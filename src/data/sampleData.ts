@@ -10,7 +10,7 @@ export interface User {
 }
 
 export interface Staff {
-    id: number;
+    _id: number;
     name: string;
     designation: string;
     department: string;
@@ -21,7 +21,7 @@ export interface Staff {
     email: string;
     skills: string[];
     achievements: string[];
-    image: string;
+    photo: string;
 }
 
 export interface Subject {
@@ -45,178 +45,6 @@ export interface QuestionBank {
     year: string;
     downloadUrl: string;
 }
-
-export const SAMPLE_USER: User = {
-    name: "Khan",
-    registerNumber: "210623205056",
-    department: "Information Technology",
-    year: "IV Year",
-    semester: 7,
-    email: "khan@example.com",
-    phone: "9876543210",
-};
-
-export const STAFF_DATA: Staff[] = [
-    {
-        id: 1,
-        name: "Dr. Selvam",
-        designation: "Professor & Head",
-        department: "Information Technology",
-        qualification: "Ph.D. (IT)",
-        experience: 18,
-        subjects: ["Cloud Computing", "Data Mining"],
-        contactNumber: "+91 98765 43210",
-        email: "selvam@jit.ac.in",
-        skills: ["Cloud Architecture", "Big Data Analytics", "Research Methodology", "Machine Learning", "Distributed Systems"],
-        achievements: [
-            "Published 25+ research papers in international journals",
-            "Received Best Teacher Award 2022",
-            "Led department to NBA accreditation",
-            "Guided 15+ Ph.D. scholars",
-            "Principal Investigator for 3 funded research projects"
-        ],
-        image: "/assets/images/selvam.jpg",
-    },
-    {
-        id: 2,
-        name: "Mrs. Ruth Shobitha",
-        designation: "Assistant Professor",
-        department: "Information Technology",
-        qualification: "M.E. (IT)",
-        experience: 8,
-        subjects: ["Web Technology", "Python Programming"],
-        contactNumber: "+91 98765 43211",
-        email: "ruthshobitha@jit.ac.in",
-        skills: ["Full Stack Development", "Python", "JavaScript", "React", "Node.js", "Database Design"],
-        achievements: [
-            "Published 8 research papers in reputed journals",
-            "Organized 3 national level technical workshops",
-            "Mentor for student innovation projects",
-            "Received Excellence in Teaching Award 2023",
-            "Certified AWS Solutions Architect"
-        ],
-        image: "/assets/images/ruthshobitha.jpg",
-    },
-    {
-        id: 3,
-        name: "Mrs. Yuvabharathi",
-        designation: "Assistant Professor",
-        department: "Information Technology",
-        qualification: "M.Tech (IT)",
-        experience: 10,
-        subjects: ["Computer Networks", "Cryptography"],
-        contactNumber: "+91 98765 43212",
-        email: "yuvabharathi@jit.ac.in",
-        skills: ["Network Security", "Cryptographic Protocols", "Ethical Hacking", "Cyber Security", "Blockchain"],
-        achievements: [
-            "Published 12 papers on network security",
-            "Conducted 5 workshops on cyber security",
-            "Certified Ethical Hacker (CEH)",
-            "Guided students to win 3 hackathons",
-            "Co-authored a book on Network Security"
-        ],
-        image: "/assets/images/yuvabharathi.jpg",
-    },
-    {
-        id: 4,
-        name: "Mr. Kalaiarasan",
-        designation: "Assistant Professor",
-        department: "Information Technology",
-        qualification: "M.E. (IT)",
-        experience: 7,
-        subjects: ["Operating Systems", "Compiler Design"],
-        contactNumber: "+91 98765 43213",
-        email: "kalaiarasan@jit.ac.in",
-        skills: ["System Programming", "Compiler Construction", "Linux Administration", "Shell Scripting", "Performance Optimization"],
-        achievements: [
-            "Published 6 research papers on OS optimization",
-            "Developed custom compiler for educational purposes",
-            "Received Young Faculty Award 2021",
-            "Mentored students for GATE preparation",
-            "Contributed to open-source Linux projects"
-        ],
-        image: "/assets/images/kalaiarasan.jpg",
-    },
-    {
-        id: 5,
-        name: "Mrs. Kanmani",
-        designation: "Assistant Professor",
-        department: "Information Technology",
-        qualification: "M.E. (IT)",
-        experience: 9,
-        subjects: ["Database Management Systems", "Big Data Analytics"],
-        contactNumber: "+91 98765 43214",
-        email: "kanmani@jit.ac.in",
-        skills: ["Database Design", "SQL", "NoSQL", "Hadoop", "Spark", "Data Warehousing", "ETL Processes"],
-        achievements: [
-            "Published 10 papers on big data technologies",
-            "Certified MongoDB Professional",
-            "Conducted industry training on Big Data",
-            "Led 2 consultancy projects for local industries",
-            "Received Best Research Paper Award 2022"
-        ],
-        image: "/assets/images/kanmani.jpg",
-    },
-    {
-        id: 6,
-        name: "Mrs. Shanmuga Priya",
-        designation: "Assistant Professor",
-        department: "Information Technology",
-        qualification: "M.Tech (IT)",
-        experience: 6,
-        subjects: ["Software Engineering", "Agile Methodologies"],
-        contactNumber: "+91 98765 43215",
-        email: "shanmugapriya@jit.ac.in",
-        skills: ["Software Project Management", "Agile & Scrum", "DevOps", "CI/CD", "Quality Assurance", "UML"],
-        achievements: [
-            "Certified Scrum Master (CSM)",
-            "Published 7 papers on software engineering",
-            "Organized 2 national conferences",
-            "Industry collaboration with 3 IT companies",
-            "Guided 20+ final year projects"
-        ],
-        image: "/assets/images/shanmugapriya.jpg",
-    },
-    {
-        id: 7,
-        name: "Mr. Manikandan",
-        designation: "Assistant Professor",
-        department: "Information Technology",
-        qualification: "M.E. (IT)",
-        experience: 11,
-        subjects: ["Artificial Intelligence", "Machine Learning"],
-        contactNumber: "+91 98765 43216",
-        email: "manikandan@jit.ac.in",
-        skills: ["Machine Learning", "Deep Learning", "Neural Networks", "TensorFlow", "PyTorch", "Computer Vision", "NLP"],
-        achievements: [
-            "Published 15 papers on AI/ML applications",
-            "Received research grant for AI project worth ₹10 lakhs",
-            "Developed AI-based attendance system for college",
-            "Certified TensorFlow Developer",
-            "Mentored students to win 2 national level AI competitions"
-        ],
-        image: "/assets/images/manikandan.jpg",
-    },
-    {
-        id: 8,
-        name: "Mrs. Arthi",
-        designation: "Assistant Professor",
-        department: "Information Technology",
-        qualification: "M.E. (IT)",
-        experience: 5,
-        subjects: ["Artificial Intelligence", "Machine Learning"],
-        contactNumber: "+91 98765 43216",
-        email: "arthi@jit.ac.in",
-        skills: ["Machine Learning", "Deep Learning", "Neural Networks", "TensorFlow", "PyTorch", "Computer Vision", "NLP"],
-        achievements: [
-            "Published 15 papers on AI/ML applications",
-            "Received research grant for AI project worth ₹10 lakhs",
-            "Developed AI-based attendance system for college",
-            "Certified good teacher",
-        ],
-        image: "/assets/images/arthi.jpg",
-    }
-];
 
 export const SUBJECTS_DATA: Subject[] = [
     // Semester 1

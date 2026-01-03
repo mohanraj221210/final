@@ -1,23 +1,36 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Nav from '../components/Nav';
 import { useNavigate } from 'react-router-dom';
-import { RECENT_DOWNLOADS, type Staff, STAFF_DATA } from '../data/sampleData';
+import { RECENT_DOWNLOADS, type Staff} from '../data/sampleData';
 import { toast } from 'react-toastify';
+import axios from 'axios';
 
 const StaffDashboard: React.FC = () => {
     // Staff Dashboard Component
     // For now mocking the logged in staff as the first one or empty
-    const [staff] = useState<Staff | null>(STAFF_DATA[0]);
+    const [staff, setStaff] = useState<Staff | null>(null);
     const navigate = useNavigate();
     const [zoomingPath, setZoomingPath] = useState<string | null>(null);
 
-    // If we had a real backend auth for staff, we would fetch here.
-    // useEffect(() => {
-    //     const fetchStaffData = async () => {
-    //         // standard fetch logic
-    //     };
-    //     fetchStaffData();
-    // }, []);
+    useEffect(() => {
+        const fetchStaffData = async () => {
+        try{
+           const response = await axios.get(`${import.meta.env.VITE_API_URL}/staff/profile`, {
+            headers:{
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        if(response.status === 200){
+            setStaff(response.data.staff);
+        };
+       }catch(error:any){
+        toast.error("Failed to fetch staff data");
+        }
+    }
+
+    
+    fetchStaffData();
+} , []);
 
     const handleQuickAction = (path: string) => {
         setZoomingPath(path);
@@ -86,7 +99,7 @@ const StaffDashboard: React.FC = () => {
                                 </div>
                                 <div
                                     className={`action-card ${zoomingPath === '/profile' ? 'zooming' : ''}`}
-                                    onClick={() => handleQuickAction(`/staffs/${staff.id}`)}
+                                    onClick={() => handleQuickAction(`/staffs/${staff._id}`)}
                                 >
                                     <span className="action-icon">👤</span>
                                     <span className="action-text">My Profile</span>
@@ -121,7 +134,7 @@ const StaffDashboard: React.FC = () => {
                                         <div className="info-icon">📋</div>
                                         <div className="info-content">
                                             <label>Total Staff</label>
-                                            <p>{STAFF_DATA.length}</p>
+                                            <p>{staff ? 1 : 0}</p>
                                         </div>
                                     </div>
                                     <div className="info-item">

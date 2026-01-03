@@ -2,11 +2,13 @@ import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import Toast from '../components/Toast';
 import axios from 'axios';
+import { toast } from "react-toastify";
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [Loading, setLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [loginType, setLoginType] = useState<'student' | 'staff'>('student');
   const navigate = useNavigate();
@@ -15,8 +17,9 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      const endpoint = loginType === 'student' ? '/api/login' : '/api/staff-login';
+      const endpoint = loginType === 'student' ? '/api/login' : '/staff/login';
       const response = await axios.post(`${API_URL}${endpoint}`, { email, password });
 
       if (response.status === 200) {
@@ -34,19 +37,10 @@ const Login: React.FC = () => {
         }, 1500);
       }
     } catch (error) {
-      // Demo/Fallback Mode
+      toast.error("Login failed. Please check your credentials.");
       console.log("Backend not reachable, using demo mode");
-      localStorage.setItem('token', 'demo-token');
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('userType', loginType);
-      setShowToast(true);
-      setTimeout(() => {
-        if (loginType === 'staff') {
-          navigate('/staff-dashboard');
-        } else {
-          navigate('/dashboard');
-        }
-      }, 1500);
+    }finally{
+      setLoading(false);
     }
   };
 
@@ -141,7 +135,7 @@ const Login: React.FC = () => {
               </label>
             </div>
 
-            <button type="submit" className="btn btn-primary btn-block">
+            <button type="submit" className="btn btn-primary btn-block" disabled={Loading}>
               {loginType === 'student' ? 'Sign In' : 'Sign In as Staff'}
             </button>
           </form>

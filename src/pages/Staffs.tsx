@@ -1,22 +1,51 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Nav from '../components/Nav';
 import StaffCard from '../components/StaffCard';
-import { STAFF_DATA } from '../data/sampleData';
+import axios from 'axios';
 
 const Staffs: React.FC = () => {
+    const [Loading, setLoading] = useState(true);
+    const [staffData, setStaffData] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState('All');
 
-    const filteredStaff = STAFF_DATA.filter(staff => {
+    useEffect(() => {
+        const staff = async()=>{
+            try {
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/staff/list`,{
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            if(response.status === 200){
+            setStaffData(response.data.staff);
+            console.log("staff data",response.data);
+            }
+            } catch (error: any) {
+            console.error("Error fetching staff data:", error.message);
+            }finally{
+                setLoading(false)
+            }
+    }
+
+        staff();
+  }, []);
+
+    const filteredStaff = staffData.filter(staff => {
         const matchesSearch = staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            staff.subjects.some(sub => sub.toLowerCase().includes(searchTerm.toLowerCase()));
+            staff.subjects.some((sub: String) => sub.toLowerCase().includes(searchTerm.toLowerCase()));
 
         const matchesFilter = filter === 'All' || staff.designation.includes(filter);
 
         return matchesSearch && matchesFilter;
     });
 
-    const designations = ['All', ...new Set(STAFF_DATA.map(s => s.designation))];
+    const designations = ['All', ...new Set(staffData.map(s => s.designation))];
+
+    if(Loading){
+        return <div className="card staff-card">Loading...</div>;
+    }
 
     return (
         <div className="page-container staff-page">
@@ -53,7 +82,7 @@ const Staffs: React.FC = () => {
 
                 <div className="staff-grid">
                     {filteredStaff.map(staff => (
-                        <StaffCard key={staff.id} staff={staff} />
+                        <StaffCard key={staff._id} staff={staff} />
                     ))}
                 </div>
 

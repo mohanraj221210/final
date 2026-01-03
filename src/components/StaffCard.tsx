@@ -1,39 +1,73 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Staff } from '../data/sampleData';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
 interface StaffCardProps {
     staff: Staff;
 }
 
 const StaffCard: React.FC<StaffCardProps> = ({ staff }) => {
+    const [Loading, setLoading] = React.useState(true);
+    const [staffData, setStaffData] = React.useState<Staff | null>(null);
     const navigate = useNavigate();
 
+    useEffect(() => {
+        const Staff = async()=>{
+            try {
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/staff/list`,{
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            if(response.status === 200){
+            const staffs = response.data.staff;
+            const staffinfo = Array.isArray(staffs) ? staffs.find((s: Staff) => s._id === staff._id) : null;
+            setStaffData(staffinfo);
+            console.log("staff data",response.data);
+           }
+            toast.error("Failed to fetch staff data");
+            } catch (error: any) {
+            toast.error("An error occurred while fetching staff data");
+            console.error("Error fetching staff data:", error.message);
+            }finally{
+                setLoading(false);
+            }
+    }
+        Staff();
+    }, []);
+
     const handleViewProfile = () => {
-        navigate(`/staffs/${staff.id}`);
+        navigate(`/staffs/${staff._id}`);
     };
+
+    if (Loading) {
+        return <div className="card staff-card">Loading...</div>;
+    }
 
     return (
         <div className="card staff-card">
             <div className="staff-header">
                 <div className="staff-img-wrapper">
                     <img
-                        src={staff.image}
-                        alt={staff.name}
+                        src={staffData?.photo}
+                        alt={staffData?.name}
                         onError={(e) => { e.currentTarget.src = 'https://ui-avatars.com/api/?name=' + staff.name + '&background=random'; }}
                         className="staff-img"
                     />
                 </div>
                 <div className="staff-identity">
-                    <h3>{staff.name}</h3>
-                    <p className="designation">{staff.designation}</p>
+                    <h3>{staffData?.name}</h3>
+                    <p className="designation">{staffData?.designation}</p>
                 </div>
             </div>
 
             <div className="staff-body">
-                <p className="qualification">{staff.qualification}</p>
+                <p className="qualification">{staffData?.qualification}</p>
                 <div className="subjects-list">
-                    {staff.subjects.map((sub, idx) => (
+                    {staffData?.subjects?.map((sub, idx) => (
                         <span key={idx} className="subject-tag">{sub}</span>
                     ))}
                 </div>

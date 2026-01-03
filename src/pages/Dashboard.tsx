@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import { toast } from 'react-toastify';
 
 const Dashboard: React.FC = () => {
+    const [Loading, setLoading] = React.useState(true);
     const [user, setUser] = React.useState<User>({
         name: "",
         registerNumber: "",
@@ -39,6 +40,8 @@ const Dashboard: React.FC = () => {
                 }
             } catch (error) {
                 toast.error('Failed to fetch user data');
+            }finally{
+                setLoading(false);
             }
         };
 
@@ -51,6 +54,10 @@ const Dashboard: React.FC = () => {
             navigate(path);
         }, 700); // Wait for animation to finish
     };
+
+    if (Loading) {
+        return <div className="card staff-card">Loading...</div>;
+    }
 
     return (
         <div className="page-container dashboard-page">

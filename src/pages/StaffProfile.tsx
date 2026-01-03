@@ -1,12 +1,40 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { STAFF_DATA } from '../data/sampleData';
 import Nav from '../components/Nav';
+import axios from 'axios';
 
 const StaffProfile: React.FC = () => {
+    const [Loading, setLoading] = React.useState(true);
+    const [staff, setStaff] = React.useState<any>(null);
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const staff = STAFF_DATA.find(s => s.id === Number(id));
+
+    useEffect(() => {
+        const fetchStaffById = async () => {
+            try {
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/staff/${id}`,{
+                    headers:{
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type':'application/json'
+                    }
+                });
+                if (response.status === 200) {
+                    setStaff(response.data.staff);
+                    console.log("Fetched staff data:", response.data.staff);
+                }
+            } catch (error) {
+                console.error("Error fetching staff data by ID:", error);
+            }finally{
+                setLoading(false);
+            }
+        };
+
+        fetchStaffById();
+    }, [id]);
+
+    if (Loading) {
+        return <div className="card staff-card">Loading...</div>;
+    }
 
     if (!staff) {
         return (
@@ -40,7 +68,7 @@ const StaffProfile: React.FC = () => {
                     <div className="profile-header">
                         <div className="profile-image-wrapper">
                             <img
-                                src={staff.image}
+                                src={staff.photo}
                                 alt={staff.name}
                                 onError={(e) => {
                                     e.currentTarget.src = `https://ui-avatars.com/api/?name=${staff.name}&background=0047AB&color=fff&size=200`;
@@ -121,7 +149,7 @@ const StaffProfile: React.FC = () => {
                                 Handling Subjects
                             </h2>
                             <div className="subjects-list-new">
-                                {staff.subjects.map((subject, idx) => (
+                                {staff.subjects.map((subject: string, idx: number) => (
                                     <div key={idx} className="subject-item-new">
                                         <span className="subject-bullet">📖</span>
                                         <span className="subject-text">{subject}</span>
@@ -137,7 +165,7 @@ const StaffProfile: React.FC = () => {
                                 Knowledge & Skills
                             </h2>
                             <div className="skills-list">
-                                {staff.skills.map((skill, idx) => (
+                                {staff.skills.map((skill: string, idx: number) => (
                                     <span key={idx} className="skill-badge">
                                         {skill}
                                     </span>
@@ -152,7 +180,7 @@ const StaffProfile: React.FC = () => {
                                 Achievements
                             </h2>
                             <ul className="achievements-list-new">
-                                {staff.achievements.map((achievement, idx) => (
+                                {staff.achievements.map((achievement: string, idx: number) => (
                                     <li key={idx} className="achievement-item-new">
                                         <span className="achievement-check">✓</span>
                                         <span className="achievement-content">{achievement}</span>
