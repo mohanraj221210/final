@@ -1,416 +1,555 @@
 import React, { useEffect, useState } from 'react';
-import Nav from '../components/Nav';
 import { useNavigate } from 'react-router-dom';
-import { RECENT_DOWNLOADS, type Staff} from '../data/sampleData';
+import { type Staff } from '../data/sampleData';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 
 const StaffDashboard: React.FC = () => {
-    // Staff Dashboard Component
-    // For now mocking the logged in staff as the first one or empty
     const [staff, setStaff] = useState<Staff | null>(null);
     const navigate = useNavigate();
-    const [zoomingPath, setZoomingPath] = useState<string | null>(null);
+    const [activeMenu, setActiveMenu] = useState('dashboard');
 
     useEffect(() => {
         const fetchStaffData = async () => {
-        try{
-           const response = await axios.get(`${import.meta.env.VITE_API_URL}/staff/profile`, {
-            headers:{
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            try {
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}/staff/profile`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                if (response.status === 200) {
+                    setStaff(response.data.staff);
+                };
+            } catch (error: any) {
+                toast.error("Failed to fetch staff data");
             }
-        });
-        if(response.status === 200){
-            setStaff(response.data.staff);
-        };
-       }catch(error:any){
-        toast.error("Failed to fetch staff data");
         }
-    }
 
-    
-    fetchStaffData();
-} , []);
 
-    const handleQuickAction = (path: string) => {
-        setZoomingPath(path);
-        setTimeout(() => {
-            navigate(path);
-        }, 600);
+        fetchStaffData();
+    }, []);
+
+    const handleLogout = () => {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userType');
+        localStorage.removeItem('token');
+        navigate('/login');
     };
 
-    if (!staff) return <div>Loading...</div>;
+    const handleNavigation = (path: string, menu: string) => {
+        setActiveMenu(menu);
+        navigate(path);
+    };
+
+    if (!staff) return <div className="loading-screen">Loading...</div>;
 
     return (
-        <div className="page-container dashboard-page">
-            <Nav />
-            <div className="content-wrapper">
-                {/* Hero Section */}
-                <div className="dashboard-hero">
-                    <div className="hero-welcome">
-                        <div>
-                            <span className="badge">Staff Portal</span>
-                        </div>
-                        <div>
-                            <h1 style={{ color: 'skyblue' }}>Hello, {staff.name}! 👋</h1>
-                            <p style={{ color: 'skyblue' }}>
-                                {staff.designation} • {staff.department}
-                            </p>
+        <div className="staff-dashboard">
+            {/* Fixed Header */}
+            <header className="dashboard-header">
+                <div className="header-container">
+                    <div className="header-left">
+                        <div className="brand">
+                            <span className="brand-icon">🎓</span>
+                            <span className="brand-text">JIT Staff Portal</span>
                         </div>
                     </div>
-                    <div className="hero-stats-grid">
-                        <div className="stat-card">
-                            <div className="stat-icon blue">📚</div>
-                            <div className="stat-info">
-                                <span className="stat-value">{staff.subjects.length}</span>
-                                <span className="stat-label">Handling Subjects</span>
-                            </div>
-                        </div>
-                        <div className="stat-card">
-                            <div className="stat-icon orange">🎓</div>
-                            <div className="stat-info">
-                                <span className="stat-value">120</span>
-                                <span className="stat-label">Total Students</span>
-                            </div>
-                        </div>
-                    </div>
+                    <nav className="header-nav">
+                        <button
+                            className={`nav-item ${activeMenu === 'dashboard' ? 'active' : ''}`}
+                            onClick={() => handleNavigation('/staff-dashboard', 'dashboard')}
+                        >
+                            Dashboard
+                        </button>
+                        <button
+                            className={`nav-item ${activeMenu === 'notice' ? 'active' : ''}`}
+                            onClick={() => handleNavigation('/notice', 'notice')}
+                        >
+                            Notice
+                        </button>
+                        <button
+                            className={`nav-item ${activeMenu === 'profile' ? 'active' : ''}`}
+                            onClick={() => handleNavigation('/staff-profile', 'profile')}
+                        >
+                            Profile
+                        </button>
+                        <button className="logout-btn" onClick={handleLogout}>
+                            Logout
+                        </button>
+                    </nav>
                 </div>
+            </header>
 
-                <div className="dashboard-layout">
-                    {/* Main Content */}
-                    <div className="main-content">
-                        {/* Quick Actions */}
-                        <section className="section">
-                            <h2 className="section-title">Quick Actions</h2>
-                            <div className="quick-links-grid">
-                                <div
-                                    className={`action-card ${zoomingPath === '/students' ? 'zooming' : ''}`}
-                                    onClick={() => handleQuickAction('/passApproval')} // Assuming this route exists or will exist
-                                >
-                                    <span className="action-icon">👨‍🎓</span>
-                                    <span className="action-text">Out Pass</span>
-                                </div>
-                                <div
-                                    className={`action-card ${zoomingPath === '/my-classes' ? 'zooming' : ''}`}
-                                    onClick={() => toast.info('Manage Classes feature coming soon!')}
-                                >
-                                    <span className="action-icon">🏫</span>
-                                    <span className="action-text">My Classes</span>
-                                </div>
-                                <div
-                                    className={`action-card ${zoomingPath === '/profile' ? 'zooming' : ''}`}
-                                    onClick={() => handleQuickAction(`/staffs/${staff._id}`)}
-                                >
-                                    <span className="action-icon">👤</span>
-                                    <span className="action-text">My Profile</span>
-                                </div>
-                                <div className="action-card disabled">
-                                    <span className="action-icon">📅</span>
-                                    <span className="action-text">My Timetable</span>
+            {/* Main Content */}
+            <main className="dashboard-main">
+                <div className="content-container">
+                    {/* Welcome Section */}
+                    <div className="welcome-section">
+                        <div className="welcome-content">
+                            <h1>Welcome back, {staff.name}! 👋</h1>
+                            <p className="welcome-subtitle">{staff.designation} • {staff.department}</p>
+                        </div>
+                        <div className="stats-mini">
+                            <div className="stat-mini">
+                                <span className="stat-mini-icon">📚</span>
+                                <div>
+                                    <div className="stat-mini-value">{staff.subjects.length}</div>
+                                    <div className="stat-mini-label">Subjects</div>
                                 </div>
                             </div>
-                        </section>
+                            <div className="stat-mini">
+                                <span className="stat-mini-icon">🎓</span>
+                                <div>
+                                    <div className="stat-mini-value">120</div>
+                                    <div className="stat-mini-label">Students</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                        {/* Department Info */}
-                        <section className="section">
-                            <div className="card info-card">
-                                <div className="card-header">
-                                    <div className="header-icon">🏛️</div>
+                    {/* Quick Actions */}
+                    <section className="quick-actions-section">
+                        <h2 className="section-title">Quick Actions</h2>
+                        <div className="quick-actions-grid">
+                            <div
+                                className="action-card"
+                                onClick={() => navigate('/staff-profile')}
+                            >
+                                <div className="action-icon-wrapper">
+                                    <span className="action-icon">👤</span>
+                                </div>
+                                <h3 className="action-title">My Profile</h3>
+                                <p className="action-description">View and edit your profile details</p>
+                                <div className="action-arrow">→</div>
+                            </div>
+
+                            <div
+                                className="action-card"
+                                onClick={() => navigate('/passApproval')}
+                            >
+                                <div className="action-icon-wrapper">
+                                    <span className="action-icon">📋</span>
+                                </div>
+                                <h3 className="action-title">View Outpass Requests</h3>
+                                <p className="action-description">Review student outpass applications</p>
+                                <div className="action-arrow">→</div>
+                            </div>
+
+                            <div
+                                className="action-card"
+                                onClick={() => navigate('/passApproval')}
+                            >
+                                <div className="action-icon-wrapper">
+                                    <span className="action-icon">⏳</span>
+                                </div>
+                                <h3 className="action-title">Pending Approvals</h3>
+                                <p className="action-description">Approve or reject pending requests</p>
+                                <div className="action-arrow">→</div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Department Info */}
+                    <section className="info-section">
+                        <div className="info-card">
+                            <div className="info-card-header">
+                                <div className="info-header-left">
+                                    <span className="info-icon">🏛️</span>
                                     <div>
                                         <h3>Department of Information Technology</h3>
-                                        <p className="card-subtitle">Academic Overview</p>
+                                        <p className="info-subtitle">Academic Overview</p>
                                     </div>
-                                    <span className="badge">IT Dept</span>
                                 </div>
-                                <div className="info-grid">
-                                    <div className="info-item">
-                                        <div className="info-icon">👨‍🏫</div>
-                                        <div className="info-content">
-                                            <label>Head of Department</label>
-                                            <p>Dr. Selvam</p>
-                                        </div>
+                                <span className="dept-badge">IT Dept</span>
+                            </div>
+                            <div className="info-grid">
+                                <div className="info-item">
+                                    <span className="info-item-icon">👨‍🏫</span>
+                                    <div className="info-item-content">
+                                        <label>Head of Department</label>
+                                        <p>Dr. Selvam</p>
                                     </div>
-                                    <div className="info-item">
-                                        <div className="info-icon">📋</div>
-                                        <div className="info-content">
-                                            <label>Total Staff</label>
-                                            <p>{staff ? 1 : 0}</p>
-                                        </div>
+                                </div>
+                                <div className="info-item">
+                                    <span className="info-item-icon">📋</span>
+                                    <div className="info-item-content">
+                                        <label>Total Staff</label>
+                                        <p>{staff ? 1 : 0}</p>
                                     </div>
-                                    <div className="info-item">
-                                        <div className="info-icon">🎓</div>
-                                        <div className="info-content">
-                                            <label>Total Students</label>
-                                            <p>120</p>
-                                        </div>
+                                </div>
+                                <div className="info-item">
+                                    <span className="info-item-icon">🎓</span>
+                                    <div className="info-item-content">
+                                        <label>Total Students</label>
+                                        <p>120</p>
                                     </div>
-                                    <div className="info-item">
-                                        <div className="info-icon">📅</div>
-                                        <div className="info-content">
-                                            <label>Academic Year</label>
-                                            <p>2023-2024</p>
-                                        </div>
+                                </div>
+                                <div className="info-item">
+                                    <span className="info-item-icon">📅</span>
+                                    <div className="info-item-content">
+                                        <label>Academic Year</label>
+                                        <p>2023-2024</p>
                                     </div>
                                 </div>
                             </div>
-                        </section>
-
-                        {/* Vision & Mission */}
-                        <section className="section">
-                            <div className="card vision-card">
-                                <div className="card-header">
-                                    <div className="header-icon">🚀</div>
-                                    <h3 className="text-white">Vision & Mission</h3>
-                                </div>
-                                <div className="vision-content">
-                                    <div className="vision-block">
-                                        <h4>Vision</h4>
-                                        <p>Jeppiaar Institute of Technology aspires to provide technical education in futuristic technologies with the perspective of innovative, industrial, and social applications for the betterment of humanity.</p>
-                                    </div>
-                                    <div className="vision-divider"></div>
-                                    <div className="vision-block">
-                                        <h4>Mission</h4>
-                                        <ul>
-                                            <li style={{ color: '#d0c9c9ff' }}>To produce competent and disciplined high-quality professionals.</li>
-                                            <li style={{ color: '#d0c9c9ff' }}>To improve the quality of education through excellence in teaching.</li>
-                                            <li style={{ color: '#d0c9c9ff' }}>To provide excellent infrastructure and stimulating environment.</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-                    </div>
-
-                    {/* Sidebar */}
-                    <aside className="sidebar">
-                        {/* Recent Downloads/Uploads */}
-                        <div className="card sidebar-card">
-                            <h3>Recent Uploads</h3>
-                            <div className="downloads-list">
-                                {RECENT_DOWNLOADS.slice(0, 3).map(download => (
-                                    <div key={download.id} className="download-item">
-                                        <div className="download-icon">📄</div>
-                                        <div className="download-info">
-                                            <p className="download-title">{download.title}</p>
-                                            <span className="download-meta">{download.subject} • {download.date}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                            <button className="btn btn-ghost btn-sm w-full mt-4">View All Uploads</button>
                         </div>
-                    </aside>
+                    </section>
                 </div>
-            </div>
+            </main>
 
             <style>{`
-                .dashboard-hero {
-                    background: linear-gradient(-45deg, #0047AB, #00214D, #1e3a8a, #0f172a);
-                    background-size: 400% 400%;
-                    animation: aurora 15s ease infinite;
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+
+                .staff-dashboard {
+                    min-height: 100vh;
+                    background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
+                }
+
+                .loading-screen {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    min-height: 100vh;
+                    font-size: 1.5rem;
+                    color: #64748b;
+                }
+
+                /* Fixed Header */
+                .dashboard-header {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 70px;
+                    background: white;
+                    border-bottom: 1px solid #e2e8f0;
+                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+                    z-index: 1000;
+                }
+
+                .header-container {
+                    max-width: 1400px;
+                    margin: 0 auto;
+                    height: 100%;
+                    padding: 0 24px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+
+                .header-left {
+                    display: flex;
+                    align-items: center;
+                }
+
+                .brand {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                }
+
+                .brand-icon {
+                    font-size: 28px;
+                }
+
+                .brand-text {
+                    font-size: 1.3rem;
+                    font-weight: 700;
+                    background: linear-gradient(135deg, #0047AB, #2563eb);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                }
+
+                .header-nav {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+
+                .nav-item {
+                    padding: 10px 20px;
+                    border: none;
+                    background: transparent;
+                    color: #64748b;
+                    font-weight: 600;
+                    font-size: 0.95rem;
+                    cursor: pointer;
+                    border-radius: 10px;
+                    transition: all 0.3s;
+                }
+
+                .nav-item:hover {
+                    background: #f1f5f9;
+                    color: #0047AB;
+                }
+
+                .nav-item.active {
+                    background: linear-gradient(135deg, #0047AB, #2563eb);
+                    color: white;
+                    box-shadow: 0 4px 12px rgba(0, 71, 171, 0.2);
+                }
+
+                .logout-btn {
+                    padding: 10px 24px;
+                    border: 2px solid #ef4444;
+                    background: white;
+                    color: #ef4444;
+                    font-weight: 600;
+                    font-size: 0.95rem;
+                    cursor: pointer;
+                    border-radius: 10px;
+                    transition: all 0.3s;
+                    margin-left: 12px;
+                }
+
+                .logout-btn:hover {
+                    background: #ef4444;
+                    color: white;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+                }
+
+                /* Main Content */
+                .dashboard-main {
+                    margin-top: 70px;
+                    padding: 40px 20px;
+                }
+
+                .content-container {
+                    max-width: 1400px;
+                    margin: 0 auto;
+                }
+
+                /* Welcome Section */
+                .welcome-section {
+                    background: linear-gradient(135deg, #0047AB, #2563eb);
                     border-radius: 24px;
                     padding: 40px;
                     margin-bottom: 32px;
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4);
-                    position: relative;
-                    overflow: hidden;
+                    box-shadow: 0 10px 30px rgba(0, 71, 171, 0.2);
                     color: white;
                 }
 
-                .dashboard-hero::before {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    background: 
-                        radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 80%, rgba(255,255,255,0.05) 0%, transparent 40%);
-                    animation: pulse-glow 8s ease-in-out infinite alternate;
-                    z-index: 0;
+                .welcome-content h1 {
+                    font-size: 2.2rem;
+                    margin-bottom: 8px;
+                    font-weight: 700;
                 }
 
-                /* 3D Stat Card Effect */
-                .hero-stats-grid {
+                .welcome-subtitle {
+                    font-size: 1.1rem;
+                    opacity: 0.9;
+                }
+
+                .stats-mini {
                     display: flex;
                     gap: 24px;
-                    position: relative;
-                    z-index: 1;
-                    perspective: 1000px;
                 }
 
-                .stat-card {
-                    background: rgba(255, 255, 255, 0.1);
-                    backdrop-filter: blur(12px);
-                    padding: 20px 28px;
-                    border-radius: 20px;
+                .stat-mini {
                     display: flex;
                     align-items: center;
-                    gap: 20px;
-                    min-width: 180px;
+                    gap: 16px;
+                    background: rgba(255, 255, 255, 0.15);
+                    backdrop-filter: blur(10px);
+                    padding: 20px 28px;
+                    border-radius: 16px;
                     border: 1px solid rgba(255, 255, 255, 0.2);
-                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                    transform-style: preserve-3d;
                 }
 
-                .stat-card:hover {
-                    transform: translateY(-5px) rotateX(5deg) scale(1.05);
-                    background: rgba(255, 255, 255, 0.2);
-                    box-shadow: 
-                        0 20px 40px rgba(0,0,0,0.3),
-                        0 0 20px rgba(255,255,255,0.2) inset;
-                    border-color: rgba(255,255,255,0.6);
+                .stat-mini-icon {
+                    font-size: 2rem;
                 }
 
-                /* Section Spacing */
-                .section {
+                .stat-mini-value {
+                    font-size: 1.8rem;
+                    font-weight: 700;
+                }
+
+                .stat-mini-label {
+                    font-size: 0.9rem;
+                    opacity: 0.9;
+                }
+
+                /* Quick Actions */
+                .quick-actions-section {
                     margin-bottom: 32px;
                 }
 
                 .section-title {
-                    font-size: 1.25rem;
-                    font-weight: 600;
+                    font-size: 1.5rem;
+                    font-weight: 700;
                     color: #1e293b;
-                    margin-bottom: 20px;
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
+                    margin-bottom: 24px;
                 }
 
-                /* Quick Actions Grid with 3D Perspective */
-                .quick-links-grid {
+                .quick-actions-grid {
                     display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-                    gap: 20px;
-                    perspective: 1000px;
-                    padding-bottom: 20px;
+                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                    gap: 24px;
                 }
 
                 .action-card {
                     background: white;
-                    padding: 24px;
                     border-radius: 20px;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 16px;
-                    text-align: center;
-                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                    border: 1px solid rgba(0, 0, 0, 0.05);
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.02);
-                    position: relative;
-                    overflow: hidden;
-                    z-index: 1;
-                    cursor: pointer;
-                }
-
-                /* Zoom Effect */
-                .action-card.zooming {
-                    animation: zoom-in-nav 0.6s cubic-bezier(0.7, 0, 0.3, 1) forwards;
-                    z-index: 100;
-                    pointer-events: none;
-                }
-
-                @keyframes zoom-in-nav {
-                    0% {
-                        transform: scale(1);
-                        opacity: 1;
-                    }
-                    50% {
-                        opacity: 0.8;
-                    }
-                    100% {
-                        transform: scale(20);
-                        opacity: 0;
-                    }
-                }
-
-                .action-card:hover {
-                    transform: translateY(-8px) scale(1.02);
-                    box-shadow: 0 20px 50px rgba(255, 255, 255, 0.17);
-                }
-                
-                .action-icon {
-                    font-size: 36px;
-                    background: linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%);
-                    width: 72px;
-                    height: 72px;
-                    border-radius: 20px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-                    color: var(--primary);
-                    border: 1px solid rgba(0, 0, 0, 0.03);
-                    position: relative;
-                    z-index: 2;
-                }
-
-                .action-card:hover .action-icon {
-                    background: #8eb7f0ff;
-                    color: white;
-                    transform: scale(1.15) rotate(10deg);
-                    box-shadow: 0 15px 30px rgba(0, 70, 168, 0.78);
-                }
-
-                /* Enhanced Info Card */
-                .info-card {
-                    background: white;
-                    border-radius: 24px;
                     padding: 32px;
-                    border: 1px solid rgba(0, 0, 0, 0.05);
-                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
+                    cursor: pointer;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    border: 2px solid transparent;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
                     position: relative;
                     overflow: hidden;
                 }
-                
-                .info-card::before {
+
+                .action-card::before {
                     content: '';
                     position: absolute;
                     top: 0;
                     left: 0;
                     width: 100%;
-                    height: 6px;
-                    background: linear-gradient(90deg, #0047AB, #60a5fa);
+                    height: 4px;
+                    background: linear-gradient(90deg, #0047AB, #2563eb);
+                    transform: scaleX(0);
+                    transition: transform 0.3s;
                 }
-                
-                .card-header {
+
+                .action-card:hover {
+                    transform: translateY(-8px);
+                    border-color: #0047AB;
+                    box-shadow: 0 12px 28px rgba(0, 71, 171, 0.15);
+                }
+
+                .action-card:hover::before {
+                    transform: scaleX(1);
+                }
+
+                .action-icon-wrapper {
+                    width: 70px;
+                    height: 70px;
+                    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+                    border-radius: 16px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin-bottom: 20px;
+                    transition: all 0.3s;
+                }
+
+                .action-card:hover .action-icon-wrapper {
+                    background: linear-gradient(135deg, #0047AB, #2563eb);
+                    transform: scale(1.1) rotate(5deg);
+                }
+
+                .action-icon {
+                    font-size: 2rem;
+                    transition: all 0.3s;
+                }
+
+                .action-card:hover .action-icon {
+                    filter: brightness(0) invert(1);
+                }
+
+                .action-title {
+                    font-size: 1.3rem;
+                    font-weight: 700;
+                    color: #1e293b;
+                    margin-bottom: 8px;
+                }
+
+                .action-description {
+                    color: #64748b;
+                    font-size: 0.95rem;
+                    line-height: 1.5;
+                    margin-bottom: 16px;
+                }
+
+                .action-arrow {
+                    color: #0047AB;
+                    font-size: 1.5rem;
+                    font-weight: 700;
+                    transition: all 0.3s;
+                }
+
+                .action-card:hover .action-arrow {
+                    transform: translateX(8px);
+                }
+
+                /* Info Section */
+                .info-section {
+                    margin-bottom: 32px;
+                }
+
+                .info-card {
+                    background: white;
+                    border-radius: 20px;
+                    padding: 32px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+                    border: 1px solid #e2e8f0;
+                }
+
+                .info-card-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 28px;
+                    padding-bottom: 20px;
+                    border-bottom: 2px solid #f1f5f9;
+                }
+
+                .info-header-left {
                     display: flex;
                     align-items: flex-start;
                     gap: 16px;
-                    margin-bottom: 32px;
-                    border-bottom: 1px solid #f1e4e4ff;
-                    padding-bottom: 24px;
                 }
 
-                .header-icon {
-                    font-size: 28px;
+                .info-icon {
+                    font-size: 2rem;
                     background: #eff6ff;
                     padding: 12px;
                     border-radius: 12px;
                 }
 
-                .card-subtitle {
+                .info-card-header h3 {
+                    font-size: 1.3rem;
+                    color: #1e293b;
+                    margin-bottom: 4px;
+                }
+
+                .info-subtitle {
                     color: #64748b;
                     font-size: 0.9rem;
-                    margin-top: 4px;
+                }
+
+                .dept-badge {
+                    background: linear-gradient(135deg, #0047AB, #2563eb);
+                    color: white;
+                    padding: 8px 16px;
+                    border-radius: 20px;
+                    font-weight: 600;
+                    font-size: 0.85rem;
                 }
 
                 .info-grid {
                     display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 24px;
+                    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                    gap: 20px;
                 }
 
                 .info-item {
                     display: flex;
                     align-items: flex-start;
                     gap: 16px;
-                    padding: 16px;
+                    padding: 20px;
                     background: #f8fafc;
                     border-radius: 16px;
-                    transition: all 0.3s ease;
+                    transition: all 0.3s;
                 }
 
                 .info-item:hover {
@@ -418,332 +557,111 @@ const StaffDashboard: React.FC = () => {
                     transform: translateY(-2px);
                 }
 
-                .info-icon {
-                    font-size: 24px;
+                .info-item-icon {
+                    font-size: 1.8rem;
                     background: white;
                     padding: 10px;
                     border-radius: 12px;
-                    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
                 }
 
-                .info-content label {
+                .info-item-content label {
                     display: block;
-                    color: #64748b;
                     font-size: 0.8rem;
-                    font-weight: 500;
+                    font-weight: 600;
+                    color: #64748b;
                     text-transform: uppercase;
                     letter-spacing: 0.5px;
-                    margin-bottom: 4px;
+                    margin-bottom: 6px;
                 }
 
-                .info-content p {
-                    color: #0f172a;
-                    font-weight: 600;
-                    font-size: 1rem;
-                    margin: 0;
-                }
-
-                /* Vision Card Enhancements */
-                .vision-card {
-                    background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
-                    color: white;
-                    border-radius: 24px;
-                    padding: 32px;
-                    position: relative;
-                    overflow: hidden;
-                    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-                }
-
-                /* Shimmer Glow Border */
-                .vision-card::before {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    border-radius: 24px; 
-                    padding: 2px; 
-                    background: linear-gradient(45deg, transparent, rgba(96, 165, 250, 0.8), rgba(251, 191, 36, 0.8), transparent); 
-                    background-size: 200% 200%; 
-                    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-                    -webkit-mask-composite: xor;
-                    mask-composite: exclude;
-                    animation: shimmer-border 3s linear infinite;
-                    pointer-events: none;
-                }
-
-                /* Background Blur/Glow behind */
-                .vision-card::after {
-                    content: '';
-                    position: absolute;
-                    top: -50%;
-                    left: -50%;
-                    width: 200%;
-                    height: 200%;
-                    background: radial-gradient(circle at 50% 50%, rgba(96, 165, 250, 0.1), transparent 60%);
-                    animation: rotate-glow 10s linear infinite;
-                    pointer-events: none;
-                    z-index: 0;
-                }
-
-                .vision-card .card-header {
-                    border-bottom-color: rgba(255,255,255,0.1);
-                    align-items: center;
-                    position: relative;
-                    z-index: 1;
-                }
-                
-                .vision-card .header-icon {
-                    background: rgba(255, 255, 255, 0.1);
-                }
-
-                .vision-card h3 {
-                    color: white;
-                }
-
-                .vision-content {
-                    display: grid;
-                    grid-template-columns: 1fr auto 1fr;
-                    gap: 32px;
-                    align-items: start;
-                    position: relative;
-                    z-index: 1;
-                }
-
-                .vision-divider {
-                    width: 1px;
-                    height: 100%;
-                    background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.2), transparent);
-                }
-
-                .vision-block h4 {
-                    color: #60a5fa; /* Light Blue */
+                .info-item-content p {
                     font-size: 1.1rem;
-                    margin-bottom: 16px;
-                    font-weight: 600;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
+                    font-weight: 700;
+                    color: #1e293b;
                 }
 
-                .vision-block p, .vision-block li {
-                    color: #cbd5e1; /* Slate 300 - readable on dark */
-                    line-height: 1.6;
-                    font-size: 0.95rem;
-                }
-
-                .vision-block ul {
-                    padding-left: 20px;
-                }
-
-                .vision-block li {
-                    margin-bottom: 8px;
-                }
-
+                /* Responsive */
                 @media (max-width: 768px) {
+                    .header-container {
+                        padding: 0 16px;
+                    }
+
+                    .brand-text {
+                        font-size: 1.1rem;
+                    }
+
+                    .header-nav {
+                        gap: 4px;
+                    }
+
+                    .nav-item {
+                        padding: 8px 12px;
+                        font-size: 0.85rem;
+                    }
+
+                    .logout-btn {
+                        padding: 8px 16px;
+                        font-size: 0.85rem;
+                        margin-left: 4px;
+                    }
+
+                    .dashboard-main {
+                        padding: 24px 16px;
+                    }
+
+                    .welcome-section {
+                        flex-direction: column;
+                        align-items: flex-start;
+                        gap: 24px;
+                        padding: 28px 24px;
+                    }
+
+                    .welcome-content h1 {
+                        font-size: 1.8rem;
+                    }
+
+                    .stats-mini {
+                        width: 100%;
+                        flex-direction: column;
+                        gap: 12px;
+                    }
+
+                    .stat-mini {
+                        width: 100%;
+                    }
+
+                    .quick-actions-grid {
+                        grid-template-columns: 1fr;
+                    }
+
                     .info-grid {
                         grid-template-columns: 1fr;
                     }
-                    .vision-content {
-                        grid-template-columns: 1fr;
+
+                    .section-title {
+                        font-size: 1.3rem;
                     }
-                    .vision-divider {
+                }
+
+                @media (max-width: 480px) {
+                    .brand-icon {
+                        font-size: 24px;
+                    }
+
+                    .brand-text {
                         display: none;
                     }
-                }
-                
-                @keyframes shimmer-border {
-                    0% { background-position: 0% 50%; }
-                    100% { background-position: 200% 50%; }
-                }
 
-                @keyframes rotate-glow {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
-                }
+                    .nav-item {
+                        padding: 6px 10px;
+                        font-size: 0.8rem;
+                    }
 
-
-                /* Keyframes */
-                @keyframes aurora {
-                    0% { background-position: 0% 50%; }
-                    50% { background-position: 100% 50%; }
-                    100% { background-position: 0% 50%; }
-                }
-
-                @keyframes float {
-                    0%, 100% { transform: translateY(0); }
-                    50% { transform: translateY(-10px); }
-                }
-
-                @keyframes fadeIn {
-                    from { opacity: 0; }
-                    to { opacity: 1; }
-                }
-
-                @keyframes fadeInUp {
-                    from { opacity: 0; transform: translateY(20px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-
-                @keyframes fadeInRight {
-                    from { opacity: 0; transform: translateX(-20px); }
-                    to { opacity: 1; transform: translateX(0); }
-                }
-
-                @keyframes slideInRight {
-                    from { opacity: 0; transform: translateX(30px); }
-                    to { opacity: 1; transform: translateX(0); }
-                }
-                
-                @keyframes pulse-glow {
-                    0%, 100% { opacity: 0.5; transform: scale(1); }
-                    50% { opacity: 0.8; transform: scale(1.1); }
-                }
-
-                @keyframes typing {
-                    from { width: 0 }
-                    to { width: 100% }
-                }
-                
-                @keyframes blink-caret {
-                    from, to { border-color: transparent }
-                    50% { border-color: white; }
-                }
-
-                .hero-welcome .badge {
-                    animation: pulse-glow 3s infinite;
-                }
-                
-                /* Typing effect for H1 */
-                .hero-welcome h1 {
-                    display: inline-block;
-                    overflow: hidden;
-                    white-space: nowrap;
-                    border-right: 3px solid white;
-                    animation: 
-                        fadeInUp 0.8s ease-out 0.2s backwards,
-                        typing 2s steps(30, end) 0.5s both,
-                        blink-caret 0.75s step-end infinite;
-                    max-width: fit-content;
-                }
-
-                /* Staggered Action Cards */
-                .action-card {
-                    animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
-                }
-                .action-card:nth-child(1) { animation-delay: 0.3s; }
-                .action-card:nth-child(2) { animation-delay: 0.4s; }
-                .action-card:nth-child(3) { animation-delay: 0.5s; }
-                .action-card:nth-child(4) { animation-delay: 0.6s; }
-
-                @media (max-width: 968px) {
-                    .dashboard-layout { grid-template-columns: 20fr; }
-                    .dashboard-hero { flex-direction: column; align-items: flex-start; gap: 24px; }
-                    .hero-stats-grid { width: 100%; overflow-x: auto; padding-bottom: 12px; }
-                    .sidebar { animation: fadeInUp 0.8s ease-out 0.4s backwards; }
-                }
-
-                /* Recent Downloads Premium Styles */
-                .sidebar-card {
-                    background: white;
-                    border-radius: 24px;
-                    padding: 24px;
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.02);
-                    border: 1px solid rgba(0,0,0,0.05);
-                    transition: transform 0.3s ease, box-shadow 0.3s ease;
-                    margin-bottom: 24px;
-                }
-
-                .sidebar-card:hover {
-                    transform: translateY(-5px);
-                    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
-                }
-
-                .sidebar-card h3 {
-                    font-size: 1.1rem;
-                    font-weight: 600;
-                    color: #1e293b;
-                    margin-bottom: 20px;
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                }
-
-                .downloads-list {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 12px;
-                }
-
-                .download-item {
-                    display: flex;
-                    align-items: center;
-                    gap: 16px;
-                    padding: 12px;
-                    border-radius: 16px;
-                    background: #f8fafc;
-                    border: 1px solid transparent;
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                    cursor: pointer;
-                    animation: slideInRight 0.5s ease backwards;
-                }
-
-                .download-item:nth-child(1) { animation-delay: 0.1s; }
-                .download-item:nth-child(2) { animation-delay: 0.2s; }
-                .download-item:nth-child(3) { animation-delay: 0.3s; }
-                .download-item:nth-child(4) { animation-delay: 0.4s; }
-                .download-item:nth-child(5) { animation-delay: 0.5s; }
-
-                .download-item:hover {
-                    background: #eff6ff;
-                    border-color: rgba(59, 130, 246, 0.3);
-                    transform: translateX(5px) scale(1.02);
-                    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.1);
-                }
-
-                .download-icon {
-                    width: 42px;
-                    height: 42px;
-                    background: white;
-                    border-radius: 12px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 20px;
-                    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-                    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease, color 0.3s ease;
-                    color: #64748b;
-                }
-
-                .download-item:hover .download-icon {
-                    transform: scale(1.15) rotate(-8deg);
-                    background: #3b82f6;
-                    color: white;
-                }
-
-                .download-info {
-                    flex: 1;
-                    min-width: 0;
-                }
-
-                .download-title {
-                    font-weight: 600;
-                    color: #334155;
-                    font-size: 0.9rem;
-                    margin-bottom: 2px;
-                    transition: color 0.2s ease;
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                }
-
-                .download-item:hover .download-title {
-                    color: #1d4ed8;
-                    width: 200px; /* Force width to trigger ellipsis if needed, though better handled by flex */
-                }
-
-                .download-meta {
-                    font-size: 0.75rem;
-                    color: #94a3b8;
-                    display: block;
+                    .logout-btn {
+                        padding: 6px 12px;
+                        font-size: 0.8rem;
+                    }
                 }
             `}</style>
         </div>

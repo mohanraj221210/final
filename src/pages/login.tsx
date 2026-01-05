@@ -39,7 +39,7 @@ const Login: React.FC = () => {
     } catch (error) {
       toast.error("Login failed. Please check your credentials.");
       console.log("Backend not reachable, using demo mode");
-    }finally{
+    } finally {
       setLoading(false);
     }
   };

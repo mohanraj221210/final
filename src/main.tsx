@@ -43,6 +43,11 @@ createRoot(document.getElementById('root')!).render(
             <Staffs />
           </ProtectedRoute>
         } />
+        <Route path="/staff-profile" element={
+          <ProtectedRoute>
+            <StaffProfile />
+          </ProtectedRoute>
+        } />
         <Route path="/staffs/:id" element={
           <ProtectedRoute>
             <StaffProfile />
