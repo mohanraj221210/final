@@ -21,7 +21,7 @@ const Profile: React.FC = () => {
         arrears: 0,
         gender: 'male',
         parentnumber: '',
-        residencetype: 'day scholar',
+        residencetype: '',
         hostelname: '',
         hostelroomno: '',
         busno: '',
@@ -85,11 +85,11 @@ const Profile: React.FC = () => {
                 }
             });
             if (response.status === 200) {
-                alert("Profile updated successfully");
+                toast.success("Profile updated successfully");
                 setShowToast(true);
             }
         } catch (error) {
-            alert("Failed to update profile");
+            toast.error("Failed to update profile");
         }
         localStorage.setItem('userProfile', JSON.stringify(user));
         setIsEditing(false);
@@ -356,7 +356,7 @@ const Profile: React.FC = () => {
                                     <input
                                         type="number"
                                         name="arrears"
-                                        value={user.arrears || ''}
+                                        value={user.arrears}
                                         onChange={handleChange}
                                         disabled={!isEditing}
                                         className="input"
@@ -382,7 +382,9 @@ const Profile: React.FC = () => {
                                         onChange={handleChange}
                                         disabled={!isEditing}
                                         className="input"
+                                    
                                     >
+                                        <option value="">Select your type</option>
                                         <option value="day scholar">Day Scholar</option>
                                         <option value="hostel">Hostel</option>
                                     </select>
@@ -392,14 +394,18 @@ const Profile: React.FC = () => {
                                     <>
                                         <div className="form-group">
                                             <label>Hostel Name</label>
-                                            <input
-                                                type="text"
+                                            <select
+                                                
                                                 name="hostelname"
                                                 value={user.hostelname}
                                                 onChange={handleChange}
                                                 disabled={!isEditing}
                                                 className="input"
-                                            />
+                                            >
+                                                <option value="">Select Hostel</option>
+                                                <option value="M.G.R">M.G.R illam</option>
+                                                <option value="Janaki ammal">Janaki ammal illam</option>
+                                            </select>
                                         </div>
 
                                         <div className="form-group">

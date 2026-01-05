@@ -12,7 +12,7 @@ export interface User {
     arrears?: number;
     gender: 'male' | 'female';
     parentnumber: string;
-    residencetype: 'hostel' | 'day scholar';
+    residencetype: string;
     hostelname: string;
     hostelroomno: string;
     busno: string;
