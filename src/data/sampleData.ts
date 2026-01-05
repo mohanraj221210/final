@@ -2,11 +2,23 @@ export interface User {
     name: string;
     registerNumber: string;
     department: string;
-    year: string;
     semester: number;
-    email: string;
+    year: string;
     phone: string;
-    photo?: string; // base64 string
+    email: string;
+    photo?: string;
+    batch: string;
+    cgpa?: number;
+    arrears?: number;
+    gender: 'male' | 'female';
+    parentnumber: string;
+    residencetype: 'hostel' | 'day scholar';
+    hostelname: string;
+    hostelroomno: string;
+    busno: string;
+    boardingpoint: string;
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
 export interface Staff {

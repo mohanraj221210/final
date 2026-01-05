@@ -16,6 +16,16 @@ const Profile: React.FC = () => {
         email: '',
         phone: '',
         photo: '',
+        batch: '',
+        cgpa: 0,
+        arrears: 0,
+        gender: 'male',
+        parentnumber: '',
+        residencetype: 'day scholar',
+        hostelname: '',
+        hostelroomno: '',
+        busno: '',
+        boardingpoint: '',
     });
     const [isEditing, setIsEditing] = useState(false);
     const [showToast, setShowToast] = useState(false);
@@ -41,7 +51,7 @@ const Profile: React.FC = () => {
         fetchUserProfile();
     }, []);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setUser(prev => ({ ...prev, [name]: value }));
     };
@@ -203,38 +213,81 @@ const Profile: React.FC = () => {
 
                                 <div className="form-group">
                                     <label>Department</label>
-                                    <input
-                                        type="text"
+                                    <select
                                         name="department"
                                         value={user.department}
                                         onChange={handleChange}
                                         disabled={!isEditing}
                                         className="input"
-                                    />
+                                    >
+                                        <option value="">Select Department</option>
+                                        <option value="CSE">Computer Science and Engineering</option>
+                                        <option value="IT">Information Technology</option>
+                                        <option value="ECE">Electronics and Communication Engineering</option>
+                                        <option value="EEE">Electrical and Electronics Engineering</option>
+                                        <option value="MECH">Mechanical Engineering</option>
+                                        <option value="CIVIL">Civil Engineering</option>
+                                        <option value="AIDS">Artificial Intelligence and Data Science</option>
+                                        <option value="AIML">Artificial Intelligence and Machine Learning</option>
+                                    </select>
                                 </div>
 
                                 <div className="form-group">
                                     <label>Year</label>
-                                    <input
-                                        type="text"
+                                    <select
                                         name="year"
                                         value={user.year}
                                         onChange={handleChange}
                                         disabled={!isEditing}
                                         className="input"
-                                    />
+                                    >
+                                        <option value="">Select Year</option>
+                                        <option value="1">1st Year</option>
+                                        <option value="2">2nd Year</option>
+                                        <option value="3">3rd Year</option>
+                                        <option value="4">4th Year</option>
+                                    </select>
                                 </div>
 
                                 <div className="form-group">
                                     <label>Semester</label>
                                     <input
-                                        type="text"
+                                        type="number"
                                         name="semester"
                                         value={user.semester}
                                         onChange={handleChange}
                                         disabled={!isEditing}
                                         className="input"
+                                        min="1"
+                                        max="8"
                                     />
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Batch</label>
+                                    <input
+                                        type="text"
+                                        name="batch"
+                                        value={user.batch}
+                                        onChange={handleChange}
+                                        disabled={!isEditing}
+                                        className="input"
+                                        placeholder="e.g., 2021-2025"
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Gender</label>
+                                    <select
+                                        name="gender"
+                                        value={user.gender}
+                                        onChange={handleChange}
+                                        disabled={!isEditing}
+                                        className="input"
+                                    >
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                    </select>
                                 </div>
 
                                 <div className="form-group">
@@ -260,6 +313,136 @@ const Profile: React.FC = () => {
                                         className="input"
                                     />
                                 </div>
+
+                                <div className="form-group">
+                                    <label>Parent Phone Number</label>
+                                    <input
+                                        type="tel"
+                                        name="parentnumber"
+                                        value={user.parentnumber}
+                                        onChange={handleChange}
+                                        disabled={!isEditing}
+                                        className="input"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Academic Details */}
+                        <div className="card details-card">
+                            <div className="card-header">
+                                <h3>Academic Details</h3>
+                                <p className="text-muted">View your academic performance.</p>
+                            </div>
+
+                            <div className="form-grid">
+                                <div className="form-group">
+                                    <label>CGPA</label>
+                                    <input
+                                        type="number"
+                                        name="cgpa"
+                                        value={user.cgpa || ''}
+                                        onChange={handleChange}
+                                        disabled={!isEditing}
+                                        className="input"
+                                        step="0.01"
+                                        min="0"
+                                        max="10"
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Arrears</label>
+                                    <input
+                                        type="number"
+                                        name="arrears"
+                                        value={user.arrears || ''}
+                                        onChange={handleChange}
+                                        disabled={!isEditing}
+                                        className="input"
+                                        min="0"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Residence Details */}
+                        <div className="card details-card">
+                            <div className="card-header">
+                                <h3>Residence Details</h3>
+                                <p className="text-muted">Manage your residence and transportation information.</p>
+                            </div>
+
+                            <div className="form-grid">
+                                <div className="form-group">
+                                    <label>Residence Type</label>
+                                    <select
+                                        name="residencetype"
+                                        value={user.residencetype}
+                                        onChange={handleChange}
+                                        disabled={!isEditing}
+                                        className="input"
+                                    >
+                                        <option value="day scholar">Day Scholar</option>
+                                        <option value="hostel">Hostel</option>
+                                    </select>
+                                </div>
+
+                                {user.residencetype === 'hostel' && (
+                                    <>
+                                        <div className="form-group">
+                                            <label>Hostel Name</label>
+                                            <input
+                                                type="text"
+                                                name="hostelname"
+                                                value={user.hostelname}
+                                                onChange={handleChange}
+                                                disabled={!isEditing}
+                                                className="input"
+                                            />
+                                        </div>
+
+                                        <div className="form-group">
+                                            <label>Hostel Room Number</label>
+                                            <input
+                                                type="text"
+                                                name="hostelroomno"
+                                                value={user.hostelroomno}
+                                                onChange={handleChange}
+                                                disabled={!isEditing}
+                                                className="input"
+                                            />
+                                        </div>
+                                    </>
+                                )}
+
+                                {user.residencetype === 'day scholar' && (
+                                    <>
+                                        <div className="form-group">
+                                            <label>Bus Number</label>
+                                            <input
+                                                type="text"
+                                                name="busno"
+                                                value={user.busno}
+                                                onChange={handleChange}
+                                                disabled={!isEditing}
+                                                className="input"
+                                            />
+                                        </div>
+
+                                        <div className="form-group">
+                                            <label>Boarding Point</label>
+                                            <input
+                                                type="text"
+                                                name="boardingpoint"
+                                                value={user.boardingpoint}
+                                                onChange={handleChange}
+                                                disabled={!isEditing}
+                                                className="input"
+                                            />
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
 
