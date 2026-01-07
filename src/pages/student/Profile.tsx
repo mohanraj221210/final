@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import Nav from '../components/Nav';
-import Toast from '../components/Toast';
-import { type User, RECENT_DOWNLOADS } from '../data/sampleData';
-import jitProfile from '../assets/jit.webp';
+import Toast from '../../components/Toast';
+import { type User, RECENT_DOWNLOADS } from '../../data/sampleData';
+import jitProfile from '../../assets/jit.webp';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 
 const Profile: React.FC = () => {
     const [user, setUser] = useState<User>({
@@ -29,6 +29,8 @@ const Profile: React.FC = () => {
     });
     const [isEditing, setIsEditing] = useState(false);
     const [showToast, setShowToast] = useState(false);
+     const navigate = useNavigate();
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
     useEffect(() => {
         const fetchUserProfile = async () => {
@@ -39,7 +41,11 @@ const Profile: React.FC = () => {
                     }
                 });
                 if (response.status === 200) {
-                    setUser(response.data.user);
+                    setUser(prev => ({
+                        ...prev,
+                        ...response.data.user,
+                        gender: response.data.user.gender || prev.gender || 'male'
+                    }));
                     toast.success("User profile fetched successfully");
                 } else {
                     toast.error("Failed to fetch user profile");
@@ -77,7 +83,15 @@ const Profile: React.FC = () => {
         }
     };
 
+      const handleLogout = () => {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userType');
+        localStorage.removeItem('token');
+        navigate('/login');
+    };
+
     const handleSave = async () => {
+        console.log(user);
         try {
             const response = await axios.put(`${import.meta.env.VITE_API_URL}/api/profile/update`, user, {
                 headers: {
@@ -98,7 +112,68 @@ const Profile: React.FC = () => {
 
     return (
         <div className="page-container profile-page">
-            <Nav />
+            
+             <header className="dashboard-header-custom">
+                <div className="header-container-custom">
+                    <div className="header-left-custom">
+                        <div className="brand-custom">
+                            <span className="brand-icon-custom">🎓</span>
+                            <span className="brand-text-custom">JIT Student Portal</span>
+                        </div>
+                    </div>
+
+                    <button
+                        className="mobile-menu-btn"
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        aria-label="Toggle menu"
+                    >
+                        {isMobileMenuOpen ? '✕' : '☰'}
+                    </button>
+
+                    <nav className={`header-nav-custom ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
+                        <button
+                            className="nav-item-custom"
+                            onClick={() => navigate('/dashboard')}
+                        >
+                            Dashboard
+                        </button>
+                        <button
+                            className="nav-item-custom"
+                            onClick={() => navigate('/staffs')}
+                        >
+                            Staffs
+                        </button>
+                        <button
+                            className="nav-item-custom"
+                            onClick={() => navigate('/student-notice')}
+                        >
+                            Notices
+                        </button>
+                        <button
+                            className="nav-item-custom"
+                            onClick={() => navigate('/outpass')}
+                        >
+                            Outpass
+                        </button>
+                        <button
+                            className="nav-item-custom"
+                            onClick={() => navigate('/subjects')}
+                        >
+                            Subjects
+                        </button>
+                        <button
+                            className="nav-item-custom"
+                            onClick={() => navigate('/profile')}
+                        >
+                            Profile
+                        </button>
+                        <button className="logout-btn-custom" onClick={handleLogout}>
+                            Logout
+                        </button>
+                    </nav>
+                </div>
+            </header>
+
             {showToast && (
                 <Toast
                     message="Profile updated successfully!"
@@ -382,7 +457,7 @@ const Profile: React.FC = () => {
                                         onChange={handleChange}
                                         disabled={!isEditing}
                                         className="input"
-                                    
+
                                     >
                                         <option value="">Select your type</option>
                                         <option value="day scholar">Day Scholar</option>
@@ -395,7 +470,7 @@ const Profile: React.FC = () => {
                                         <div className="form-group">
                                             <label>Hostel Name</label>
                                             <select
-                                                
+
                                                 name="hostelname"
                                                 value={user.hostelname}
                                                 onChange={handleChange}
@@ -482,6 +557,111 @@ const Profile: React.FC = () => {
             </div>
 
             <style>{`
+            /* Custom Dashboard Header */
+                .dashboard-header-custom {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 70px;
+                    background: white;
+                    border-bottom: 1px solid #e2e8f0;
+                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+                    z-index: 1000;
+                }
+
+                .mobile-menu-btn {
+                    display: none;
+                    background: none;
+                    border: none;
+                    font-size: 24px;
+                    cursor: pointer;
+                    color: #1e293b;
+                    padding: 8px;
+                    z-index: 1001;
+                }
+
+                .header-container-custom {
+                    max-width: 1400px;
+                    margin: 0 auto;
+                    height: 100%;
+                    padding: 0 24px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+
+                .header-left-custom {
+                    display: flex;
+                    align-items: center;
+                }
+
+                .brand-custom {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                }
+
+                .brand-icon-custom {
+                    font-size: 28px;
+                }
+
+                .brand-text-custom {
+                    font-size: 1.3rem;
+                    font-weight: 700;
+                    background: linear-gradient(135deg, #0047AB, #2563eb);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                }
+
+                .header-nav-custom {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+
+                .nav-item-custom {
+                    padding: 10px 20px;
+                    border: none;
+                    background: transparent;
+                    color: #64748b;
+                    font-weight: 600;
+                    font-size: 0.95rem;
+                    cursor: pointer;
+                    border-radius: 10px;
+                    transition: all 0.3s;
+                }
+
+                .nav-item-custom:hover {
+                    background: #f1f5f9;
+                    color: #0047AB;
+                }
+
+                .logout-btn-custom {
+                    padding: 10px 24px;
+                    border: 2px solid #ef4444;
+                    background: white;
+                    color: #ef4444;
+                    font-weight: 600;
+                    font-size: 0.95rem;
+                    cursor: pointer;
+                    border-radius: 10px;
+                    transition: all 0.3s;
+                    margin-left: 12px;
+                }
+
+                .logout-btn-custom:hover {
+                    background: #ef4444;
+                    color: white;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+                }
+
+                .content-wrapper-custom {
+                    margin-top: 70px;
+                    padding: 0;
+                }
+
                 .profile-layout {
                     display: grid;
                     grid-template-columns: 350px 1fr;

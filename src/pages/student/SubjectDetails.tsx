@@ -1,24 +1,92 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Nav from '../components/Nav';
-import Toast from '../components/Toast';
-import { SUBJECTS_DATA, UNITS_DATA, QUESTION_BANKS_DATA } from '../data/sampleData';
+import Toast from '../../components/Toast';
+import { SUBJECTS_DATA, UNITS_DATA, QUESTION_BANKS_DATA } from '../../data/sampleData';
 
 const SubjectDetails: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState("");
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
     const subject = SUBJECTS_DATA.find(s => s.id === id);
 
     const units = id ? UNITS_DATA[id] : [];
     const questionBanks = id ? QUESTION_BANKS_DATA[id] || [] : [];
 
+      const handleLogout = () => {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userType');
+        localStorage.removeItem('token');
+        navigate('/login');
+    };
+
     if (!subject) {
         return (
             <div className="page-container">
-                <Nav />
+                
+                <header className="dashboard-header-custom">
+                <div className="header-container-custom">
+                    <div className="header-left-custom">
+                        <div className="brand-custom">
+                            <span className="brand-icon-custom">🎓</span>
+                            <span className="brand-text-custom">JIT Student Portal</span>
+                        </div>
+                    </div>
+
+                    <button
+                        className="mobile-menu-btn"
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        aria-label="Toggle menu"
+                    >
+                        {isMobileMenuOpen ? '✕' : '☰'}
+                    </button>
+
+                    <nav className={`header-nav-custom ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
+                        <button
+                            className="nav-item-custom"
+                            onClick={() => navigate('/dashboard')}
+                        >
+                            Dashboard
+                        </button>
+                        <button
+                            className="nav-item-custom"
+                            onClick={() => navigate('/staffs')}
+                        >
+                            Staffs
+                        </button>
+                        <button
+                            className="nav-item-custom"
+                            onClick={() => navigate('/student-notice')}
+                        >
+                            Notices
+                        </button>
+                        <button
+                            className="nav-item-custom"
+                            onClick={() => navigate('/outpass')}
+                        >
+                            Outpass
+                        </button>
+                        <button
+                            className="nav-item-custom"
+                            onClick={() => navigate('/subjects')}
+                        >
+                            Subjects
+                        </button>
+                        <button
+                            className="nav-item-custom"
+                            onClick={() => navigate('/profile')}
+                        >
+                            Profile
+                        </button>
+                        <button className="logout-btn-custom" onClick={handleLogout}>
+                            Logout
+                        </button>
+                    </nav>
+                </div>
+            </header>
+
                 <div className="content-wrapper error-state">
                     <h2>Subject not found</h2>
                     <button onClick={() => navigate('/subjects')} className="btn btn-primary">
@@ -36,7 +104,68 @@ const SubjectDetails: React.FC = () => {
 
     return (
         <div className="page-container">
-            <Nav />
+            
+             <header className="dashboard-header-custom">
+                <div className="header-container-custom">
+                    <div className="header-left-custom">
+                        <div className="brand-custom">
+                            <span className="brand-icon-custom">🎓</span>
+                            <span className="brand-text-custom">JIT Student Portal</span>
+                        </div>
+                    </div>
+
+                    <button
+                        className="mobile-menu-btn"
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        aria-label="Toggle menu"
+                    >
+                        {isMobileMenuOpen ? '✕' : '☰'}
+                    </button>
+
+                    <nav className={`header-nav-custom ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
+                        <button
+                            className="nav-item-custom"
+                            onClick={() => navigate('/dashboard')}
+                        >
+                            Dashboard
+                        </button>
+                        <button
+                            className="nav-item-custom"
+                            onClick={() => navigate('/staffs')}
+                        >
+                            Staffs
+                        </button>
+                        <button
+                            className="nav-item-custom"
+                            onClick={() => navigate('/student-notice')}
+                        >
+                            Notices
+                        </button>
+                        <button
+                            className="nav-item-custom"
+                            onClick={() => navigate('/outpass')}
+                        >
+                            Outpass
+                        </button>
+                        <button
+                            className="nav-item-custom"
+                            onClick={() => navigate('/subjects')}
+                        >
+                            Subjects
+                        </button>
+                        <button
+                            className="nav-item-custom"
+                            onClick={() => navigate('/profile')}
+                        >
+                            Profile
+                        </button>
+                        <button className="logout-btn-custom" onClick={handleLogout}>
+                            Logout
+                        </button>
+                    </nav>
+                </div>
+            </header>
+
             {showToast && (
                 <Toast
                     message={toastMessage}
@@ -137,6 +266,111 @@ const SubjectDetails: React.FC = () => {
             </div>
 
             <style>{`
+            /* Custom Dashboard Header */
+                .dashboard-header-custom {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 70px;
+                    background: white;
+                    border-bottom: 1px solid #e2e8f0;
+                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+                    z-index: 1000;
+                }
+
+                .mobile-menu-btn {
+                    display: none;
+                    background: none;
+                    border: none;
+                    font-size: 24px;
+                    cursor: pointer;
+                    color: #1e293b;
+                    padding: 8px;
+                    z-index: 1001;
+                }
+
+                .header-container-custom {
+                    max-width: 1400px;
+                    margin: 0 auto;
+                    height: 100%;
+                    padding: 0 24px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+
+                .header-left-custom {
+                    display: flex;
+                    align-items: center;
+                }
+
+                .brand-custom {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                }
+
+                .brand-icon-custom {
+                    font-size: 28px;
+                }
+
+                .brand-text-custom {
+                    font-size: 1.3rem;
+                    font-weight: 700;
+                    background: linear-gradient(135deg, #0047AB, #2563eb);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                }
+
+                .header-nav-custom {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+
+                .nav-item-custom {
+                    padding: 10px 20px;
+                    border: none;
+                    background: transparent;
+                    color: #64748b;
+                    font-weight: 600;
+                    font-size: 0.95rem;
+                    cursor: pointer;
+                    border-radius: 10px;
+                    transition: all 0.3s;
+                }
+
+                .nav-item-custom:hover {
+                    background: #f1f5f9;
+                    color: #0047AB;
+                }
+
+                .logout-btn-custom {
+                    padding: 10px 24px;
+                    border: 2px solid #ef4444;
+                    background: white;
+                    color: #ef4444;
+                    font-weight: 600;
+                    font-size: 0.95rem;
+                    cursor: pointer;
+                    border-radius: 10px;
+                    transition: all 0.3s;
+                    margin-left: 12px;
+                }
+
+                .logout-btn-custom:hover {
+                    background: #ef4444;
+                    color: white;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+                }
+
+                .content-wrapper-custom {
+                    margin-top: 70px;
+                    padding: 0;
+                }
+
                 .subject-header {
                     background: linear-gradient(135deg, #00214D 0%, #0047AB 100%);
                     padding: 40px;
