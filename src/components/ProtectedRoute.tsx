@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface ProtectedRouteProps {
     children: React.ReactNode;
@@ -7,13 +7,20 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     const navigate = useNavigate();
+    const location = useLocation();
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    const userType = localStorage.getItem('userType');
 
     useEffect(() => {
         if (!isLoggedIn) {
-            navigate('/login');
+            // If we are on a warden route, redirect to warden login
+            if (location.pathname.startsWith('/warden')) {
+                navigate('/wardenlogin');
+            } else {
+                navigate('/login');
+            }
         }
-    }, [isLoggedIn, navigate]);
+    }, [isLoggedIn, navigate, location.pathname]);
 
     return isLoggedIn ? <>{children}</> : null;
 };
