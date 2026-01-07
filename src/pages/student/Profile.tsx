@@ -3,7 +3,7 @@ import Toast from '../../components/Toast';
 import { type User, RECENT_DOWNLOADS } from '../../data/sampleData';
 import jitProfile from '../../assets/jit.webp';
 import axios from 'axios';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 
 const Profile: React.FC = () => {
@@ -112,7 +112,7 @@ const Profile: React.FC = () => {
 
     return (
         <div className="page-container profile-page">
-            
+            < ToastContainer/>
              <header className="dashboard-header-custom">
                 <div className="header-container-custom">
                     <div className="header-left-custom">

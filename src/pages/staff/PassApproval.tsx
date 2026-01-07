@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import axios from 'axios';
 import StaffHeader from '../../components/StaffHeader';
 
@@ -21,8 +21,8 @@ interface StudentOutpass {
     parentContact: string;
 
     // Hostel Details
-    hostelName: string;
-    roomNumber: string;
+    hostelname: string;
+    hostelroomno: string;
 
     // Last Outpass
     lastOutpassFrom?: string;
@@ -203,6 +203,7 @@ const PassApproval: React.FC = () => {
 
     return (
         <div className="page-container approval-page">
+            <ToastContainer position="bottom-right" />
             <StaffHeader activeMenu="dashboard" />
 
             <div className="content-wrapper">
@@ -363,11 +364,11 @@ const PassApproval: React.FC = () => {
                                     <div className="info-grid">
                                         <div className="info-field">
                                             <label>HOSTEL NAME</label>
-                                            <div className="field-value">{selectedStudent.hostelName}</div>
+                                            <div className="field-value">{selectedStudent.hostelname}</div>
                                         </div>
                                         <div className="info-field">
                                             <label>ROOM NUMBER</label>
-                                            <div className="field-value">{selectedStudent.roomNumber}</div>
+                                            <div className="field-value">{selectedStudent.hostelroomno}</div>
                                         </div>
                                     </div>
                                 </div>

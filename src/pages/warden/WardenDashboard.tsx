@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { type User } from '../../data/sampleData';
 import axios from 'axios';
 import { useEffect } from 'react';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 
 const Dashboard: React.FC = () => {
     const [Loading, setLoading] = React.useState(true);
@@ -96,6 +96,7 @@ const Dashboard: React.FC = () => {
 
     return (
         <div className="page-container dashboard-page">
+            <ToastContainer position="bottom-right" />
             <Nav />
             <div className="content-wrapper">
                 {/* Hero Section */}

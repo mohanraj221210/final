@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { RECENT_DOWNLOADS, type User } from '../../data/sampleData';
 import axios from 'axios';
 import { useEffect } from 'react';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 
 // Event types for calendar
 type EventType = 'working' | 'leave' | 'college_event' | 'cia_exam';
@@ -216,6 +216,7 @@ const Dashboard: React.FC = () => {
 
     return (
         <div className="page-container dashboard-page">
+            <ToastContainer position="bottom-right" />
             {/* Custom Dashboard Header */}
             <header className="dashboard-header-custom">
                 <div className="header-container-custom">
