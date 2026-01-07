@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import Nav from '../components/Nav';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -15,17 +16,69 @@ const Outpass: React.FC = () => {
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    React.useEffect(() => {
+        const checkProfile = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/profile`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.status === 200) {
+                    const user = response.data.user;
+                    const isProfileComplete = () => {
+                        if (!user.name || !user.registerNumber || !user.department || !user.year ||
+                            !user.phone || !user.email || !user.parentnumber || !user.residencetype || !user.photo) {
+                            return false;
+                        }
+
+                        if (user.residencetype === 'hostel') {
+                            if (!user.hostelname || !user.hostelroomno) return false;
+                        } else if (user.residencetype === 'day scholar') {
+                            if (!user.busno || !user.boardingpoint) return false;
+                        }
+                        return true;
+                    };
+
+                    if (!isProfileComplete()) {
+                        toast.error("Please complete your profile first");
+                        navigate('/dashboard');
+                    }
+                }
+            } catch (error) {
+                console.error("Error checking profile:", error);
+            }
+        };
+        checkProfile();
+    }, [navigate]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
 
-        // Simulating API call
-        setTimeout(() => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.post(
+                `${import.meta.env.VITE_API_URL}/api/outpass/apply`,
+                formData,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                }
+            );
+
+            if (response.status === 200) {
+                toast.success("Outpass applied successfully");
+                navigate('/passapproval');
+            }
+        } catch (error: any) {
+            console.error("Error applying for outpass:", error);
+            const errorMessage = error.response?.data?.message || "Failed to submit application";
+            toast.error(errorMessage);
+        } finally {
             setIsSubmitting(false);
-            toast.success("Outpass application submitted successfully!");
-            // Navigate to the approval page to view the submitted request
-            navigate('/passapproval');
-        }, 1500);
+        }
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {

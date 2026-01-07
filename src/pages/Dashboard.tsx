@@ -40,6 +40,7 @@ const Dashboard: React.FC = () => {
     });
     const navigate = useNavigate();
     const [zoomingPath, setZoomingPath] = React.useState<string | null>(null);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
     // Calendar state
     const [currentDate, setCurrentDate] = React.useState(new Date());
@@ -224,7 +225,16 @@ const Dashboard: React.FC = () => {
                             <span className="brand-text-custom">JIT Student Portal</span>
                         </div>
                     </div>
-                    <nav className="header-nav-custom">
+
+                    <button
+                        className="mobile-menu-btn"
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        aria-label="Toggle menu"
+                    >
+                        {isMobileMenuOpen ? '✕' : '☰'}
+                    </button>
+
+                    <nav className={`header-nav-custom ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
                         <button
                             className="nav-item-custom"
                             onClick={() => navigate('/dashboard')}
@@ -236,6 +246,12 @@ const Dashboard: React.FC = () => {
                             onClick={() => navigate('/staffs')}
                         >
                             Staffs
+                        </button>
+                        <button
+                            className="nav-item-custom"
+                            onClick={() => navigate('/student-notice')}
+                        >
+                            Notices
                         </button>
                         <button
                             className="nav-item-custom"
@@ -317,6 +333,13 @@ const Dashboard: React.FC = () => {
                                     <span className="action-text">Find Staff</span>
                                 </div>
                                 <div
+                                    className={`action-card ${zoomingPath === '/student-notice' ? 'zooming' : ''}`}
+                                    onClick={() => handleQuickAction('/student-notice')}
+                                >
+                                    <span className="action-icon">📢</span>
+                                    <span className="action-text">Notices</span>
+                                </div>
+                                <div
                                     className={`action-card ${zoomingPath === '/subjects' ? 'zooming' : ''}`}
                                     onClick={() => handleQuickAction('/subjects')}
                                 >
@@ -334,7 +357,37 @@ const Dashboard: React.FC = () => {
                                     className={`action-card ${zoomingPath === '/outpass' ? 'zooming' : ''}`}
                                     onClick={(e) => {
                                         e.preventDefault();
-                                        handleQuickAction('/outpass');
+
+                                        const isProfileComplete = () => {
+                                            if (!user.name || !user.registerNumber || !user.department || !user.year ||
+                                                !user.phone || !user.email || !user.parentnumber || !user.residencetype || !user.photo) {
+                                                console.log("Basic fields missing", user);
+                                                return false;
+                                            }
+
+                                            if (user.residencetype === 'hostel') {
+                                                if (!user.hostelname || !user.hostelroomno) return false;
+                                            } else if (user.residencetype === 'day scholar') {
+                                                if (!user.busno || !user.boardingpoint) return false;
+                                            }
+
+                                            return true;
+                                        };
+
+                                        if (isProfileComplete()) {
+                                            handleQuickAction('/outpass');
+                                        } else {
+                                            toast.warn("Complete your profile to enable Outpass", {
+                                                position: "top-center",
+                                                autoClose: 3000,
+                                            });
+                                        }
+                                    }}
+                                    style={{
+                                        opacity: (!user.name || !user.registerNumber || !user.department || !user.year ||
+                                            !user.phone || !user.email || !user.parentnumber || !user.residencetype || !user.photo) ? 0.7 : 1,
+                                        cursor: (!user.name || !user.registerNumber || !user.department || !user.year ||
+                                            !user.phone || !user.email || !user.parentnumber || !user.residencetype || !user.photo) ? 'not-allowed' : 'pointer'
                                     }}
                                 >
                                     <span className="action-icon">📝</span>
@@ -579,6 +632,17 @@ const Dashboard: React.FC = () => {
                     z-index: 1000;
                 }
 
+                .mobile-menu-btn {
+                    display: none;
+                    background: none;
+                    border: none;
+                    font-size: 24px;
+                    cursor: pointer;
+                    color: #1e293b;
+                    padding: 8px;
+                    z-index: 1001;
+                }
+
                 .header-container-custom {
                     max-width: 1400px;
                     margin: 0 auto;
@@ -781,9 +845,56 @@ const Dashboard: React.FC = () => {
                     background: #f8fafc;
                     border: 2px solid transparent;
                     cursor: pointer;
+                    cursor: pointer;
                     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                     position: relative;
                     overflow: visible;
+                }
+
+                @media (max-width: 768px) {
+                    .mobile-menu-btn {
+                        display: block;
+                    }
+
+                    .header-nav-custom {
+                        position: absolute;
+                        top: 70px;
+                        left: 0;
+                        right: 0;
+                        background: white;
+                        flex-direction: column;
+                        padding: 0;
+                        border-bottom: 1px solid #e2e8f0;
+                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                        overflow: hidden;
+                        max-height: 0;
+                        transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
+                        gap: 0;
+                    }
+
+                    .header-nav-custom.mobile-open {
+                        max-height: 500px;
+                        padding: 16px 0;
+                    }
+
+                    .nav-item-custom, .logout-btn-custom {
+                        width: 100%;
+                        text-align: left;
+                        padding: 12px 24px;
+                        border-radius: 0;
+                        margin: 0;
+                    }
+
+                    .logout-btn-custom {
+                        border: none;
+                        border-top: 1px solid #fee2e2;
+                        color: #ef4444;
+                        margin-top: 8px;
+                    }
+
+                    .content-wrapper-custom {
+                        margin-top: 70px;
+                    }
                 }
 
                 .calendar-day.empty {

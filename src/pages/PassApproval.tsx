@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import Nav from '../components/Nav';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
+import axios from 'axios';
+import StaffHeader from '../components/StaffHeader';
 
 type ApprovalStatus = 'pending' | 'approved' | 'rejected';
 
@@ -8,7 +9,7 @@ interface StudentOutpass {
     id: string;
     studentId: string;
     registerNumber: string;
-    studentName: string;
+    studentname: string;
     year: string;
     section: string;
     department: string;
@@ -17,16 +18,11 @@ interface StudentOutpass {
     photo: string;
 
     // Parents Details
-    fatherName: string;
-    motherName: string;
     parentContact: string;
 
     // Hostel Details
     hostelName: string;
-    block: string;
     roomNumber: string;
-    floor: string;
-    wardenName: string;
 
     // Last Outpass
     lastOutpassFrom?: string;
@@ -39,7 +35,6 @@ interface StudentOutpass {
     reason: string;
     fromDate: string;
     toDate: string;
-    placeOfVisit: string;
 
     // Approval Status
     staffApproval: ApprovalStatus;
@@ -53,109 +48,61 @@ const PassApproval: React.FC = () => {
     const [showActionModal, setShowActionModal] = useState(false);
     const [actionType, setActionType] = useState<'approve' | 'reject'>('approve');
     const [actionRemarks, setActionRemarks] = useState('');
+    const [students, setStudents] = useState<StudentOutpass[]>([]);
 
-    // Sample data
-    const studentsData: StudentOutpass[] = [
-        {
-            id: '1',
-            studentId: '2021IT001',
-            registerNumber: '921621104001',
-            studentName: 'Rajesh Kumar',
-            year: 'III',
-            section: 'A',
-            department: 'Computer Science and Engineering',
-            mobile: '+91 9876543210',
-            appliedDate: '2026-01-05T09:30:00',
-            photo: 'https://via.placeholder.com/150',
-            fatherName: 'Kumar Selvam',
-            motherName: 'Lakshmi Kumar',
-            parentContact: '+91 9876543211',
-            hostelName: 'Boys Hostel A',
-            block: 'Block B',
-            roomNumber: '204',
-            floor: '2nd Floor',
-            wardenName: 'Dr. Suresh Kumar',
-            lastOutpassFrom: '2025-12-20T10:00',
-            lastOutpassTo: '2025-12-22T18:00',
-            lastOutpassReason: 'Family Function',
-            lastOutpassApprovedBy: 'Dr. Suresh Kumar',
-            lastOutpassStatus: 'approved',
-            reason: 'Sister\'s Wedding Ceremony',
-            fromDate: '2026-01-15T10:00',
-            toDate: '2026-01-17T20:00',
-            placeOfVisit: 'Chennai',
-            staffApproval: 'pending',
-            wardenApproval: 'pending',
-        },
-        {
-            id: '2',
-            studentId: '2021IT002',
-            registerNumber: '921621104002',
-            studentName: 'Priya Sharma',
-            year: 'II',
-            section: 'B',
-            department: 'Information Technology',
-            mobile: '+91 9876543220',
-            appliedDate: '2026-01-04T14:20:00',
-            photo: 'https://via.placeholder.com/150',
-            fatherName: 'Sharma Ravi',
-            motherName: 'Meena Sharma',
-            parentContact: '+91 9876543221',
-            hostelName: 'Girls Hostel A',
-            block: 'Block A',
-            roomNumber: '305',
-            floor: '3rd Floor',
-            wardenName: 'Dr. Kavitha Devi',
-            lastOutpassFrom: '2025-12-10T09:00',
-            lastOutpassTo: '2025-12-12T19:00',
-            lastOutpassReason: 'Medical Checkup',
-            lastOutpassApprovedBy: 'Dr. Kavitha Devi',
-            lastOutpassStatus: 'approved',
-            reason: 'Medical Appointment at City Hospital',
-            fromDate: '2026-01-10T08:00',
-            toDate: '2026-01-10T18:00',
-            placeOfVisit: 'Coimbatore',
-            staffApproval: 'approved',
-            wardenApproval: 'pending',
-        },
-        {
-            id: '3',
-            studentId: '2021IT003',
-            registerNumber: '921621104003',
-            studentName: 'Arun Prakash',
-            year: 'IV',
-            section: 'A',
-            department: 'Electronics and Communication',
-            mobile: '+91 9876543230',
-            appliedDate: '2026-01-03T11:15:00',
-            photo: 'https://via.placeholder.com/150',
-            fatherName: 'Prakash Mohan',
-            motherName: 'Divya Prakash',
-            parentContact: '+91 9876543231',
-            hostelName: 'Boys Hostel B',
-            block: 'Block C',
-            roomNumber: '101',
-            floor: '1st Floor',
-            wardenName: 'Dr. Ramesh Babu',
-            lastOutpassFrom: '2025-11-25T10:00',
-            lastOutpassTo: '2025-11-27T18:00',
-            lastOutpassReason: 'Home Visit',
-            lastOutpassApprovedBy: 'Dr. Ramesh Babu',
-            lastOutpassStatus: 'rejected',
-            reason: 'Project Work at Company',
-            fromDate: '2026-01-08T09:00',
-            toDate: '2026-01-09T18:00',
-            placeOfVisit: 'Bangalore',
-            staffApproval: 'rejected',
-            wardenApproval: 'pending',
-        },
-    ];
+    useEffect(() => {
+        const fetchRequests = async () => {
+            try {
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}/staff/outpass/list`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (response.status === 200) {
+                    const mappedStudents = (response.data.outpasses || [])
+                        .filter((item: any) => item.studentid?.residencetype === 'hostel')
+                        .map((item: any) => {
+                            const studentDetails = item.studentid || {};
+                            return {
+                                id: item._id,
+                                studentId: studentDetails.registerNumber || 'N/A',
+                                registerNumber: studentDetails.registerNumber || 'N/A',
+                                studentname: studentDetails.name || 'Student',
+                                year: studentDetails.year || 'N/A',
+                                section: 'N/A', // Not provided in API
+                                department: studentDetails.department || 'N/A',
+                                mobile: studentDetails.phone || 'N/A',
+                                appliedDate: item.createdAt,
+                                photo: `https://ui-avatars.com/api/?name=${studentDetails.name || 'Student'}&background=random`,
+                                parentContact: studentDetails.parentnumber || 'N/A',
+                                hostelName: 'N/A',
+                                roomNumber: 'N/A',
+                                reason: item.reason,
+                                fromDate: item.fromDate,
+                                toDate: item.toDate,
+                                staffApproval: item.staffapprovalstatus || 'pending',
+                                wardenApproval: item.wardenapprovalstatus || 'pending'
+                            };
+                        });
+
+                    setStudents(mappedStudents);
+                }
+            } catch (error) {
+                console.error("Error fetching pass requests:", error);
+                toast.error("Failed to load outpass requests");
+            }
+        };
+
+        fetchRequests();
+    }, []);
+
 
     // Filter and search logic
-    const filteredStudents = studentsData.filter(student => {
+    const filteredStudents = students.filter(student => {
         const matchesSearch =
             student.studentId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            student.studentName.toLowerCase().includes(searchQuery.toLowerCase());
+            student.studentname.toLowerCase().includes(searchQuery.toLowerCase());
 
         const overallStatus = student.staffApproval === 'rejected' || student.wardenApproval === 'rejected'
             ? 'rejected'
@@ -205,30 +152,49 @@ const PassApproval: React.FC = () => {
         setShowActionModal(true);
     };
 
-    const confirmAction = () => {
+
+    const confirmAction = async () => {
         if (!selectedStudent || !actionRemarks.trim()) return;
 
-        if (actionType === 'approve') {
-            if (selectedStudent.staffApproval === 'pending') {
-                toast.success(`Staff approval granted! Remarks: ${actionRemarks}`);
-                // Update state here
-            } else if (selectedStudent.staffApproval === 'approved' && selectedStudent.wardenApproval === 'pending') {
-                toast.success(`Warden approval granted! Remarks: ${actionRemarks}`);
-                // Update state here
-            }
-        } else {
-            if (selectedStudent.staffApproval === 'pending') {
-                toast.error(`Outpass rejected by staff. Remarks: ${actionRemarks}`);
-                // Update state here
-            } else if (selectedStudent.staffApproval === 'approved' && selectedStudent.wardenApproval === 'pending') {
-                toast.error(`Outpass rejected by warden. Remarks: ${actionRemarks}`);
-                // Update state here
-            }
-        }
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.put(
+                `${import.meta.env.VITE_API_URL}/staff/outpass/approval`,
+                {
+                    outpassId: selectedStudent.id,
+                    staffapprovalstatus: actionType === 'approve' ? 'approved' : 'rejected',
+                    remarks: actionRemarks
+                },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                }
+            );
 
-        setShowActionModal(false);
-        setActionRemarks('');
+            if (response.status === 200) {
+                toast.success(response.data.message || `Outpass ${actionType}d successfully`);
+
+                // Update local state to reflect changes immediately
+                setStudents(prev => prev.map(student =>
+                    student.id === selectedStudent.id
+                        ? {
+                            ...student,
+                            staffApproval: actionType === 'approve' ? 'approved' : 'rejected'
+                        }
+                        : student
+                ));
+
+                setShowActionModal(false);
+                setActionRemarks('');
+                setSelectedStudent(null);
+            }
+        } catch (error: any) {
+            console.error('Error updating outpass status:', error);
+            toast.error(error.response?.data?.message || 'Failed to update status');
+        }
     };
+
 
 
     const canApprove = selectedStudent &&
@@ -237,7 +203,8 @@ const PassApproval: React.FC = () => {
 
     return (
         <div className="page-container approval-page">
-            <Nav />
+            <StaffHeader activeMenu="dashboard" />
+
             <div className="content-wrapper">
                 {!selectedStudent ? (
                     /* Student List View */
@@ -305,7 +272,7 @@ const PassApproval: React.FC = () => {
                                                 {student.studentId}
                                             </div>
                                             <div className="student-info">
-                                                <div className="student-name">{student.studentName}</div>
+                                                <div className="student-name">{student.studentname}</div>
                                                 <div className="student-meta">
                                                     Year {student.year} • Applied on {formatDateTime(student.appliedDate)}
                                                 </div>
@@ -352,7 +319,7 @@ const PassApproval: React.FC = () => {
                                             </div>
                                             <div className="profile-field">
                                                 <label>STUDENT NAME</label>
-                                                <div className="field-value">{selectedStudent.studentName}</div>
+                                                <div className="field-value">{selectedStudent.studentname}</div>
                                             </div>
                                             <div className="profile-field">
                                                 <label>DEPARTMENT</label>
@@ -380,14 +347,6 @@ const PassApproval: React.FC = () => {
                                 <div className="card-body">
                                     <div className="info-grid">
                                         <div className="info-field">
-                                            <label>FATHER NAME</label>
-                                            <div className="field-value">{selectedStudent.fatherName}</div>
-                                        </div>
-                                        <div className="info-field">
-                                            <label>MOTHER NAME</label>
-                                            <div className="field-value">{selectedStudent.motherName}</div>
-                                        </div>
-                                        <div className="info-field">
                                             <label>PARENT CONTACT</label>
                                             <div className="field-value">{selectedStudent.parentContact}</div>
                                         </div>
@@ -395,7 +354,6 @@ const PassApproval: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Hostel Details */}
                             <div className="detail-card">
                                 <div className="card-header">
                                     <span className="card-icon">🏢</span>
@@ -408,20 +366,8 @@ const PassApproval: React.FC = () => {
                                             <div className="field-value">{selectedStudent.hostelName}</div>
                                         </div>
                                         <div className="info-field">
-                                            <label>BLOCK</label>
-                                            <div className="field-value">{selectedStudent.block}</div>
-                                        </div>
-                                        <div className="info-field">
                                             <label>ROOM NUMBER</label>
                                             <div className="field-value">{selectedStudent.roomNumber}</div>
-                                        </div>
-                                        <div className="info-field">
-                                            <label>FLOOR</label>
-                                            <div className="field-value">{selectedStudent.floor}</div>
-                                        </div>
-                                        <div className="info-field">
-                                            <label>WARDEN NAME</label>
-                                            <div className="field-value">{selectedStudent.wardenName}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -478,10 +424,6 @@ const PassApproval: React.FC = () => {
                                         <div className="info-field">
                                             <label>TO DATE & TIME</label>
                                             <div className="field-value">{formatDateTime(selectedStudent.toDate)}</div>
-                                        </div>
-                                        <div className="info-field">
-                                            <label>PLACE OF VISIT</label>
-                                            <div className="field-value">{selectedStudent.placeOfVisit}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -574,6 +516,8 @@ const PassApproval: React.FC = () => {
                     min-height: 100vh;
                     background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
                 }
+
+                /* Fixed Header Styles Removed - using StaffHeader component */
 
                 .content-wrapper {
                     max-width: 1400px;

@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 import Nav from '../components/Nav';
 import { useNavigate } from 'react-router-dom';
 
@@ -32,85 +34,52 @@ const OutpassDetails: React.FC = () => {
     const navigate = useNavigate();
     const [selectedOutpass, setSelectedOutpass] = useState<OutpassData | null>(null);
 
-    // Sample data - replace with API call later
-    const allOutpasses: OutpassData[] = [
-        {
-            id: '1',
-            studentId: '2021IT001',
-            studentName: 'Mohanraj',
-            fromDate: '2026-01-10T14:00',
-            toDate: '2026-01-12T18:00',
-            reason: 'Family function - Sister\'s wedding ceremony in hometown. Need to attend the event and help with preparations.',
-            overallStatus: 'pending',
-            staffApproval: {
-                status: 'approved',
-                remarks: 'Valid reason. Approved for home visit.',
-                approvedAt: '2026-01-05T10:30:00',
-            },
-            wardenApproval: {
-                status: 'pending',
-            },
-            createdAt: '2026-01-05T09:15:00',
-        },
-        {
-            id: '2',
-            studentId: '2021IT001',
-            studentName: 'Mohanraj',
-            fromDate: '2025-12-15T10:00',
-            toDate: '2025-12-17T18:00',
-            reason: 'Family emergency - Need to visit home urgently',
-            overallStatus: 'approved',
-            staffApproval: {
-                status: 'approved',
-                remarks: 'Emergency approved',
-                approvedAt: '2025-12-14T09:00',
-            },
-            wardenApproval: {
-                status: 'approved',
-                remarks: 'Approved for emergency',
-                approvedAt: '2025-12-14T14:00',
-            },
-            createdAt: '2025-12-14T08:30',
-        },
-        {
-            id: '3',
-            studentId: '2021IT001',
-            studentName: 'Mohanraj',
-            fromDate: '2025-12-22T14:00',
-            toDate: '2025-12-23T20:00',
-            reason: 'Medical appointment at city hospital',
-            overallStatus: 'rejected',
-            staffApproval: {
-                status: 'rejected',
-                remarks: 'Insufficient notice period',
-                rejectedAt: '2025-12-21T10:00',
-            },
-            wardenApproval: {
-                status: 'pending',
-            },
-            createdAt: '2025-12-21T09:00',
-        },
-        {
-            id: '4',
-            studentId: '2021IT001',
-            studentName: 'Mohanraj',
-            fromDate: '2025-12-28T09:00',
-            toDate: '2025-12-30T18:00',
-            reason: 'Home visit for festival celebration',
-            overallStatus: 'approved',
-            staffApproval: {
-                status: 'approved',
-                remarks: 'Festival leave approved',
-                approvedAt: '2025-12-27T11:00',
-            },
-            wardenApproval: {
-                status: 'approved',
-                remarks: 'Enjoy the festival',
-                approvedAt: '2025-12-27T15:00',
-            },
-            createdAt: '2025-12-27T10:00',
-        },
-    ];
+    const [outpasses, setOutpasses] = useState<OutpassData[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchOutpasses = async () => {
+            try {
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/outpass`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                if (response.status === 200) {
+                    const mappedOutpasses = (response.data.outpasses || []).map((item: any) => ({
+                        id: item._id,
+                        studentId: item.studentid, // API uses lowercase 'studentid'
+                        studentName: 'Student', // Name not in API response, using placeholder
+                        fromDate: item.fromDate,
+                        toDate: item.toDate,
+                        reason: item.reason,
+                        overallStatus: item.status || 'pending',
+                        createdAt: item.createdAt,
+                        staffApproval: {
+                            status: item.staffapprovalstatus || 'pending',
+                            remarks: item.staffremarks,
+                            approvedAt: item.staffapprovedAt,
+                            rejectedAt: item.staffapprovalstatus === 'rejected' ? item.updatedAt : undefined // Approximation if not explicit
+                        },
+                        wardenApproval: {
+                            status: item.wardenapprovalstatus || 'pending',
+                            remarks: item.wardenremarks,
+                            approvedAt: item.wardenapprovedAt,
+                            rejectedAt: item.wardenapprovalstatus === 'rejected' ? item.updatedAt : undefined
+                        }
+                    }));
+                    setOutpasses(mappedOutpasses);
+                }
+            } catch (error) {
+                console.error("Error fetching outpasses:", error);
+                toast.error("Failed to fetch outpass history");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchOutpasses();
+    }, []);
 
     const getStatusBadge = (status: ApprovalStatus) => {
         const statusConfig = {
@@ -170,36 +139,41 @@ const OutpassDetails: React.FC = () => {
                 {!selectedOutpass ? (
                     /* List View */
                     <div className="outpass-list-view">
-                        {allOutpasses.map((outpass) => (
-                            <div key={outpass.id} className="outpass-card">
-                                <div className="outpass-card-header">
-                                    <div className="outpass-duration">
-                                        <span className="calendar-icon">📅</span>
-                                        <span className="duration-text">
-                                            {formatDateTime(outpass.fromDate)} → {formatDateTime(outpass.toDate)}
-                                        </span>
+                        {loading ? (
+                            <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>Loading outpasses...</div>
+                        ) : outpasses.length === 0 ? (
+                            <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>No outpasses found. APPLY ONE NOW!</div>
+                        ) : (
+                            outpasses.map((outpass) => (
+                                <div key={outpass.id} className="outpass-card">
+                                    <div className="outpass-card-header">
+                                        <div className="outpass-duration">
+                                            <span className="calendar-icon">📅</span>
+                                            <span className="duration-text">
+                                                {formatDateTime(outpass.fromDate)} → {formatDateTime(outpass.toDate)}
+                                            </span>
+                                        </div>
+                                        {getStatusBadge(outpass.overallStatus)}
                                     </div>
-                                    {getStatusBadge(outpass.overallStatus)}
-                                </div>
-                                <div className="outpass-card-body">
-                                    <div className="reason-section">
-                                        <strong>Reason:</strong> {outpass.reason}
+                                    <div className="outpass-card-body">
+                                        <div className="reason-section">
+                                            <strong>Reason:</strong> {outpass.reason}
+                                        </div>
+                                        <div className="applied-section">
+                                            <span className="applied-label">Applied on:</span>
+                                            <span className="applied-date">{formatDateTime(outpass.createdAt)}</span>
+                                        </div>
                                     </div>
-                                    <div className="applied-section">
-                                        <span className="applied-label">Applied on:</span>
-                                        <span className="applied-date">{formatDateTime(outpass.createdAt)}</span>
+                                    <div className="outpass-card-footer">
+                                        <button
+                                            className="view-details-btn"
+                                            onClick={() => handleViewDetails(outpass)}
+                                        >
+                                            View Details →
+                                        </button>
                                     </div>
                                 </div>
-                                <div className="outpass-card-footer">
-                                    <button
-                                        className="view-details-btn"
-                                        onClick={() => handleViewDetails(outpass)}
-                                    >
-                                        View Details →
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
+                            )))}
                     </div>
                 ) : (
                     /* Detail View */

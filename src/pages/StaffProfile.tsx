@@ -1,928 +1,1048 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import StaffHeader from '../components/StaffHeader';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
-interface StaffProfile {
-    _id: string;
-    name: string;
-    email: string;
-    profilePhoto?: string;
-    designation: string;
-    department: string;
-    qualification: string;
-    subjects: string[];
-    skills: string[];
-    contactNumber: string;
-    experience: string;
-    achievements: string[];
-    createdAt: string;
-    updatedAt: string;
-}
-
-const StaffProfilePage: React.FC = () => {
-    const navigate = useNavigate();
-    const [staff, setStaff] = useState<StaffProfile | null>(null);
+const StaffProfile: React.FC = () => {
     const [loading, setLoading] = useState(true);
+    const [staff, setStaff] = useState<any>(null);
     const [isEditing, setIsEditing] = useState(false);
-    const [saving, setSaving] = useState(false);
-    const [editedStaff, setEditedStaff] = useState<StaffProfile | null>(null);
 
-    // New input states for chips
+    // Form state for editing
+    const [formData, setFormData] = useState<any>({
+        name: '',
+        designation: '',
+        qualification: '',
+        department: '',
+        experience: '',
+        email: '',
+        contactNumber: '',
+        subjects: [],
+        skills: [],
+        achievements: []
+    });
+
+    // Temporary states for array inputs
     const [newSubject, setNewSubject] = useState('');
     const [newSkill, setNewSkill] = useState('');
     const [newAchievement, setNewAchievement] = useState('');
 
+    const navigate = useNavigate();
+
     useEffect(() => {
+        const fetchStaffProfile = async () => {
+            try {
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}/staff/profile`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (response.status === 200) {
+                    setStaff(response.data.staff);
+                    setFormData(response.data.staff);
+                }
+            } catch (error) {
+                console.error("Error fetching staff profile:", error);
+                toast.error("Failed to fetch profile data");
+            } finally {
+                setLoading(false);
+            }
+        };
+
         fetchStaffProfile();
     }, []);
 
-    const fetchStaffProfile = async () => {
-        try {
-            setLoading(true);
-            const response = await axios.get('https://jitqr-backend-1.onrender.com/staff/profile', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-
-            if (response.status === 200) {
-                setStaff(response.data.staff);
-                setEditedStaff(response.data.staff);
-            }
-        } catch (error: any) {
-            toast.error('Failed to fetch staff profile');
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setFormData((prev: any) => ({
+            ...prev,
+            [name]: value
+        }));
     };
 
-    const handleEdit = () => {
-        setIsEditing(true);
-        setEditedStaff({ ...staff! });
+    const handleArrayAdd = (field: string, value: string, setter: React.Dispatch<React.SetStateAction<string>>) => {
+        if (!value.trim()) return;
+        setFormData((prev: any) => ({
+            ...prev,
+            [field]: [...(prev[field] || []), value]
+        }));
+        setter('');
     };
 
-    const handleCancel = () => {
-        setIsEditing(false);
-        setEditedStaff({ ...staff! });
-        setNewSubject('');
-        setNewSkill('');
-        setNewAchievement('');
+    const handleArrayRemove = (field: string, index: number) => {
+        setFormData((prev: any) => ({
+            ...prev,
+            [field]: prev[field].filter((_: any, i: number) => i !== index)
+        }));
     };
 
     const handleSave = async () => {
         try {
-            setSaving(true);
-            const response = await axios.put(
-                'https://jitqr-backend-1.onrender.com/staff/profile/update',
-                editedStaff,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
+            const response = await axios.put(`${import.meta.env.VITE_API_URL}/staff/update-profile`, formData, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
                 }
-            );
+            });
 
             if (response.status === 200) {
-                setStaff(editedStaff);
+                setStaff(response.data.staff || formData);
                 setIsEditing(false);
-                toast.success('Profile updated successfully!');
+                toast.success("Profile updated successfully!");
             }
-        } catch (error: any) {
-            toast.error('Failed to update profile');
-            console.error(error);
-        } finally {
-            setSaving(false);
+        } catch (error) {
+            console.error("Error updating profile:", error);
+            toast.error("Failed to update profile");
         }
     };
 
-    const handleInputChange = (field: keyof StaffProfile, value: any) => {
-        setEditedStaff(prev => prev ? { ...prev, [field]: value } : null);
-    };
-
-    const addChip = (field: 'subjects' | 'skills' | 'achievements', value: string) => {
-        if (!value.trim()) return;
-
-        setEditedStaff(prev => {
-            if (!prev) return null;
-            return {
-                ...prev,
-                [field]: [...prev[field], value.trim()]
-            };
-        });
-
-        // Clear input
-        if (field === 'subjects') setNewSubject('');
-        if (field === 'skills') setNewSkill('');
-        if (field === 'achievements') setNewAchievement('');
-    };
-
-    const removeChip = (field: 'subjects' | 'skills' | 'achievements', index: number) => {
-        setEditedStaff(prev => {
-            if (!prev) return null;
-            return {
-                ...prev,
-                [field]: prev[field].filter((_, i) => i !== index)
-            };
-        });
-    };
-
-    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        // Here you would typically upload to a server
-        // For now, we'll create a local URL
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            handleInputChange('profilePhoto', reader.result as string);
-        };
-        reader.readAsDataURL(file);
-        toast.info('Image selected. Click Save to update.');
-    };
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-    };
-
     if (loading) {
-        return (
-            <div className="loading-container">
-                <div className="spinner"></div>
-                <p>Loading profile...</p>
-            </div>
-        );
+        return <div className="card staff-card">Loading...</div>;
     }
 
-    if (!staff || !editedStaff) {
+    if (!staff) {
         return (
-            <div className="error-container">
-                <p>Failed to load staff profile</p>
-                <button onClick={() => navigate('/staff-dashboard')}>Back to Dashboard</button>
-            </div>
+            <>
+                <StaffHeader activeMenu="profile" />
+                <div className="page-container">
+                    <div className="content-wrapper">
+                        <div className="error-message">
+                            <h2>Profile not found</h2>
+                            <button className="btn btn-primary" onClick={() => navigate('/staff-dashboard')}>
+                                Back to Dashboard
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </>
         );
     }
 
     return (
-        <div className="staff-profile-page">
-            {/* Header */}
-            <header className="profile-header">
-                <div className="header-content">
-                    <button className="back-btn" onClick={() => navigate('/staff-dashboard')}>
-                        ← Back to Dashboard
-                    </button>
+        <>
+            <StaffHeader activeMenu="profile" />
+            <div className="page-container staff-profile-page">
+                <div className="content-wrapper">
+                    {/* Header Actions */}
+                    {/* Header Actions */}
                     <div className="header-actions">
+                        <button className="back-btn" onClick={() => navigate('/staff-dashboard')}>
+                            ← Back to Dashboard
+                        </button>
+
                         {!isEditing ? (
-                            <button className="edit-btn" onClick={handleEdit}>
+                            <button className="action-btn edit-btn" onClick={() => setIsEditing(true)}>
                                 ✏️ Edit Profile
                             </button>
                         ) : (
-                            <>
-                                <button className="cancel-btn" onClick={handleCancel} disabled={saving}>
+                            <div className="edit-actions">
+                                <button className="action-btn cancel-btn" onClick={() => {
+                                    setIsEditing(false);
+                                    setFormData(staff); // Reset changes
+                                }}>
                                     Cancel
                                 </button>
-                                <button className="save-btn" onClick={handleSave} disabled={saving}>
-                                    {saving ? 'Saving...' : '✓ Save Changes'}
+                                <button className="action-btn save-btn" onClick={handleSave}>
+                                    💾 Save Changes
                                 </button>
-                            </>
+                            </div>
                         )}
                     </div>
-                </div>
-            </header>
 
-            {/* Profile Content */}
-            <main className="profile-main">
-                <div className="profile-container">
-                    {/* Profile Hero Section */}
-                    <div className="profile-hero">
-                        <div className="profile-image-section">
-                            <div className="profile-image-wrapper">
-                                <img
-                                    src={editedStaff.profilePhoto || 'https://via.placeholder.com/200'}
-                                    alt={editedStaff.name}
-                                    className="profile-image"
-                                />
-                                {isEditing && (
-                                    <label className="change-image-btn">
-                                        📷 Change Image
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={handleImageChange}
-                                            style={{ display: 'none' }}
-                                        />
+                    {/* Profile Header */}
+                    <div className="profile-header">
+                        <div className="profile-image-wrapper">
+                            <img
+                                src={formData.photo || staff.photo || `https://ui-avatars.com/api/?name=${formData.name}&background=0047AB&color=fff&size=200`}
+                                alt={formData.name}
+                                className="profile-image"
+                            />
+                            {isEditing && (
+                                <>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        id="photo-upload"
+                                        style={{ display: 'none' }}
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                const reader = new FileReader();
+                                                reader.onloadend = () => {
+                                                    setFormData((prev: any) => ({
+                                                        ...prev,
+                                                        photo: reader.result
+                                                    }));
+                                                };
+                                                reader.readAsDataURL(file);
+                                            }
+                                        }}
+                                    />
+                                    <label htmlFor="photo-upload" className="photo-edit-btn" title="Change Photo">
+                                        📷
                                     </label>
-                                )}
-                            </div>
+                                </>
+                            )}
                         </div>
-                        <div className="profile-info-header">
+                        <div className="profile-header-info">
                             {isEditing ? (
                                 <input
                                     type="text"
-                                    value={editedStaff.name}
-                                    onChange={(e) => handleInputChange('name', e.target.value)}
-                                    className="name-input"
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleChange}
+                                    className="edit-input header-input"
+                                    placeholder="Full Name"
                                 />
                             ) : (
-                                <h1 className="staff-name">{staff.name}</h1>
+                                <h1 className="profile-name">{staff.name}</h1>
                             )}
-                            <p className="staff-designation">{staff.designation}</p>
-                            <p className="staff-department">{staff.department}</p>
+
+                            <div className="profile-badges">
+                                {isEditing ? (
+                                    <>
+                                        <input
+                                            type="text"
+                                            name="designation"
+                                            value={formData.designation}
+                                            onChange={handleChange}
+                                            className="edit-input badge-input"
+                                            placeholder="Designation"
+                                        />
+                                        <input
+                                            type="text"
+                                            name="department"
+                                            value={formData.department}
+                                            onChange={handleChange}
+                                            className="edit-input badge-input"
+                                            placeholder="Department"
+                                        />
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="badge badge-primary">{staff.designation}</span>
+                                        <span className="badge badge-secondary">{staff.department}</span>
+                                    </>
+                                )}
+                            </div>
+
+                            {isEditing ? (
+                                <input
+                                    type="text"
+                                    name="qualification"
+                                    value={formData.qualification}
+                                    onChange={handleChange}
+                                    className="edit-input"
+                                    placeholder="Qualification (e.g. Ph.D, M.Tech)"
+                                    style={{ marginTop: '10px', width: '100%', maxWidth: '300px' }}
+                                />
+                            ) : (
+                                <p className="profile-qualification">{staff.qualification}</p>
+                            )}
                         </div>
                     </div>
 
-                    {/* Profile Details Grid */}
-                    <div className="profile-details">
-                        {/* Contact Information */}
-                        <div className="detail-card">
-                            <h2 className="card-title">Contact Information</h2>
-                            <div className="detail-grid">
-                                <div className="detail-item">
-                                    <label>Email</label>
+                    {/* Profile Content */}
+                    <div className="profile-content">
+                        {/* Basic Information Section */}
+                        <div className="section">
+                            <h2 className="section-heading">
+                                <span className="heading-icon">📋</span>
+                                Basic Information
+                            </h2>
+                            <div className="info-list">
+                                <div className="info-item">
+                                    <span className="info-label">Experience</span>
                                     {isEditing ? (
-                                        <input
-                                            type="email"
-                                            value={editedStaff.email}
-                                            onChange={(e) => handleInputChange('email', e.target.value)}
-                                            className="detail-input"
-                                        />
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+                                            <input
+                                                type="text"
+                                                name="experience"
+                                                value={formData.experience}
+                                                onChange={handleChange}
+                                                className="edit-input"
+                                                style={{ width: '80px' }}
+                                            />
+                                            <span>Years</span>
+                                        </div>
                                     ) : (
-                                        <p className="detail-value email-value">{staff.email}</p>
+                                        <span className="info-value">{staff.experience} Years</span>
                                     )}
                                 </div>
-                                <div className="detail-item">
-                                    <label>Contact Number</label>
-                                    {isEditing ? (
-                                        <input
-                                            type="tel"
-                                            value={editedStaff.contactNumber}
-                                            onChange={(e) => handleInputChange('contactNumber', e.target.value)}
-                                            className="detail-input"
-                                        />
-                                    ) : (
-                                        <p className="detail-value">{staff.contactNumber}</p>
-                                    )}
+                                <div className="info-item">
+                                    <span className="info-label">Designation</span>
+                                    <span className="info-value">{isEditing ? formData.designation : staff.designation}</span>
                                 </div>
-                            </div>
-                        </div>
-
-                        {/* Professional Information */}
-                        <div className="detail-card">
-                            <h2 className="card-title">Professional Information</h2>
-                            <div className="detail-grid">
-                                <div className="detail-item">
-                                    <label>Designation</label>
-                                    {isEditing ? (
-                                        <input
-                                            type="text"
-                                            value={editedStaff.designation}
-                                            onChange={(e) => handleInputChange('designation', e.target.value)}
-                                            className="detail-input"
-                                        />
-                                    ) : (
-                                        <p className="detail-value">{staff.designation}</p>
-                                    )}
+                                <div className="info-item">
+                                    <span className="info-label">Qualification</span>
+                                    <span className="info-value">{isEditing ? formData.qualification : staff.qualification}</span>
                                 </div>
-                                <div className="detail-item">
-                                    <label>Department</label>
-                                    {isEditing ? (
-                                        <input
-                                            type="text"
-                                            value={editedStaff.department}
-                                            onChange={(e) => handleInputChange('department', e.target.value)}
-                                            className="detail-input"
-                                        />
-                                    ) : (
-                                        <p className="detail-value">{staff.department}</p>
-                                    )}
-                                </div>
-                                <div className="detail-item">
-                                    <label>Qualification</label>
-                                    {isEditing ? (
-                                        <input
-                                            type="text"
-                                            value={editedStaff.qualification}
-                                            onChange={(e) => handleInputChange('qualification', e.target.value)}
-                                            className="detail-input"
-                                        />
-                                    ) : (
-                                        <p className="detail-value">{staff.qualification}</p>
-                                    )}
-                                </div>
-                                <div className="detail-item">
-                                    <label>Experience</label>
-                                    {isEditing ? (
-                                        <input
-                                            type="text"
-                                            value={editedStaff.experience}
-                                            onChange={(e) => handleInputChange('experience', e.target.value)}
-                                            className="detail-input"
-                                        />
-                                    ) : (
-                                        <p className="detail-value">{staff.experience}</p>
-                                    )}
+                                <div className="info-item">
+                                    <span className="info-label">Department</span>
+                                    <span className="info-value">{isEditing ? formData.department : staff.department}</span>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Subjects Handled */}
-                        <div className="detail-card">
-                            <h2 className="card-title">Subjects Handled</h2>
-                            <div className="chips-container">
-                                {editedStaff.subjects.map((subject, index) => (
-                                    <div key={index} className="chip">
-                                        <span>{subject}</span>
+                        {/* Contact Information Section */}
+                        <div className="section">
+                            <h2 className="section-heading">
+                                <span className="heading-icon">📞</span>
+                                Contact Information
+                            </h2>
+                            <div className="contact-list">
+                                <div className="contact-item-new">
+                                    <span className="contact-icon-new">📧</span>
+                                    <div className="contact-info" style={{ width: '100%' }}>
+                                        <span className="contact-label-new">EMAIL</span>
+                                        {isEditing ? (
+                                            <input
+                                                type="email"
+                                                name="email"
+                                                value={formData.email}
+                                                onChange={handleChange}
+                                                className="edit-input"
+                                                placeholder="Email Address"
+                                            />
+                                        ) : (
+                                            <a href={`mailto:${staff.email}`} className="contact-value">{staff.email}</a>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="contact-item-new">
+                                    <span className="contact-icon-new">📱</span>
+                                    <div className="contact-info" style={{ width: '100%' }}>
+                                        <span className="contact-label-new">PHONE</span>
+                                        {isEditing ? (
+                                            <input
+                                                type="text"
+                                                name="contactNumber"
+                                                value={formData.contactNumber}
+                                                onChange={handleChange}
+                                                className="edit-input"
+                                                placeholder="Phone Number"
+                                            />
+                                        ) : (
+                                            <a href={`tel:${staff.contactNumber}`} className="contact-value">{staff.contactNumber}</a>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Handling Subjects Section */}
+                        <div className="section">
+                            <h2 className="section-heading">
+                                <span className="heading-icon">📚</span>
+                                Handling Subjects
+                            </h2>
+                            <div className="subjects-list-new">
+                                {(isEditing ? formData.subjects : staff.subjects)?.map((subject: string, idx: number) => (
+                                    <div key={idx} className="subject-item-new">
+                                        <span className="subject-bullet">📖</span>
+                                        <span className="subject-text">{subject}</span>
                                         {isEditing && (
                                             <button
-                                                className="chip-remove"
-                                                onClick={() => removeChip('subjects', index)}
-                                            >
-                                                ×
-                                            </button>
+                                                onClick={() => handleArrayRemove('subjects', idx)}
+                                                className="remove-btn"
+                                            >✖</button>
                                         )}
                                     </div>
                                 ))}
                                 {isEditing && (
-                                    <div className="chip-input-wrapper">
+                                    <div className="add-item-row">
                                         <input
                                             type="text"
                                             value={newSubject}
                                             onChange={(e) => setNewSubject(e.target.value)}
-                                            onKeyPress={(e) => e.key === 'Enter' && addChip('subjects', newSubject)}
-                                            placeholder="Add subject..."
-                                            className="chip-input"
+                                            placeholder="Add new subject"
+                                            className="edit-input"
                                         />
                                         <button
-                                            className="chip-add-btn"
-                                            onClick={() => addChip('subjects', newSubject)}
-                                        >
-                                            + Add
-                                        </button>
+                                            onClick={() => handleArrayAdd('subjects', newSubject, setNewSubject)}
+                                            className="add-btn"
+                                        >Add</button>
                                     </div>
                                 )}
                             </div>
                         </div>
 
-                        {/* Skills */}
-                        <div className="detail-card">
-                            <h2 className="card-title">Skills</h2>
-                            <div className="chips-container">
-                                {editedStaff.skills.map((skill, index) => (
-                                    <div key={index} className="chip">
-                                        <span>{skill}</span>
+                        {/* Knowledge & Skills Section */}
+                        <div className="section">
+                            <h2 className="section-heading">
+                                <span className="heading-icon">💡</span>
+                                Knowledge & Skills
+                            </h2>
+                            <div className="skills-list">
+                                {(isEditing ? formData.skills : staff.skills)?.map((skill: string, idx: number) => (
+                                    <span key={idx} className="skill-badge">
+                                        {skill}
                                         {isEditing && (
                                             <button
-                                                className="chip-remove"
-                                                onClick={() => removeChip('skills', index)}
-                                            >
-                                                ×
-                                            </button>
+                                                onClick={() => handleArrayRemove('skills', idx)}
+                                                className="remove-btn-badge"
+                                            >✖</button>
                                         )}
-                                    </div>
+                                    </span>
                                 ))}
                                 {isEditing && (
-                                    <div className="chip-input-wrapper">
+                                    <div className="add-item-row" style={{ marginTop: '10px', width: '100%' }}>
                                         <input
                                             type="text"
                                             value={newSkill}
                                             onChange={(e) => setNewSkill(e.target.value)}
-                                            onKeyPress={(e) => e.key === 'Enter' && addChip('skills', newSkill)}
-                                            placeholder="Add skill..."
-                                            className="chip-input"
+                                            placeholder="Add skill"
+                                            className="edit-input"
+                                            style={{ maxWidth: '200px' }}
                                         />
                                         <button
-                                            className="chip-add-btn"
-                                            onClick={() => addChip('skills', newSkill)}
-                                        >
-                                            + Add
-                                        </button>
+                                            onClick={() => handleArrayAdd('skills', newSkill, setNewSkill)}
+                                            className="add-btn"
+                                        >Add</button>
                                     </div>
                                 )}
                             </div>
                         </div>
 
-                        {/* Achievements */}
-                        <div className="detail-card">
-                            <h2 className="card-title">Achievements</h2>
-                            <div className="chips-container">
-                                {editedStaff.achievements.map((achievement, index) => (
-                                    <div key={index} className="chip">
-                                        <span>{achievement}</span>
+                        {/* Achievements Section */}
+                        <div className="section">
+                            <h2 className="section-heading">
+                                <span className="heading-icon">🏆</span>
+                                Achievements
+                            </h2>
+                            <ul className="achievements-list-new">
+                                {(isEditing ? formData.achievements : staff.achievements)?.map((achievement: string, idx: number) => (
+                                    <li key={idx} className="achievement-item-new">
+                                        <span className="achievement-check">✓</span>
+                                        <span className="achievement-content">{achievement}</span>
                                         {isEditing && (
                                             <button
-                                                className="chip-remove"
-                                                onClick={() => removeChip('achievements', index)}
-                                            >
-                                                ×
-                                            </button>
+                                                onClick={() => handleArrayRemove('achievements', idx)}
+                                                className="remove-btn"
+                                            >✖</button>
                                         )}
-                                    </div>
+                                    </li>
                                 ))}
                                 {isEditing && (
-                                    <div className="chip-input-wrapper">
-                                        <input
-                                            type="text"
-                                            value={newAchievement}
-                                            onChange={(e) => setNewAchievement(e.target.value)}
-                                            onKeyPress={(e) => e.key === 'Enter' && addChip('achievements', newAchievement)}
-                                            placeholder="Add achievement..."
-                                            className="chip-input"
-                                        />
-                                        <button
-                                            className="chip-add-btn"
-                                            onClick={() => addChip('achievements', newAchievement)}
-                                        >
-                                            + Add
-                                        </button>
-                                    </div>
+                                    <li className="achievement-item-new" style={{ background: 'transparent', border: 'none', padding: 0 }}>
+                                        <div className="add-item-row" style={{ width: '100%' }}>
+                                            <input
+                                                type="text"
+                                                value={newAchievement}
+                                                onChange={(e) => setNewAchievement(e.target.value)}
+                                                placeholder="Add achievement"
+                                                className="edit-input"
+                                                style={{ flex: 1 }}
+                                            />
+                                            <button
+                                                onClick={() => handleArrayAdd('achievements', newAchievement, setNewAchievement)}
+                                                className="add-btn"
+                                            >Add</button>
+                                        </div>
+                                    </li>
                                 )}
-                            </div>
-                        </div>
-
-                        {/* Profile Metadata */}
-                        <div className="detail-card metadata-card">
-                            <h2 className="card-title">Profile Information</h2>
-                            <div className="detail-grid">
-                                <div className="detail-item">
-                                    <label>Profile Created</label>
-                                    <p className="detail-value">{formatDate(staff.createdAt)}</p>
-                                </div>
-                                <div className="detail-item">
-                                    <label>Last Updated</label>
-                                    <p className="detail-value">{formatDate(staff.updatedAt)}</p>
-                                </div>
-                            </div>
+                            </ul>
                         </div>
                     </div>
                 </div>
-            </main>
+            </div>
 
             <style>{`
-                * {
-                    margin: 0;
-                    padding: 0;
-                    box-sizing: border-box;
-                }
-
                 .staff-profile-page {
-                    min-height: 100vh;
-                    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+                    background: linear-gradient(135deg, var(--bg) 0%, #E0E8F0 100%);
+                    animation: fadeIn 0.5s ease-out;
+                    padding-bottom: 40px;
                 }
 
-                .loading-container,
-                .error-container {
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+
+                .content-wrapper {
+                    max-width: 900px;
+                    margin: 0 auto;
+                    padding: 0 20px;
+                }
+
+                .back-btn {
+                    background: white;
+                    border: 1px solid rgba(0,0,0,0.1);
+                    color: var(--primary);
+                    font-size: 14px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    padding: 8px 16px;
+                    border-radius: var(--radius-sm);
+                    transition: var(--transition);
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    box-shadow: var(--shadow-sm);
+                }
+                
+                .back-btn:hover {
+                    box-shadow: var(--shadow-md);
+                    transform: translateY(-1px);
+                }
+
+                .action-btn {
+                    padding: 8px 16px;
+                    border-radius: var(--radius-sm);
+                    font-weight: 600;
+                    cursor: pointer;
+                    border: none;
+                    transition: all 0.2s;
+                }
+
+                .edit-btn {
+                    background: var(--primary);
+                    color: white;
+                }
+
+                .save-btn {
+                    background: #28a745;
+                    color: white;
+                }
+
+                .cancel-btn {
+                    background: #dc3545;
+                    color: white;
+                }
+
+                /* Inputs */
+                .edit-input {
+                    padding: 8px 12px;
+                    border: 1px solid #ccc;
+                    border-radius: 6px;
+                    font-family: inherit;
+                    font-size: 14px;
+                    transition: border-color 0.2s;
+                    background: rgba(255,255,255,0.9);
+                    width: 100%;
+                }
+
+                .edit-input:focus {
+                    border-color: var(--primary);
+                    outline: none;
+                    box-shadow: 0 0 0 2px rgba(0, 71, 171, 0.2);
+                }
+
+                .header-input {
+                    font-size: 24px;
+                    font-weight: 700;
+                    margin-bottom: 10px;
+                    color: #333;
+                }
+
+                .badge-input {
+                    font-size: 14px;
+                    width: 150px;
+                }
+
+                .add-item-row {
                     display: flex;
-                    flex-direction: column;
+                    gap: 8px;
+                    margin-top: 8px;
+                }
+
+                .add-btn {
+                    padding: 6px 12px;
+                    background: var(--primary);
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 13px;
+                }
+
+                .remove-btn {
+                    background: none;
+                    border: none;
+                    color: #ff4d4f;
+                    cursor: pointer;
+                    font-size: 14px;
+                    margin-left: 8px;
+                    padding: 0 4px;
+                }
+
+                .remove-btn-badge {
+                    background: rgba(255,255,255,0.2);
+                    border: none;
+                    color: white;
+                    border-radius: 50%;
+                    width: 18px;
+                    height: 18px;
+                    display: inline-flex;
                     align-items: center;
                     justify-content: center;
-                    min-height: 100vh;
-                    color: white;
-                    gap: 20px;
+                    font-size: 10px;
+                    margin-left: 6px;
+                    cursor: pointer;
                 }
 
-                .spinner {
-                    width: 50px;
-                    height: 50px;
-                    border: 4px solid rgba(255, 255, 255, 0.1);
-                    border-top-color: #0047AB;
-                    border-radius: 50%;
-                    animation: spin 1s linear infinite;
-                }
-
-                @keyframes spin {
-                    to { transform: rotate(360deg); }
+                .remove-btn-badge:hover {
+                    background: rgba(255,255,255,0.4);
                 }
 
                 /* Header */
                 .profile-header {
-                    background: rgba(15, 23, 42, 0.95);
-                    backdrop-filter: blur(10px);
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-                    padding: 20px 0;
-                    position: sticky;
-                    top: 0;
-                    z-index: 100;
-                }
-
-                .header-content {
-                    max-width: 1200px;
-                    margin: 0 auto;
-                    padding: 0 24px;
+                    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+                    border-radius: var(--radius-lg);
+                    padding: 32px;
                     display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                }
-
-                .back-btn {
-                    padding: 10px 20px;
-                    background: rgba(255, 255, 255, 0.1);
-                    border: 1px solid rgba(255, 255, 255, 0.2);
-                    color: white;
-                    border-radius: 10px;
-                    cursor: pointer;
-                    font-weight: 600;
-                    transition: all 0.3s;
-                }
-
-                .back-btn:hover {
-                    background: rgba(255, 255, 255, 0.2);
-                    transform: translateX(-4px);
-                }
-
-                .header-actions {
-                    display: flex;
-                    gap: 12px;
-                }
-
-                .edit-btn,
-                .save-btn,
-                .cancel-btn {
-                    padding: 12px 24px;
-                    border: none;
-                    border-radius: 10px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    transition: all 0.3s;
-                    font-size: 0.95rem;
-                }
-
-                .edit-btn {
-                    background: linear-gradient(135deg, #0047AB, #2563eb);
-                    color: white;
-                    box-shadow: 0 4px 12px rgba(0, 71, 171, 0.3);
-                }
-
-                .edit-btn:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 6px 16px rgba(0, 71, 171, 0.4);
-                }
-
-                .save-btn {
-                    background: linear-gradient(135deg, #10b981, #059669);
-                    color: white;
-                    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-                }
-
-                .save-btn:hover:not(:disabled) {
-                    transform: translateY(-2px);
-                    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
-                }
-
-                .save-btn:disabled {
-                    opacity: 0.6;
-                    cursor: not-allowed;
-                }
-
-                .cancel-btn {
-                    background: rgba(255, 255, 255, 0.1);
-                    border: 1px solid rgba(255, 255, 255, 0.2);
-                    color: white;
-                }
-
-                .cancel-btn:hover:not(:disabled) {
-                    background: rgba(255, 255, 255, 0.2);
-                }
-
-                /* Main Content */
-                .profile-main {
-                    padding: 40px 20px;
-                }
-
-                .profile-container {
-                    max-width: 1200px;
-                    margin: 0 auto;
-                }
-
-                /* Profile Hero */
-                .profile-hero {
-                    background: linear-gradient(135deg, #0047AB, #2563eb);
-                    border-radius: 24px;
-                    padding: 48px;
+                    gap: 32px;
                     margin-bottom: 32px;
-                    display: flex;
-                    gap: 40px;
-                    align-items: center;
-                    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-                }
-
-                .profile-image-section {
-                    flex-shrink: 0;
+                    box-shadow: var(--shadow-lg);
+                    position: relative;
+                    overflow: hidden;
+                    color: white;
                 }
 
                 .profile-image-wrapper {
+                    flex-shrink: 0;
+                    width: 180px;
+                    height: 180px;
+                    border-radius: 50%;
+                    padding: 6px;
+                    background: rgba(255, 255, 255, 0.2);
+                    backdrop-filter: blur(8px);
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
                     position: relative;
                 }
 
-                .profile-image {
-                    width: 180px;
-                    height: 180px;
-                    border-radius: 20px;
-                    object-fit: cover;
-                    border: 4px solid rgba(255, 255, 255, 0.3);
-                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-                }
-
-                .change-image-btn {
+                .photo-edit-btn {
                     position: absolute;
-                    bottom: -12px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    background: white;
-                    color: #0047AB;
-                    padding: 8px 16px;
-                    border-radius: 20px;
-                    font-weight: 600;
-                    font-size: 0.85rem;
+                    bottom: 10px;
+                    right: 10px;
+                    background: var(--primary);
+                    color: white;
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                     cursor: pointer;
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-                    transition: all 0.3s;
-                    white-space: nowrap;
+                    border: 3px solid white;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                    transition: transform 0.2s;
+                    font-size: 18px;
                 }
 
-                .change-image-btn:hover {
-                    transform: translateX(-50%) translateY(-2px);
-                    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+                .photo-edit-btn:hover {
+                    transform: scale(1.1);
+                    background: var(--primary-dark);
                 }
 
-                .profile-info-header {
-                    flex: 1;
-                }
-
-                .staff-name {
-                    font-size: 2.5rem;
-                    font-weight: 700;
-                    color: white;
-                    margin-bottom: 12px;
-                }
-
-                .name-input {
-                    font-size: 2.5rem;
-                    font-weight: 700;
-                    color: white;
-                    background: rgba(255, 255, 255, 0.1);
-                    border: 2px solid rgba(255, 255, 255, 0.3);
-                    border-radius: 12px;
-                    padding: 12px 16px;
+                .profile-image {
                     width: 100%;
-                    margin-bottom: 12px;
+                    height: 100%;
+                    border-radius: 50%;
+                    object-fit: cover;
+                    border: 4px solid white;
+                    background: white;
                 }
 
-                .name-input:focus {
-                    outline: none;
-                    border-color: rgba(255, 255, 255, 0.6);
-                    background: rgba(255, 255, 255, 0.15);
-                }
-
-                .staff-designation {
-                    font-size: 1.3rem;
-                    color: rgba(255, 255, 255, 0.9);
-                    margin-bottom: 6px;
-                }
-
-                .staff-department {
-                    font-size: 1.1rem;
-                    color: rgba(255, 255, 255, 0.8);
-                }
-
-                /* Detail Cards */
-                .profile-details {
+                .profile-header-info {
+                    flex: 1;
+                    justify-content: center;
                     display: flex;
                     flex-direction: column;
-                    gap: 24px;
                 }
 
-                .detail-card {
-                    background: rgba(255, 255, 255, 0.05);
-                    backdrop-filter: blur(10px);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    border-radius: 20px;
-                    padding: 32px;
-                }
-
-                .card-title {
-                    font-size: 1.5rem;
+                .profile-name {
+                    font-size: 32px;
                     font-weight: 700;
+                    margin: 0 0 12px 0;
+                    letter-spacing: -0.5px;
                     color: white;
+                    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                }
+
+                .profile-badges {
+                    display: flex;
+                    gap: 12px;
+                    margin-bottom: 16px;
+                    flex-wrap: wrap;
+                }
+
+                .badge {
+                    padding: 6px 14px;
+                    border-radius: 50px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    letter-spacing: 0.5px;
+                    text-transform: uppercase;
+                }
+
+                .badge-primary {
+                    background: rgba(255, 255, 255, 0.2);
+                    backdrop-filter: blur(4px);
+                    border: 1px solid rgba(255, 255, 255, 0.3);
+                }
+
+                .badge-secondary {
+                    background: white;
+                    color: var(--primary);
+                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                }
+
+                .profile-qualification {
+                    opacity: 0.9;
+                    font-size: 16px;
+                    font-weight: 500;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+
+                /* Profile Content */
+                .profile-content {
+                    background: white;
+                    border-radius: var(--radius-lg);
+                    padding: 40px;
+                    box-shadow: var(--shadow-md);
+                }
+
+                .section {
+                    margin-bottom: 40px;
+                }
+
+                .section:last-child {
+                    margin-bottom: 0;
+                }
+
+                .section-heading {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    font-size: 20px;
+                    font-weight: 700;
+                    color: var(--primary);
                     margin-bottom: 24px;
                     padding-bottom: 16px;
-                    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+                    border-bottom: 2px solid #F0F4F8;
                 }
 
-                .detail-grid {
+                .heading-icon {
+                    width: 36px;
+                    height: 36px;
+                    background: #F0F7FF;
+                    border-radius: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 18px;
+                }
+
+                .info-list {
                     display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
                     gap: 24px;
                 }
 
-                .detail-item {
+                .info-item {
                     display: flex;
                     flex-direction: column;
                     gap: 8px;
                 }
 
-                .detail-item label {
-                    font-size: 0.85rem;
-                    font-weight: 600;
-                    color: #94a3b8;
+                .info-label {
+                    font-size: 13px;
                     text-transform: uppercase;
+                    color: var(--text-light);
+                    font-weight: 600;
                     letter-spacing: 0.5px;
                 }
 
-                .detail-value {
-                    font-size: 1.1rem;
-                    font-weight: 600;
-                    color: white;
-                    padding: 12px 16px;
-                    background: rgba(255, 255, 255, 0.05);
-                    border-radius: 10px;
-                    border: 1px solid rgba(255, 255, 255, 0.1);
+                .info-value {
+                    font-size: 16px;
+                    color: var(--text-main);
+                    font-weight: 500;
                 }
 
-                .email-value {
+                /* Contact List */
+                .contact-list {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                    gap: 20px;
+                }
+
+                .contact-item-new {
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+                    padding: 20px;
+                    border-radius: var(--radius-sm);
+                    background: #F8FAFC;
+                    border: 1px solid #E2E8F0;
+                    transition: var(--transition);
+                }
+
+                .contact-item-new:hover {
+                    border-color: var(--primary-light);
+                    background: white;
+                    box-shadow: var(--shadow-sm);
+                }
+
+                .contact-icon-new {
+                    width: 44px;
+                    height: 44px;
+                    background: white;
+                    border-radius: 12px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 20px;
+                    box-shadow: var(--shadow-sm);
+                    color: var(--primary);
+                }
+
+                .contact-info {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                }
+
+                .contact-label-new {
+                    font-size: 12px;
+                    font-weight: 700;
+                    color: var(--text-light);
+                    letter-spacing: 0.5px;
+                }
+
+                .contact-value {
+                    font-size: 16px;
+                    color: var(--primary);
+                    font-weight: 600;
+                    text-decoration: none;
+                    transition: color 0.2s;
                     word-break: break-all;
-                    overflow-wrap: break-word;
                 }
 
-                .detail-input {
-                    font-size: 1.1rem;
-                    font-weight: 600;
-                    color: white;
-                    background: rgba(255, 255, 255, 0.1);
-                    border: 2px solid rgba(255, 255, 255, 0.2);
-                    border-radius: 10px;
-                    padding: 12px 16px;
+                /* Subjects List */
+                .subjects-list-new {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                    gap: 16px;
                 }
 
-                .detail-input:focus {
-                    outline: none;
-                    border-color: #0047AB;
-                    background: rgba(255, 255, 255, 0.15);
+                .subject-item-new {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 16px;
+                    background: #F8FAFC;
+                    border-radius: var(--radius-sm);
+                    transition: var(--transition);
+                    border: 1px solid transparent;
                 }
 
-                /* Chips */
-                .chips-container {
+                .subject-item-new:hover {
+                    background: white;
+                    box-shadow: var(--shadow-sm);
+                    border-color: #E2E8F0;
+                    transform: translateY(-2px);
+                }
+
+                .subject-bullet {
+                    font-size: 18px;
+                }
+
+                .subject-text {
+                    font-weight: 500;
+                    color: var(--text-main);
+                    font-size: 15px;
+                    flex: 1;
+                }
+
+                /* Skills List */
+                .skills-list {
                     display: flex;
                     flex-wrap: wrap;
                     gap: 12px;
                 }
 
-                .chip {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 8px;
-                    background: rgba(0, 71, 171, 0.3);
-                    border: 1px solid rgba(0, 71, 171, 0.5);
-                    padding: 10px 16px;
-                    border-radius: 20px;
-                    font-weight: 600;
+                .skill-badge {
+                    padding: 10px 20px;
+                    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
                     color: white;
-                    font-size: 0.95rem;
+                    border-radius: var(--radius-full);
+                    font-size: 14px;
+                    font-weight: 500;
+                    transition: var(--transition);
+                    cursor: default;
+                    box-shadow: 0 2px 8px rgba(0, 71, 171, 0.25);
+                    display: flex;
+                    align-items: center;
                 }
 
-                .chip-remove {
-                    background: rgba(255, 255, 255, 0.2);
-                    border: none;
-                    color: white;
-                    width: 20px;
-                    height: 20px;
+                .skill-badge:hover {
+                    transform: translateY(-3px) scale(1.05);
+                    box-shadow: 0 6px 16px rgba(0, 71, 171, 0.35);
+                }
+
+                /* Achievements List */
+                .achievements-list-new {
+                    list-style: none;
+                    padding: 0;
+                    margin: 0;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 14px;
+                }
+
+                .achievement-item-new {
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 18px;
+                    padding: 18px 20px;
+                    background: linear-gradient(135deg, #FFF9E6 0%, #FFFBF0 100%);
+                    border-radius: var(--radius-sm);
+                    border-left: 4px solid var(--accent);
+                    transition: var(--transition);
+                }
+
+                .achievement-item-new:hover {
+                    transform: translateX(6px);
+                    box-shadow: var(--shadow-sm);
+                    background: linear-gradient(135deg, #FFF4CC 0%, #FFF9E6 100%);
+                }
+
+                .achievement-check {
+                    flex-shrink: 0;
+                    width: 32px;
+                    height: 32px;
+                    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+                    color: var(--primary-dark);
                     border-radius: 50%;
-                    cursor: pointer;
-                    font-size: 1.2rem;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    transition: all 0.2s;
+                    font-weight: 700;
+                    font-size: 16px;
+                    box-shadow: 0 3px 10px rgba(255, 215, 0, 0.35);
                 }
 
-                .chip-remove:hover {
-                    background: rgba(239, 68, 68, 0.8);
+                .achievement-content {
+                    flex: 1;
+                    color: var(--text-main);
+                    font-size: 15px;
+                    line-height: 1.7;
+                    padding-top: 4px;
                 }
 
-                .chip-input-wrapper {
+                .error-message {
+                    text-align: center;
+                    padding: 60px 20px;
+                }
+
+                .error-message h2 {
+                    margin-bottom: 24px;
+                    color: var(--text-muted);
+                }
+
+                /* Header Actions */
+                .header-actions {
                     display: flex;
-                    gap: 8px;
-                    flex: 1;
-                    min-width: 250px;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 24px;
+                    flex-wrap: wrap;
+                    gap: 16px;
                 }
 
-                .chip-input {
-                    flex: 1;
-                    padding: 10px 16px;
-                    background: rgba(255, 255, 255, 0.1);
-                    border: 2px solid rgba(255, 255, 255, 0.2);
-                    border-radius: 20px;
-                    color: white;
-                    font-size: 0.95rem;
+                .edit-actions {
+                    display: flex;
+                    gap: 12px;
                 }
 
-                .chip-input:focus {
-                    outline: none;
-                    border-color: #0047AB;
-                    background: rgba(255, 255, 255, 0.15);
-                }
-
-                .chip-input::placeholder {
-                    color: rgba(255, 255, 255, 0.5);
-                }
-
-                .chip-add-btn {
-                    padding: 10px 20px;
-                    background: linear-gradient(135deg, #0047AB, #2563eb);
-                    border: none;
-                    color: white;
-                    border-radius: 20px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    transition: all 0.3s;
-                }
-
-                .chip-add-btn:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 12px rgba(0, 71, 171, 0.4);
-                }
-
-                /* Metadata Card */
-                .metadata-card {
-                    background: rgba(0, 71, 171, 0.1);
-                    border-color: rgba(0, 71, 171, 0.3);
-                }
-
-                /* Responsive */
                 @media (max-width: 768px) {
-                    .profile-hero {
-                        flex-direction: column;
-                        padding: 32px 24px;
-                        text-align: center;
-                    }
-
-                    .profile-image {
-                        width: 150px;
-                        height: 150px;
-                    }
-
-                    .staff-name {
-                        font-size: 2rem;
-                    }
-
-                    .name-input {
-                        font-size: 2rem;
-                    }
-
-                    .header-content {
-                        flex-direction: column;
-                        gap: 16px;
-                    }
-
                     .header-actions {
+                        flex-direction: column;
+                        align-items: stretch;
+                        gap: 12px;
+                    }
+
+                    .back-btn, .action-btn {
                         width: 100%;
                         justify-content: center;
                     }
-
-                    .detail-grid {
-                        grid-template-columns: 1fr;
-                    }
-
-                    .detail-card {
-                        padding: 24px 20px;
-                    }
-
-                    .chip-input-wrapper {
+                    
+                    .edit-actions {
+                        flex-direction: column;
                         width: 100%;
                     }
                 }
 
-                @media (max-width: 480px) {
-                    .profile-main {
-                        padding: 24px 12px;
+                /* Responsive Design */
+                @media (max-width: 768px) {
+                    .profile-header {
+                        flex-direction: column;
+                        text-align: center;
+                        padding: 32px 24px;
                     }
 
-                    .staff-name {
-                        font-size: 1.8rem;
+                    .profile-image-wrapper {
+                        width: 150px;
+                        height: 150px;
+                        margin: 0 auto;
                     }
 
-                    .name-input {
-                        font-size: 1.8rem;
+                    .profile-name {
+                        font-size: 28px;
                     }
 
-                    .card-title {
-                        font-size: 1.3rem;
+                    .profile-badges {
+                        justify-content: center;
                     }
 
-                    .edit-btn,
-                    .save-btn,
-                    .cancel-btn {
-                        padding: 10px 16px;
-                        font-size: 0.85rem;
+                    .profile-content {
+                        padding: 24px;
+                    }
+
+                    .section {
+                        margin-bottom: 36px;
+                    }
+
+                    .section-heading {
+                        font-size: 18px;
+                    }
+
+                    .info-item {
+                        flex-direction: column;
+                        align-items: flex-start;
+                        gap: 6px;
+                    }
+
+                    .info-label {
+                        min-width: auto;
+                    }
+
+                    .info-value {
+                        text-align: left;
+                    }
+
+                    .back-btn {
+                        font-size: 14px;
+                    }
+
+                    .contact-value {
+                        font-size: 14px;
+                    }
+                }
+
+                @media (min-width: 769px) and (max-width: 1024px) {
+                    .profile-content {
+                        padding: 32px;
                     }
                 }
             `}</style>
-        </div>
+        </>
     );
 };
 
-export default StaffProfilePage;
+export default StaffProfile;

@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { type Staff } from '../data/sampleData';
 import { toast } from 'react-toastify';
 import axios from 'axios';
+import StaffHeader from '../components/StaffHeader';
 
 const StaffDashboard: React.FC = () => {
     const [staff, setStaff] = useState<Staff | null>(null);
     const navigate = useNavigate();
-    const [activeMenu, setActiveMenu] = useState('dashboard');
 
     useEffect(() => {
         const fetchStaffData = async () => {
@@ -29,56 +29,12 @@ const StaffDashboard: React.FC = () => {
         fetchStaffData();
     }, []);
 
-    const handleLogout = () => {
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('userType');
-        localStorage.removeItem('token');
-        navigate('/login');
-    };
-
-    const handleNavigation = (path: string, menu: string) => {
-        setActiveMenu(menu);
-        navigate(path);
-    };
 
     if (!staff) return <div className="loading-screen">Loading...</div>;
 
     return (
         <div className="staff-dashboard">
-            {/* Fixed Header */}
-            <header className="dashboard-header">
-                <div className="header-container">
-                    <div className="header-left">
-                        <div className="brand">
-                            <span className="brand-icon">🎓</span>
-                            <span className="brand-text">JIT Staff Portal</span>
-                        </div>
-                    </div>
-                    <nav className="header-nav">
-                        <button
-                            className={`nav-item ${activeMenu === 'dashboard' ? 'active' : ''}`}
-                            onClick={() => handleNavigation('/staff-dashboard', 'dashboard')}
-                        >
-                            Dashboard
-                        </button>
-                        <button
-                            className={`nav-item ${activeMenu === 'notice' ? 'active' : ''}`}
-                            onClick={() => handleNavigation('/notice', 'notice')}
-                        >
-                            Notice
-                        </button>
-                        <button
-                            className={`nav-item ${activeMenu === 'profile' ? 'active' : ''}`}
-                            onClick={() => handleNavigation('/staff-profile', 'profile')}
-                        >
-                            Profile
-                        </button>
-                        <button className="logout-btn" onClick={handleLogout}>
-                            Logout
-                        </button>
-                    </nav>
-                </div>
-            </header>
+            <StaffHeader activeMenu="dashboard" />
 
             {/* Main Content */}
             <main className="dashboard-main">
@@ -219,103 +175,10 @@ const StaffDashboard: React.FC = () => {
                 }
 
                 /* Fixed Header */
-                .dashboard-header {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    height: 70px;
-                    background: white;
-                    border-bottom: 1px solid #e2e8f0;
-                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-                    z-index: 1000;
-                }
-
-                .header-container {
-                    max-width: 1400px;
-                    margin: 0 auto;
-                    height: 100%;
-                    padding: 0 24px;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                }
-
-                .header-left {
-                    display: flex;
-                    align-items: center;
-                }
-
-                .brand {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                }
-
-                .brand-icon {
-                    font-size: 28px;
-                }
-
-                .brand-text {
-                    font-size: 1.3rem;
-                    font-weight: 700;
-                    background: linear-gradient(135deg, #0047AB, #2563eb);
-                    -webkit-background-clip: text;
-                    -webkit-text-fill-color: transparent;
-                }
-
-                .header-nav {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                }
-
-                .nav-item {
-                    padding: 10px 20px;
-                    border: none;
-                    background: transparent;
-                    color: #64748b;
-                    font-weight: 600;
-                    font-size: 0.95rem;
-                    cursor: pointer;
-                    border-radius: 10px;
-                    transition: all 0.3s;
-                }
-
-                .nav-item:hover {
-                    background: #f1f5f9;
-                    color: #0047AB;
-                }
-
-                .nav-item.active {
-                    background: linear-gradient(135deg, #0047AB, #2563eb);
-                    color: white;
-                    box-shadow: 0 4px 12px rgba(0, 71, 171, 0.2);
-                }
-
-                .logout-btn {
-                    padding: 10px 24px;
-                    border: 2px solid #ef4444;
-                    background: white;
-                    color: #ef4444;
-                    font-weight: 600;
-                    font-size: 0.95rem;
-                    cursor: pointer;
-                    border-radius: 10px;
-                    transition: all 0.3s;
-                    margin-left: 12px;
-                }
-
-                .logout-btn:hover {
-                    background: #ef4444;
-                    color: white;
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-                }
+                /* Removed - using StaffHeader component */
 
                 /* Main Content */
                 .dashboard-main {
-                    margin-top: 70px;
                     padding: 40px 20px;
                 }
 
@@ -583,28 +446,6 @@ const StaffDashboard: React.FC = () => {
 
                 /* Responsive */
                 @media (max-width: 768px) {
-                    .header-container {
-                        padding: 0 16px;
-                    }
-
-                    .brand-text {
-                        font-size: 1.1rem;
-                    }
-
-                    .header-nav {
-                        gap: 4px;
-                    }
-
-                    .nav-item {
-                        padding: 8px 12px;
-                        font-size: 0.85rem;
-                    }
-
-                    .logout-btn {
-                        padding: 8px 16px;
-                        font-size: 0.85rem;
-                        margin-left: 4px;
-                    }
 
                     .dashboard-main {
                         padding: 24px 16px;
@@ -645,23 +486,7 @@ const StaffDashboard: React.FC = () => {
                 }
 
                 @media (max-width: 480px) {
-                    .brand-icon {
-                        font-size: 24px;
-                    }
-
-                    .brand-text {
-                        display: none;
-                    }
-
-                    .nav-item {
-                        padding: 6px 10px;
-                        font-size: 0.8rem;
-                    }
-
-                    .logout-btn {
-                        padding: 6px 12px;
-                        font-size: 0.8rem;
-                    }
+                    /* Header styles removed */
                 }
             `}</style>
         </div>

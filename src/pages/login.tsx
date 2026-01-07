@@ -512,6 +512,41 @@ const Login: React.FC = () => {
             transform: translateY(0);
           }
         }
+
+        @media (max-width: 480px) {
+          .login-page {
+            padding: 16px;
+          }
+          
+          .login-container {
+            max-width: 100%;
+          }
+          
+          .login-header {
+            padding: 24px 24px 0;
+            margin-bottom: 24px;
+          }
+          
+          .logo-circle {
+            width: 56px;
+            height: 56px;
+            font-size: 28px;
+            margin-bottom: 12px;
+          }
+          
+          .login-header h1 {
+            font-size: 22px;
+          }
+          
+          .login-form {
+            padding: 0 24px 32px;
+          }
+          
+          .tab-btn {
+            padding: 12px 16px;
+            font-size: 14px;
+          }
+        }
       `}</style>
     </div>
   );

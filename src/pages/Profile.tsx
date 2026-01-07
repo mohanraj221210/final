@@ -39,7 +39,11 @@ const Profile: React.FC = () => {
                     }
                 });
                 if (response.status === 200) {
-                    setUser(response.data.user);
+                    setUser(prev => ({
+                        ...prev,
+                        ...response.data.user,
+                        gender: response.data.user.gender || prev.gender || 'male'
+                    }));
                     toast.success("User profile fetched successfully");
                 } else {
                     toast.error("Failed to fetch user profile");
@@ -78,6 +82,7 @@ const Profile: React.FC = () => {
     };
 
     const handleSave = async () => {
+        console.log(user);
         try {
             const response = await axios.put(`${import.meta.env.VITE_API_URL}/api/profile/update`, user, {
                 headers: {
@@ -382,7 +387,7 @@ const Profile: React.FC = () => {
                                         onChange={handleChange}
                                         disabled={!isEditing}
                                         className="input"
-                                    
+
                                     >
                                         <option value="">Select your type</option>
                                         <option value="day scholar">Day Scholar</option>
@@ -395,7 +400,7 @@ const Profile: React.FC = () => {
                                         <div className="form-group">
                                             <label>Hostel Name</label>
                                             <select
-                                                
+
                                                 name="hostelname"
                                                 value={user.hostelname}
                                                 onChange={handleChange}

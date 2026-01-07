@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Nav from '../components/Nav';
 import StaffCard from '../components/StaffCard';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const Staffs: React.FC = () => {
@@ -8,29 +9,30 @@ const Staffs: React.FC = () => {
     const [staffData, setStaffData] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState('All');
+    const navigate = useNavigate();
 
     useEffect(() => {
-        const staff = async()=>{
+        const staff = async () => {
             try {
-            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/staff/list`,{
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json'
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/staff/list`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (response.status === 200) {
+                    setStaffData(response.data.staff);
+                    console.log("staff data", response.data);
                 }
-            });
-            if(response.status === 200){
-            setStaffData(response.data.staff);
-            console.log("staff data",response.data);
-            }
             } catch (error: any) {
-            console.error("Error fetching staff data:", error.message);
-            }finally{
+                console.error("Error fetching staff data:", error.message);
+            } finally {
                 setLoading(false)
             }
-    }
+        }
 
         staff();
-  }, []);
+    }, []);
 
     const filteredStaff = staffData.filter(staff => {
         const matchesSearch = staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -43,7 +45,7 @@ const Staffs: React.FC = () => {
 
     const designations = ['All', ...new Set(staffData.map(s => s.designation))];
 
-    if(Loading){
+    if (Loading) {
         return <div className="card staff-card">Loading...</div>;
     }
 
@@ -53,6 +55,9 @@ const Staffs: React.FC = () => {
             <div className="content-wrapper">
                 <div className="page-header">
                     <div>
+                        <div className="back-nav" onClick={() => navigate('/dashboard')}>
+                            <span>←</span> Back to Dashboard
+                        </div>
                         <h1 className="page-title">Our Faculty</h1>
                         <p className="text-muted">Meet the dedicated professors shaping your future.</p>
                     </div>
@@ -99,10 +104,30 @@ const Staffs: React.FC = () => {
                 .page-header {
                     display: flex;
                     justify-content: space-between;
-                    align-items: flex-end;
+                    align-items: flex-start;
                     margin-bottom: 32px;
                     flex-wrap: wrap;
                     gap: 20px;
+                }
+
+                .back-nav {
+                    font-size: 0.9rem;
+                    color: #64748b;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    margin-bottom: 12px;
+                    font-weight: 600;
+                    padding: 8px 16px;
+                    background: #f1f5f9;
+                    border-radius: 8px;
+                    transition: all 0.2s;
+                }
+                .back-nav:hover {
+                    color: #0047AB;
+                    background: #e2e8f0;
+                    transform: translateX(-4px);
                 }
 
                 .controls {
