@@ -482,7 +482,7 @@ const StudentViewStaffProfile: React.FC = () => {
                 }
 
                 .page-container {
-                    padding-top: 20px;
+                    padding-top: 80px;
                 }
                 
                 /* Loading */
