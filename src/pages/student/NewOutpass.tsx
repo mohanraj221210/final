@@ -225,6 +225,7 @@ const Outpass: React.FC = () => {
                             ></textarea>
                         </div>
 
+                        {/*
                         <div className="form-group">
                             <label>Emergency Contact Number</label>
                             <input
@@ -236,7 +237,7 @@ const Outpass: React.FC = () => {
                                 placeholder="Enter parent/guardian number"
                                 className="form-input"
                             />
-                        </div>
+                        </div> */}
 
                         <div className="form-actions">
                             <button type="submit" className="btn btn-primary submit-btn" disabled={isSubmitting}>

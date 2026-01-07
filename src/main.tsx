@@ -8,6 +8,8 @@ import Login from './pages/login'
 import StaffDashboard from './pages/staff/StaffDashboard'
 import StaffProfile from './pages/staff/StaffProfile'
 import StaffNotices from './pages/staff/StaffNotices'
+import StudentDetails from './pages/staff/StudentDetails'
+import StudentRegistration from './pages/staff/StudentRegistration'
 import StudentNotices from './pages/student/StudentNotices'
 import ProtectedRoute from './components/ProtectedRoute'
 import Dashboard from './pages/student/Dashboard'
@@ -44,6 +46,16 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/staff-notice" element={
           <ProtectedRoute>
             <StaffNotices />
+          </ProtectedRoute>
+        } />
+        <Route path="/staff-registration" element={
+          <ProtectedRoute>
+            <StudentRegistration />
+          </ProtectedRoute>
+        } />
+        <Route path="/staff/student-details/:id" element={
+          <ProtectedRoute>
+            <StudentDetails />
           </ProtectedRoute>
         } />
         <Route path="/student-notice" element={
