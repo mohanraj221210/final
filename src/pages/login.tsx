@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import Toast from '../components/Toast';
 import axios from 'axios';
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -28,6 +28,7 @@ const Login: React.FC = () => {
         localStorage.setItem('isLoggedIn', 'true');
         localStorage.setItem('userType', loginType);
         setShowToast(true);
+        // toast.success("Login successful! Redirecting...");
         setTimeout(() => {
           if (loginType === 'staff') {
             navigate('/staff-dashboard');
@@ -36,9 +37,16 @@ const Login: React.FC = () => {
           }
         }, 1500);
       }
-    } catch (error) {
-      toast.error("Login failed. Please check your credentials.");
-      console.log("Backend not reachable, using demo mode");
+    } catch (error:any) { 
+    if(error.response?.status === 401) {
+        console.log("Invalid credentials");
+        toast.error("Invalid credentials. Please try again.", { position: "bottom-right", autoClose: 5000 });
+    } else if (error.response?.status === 404) {
+        console.log("User not found");
+        toast.error("User not found. Please check your email.", { position: "bottom-right", autoClose: 5000 });
+    } else {
+        toast.error("Something went wrong. Please try again later.", { position: "bottom-right", autoClose: 5000 });
+    }
     }finally{
       setLoading(false);
     }
@@ -46,6 +54,7 @@ const Login: React.FC = () => {
 
   return (
     <div className="login-page">
+      <ToastContainer />
       {showToast && (
         <Toast
           message="Login successful! Redirecting..."
@@ -510,6 +519,41 @@ const Login: React.FC = () => {
           to {
             opacity: 1;
             transform: translateY(0);
+          }
+        }
+
+        @media (max-width: 480px) {
+          .login-page {
+            padding: 16px;
+          }
+          
+          .login-container {
+            max-width: 100%;
+          }
+          
+          .login-header {
+            padding: 24px 24px 0;
+            margin-bottom: 24px;
+          }
+          
+          .logo-circle {
+            width: 56px;
+            height: 56px;
+            font-size: 28px;
+            margin-bottom: 12px;
+          }
+          
+          .login-header h1 {
+            font-size: 22px;
+          }
+          
+          .login-form {
+            padding: 0 24px 32px;
+          }
+          
+          .tab-btn {
+            padding: 12px 16px;
+            font-size: 14px;
           }
         }
       `}</style>

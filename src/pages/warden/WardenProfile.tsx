@@ -9,7 +9,7 @@ interface Warden {
   name: string;
   staffId: string;
   department: string;
-  hostelName: string;
+  hostelname: string;
   email: string;
   phone: string;
   photo: string;
@@ -22,7 +22,7 @@ const WardenProfile: React.FC = () => {
     name: "",
     staffId: "",
     department: "",
-    hostelName: "",
+    hostelname: "",
     email: "",
     phone: "",
     photo: "",
@@ -69,11 +69,16 @@ const WardenProfile: React.FC = () => {
     if (!file) return;
 
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("photo", file);
+    formData.append("name", warden.name);
+    formData.append("hostelname", warden.hostelname);
+    formData.append("email", warden.email);
+    formData.append("phone", warden.phone);
+    formData.append("gender", warden.gender);
 
     try {
       const response = await axios.put(
-        `${import.meta.env.VITE_API_URL}/warden/profile/update-photo`,
+        `${import.meta.env.VITE_API_URL}/warden/profile/update`,
         formData,
         {
           headers: {
@@ -206,11 +211,11 @@ const WardenProfile: React.FC = () => {
                 </div>
 
                 <div className="form-group">
-                  <label>Staff ID</label>
+                  <label>Email</label>
                   <input
                     type="text"
-                    name="staffId"
-                    value={warden.staffId}
+                    name="email"
+                    value={warden.email}
                     onChange={handleChange}
                     disabled={!isEditing}
                     className="input"
@@ -221,8 +226,8 @@ const WardenProfile: React.FC = () => {
                   <label>Hostel Name</label>
                   <input
                     type="text"
-                    name="hostelName"
-                    value={warden.hostelName}
+                    name="hostelname"
+                    value={warden.hostelname}
                     onChange={handleChange}
                     disabled={!isEditing}
                     className="input"

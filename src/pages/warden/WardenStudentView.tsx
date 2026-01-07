@@ -78,12 +78,12 @@ const WardenStudentView: React.FC = () => {
           <div className="section-body info-grid-with-avatar">
             <div className="avatar-box">
               {s.name ? (
-                <div className="initials-avatar">{s.name.substring(0, 2).toUpperCase()}</div>
+                <div> <img src={s.photo} alt="Student" className="initials-avatar"   /></div>
               ) : (
                 <div className="initials-avatar">NA</div>
               )}
             </div>
-            <div className="info-fields">
+            <div className="info-fields"> 
               <div className="field-group">
                 <label>STUDENT ID</label>
                 <div className="display-box">{s._id || "N/A"}</div>
@@ -190,12 +190,12 @@ const WardenStudentView: React.FC = () => {
         </div>
 
         {/* Section 5: Approval Workflow */}
-        
-          {/* <div className="section-header">
+
+        {/* <div className="section-header">
             <h3>✅ Approval Workflow</h3>
           </div> */}
-          <div className="section-body workflow-container">
-            {/* <div className="workflow-step">
+        <div className="section-body workflow-container">
+          {/* <div className="workflow-step">
               <div className={`step-icon ${student.status === 'approved' ? 'success' : 'pending'}`}>
                 {student.status === 'approved' ? '✓' : '•'}
               </div>
@@ -205,7 +205,7 @@ const WardenStudentView: React.FC = () => {
               </div>
             </div> */}
 
-            {/* <div className="step-connector"></div>
+          {/* <div className="step-connector"></div>
 
             <div className="workflow-step">
               <div className={`step-icon ${student.wardenapprovalstatus === 'approved' ? 'success' : (student.wardenapprovalstatus === 'rejected' ? 'error' : 'pending')}`}>
@@ -219,25 +219,25 @@ const WardenStudentView: React.FC = () => {
               </div>
             </div> */}
 
-            {/* Action Buttons if Pending */}
-            {(!student.wardenapprovalstatus || student.wardenapprovalstatus === 'pending') && (
-              <div className="workflow-actions">
-                <button
-                  className="btn-approve"
-                  onClick={() => handleStatusUpdate("approved")}
-                >
-                  Approve Request
-                </button>
-                <button
-                  className="btn-reject"
-                  onClick={() => handleStatusUpdate("rejected")}
-                >
-                  Reject Request
-                </button>
-              </div>
-            )}
-          </div>
-        
+          {/* Action Buttons if Pending */}
+          {(!student.wardenapprovalstatus || student.wardenapprovalstatus === 'pending') && (
+            <div className="workflow-actions">
+              <button
+                className="btn-approve"
+                onClick={() => handleStatusUpdate("approved")}
+              >
+                Approve Request
+              </button>
+              <button
+                className="btn-reject"
+                onClick={() => handleStatusUpdate("rejected")}
+              >
+                Reject Request
+              </button>
+            </div>
+          )}
+        </div>
+
       </div>
 
       <style>{`

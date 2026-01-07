@@ -22,7 +22,7 @@ const PendingOutpass: React.FC = () => {
   const fetchStudents = async () => {
     const token = localStorage.getItem("token");
     const res = await axios.get(
-      `${import.meta.env.VITE_API_URL}/warden/pending-outpass?page=${page}&limit=10`,
+      `${import.meta.env.VITE_API_URL}/warden/outpass/list`,
       {
         headers: { Authorization: `Bearer ${token}` },
       }

@@ -92,9 +92,11 @@ const OutpassList: React.FC = () => {
                   currentData.map((item, index) => (
                     <tr key={item.id || index}>
                       <td>{startIndex + index + 1}</td>
-                      <td>{item.name || item.studentName}</td>
-                      <td>{item.registerNo || item.register_number}</td>
-                      <td>{item.date || item.outDate}</td>
+                      <td>{item.studentid.name || item.studentName}</td>
+                      <td>{item.studentid.registerNumber || item.register_number}</td>
+                      <td>
+                        {new Date(item.createdAt || item.outDate).toLocaleDateString()}
+                      </td>
                       <td>{item.reason}</td>
                       <td>
                         <span className="status approved">
