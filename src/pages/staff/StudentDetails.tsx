@@ -445,6 +445,34 @@ const StudentDetails: React.FC = () => {
                     .card-actions { margin: 0; }
                 }
 
+                @media (max-width: 600px) {
+                    .profile-card {
+                        flex-direction: column;
+                        text-align: center;
+                        align-items: center;
+                    }
+                    .avatar-large {
+                        margin: 0 0 16px 0;
+                    }
+                    .card-actions {
+                        margin-top: 24px;
+                        width: 100%;
+                    }
+                    .details-header {
+                        flex-direction: column;
+                        gap: 16px;
+                        padding: 16px;
+                    }
+                    .header-actions {
+                        width: 100%;
+                        display: flex;
+                        justify-content: center;
+                    }
+                    .fields-row {
+                        grid-template-columns: 1fr;
+                    }
+                }
+
                 .loading-screen, .error-screen {
                     height: 100vh;
                     display: flex;

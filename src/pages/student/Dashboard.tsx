@@ -1658,10 +1658,58 @@ const Dashboard: React.FC = () => {
                 .action-card:nth-child(4) { animation-delay: 0.6s; }
 
                 @media (max-width: 968px) {
-                    .dashboard-layout { grid-template-columns: 20fr; }
-                    .dashboard-hero { flex-direction: column; align-items: flex-start; gap: 24px; }
-                    .hero-stats-grid { width: 100%; overflow-x: auto; padding-bottom: 12px; }
+                    .dashboard-layout { grid-template-columns: 1fr; }
+                    .dashboard-hero { flex-direction: column; align-items: flex-start; gap: 24px; padding: 24px; }
+                    .hero-stats-grid { 
+                        width: 100%; 
+                        overflow-x: auto; 
+                        padding-bottom: 12px; 
+                        justify-content: flex-start;
+                        gap: 16px;
+                    }
+                    .stat-card {
+                        min-width: 160px;
+                        flex: 0 0 auto;
+                    }
                     .sidebar { animation: fadeInUp 0.8s ease-out 0.4s backwards; }
+                }
+
+                @media (max-width: 768px) {
+                    .quick-links-grid {
+                         grid-template-columns: repeat(2, 1fr);
+                         gap: 16px;
+                    }
+                    .action-card {
+                         padding: 16px;
+                    }
+                    .action-icon {
+                         width: 56px;
+                         height: 56px;
+                         font-size: 28px;
+                    }
+                    .calendar-header {
+                        flex-direction: column;
+                        align-items: flex-start;
+                        gap: 16px;
+                    }
+                    .calendar-controls {
+                        width: 100%;
+                        justify-content: space-between;
+                    }
+                    .btn-nav, .btn-today {
+                        padding: 8px 16px;
+                        font-size: 0.85rem;
+                    }
+                    .vision-content {
+                        grid-template-columns: 1fr;
+                        gap: 24px;
+                    }
+                    .vision-divider {
+                         display: none;
+                    }
+                    .dashboard-hero h1 {
+                        font-size: 1.5rem;
+                    }
                 }
 
                 /* Recent Downloads Premium Styles */
