@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const Outpass: React.FC = () => {
     const navigate = useNavigate();
@@ -13,7 +14,7 @@ const Outpass: React.FC = () => {
         contactNo: ''
     });
 
-    const [isSubmitting, setIsSubmitting] = useState(false); 
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
     React.useEffect(() => {
@@ -62,30 +63,20 @@ const Outpass: React.FC = () => {
                 `${import.meta.env.VITE_API_URL}/api/outpass/apply`,
                 formData,
                 {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 }
             );
 
-            if (response.status === 200) {
-                toast.success("Outpass applied successfully");
-                navigate('/passapproval');
+            if (response.status === 201 || response.status === 200) {
+                toast.success('Outpass application submitted successfully');
+                setTimeout(() => navigate('/dashboard'), 3000);
             }
         } catch (error: any) {
-            console.error("Error applying for outpass:", error);
-            const errorMessage = error.response?.data?.message || "Failed to submit application";
-            toast.error(errorMessage);
+            console.error('Error submitting outpass:', error);
+            toast.error(error.response?.data?.message || 'Failed to submit application');
         } finally {
             setIsSubmitting(false);
         }
-    };
-
-      const handleLogout = () => {
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('userType');
-        localStorage.removeItem('token');
-        navigate('/login');
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -96,10 +87,16 @@ const Outpass: React.FC = () => {
         }));
     };
 
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userType');
+        localStorage.removeItem('isLoggedIn');
+        navigate('/login');
+    };
+
     return (
-        <div className="page-container outpass-page">
-            
-             <header className="dashboard-header-custom">
+        <div className="page-container">
+            <header className="dashboard-header-custom">
                 <div className="header-container-custom">
                     <div className="header-left-custom">
                         <div className="brand-custom">
@@ -157,8 +154,8 @@ const Outpass: React.FC = () => {
                             Logout
                         </button>
                     </nav>
-                </div>
-            </header>
+                </div >
+            </header >
 
             <div className="content-wrapper">
                 <div className="page-header">
@@ -180,9 +177,9 @@ const Outpass: React.FC = () => {
                                 className="form-input"
                             >
                                 <option value="Outing">Outing (Town Pass)</option>
-                                <option value="Home">Home Pass</option>
+                                {/* <option value="Home">Home Pass</option>
                                 <option value="OD">On Duty (OD)</option>
-                                <option value="Emergency">Emergency</option>
+                                <option value="Emergency">Emergency</option> */}
                             </select>
                         </div>
 
@@ -524,6 +521,7 @@ const Outpass: React.FC = () => {
                     to { opacity: 1; transform: translateY(0); }
                 }
             `}</style>
+            <ToastContainer />
         </div>
     );
 };
