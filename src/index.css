@@ -94,7 +94,7 @@ ul {
 
 .page-container {
   min-height: 100vh;
-  padding-top: 0px;
+  padding-top: 80px;
   /* Space for fixed nav */
   padding-bottom: 40px;
 }
