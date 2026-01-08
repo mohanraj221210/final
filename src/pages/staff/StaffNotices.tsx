@@ -21,8 +21,9 @@ interface Community {
 
 const StaffNotices: React.FC = () => {
     const navigate = useNavigate();
-    const [activeCommunity, setActiveCommunity] = useState<number>(1);
+    const [activeCommunity] = useState<number>(1);
     const [newMessage, setNewMessage] = useState('');
+    
 
     // Dummy Data
     const communities: Community[] = [

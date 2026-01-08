@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import axios from 'axios';
 import StaffHeader from '../../components/StaffHeader';
 
@@ -21,8 +21,8 @@ interface StudentOutpass {
     parentContact: string;
 
     // Hostel Details
-    hostelName: string;
-    roomNumber: string;
+    hostelname: string;
+    hostelroomno: string;
 
     // Last Outpass
     lastOutpassFrom?: string;
@@ -163,7 +163,7 @@ const PassApproval: React.FC = () => {
                 {
                     outpassId: selectedStudent.id,
                     staffapprovalstatus: actionType === 'approve' ? 'approved' : 'rejected',
-                    remarks: actionRemarks
+                    staffremarks: actionRemarks
                 },
                 {
                     headers: {
@@ -204,6 +204,7 @@ const PassApproval: React.FC = () => {
     return (
         <div className="page-container approval-page">
             <StaffHeader activeMenu="dashboard" />
+            <ToastContainer position="bottom-right" />
 
             <div className="content-wrapper">
                 {!selectedStudent ? (
@@ -363,11 +364,11 @@ const PassApproval: React.FC = () => {
                                     <div className="info-grid">
                                         <div className="info-field">
                                             <label>HOSTEL NAME</label>
-                                            <div className="field-value">{selectedStudent.hostelName}</div>
+                                            <div className="field-value">{selectedStudent.hostelname}</div>
                                         </div>
                                         <div className="info-field">
                                             <label>ROOM NUMBER</label>
-                                            <div className="field-value">{selectedStudent.roomNumber}</div>
+                                            <div className="field-value">{selectedStudent.hostelroomno}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -514,6 +515,7 @@ const PassApproval: React.FC = () => {
             <style>{`
                 .page-container {
                     min-height: 100vh;
+                    padding-top: 0px;
                     background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
                 }
 

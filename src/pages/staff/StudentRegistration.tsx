@@ -41,7 +41,6 @@ const StudentRegistration: React.FC = () => {
 
     // Added Students State
     const [studentsList, setStudentsList] = useState<Student[]>([]);
-    const [loadingAction, setLoadingAction] = useState(false);
     const navigate = useNavigate();
 
     const API_URL = import.meta.env.VITE_API_URL;

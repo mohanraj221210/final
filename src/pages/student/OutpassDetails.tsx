@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 
 // Outpass status types
@@ -129,7 +129,7 @@ const OutpassDetails: React.FC = () => {
 
     return (
         <div className="page-container outpass-details-page">
-           
+           <ToastContainer position="bottom-right" />
             <header className="dashboard-header-custom">
                 <div className="header-container-custom">
                     <div className="header-left-custom">

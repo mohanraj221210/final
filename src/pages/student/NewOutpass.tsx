@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 
 const Outpass: React.FC = () => {
     const navigate = useNavigate();
@@ -95,8 +94,9 @@ const Outpass: React.FC = () => {
     };
 
     return (
-        <div className="page-container">
-            <header className="dashboard-header-custom">
+        <div className="page-container outpass-page">
+            <ToastContainer position="bottom-right" />
+             <header className="dashboard-header-custom">
                 <div className="header-container-custom">
                     <div className="header-left-custom">
                         <div className="brand-custom">

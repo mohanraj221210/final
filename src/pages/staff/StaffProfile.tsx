@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StaffHeader from '../../components/StaffHeader';
 import axios from 'axios';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 
 const StaffProfile: React.FC = () => {
     const [loading, setLoading] = useState(true);
@@ -124,6 +124,7 @@ const StaffProfile: React.FC = () => {
         <>
             <StaffHeader activeMenu="profile" />
             <div className="page-container staff-profile-page">
+                <ToastContainer position="bottom-right" />
                 <div className="content-wrapper">
                     {/* Header Actions */}
                     {/* Header Actions */}
