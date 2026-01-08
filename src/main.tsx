@@ -1,4 +1,3 @@
-import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import './styles.css'
@@ -31,7 +30,6 @@ import WardenProfile from './pages/warden/WardenProfile'
 
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Welcome />} />
@@ -149,5 +147,4 @@ createRoot(document.getElementById('root')!).render(
         <Route path="*" element={<Login />} />
       </Routes>
     </BrowserRouter>
-  </StrictMode >,
 )

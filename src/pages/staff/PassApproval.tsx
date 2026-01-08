@@ -163,7 +163,7 @@ const PassApproval: React.FC = () => {
                 {
                     outpassId: selectedStudent.id,
                     staffapprovalstatus: actionType === 'approve' ? 'approved' : 'rejected',
-                    remarks: actionRemarks
+                    staffremarks: actionRemarks
                 },
                 {
                     headers: {
@@ -203,8 +203,8 @@ const PassApproval: React.FC = () => {
 
     return (
         <div className="page-container approval-page">
-            <ToastContainer position="bottom-right" />
             <StaffHeader activeMenu="dashboard" />
+            <ToastContainer position="bottom-right" />
 
             <div className="content-wrapper">
                 {!selectedStudent ? (
@@ -515,6 +515,7 @@ const PassApproval: React.FC = () => {
             <style>{`
                 .page-container {
                     min-height: 100vh;
+                    padding-top: 0px;
                     background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
                 }
 
