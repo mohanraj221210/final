@@ -55,7 +55,7 @@ const Welcome: React.FC = () => {
 
                     <div className="hero-visual fade-in">
                         <div className="visual-card main-card floating-card">
-                            <img src="/public/main.jpg" alt="JIT Campus" className="hero-img" />
+                            <img src="/main.jpg" alt="JIT Campus" className="hero-img" />
                             <div className="hero-overlay">
                                 <div className="overlay-content">
                                     <span className="campus-badge">Jeppiaar Institute of Technology</span>

@@ -1633,6 +1633,7 @@ const Dashboard: React.FC = () => {
 
                 .hero-welcome .badge {
                     animation: pulse-glow 3s infinite;
+                    margin-bottom: 5px;
                 }
                 
                 /* Typing effect for H1 */
@@ -1646,6 +1647,7 @@ const Dashboard: React.FC = () => {
                         typing 2s steps(30, end) 0.5s both,
                         blink-caret 0.75s step-end infinite;
                     max-width: fit-content;
+                    padding-top: 15px 
                 }
 
                 /* Staggered Action Cards */
@@ -1661,6 +1663,8 @@ const Dashboard: React.FC = () => {
                     .dashboard-layout { grid-template-columns: 1fr; }
                     .dashboard-hero { flex-direction: column; align-items: flex-start; gap: 24px; padding: 24px; }
                     .hero-stats-grid { 
+                        display: flex;
+                        flex-direction: column;
                         width: 100%; 
                         overflow-x: auto; 
                         padding-bottom: 12px; 
@@ -1679,6 +1683,9 @@ const Dashboard: React.FC = () => {
                          grid-template-columns: repeat(2, 1fr);
                          gap: 16px;
                     }
+                    h3{
+                      font-size:
+                    }
                     .action-card {
                          padding: 16px;
                     }
@@ -1691,6 +1698,14 @@ const Dashboard: React.FC = () => {
                         flex-direction: column;
                         align-items: flex-start;
                         gap: 16px;
+                    }
+                    .calendar-card {
+                        width: 100vw;
+                        display: flex;
+                        flex-direction: column;
+                    }
+                    .calendar-header-day{
+                      padding: 2%;
                     }
                     .calendar-controls {
                         width: 100%;
@@ -1710,6 +1725,13 @@ const Dashboard: React.FC = () => {
                     .dashboard-hero h1 {
                         font-size: 1.5rem;
                     }
+                    .calendar-grid {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 8px;
+                    margin-bottom: 24px;
+                    overflow: visible;
+                }
                 }
 
                 /* Recent Downloads Premium Styles */

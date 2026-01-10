@@ -421,6 +421,7 @@ const StudentRegistration: React.FC = () => {
                     display: flex;
                     border-bottom: 1px solid #e2e8f0;
                     background: #f8fafc;
+                    overflow-x: auto;
                 }
 
                 .tab-btn {
@@ -817,6 +818,10 @@ const StudentRegistration: React.FC = () => {
                 @media (max-width: 640px) {
                     .tab-content {
                         padding: 24px;
+                    }
+
+                    .tab {
+                        
                     }
 
                     .page-header h1 {
