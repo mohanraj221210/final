@@ -39,10 +39,8 @@ const Login: React.FC = () => {
       }
     } catch (error:any) { 
     if(error.response?.status === 401) {
-        console.log("Invalid credentials");
         toast.error("Invalid credentials. Please try again.", { position: "bottom-right", autoClose: 5000 });
     } else if (error.response?.status === 404) {
-        console.log("User not found");
         toast.error("User not found. Please check your email.", { position: "bottom-right", autoClose: 5000 });
     } else {
         toast.error("Something went wrong. Please try again later.", { position: "bottom-right", autoClose: 5000 });

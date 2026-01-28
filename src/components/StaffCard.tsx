@@ -26,7 +26,6 @@ const StaffCard: React.FC<StaffCardProps> = ({ staff }) => {
                     const staffs = response.data.staff;
                     const staffinfo = Array.isArray(staffs) ? staffs.find((s: Staff) => s._id === staff._id) : null;
                     setStaffData(staffinfo);
-                    console.log("staff data", response.data);
                 }
             } catch (error: any) {
                 toast.error("An error occurred while fetching staff data");
