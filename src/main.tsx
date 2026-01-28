@@ -26,6 +26,11 @@ import PendingOutpass from './pages/warden/PendingOutpass'
 import OutpassList from './pages/warden/OutpassList'
 import WardenStudentView from './pages/warden/WardenStudentView'
 import WardenProfile from './pages/warden/WardenProfile'
+import WatchmanProfile from './pages/watchman/WatchmanProfile'
+import WatchmanLogin from './pages/watchman/WatchmanLogin'
+import WatchmanDashboard from './pages/watchman/WatchmanDashboard'
+import WatchmanOutpassList from './pages/watchman/WatchmanOutpassList'
+import WatchmanStudentView from './pages/watchman/WatchmanStudentView'
 
 
 createRoot(document.getElementById('root')!).render(
@@ -35,11 +40,17 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/" element={<Welcome />} />
         <Route path="/login" element={<Login />} />
         <Route path="/wardenlogin" element={<Wardenlogin />} />
+        <Route path="/watchmanlogin" element={<WatchmanLogin />} />
 
         {/* Protected Routes */}
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/watchman-dashboard" element={
+          <ProtectedRoute>
+            <WatchmanDashboard />
           </ProtectedRoute>
         } />
         <Route path="/warden-dashboard" element={
@@ -50,6 +61,21 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/warden-profile" element={
           <ProtectedRoute>
             <WardenProfile />
+          </ProtectedRoute>
+        } />
+        <Route path="/watchman-profile" element={
+          <ProtectedRoute>
+            <WatchmanProfile />
+          </ProtectedRoute>
+        } />
+        <Route path="/watchman/outpass-list" element={
+          <ProtectedRoute>
+            <WatchmanOutpassList />
+          </ProtectedRoute>
+        } />
+        <Route path="/watchman/student/:id" element={
+          <ProtectedRoute>
+            <WatchmanStudentView />
           </ProtectedRoute>
         } />
         <Route path="/warden/pending-outpass" element={

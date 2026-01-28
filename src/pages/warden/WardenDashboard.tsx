@@ -39,7 +39,7 @@ const Dashboard: React.FC = () => {
                     name: "Sanjay.S",
                     registerNumber: "WARDEN001",
                     department: "Hostel Management",
-                    year: "N/A",
+                    year: "2025",
                     semester: 0,
                     email: "warden@jit.edu",
                     phone: "+91 9876543210",
@@ -87,7 +87,7 @@ const Dashboard: React.FC = () => {
         setZoomingPath(path);
         setTimeout(() => {
             navigate(path);
-        }, 700); // Wait for animation to finish
+        }, 700);
     };
 
     if (Loading) {
@@ -685,6 +685,8 @@ const Dashboard: React.FC = () => {
 
                 .hero-welcome .badge {
                     animation: pulse-glow 3s infinite;
+                    display: inline-block;
+                    margin-bottom: 12px;
                 }
                 
                 /* Typing effect for H1 */
@@ -710,10 +712,63 @@ const Dashboard: React.FC = () => {
                 .action-card:nth-child(4) { animation-delay: 0.6s; }
 
                 @media (max-width: 968px) {
-                    .dashboard-layout { grid-template-columns: 20fr; }
-                    .dashboard-hero { flex-direction: column; align-items: flex-start; gap: 24px; }
-                    .hero-stats-grid { width: 100%; overflow-x: auto; padding-bottom: 12px; }
+                    .dashboard-layout { 
+                        grid-template-columns: 1fr;
+                        gap: 24px;
+                    }
+                    .dashboard-hero { 
+                        flex-direction: column; 
+                        align-items: flex-start; 
+                        padding: 24px;
+                    }
+                    .hero-welcome h1 {
+                        font-size: 20px; /* Reduced from default/24px */
+                    }
+                    .hero-welcome p {
+                        font-size: 14px;
+                    }
+                    .hero-stats-grid { 
+                        width: 100%; 
+                        flex-wrap: wrap; 
+                        overflow-visible: visible; 
+                    }
+                    .stat-card {
+                        flex: 1 1 150px; 
+                        min-width: 140px;
+                    }
                     .sidebar { animation: fadeInUp 0.8s ease-out 0.4s backwards; }
+                    
+                    /* Adjust quick links grid for smaller screens */
+                    .quick-links-grid {
+                        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+                        gap: 16px;
+                    }
+                }
+
+                @media (max-width: 480px) {
+                    .dashboard-hero {
+                        padding: 16px; /* Further reduced padding */
+                        border-radius: 16px;
+                        gap: 16px;
+                    }
+                    .hero-welcome .badge {
+                        font-size: 10px;
+                        padding: 4px 8px;
+                    }
+                    .hero-welcome h1 {
+                        font-size: 18px; /* Further reduced */
+                    }
+                    .section-title {
+                        font-size: 1.1rem;
+                    }
+                    .action-card {
+                        padding: 16px;
+                    }
+                    .action-icon {
+                        width: 48px;
+                        height: 48px;
+                        font-size: 24px;
+                    }
                 }
 
                 /* Recent Downloads Premium Styles */

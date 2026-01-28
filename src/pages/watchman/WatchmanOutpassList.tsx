@@ -1,17 +1,13 @@
 import React, { useState, useEffect } from "react";
-
 import axios from "axios";
-
 import { useNavigate } from "react-router-dom";
+import WatchmanNav from "../../components/WatchmanNav";
 
-import WardenNav from "../../components/WardenNav";
-
-const OutpassList: React.FC = () => {
+const WatchmanOutpassList: React.FC = () => {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [outpasses, setOutpasses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState<'All' | 'Approved' | 'Rejected'>('All');
 
   const itemsPerPage = 8;
 
@@ -23,74 +19,45 @@ const OutpassList: React.FC = () => {
     try {
       const token = localStorage.getItem("token");
 
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/warden/outpass/list/all`, {
+      // Using the same endpoint as warden for now, assuming watchman has access or it's public enough
+      // In a real scenario, this might need a specific /watchman endpoint
+      // Watchman API Endpoint
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/watchman/outpass/list`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      const outpassData = res.data.outpasses || res.data.data || res.data || [];
-      // Initially set all data, filtering happens on render/derived state
-      setOutpasses(Array.isArray(outpassData) ? outpassData : []);
+      console.log("Full API Response:", res);
+      // Data extraction based on confirmed API response structure (outpasslist)
+      const outpassData = res.data.outpasslist || [];
+
+      setOutpasses(outpassData);
     } catch (err: any) {
       console.error("Failed to fetch outpasses", err);
-      // Error handling...
+      // Handle errors gracefully
+      if (err.response?.status === 401) {
+        // Token might be invalid or maybe watchman type isn't allowed on this specific endpoint
+        // For now we just alert
+        console.error("Authentication error");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // Filter logic
-  const filteredOutpasses = outpasses.filter((item) => {
-    const status = item.wardenapprovalstatus?.toLowerCase() || '';
-    if (filterStatus === 'All') return status === 'approved' || status === 'rejected' || status === 'declined';
-    if (filterStatus === 'Approved') return status === 'approved';
-    if (filterStatus === 'Rejected') return status === 'rejected' || status === 'declined';
-    return true;
-  });
-
-  const totalPages = Math.ceil(filteredOutpasses.length / itemsPerPage);
+  const totalPages = Math.ceil(outpasses.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentData = filteredOutpasses.slice(startIndex, startIndex + itemsPerPage);
-
-  const capitalize = (str: any) => {
-    if (!str) return "Pending";
-    const s = String(str);
-    return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
-  };
+  const currentData = outpasses.slice(startIndex, startIndex + itemsPerPage);
 
   return (
     <div className="page-container">
-      <WardenNav />
+      <WatchmanNav />
       <div className="list-container">
-        <div className="header-row">
-          <button className="back-btn" onClick={() => navigate("/warden-dashboard")}>
-            ← Back
-          </button>
-
-          <div className="filter-tabs">
-            <button
-              className={`filter-btn ${filterStatus === 'All' ? 'active' : ''}`}
-              onClick={() => { setFilterStatus('All'); setCurrentPage(1); }}
-            >
-              All
-            </button>
-            <button
-              className={`filter-btn ${filterStatus === 'Approved' ? 'active' : ''}`}
-              onClick={() => { setFilterStatus('Approved'); setCurrentPage(1); }}
-            >
-              Approved
-            </button>
-            <button
-              className={`filter-btn ${filterStatus === 'Rejected' ? 'active' : ''}`}
-              onClick={() => { setFilterStatus('Rejected'); setCurrentPage(1); }}
-            >
-              Rejected
-            </button>
-          </div>
-        </div>
-
-        <h1>Outpass List</h1>
+        <button className="back-btn" onClick={() => navigate("/watchman-dashboard")}>
+          ← Back
+        </button>
+        <h1>Watchman Approved Outpass List</h1>
 
         <div className="outpass-card">
           {loading ? (
@@ -117,30 +84,34 @@ const OutpassList: React.FC = () => {
                 {currentData.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="no-data-cell" style={{ textAlign: "center", padding: "20px" }}>
-                      No outpasses found
+                      No approved outpasses found
                     </td>
                   </tr>
                 ) : (
                   currentData.map((item, index) => (
                     <tr key={item.id || index}>
                       <td data-label="#">{startIndex + index + 1}</td>
-                      <td data-label="Name">{item.studentid.name || item.studentName}</td>
-                      <td data-label="Register No">{item.studentid.registerNumber || item.register_number}</td>
+                      <td data-label="Name">
+                        {item.studentid?.name || "N/A"}
+                      </td>
+                      <td data-label="Register No">
+                        {item.studentid?.registerNumber || "N/A"}
+                      </td>
                       <td data-label="Date">
                         {new Date(item.createdAt || item.outDate).toLocaleDateString()}
                       </td>
                       <td data-label="Reason">{item.reason}</td>
                       <td data-label="Status">
-                        <span className={`status ${item.status?.toLowerCase() === 'rejected' ? 'rejected' : 'approved'}`}>
-                          {capitalize(item.status)}
+                        <span className="status approved">
+                          {item.wardenapprovalstatus || "Approved"}
                         </span>
                       </td>
                       <td data-label="Action">
                         <button
                           className="view-btn"
                           onClick={() => {
-                            const studentId = item.studentID || item.studentId || item.id || item._id;
-                            navigate(`/warden/student/${studentId}`);
+                            // Pass Outpass ID (_id) for the detail view
+                            navigate(`/watchman/student/${item._id}`);
                           }}
                         >
                           View
@@ -158,23 +129,21 @@ const OutpassList: React.FC = () => {
               {currentData.map((item, index) => (
                 <div className="mobile-card" key={item.id || index}>
                   <div className="card-badge">
-                    {item.studentid.registerNumber || item.register_number}
+                    {item.studentid?.registerNumber || item.register_number}
                   </div>
-                  <h3 className="card-name">{item.studentid.name || item.studentName}</h3>
+                  <h3 className="card-name">{item.studentid?.name || item.studentName}</h3>
                   <p className="card-details">
-                    {item.studentid.year ? `Year ${item.studentid.year} • ` : ''}
                     Applied on {new Date(item.createdAt || item.outDate).toLocaleDateString()}
                   </p>
 
                   <div className="card-footer">
-                    <span className={`status-pill ${item.status?.toLowerCase() === 'rejected' ? 'status-rejected' : 'status-approved'}`}>
-                      • {capitalize(item.status)}
+                    <span className="status-pill status-approved">
+                      • {item.wardenapprovalstatus || "Approved"}
                     </span>
                     <button
                       className="card-view-link"
                       onClick={() => {
-                        const studentId = item.studentID || item.studentId || item.id || item._id;
-                        navigate(`/warden/student/${studentId}`);
+                        navigate(`/watchman/student/${item._id}`);
                       }}
                     >
                       View →
@@ -186,7 +155,7 @@ const OutpassList: React.FC = () => {
           )}
         </div>
 
-        {/* Pagination logic ... */}
+        {/* Pagination logic */}
         {!loading && outpasses.length > 0 && (
           <div className="pagination">
             <button
@@ -214,48 +183,7 @@ const OutpassList: React.FC = () => {
 .list-container {
   padding: 24px 40px;
   animation: fadeInUp 0.6s ease;
-  margin-top: 10px; /* Reduced to move content upward */
-}
-
-
-.header-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-    gap: 16px;
-}
-
-.filter-tabs {
-    display: flex;
-    background: #f1f5f9;
-    padding: 4px;
-    border-radius: 12px;
-    gap: 4px;
-}
-
-.filter-btn {
-    padding: 8px 16px;
-    border: none;
-    background: transparent;
-    color: #64748b;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-}
-
-.filter-btn:hover {
-    color: #1e293b;
-    background: rgba(255,255,255,0.5);
-}
-
-.filter-btn.active {
-    background: white;
-    color: #1e3a8a;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  margin-top: 10px; 
 }
 
 .back-btn {
@@ -264,7 +192,7 @@ const OutpassList: React.FC = () => {
   font-size: 16px;
   color: #1e3a8a;
   cursor: pointer;
-  /* margin-bottom: 20px; Removed margin since it's in header-row now */
+  margin-bottom: 20px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -282,8 +210,8 @@ const OutpassList: React.FC = () => {
 }
 
 .list-container h1 {
-  font-size: 22px; /* Reduced from 28px */
-  margin-bottom: 16px; /* Reduced from 24px */
+  font-size: 22px; 
+  margin-bottom: 16px; 
   color: #1e3a8a;
   font-weight: 700;
 }
@@ -435,40 +363,16 @@ const OutpassList: React.FC = () => {
   100% { transform: translateX(200%); }
 }
 
-/* Page Container */
-.list-container {
-  padding: 24px 40px; /* Adjusted padding */
-}
-
-/* ... existing styles ... */
-
 /* Mobile */
 @media (max-width: 768px) {
   .list-container {
     padding: 16px;
-    margin-top: 5px; /* Significantly reduced for upward movement */
+    margin-top: 5px; 
   }
 
   .list-container h1 {
-    font-size: 18px; /* Further reduced for mobile */
+    font-size: 18px; 
     margin-bottom: 12px;
-  }
-
-  .header-row {
-      flex-direction: column-reverse; /* Put filters on top or buttons where convenient, or kept column */
-      align-items: flex-start;
-      gap: 16px;
-  }
-  
-  .filter-tabs {
-      width: 100%;
-      justify-content: space-between;
-  }
-  
-  .filter-btn {
-      flex: 1;
-      text-align: center;
-      padding: 10px;
   }
 
   .outpass-card {
@@ -478,7 +382,6 @@ const OutpassList: React.FC = () => {
     border: none;
   }
 
-  /* Mobile specific card view */
   .mobile-cards-view {
     display: flex;
     flex-direction: column;
@@ -547,12 +450,6 @@ const OutpassList: React.FC = () => {
     border: 1px solid #86efac;
   }
 
-  .status-pill.status-rejected {
-    background: #fee2e2;
-    color: #991b1b;
-    border: 1px solid #f87171;
-  }
-
   .card-view-link {
     background: none;
     border: none;
@@ -566,7 +463,7 @@ const OutpassList: React.FC = () => {
   }
 
   .outpass-table {
-    display: none; /* Hide standard table on mobile */
+    display: none; 
   }
 
   .mobile-cards-view {
@@ -574,7 +471,6 @@ const OutpassList: React.FC = () => {
   }
 }
 
-/* Desktop: Hide mobile view */
 @media (min-width: 769px) {
   .mobile-cards-view {
     display: none;
@@ -586,4 +482,4 @@ const OutpassList: React.FC = () => {
   );
 };
 
-export default OutpassList;
+export default WatchmanOutpassList;
