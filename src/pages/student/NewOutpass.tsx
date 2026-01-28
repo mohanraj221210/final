@@ -6,15 +6,15 @@ import { toast, ToastContainer } from 'react-toastify';
 const Outpass: React.FC = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
-        outpassType: 'Outing',
+        outpasstype: 'Outing',
         fromDate: '',
         toDate: '',
-        reason: '',
-        contactNo: ''
+        reason: ''
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+    const [residenceType, setResidenceType] = useState<string>('');
 
     React.useEffect(() => {
         const checkProfile = async () => {
@@ -26,6 +26,13 @@ const Outpass: React.FC = () => {
 
                 if (response.status === 200) {
                     const user = response.data.user;
+                    setResidenceType(user.residencetype?.toLowerCase() || '');
+
+                    // Pre-select OD for day scholars
+                    if (user.residencetype?.toLowerCase() === 'day scholar') {
+                        setFormData(prev => ({ ...prev, outpasstype: 'OD' }));
+                    }
+
                     const isProfileComplete = () => {
                         if (!user.name || !user.registerNumber || !user.department || !user.year ||
                             !user.phone || !user.email || !user.parentnumber || !user.residencetype || !user.photo) {
@@ -96,7 +103,7 @@ const Outpass: React.FC = () => {
     return (
         <div className="page-container outpass-page">
             <ToastContainer position="bottom-right" />
-             <header className="dashboard-header-custom">
+            <header className="dashboard-header-custom">
                 <div className="header-container-custom">
                     <div className="header-left-custom">
                         <div className="brand-custom">
@@ -171,16 +178,28 @@ const Outpass: React.FC = () => {
                         <div className="form-group">
                             <label>Outpass Type</label>
                             <select
-                                name="outpassType"
-                                value={formData.outpassType}
+                                name="outpasstype"
+                                value={formData.outpasstype}
                                 onChange={handleChange}
                                 className="form-input"
+                                disabled={residenceType === 'day scholar'}
                             >
-                                <option value="Outing">Outing (Town Pass)</option>
-                                {/* <option value="Home">Home Pass</option>
-                                <option value="OD">On Duty (OD)</option>
-                                <option value="Emergency">Emergency</option> */}
+                                {residenceType === 'day scholar' ? (
+                                    <option value="OD">On Duty (OD)</option>
+                                ) : (
+                                    <>
+                                        <option value="Outing">Outing (Town Pass)</option>
+                                        <option value="Home">Home Pass</option>
+                                        <option value="OD">On Duty (OD)</option>
+                                        <option value="Emergency">Emergency</option>
+                                    </>
+                                )}
                             </select>
+                            {residenceType === 'day scholar' && (
+                                <p className="helper-text" style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '8px' }}>
+                                    Only OD outpass is allowed for Day Scholars.
+                                </p>
+                            )}
                         </div>
 
                         <div className="form-row">

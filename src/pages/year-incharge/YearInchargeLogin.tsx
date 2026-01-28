@@ -1,55 +1,67 @@
 import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
-import Toast from '../components/Toast';
+import Toast from '../../components/Toast';
 import axios from 'axios';
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 
-interface LoginProps {
-  initialType?: 'student' | 'staff';
-}
-
-const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
+const YearInchargeLogin: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [Loading, setLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
-  const [loginType, setLoginType] = useState<'student' | 'staff'>(initialType);
+
   const navigate = useNavigate();
 
   const API_URL = import.meta.env.VITE_API_URL;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (!email || !password) {
+      toast.error("Please enter email and password");
+      return;
+    }
+
     setLoading(true);
+
     try {
-      const endpoint = loginType === 'student' ? '/api/login' : '/staff/login';
-      const response = await axios.post(`${API_URL}${endpoint}`, { email, password });
+      const response = await axios.post(`${API_URL}/incharge/login`, {
+        email,
+        password
+      });
 
       if (response.status === 200) {
         const token = response.data.token;
-        localStorage.setItem('token', token);
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('userType', loginType);
+
+        // ✅ Save login data
+        localStorage.setItem("token", token);
+        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("userType", "year-incharge");
+
         setShowToast(true);
-        // toast.success("Login successful! Redirecting...");
+
         setTimeout(() => {
-          if (loginType === 'staff') {
-            navigate('/staff-dashboard');
-          } else {
-            navigate('/dashboard');
-          }
+          navigate("/year-incharge-dashboard");
         }, 1500);
       }
     } catch (error: any) {
-      if (error.response?.status === 401) {
-        console.log("Invalid credentials");
-        toast.error("Invalid credentials. Please try again.", { position: "bottom-right", autoClose: 5000 });
-      } else if (error.response?.status === 404) {
-        console.log("User not found");
-        toast.error("User not found. Please check your email.", { position: "bottom-right", autoClose: 5000 });
+      console.error("Login error:", error);
+
+      if (error.response) {
+        const status = error.response.status;
+
+        if (status === 400) {
+          toast.error("Missing email or password");
+        } else if (status === 401) {
+          toast.error("Invalid email or password");
+        } else if (status === 404) {
+          toast.error("User not found");
+        } else {
+          toast.error("Login failed. Try again.");
+        }
       } else {
-        toast.error("Something went wrong. Please try again later.", { position: "bottom-right", autoClose: 5000 });
+        toast.error("Server not reachable");
       }
     } finally {
       setLoading(false);
@@ -58,7 +70,6 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
 
   return (
     <div className="login-page">
-      <ToastContainer />
       {showToast && (
         <Toast
           message="Login successful! Redirecting..."
@@ -71,34 +82,19 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
         <button className="back-home-btn" onClick={() => navigate('/')}>
           ← Back to Welcome
         </button>
-        <div className={`login-card ${loginType === 'staff' ? 'staff-theme' : 'student-theme'}`}>
-          {/* Tab Toggle */}
+        <div className="login-card staff-theme">
+
           {/* <div className="login-tabs">
-            <button
-              type="button"
-              className={`tab-btn ${loginType === 'student' ? 'active' : ''}`}
-              onClick={() => setLoginType('student')}
-            >
-              Student Login
-            </button>
-            <button
-              type="button"
-              className={`tab-btn ${loginType === 'staff' ? 'active' : ''}`}
-              onClick={() => setLoginType('staff')}
-            >
-              Staff Login
-            </button>
-          </div> */}
+                        <button type="button" className="tab-btn active">
+                            Year Incharge
+                        </button>
+                    </div> */}
 
           <div className="login-header">
-            <div className={`logo-circle ${loginType === 'staff' ? 'staff-logo' : ''}`}>
-              {loginType === 'student' ? '🎓' : '👨‍🏫'}
-            </div>
-            <h1>{loginType === 'student' ? 'Welcome Back' : 'Staff Portal'}</h1>
+            <div className="logo-circle staff-logo">🎓</div>
+            <h1>Year Incharge Login</h1>
             <p className="text-muted">
-              {loginType === 'student'
-                ? 'Enter your credentials to access the portal'
-                : 'Enter your staff credentials to access the portal'}
+              Enter credentials to access dashboard
             </p>
           </div>
 
@@ -114,9 +110,7 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
-                <label htmlFor="username">
-                  {loginType === 'student' ? 'Username / Register No' : 'Staff Email / ID'}
-                </label>
+                <label htmlFor="username">Email ID</label>
                 <span className="input-icon">👤</span>
               </div>
             </div>
@@ -137,7 +131,6 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
                   type="button"
                   className="input-icon-btn"
                   onClick={() => setShowPassword(!showPassword)}
-                  title={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? "👁️" : "🔒"}
                 </button>
@@ -152,30 +145,15 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
             </div>
 
             <button type="submit" className="btn btn-primary btn-block" disabled={Loading}>
-              {loginType === 'student' ? 'Sign In' : 'Sign In as Staff'}
+              {Loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
 
-          {/* <div className="login-footer">
-            <p>Don't have an account? <a href="#">Contact Admin</a></p>
-            <div className="demo-login">
-              <p className="text-small text-muted">Demo Login:</p>
-              <button
-                className="btn btn-ghost btn-sm"
-                onClick={() => {
-                  setUsername("student");
-                  setPassword("password");
-                }}
-              >
-                Auto-fill Demo
-              </button>
-            </div>
-          </div> */}
         </div>
       </div>
 
-      <style>{`
-        .login-page {
+      <style>{` 
+      .login-page {
           min-height: 100vh;
           display: flex;
           align-items: center;
@@ -529,41 +507,6 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
           }
         }
 
-        @media (max-width: 480px) {
-          .login-page {
-            padding: 16px;
-          }
-          
-          .login-container {
-            max-width: 100%;
-          }
-          
-          .login-header {
-            padding: 24px 24px 0;
-            margin-bottom: 24px;
-          }
-          
-          .logo-circle {
-            width: 56px;
-            height: 56px;
-            font-size: 28px;
-            margin-bottom: 12px;
-          }
-          
-          .login-header h1 {
-            font-size: 22px;
-          }
-          
-          .login-form {
-            padding: 0 24px 32px;
-          }
-          
-          .tab-btn {
-            padding: 12px 16px;
-            font-size: 14px;
-          }
-        }
-
         .back-home-btn {
           background: rgba(255, 255, 255, 0.2);
           backdrop-filter: blur(10px);
@@ -585,9 +528,11 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
           background: rgba(255, 255, 255, 0.3);
           transform: translateX(-4px);
         }
+
       `}</style>
+
     </div>
   );
 };
 
-export default Login;
+export default YearInchargeLogin;

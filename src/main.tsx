@@ -27,124 +27,161 @@ import PendingOutpass from './pages/warden/PendingOutpass'
 import OutpassList from './pages/warden/OutpassList'
 import WardenStudentView from './pages/warden/WardenStudentView'
 import WardenProfile from './pages/warden/WardenProfile'
+import YearInchargeLogin from './pages/year-incharge/YearInchargeLogin'
+import YearInchargeDashboard from './pages/year-incharge/YearInchargeDashboard'
+import YearInchargePendingOutpass from './pages/year-incharge/YearInchargePendingOutpass'
+import YearInchargeOutpassList from './pages/year-incharge/YearInchargeOutpassList'
+import YearInchargeStudentView from './pages/year-incharge/YearInchargeStudentView'
+import YearInchargeProfile from './pages/year-incharge/YearInchargeProfile'
 
 
 createRoot(document.getElementById('root')!).render(
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Welcome />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/wardenlogin" element={<Wardenlogin />} />
+  <BrowserRouter>
+    <Routes>
+      <Route path="/" element={<Welcome />} />
+      <Route path="/login" element={<Login initialType="student" />} />
+      <Route path="/student-login" element={<Login initialType="student" />} />
+      <Route path="/staff-login" element={<Login initialType="staff" />} />
+      <Route path="/wardenlogin" element={<Wardenlogin />} />
+      <Route path="/warden-login" element={<Wardenlogin />} />
 
-        {/* Protected Routes */}
-        <Route path="/dashboard" element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        } />
-        <Route path="/warden-dashboard" element={
-          <ProtectedRoute>
-            <WardenDashboard />
-          </ProtectedRoute>
-        } />
-        <Route path="/warden-profile" element={
-          <ProtectedRoute>
-            <WardenProfile />
-          </ProtectedRoute>
-        } />
-        <Route path="/warden/pending-outpass" element={
-          <ProtectedRoute>
-            <PendingOutpass />
-          </ProtectedRoute>
-        } />
-        <Route path="/warden/outpass-list" element={
-          <ProtectedRoute>
-            <OutpassList />
-          </ProtectedRoute>
-        } />
-        <Route path="/warden/student/:id" element={
-          <ProtectedRoute>
-            <WardenStudentView />
-          </ProtectedRoute>
-        } />
-        <Route path="/staff-dashboard" element={
-          <ProtectedRoute>
-            <StaffDashboard />
-          </ProtectedRoute>
-        } />
-        <Route path="/staff-notice" element={
-          <ProtectedRoute>
-            <StaffNotices />
-          </ProtectedRoute>
-        } />
-        <Route path="/staff-registration" element={
-          <ProtectedRoute>
-            <StudentRegistration />
-          </ProtectedRoute>
-        } />
-        <Route path="/staff/student-details/:id" element={
-          <ProtectedRoute>
-            <StudentDetails />
-          </ProtectedRoute>
-        } />
-        <Route path="/student-notice" element={
-          <ProtectedRoute>
-            <StudentNotices />
-          </ProtectedRoute>
-        } />
-        <Route path="/staff-profile" element={
-          <ProtectedRoute>
-            <StaffProfile />
-          </ProtectedRoute>
-        } />
-        <Route path="/staffs" element={
-          <ProtectedRoute>
-            <Staffs />
-          </ProtectedRoute>
-        } />
-        <Route path="/staffs/:id" element={
-          <ProtectedRoute>
-            <StudentViewStaffProfile />
-          </ProtectedRoute>
-        } />
-        <Route path="/subjects" element={
-          <ProtectedRoute>
-            <Subjects />
-          </ProtectedRoute>
-        } />
-        <Route path="/subjects/:id" element={
-          <ProtectedRoute>
-            <SubjectDetails />
-          </ProtectedRoute>
-        } />
-        <Route path="/profile" element={
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        } />
-        <Route path="/outpass" element={
-          <ProtectedRoute>
-            <Outpass />
-          </ProtectedRoute>
-        } />
-        <Route path="/passapproval" element={
-          <ProtectedRoute>
-            <PassApproval />
-          </ProtectedRoute>
-        } />
-        <Route path="/outpass/:id" element={
-          <ProtectedRoute>
-            <OutpassDetails />
-          </ProtectedRoute>
-        } />
-        <Route path="/new-outpass" element={
-          <ProtectedRoute>
-            <NewOutpass />
-          </ProtectedRoute>
-        } />
+      {/* Protected Routes */}
+      <Route path="/dashboard" element={
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/warden-dashboard" element={
+        <ProtectedRoute>
+          <WardenDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/warden-profile" element={
+        <ProtectedRoute>
+          <WardenProfile />
+        </ProtectedRoute>
+      } />
+      <Route path="/warden/pending-outpass" element={
+        <ProtectedRoute>
+          <PendingOutpass />
+        </ProtectedRoute>
+      } />
+      <Route path="/warden/outpass-list" element={
+        <ProtectedRoute>
+          <OutpassList />
+        </ProtectedRoute>
+      } />
+      <Route path="/warden/student/:id" element={
+        <ProtectedRoute>
+          <WardenStudentView />
+        </ProtectedRoute>
+      } />
+      <Route path="/staff-dashboard" element={
+        <ProtectedRoute>
+          <StaffDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/staff-notice" element={
+        <ProtectedRoute>
+          <StaffNotices />
+        </ProtectedRoute>
+      } />
+      <Route path="/staff-registration" element={
+        <ProtectedRoute>
+          <StudentRegistration />
+        </ProtectedRoute>
+      } />
+      <Route path="/staff/student-details/:id" element={
+        <ProtectedRoute>
+          <StudentDetails />
+        </ProtectedRoute>
+      } />
+      <Route path="/student-notice" element={
+        <ProtectedRoute>
+          <StudentNotices />
+        </ProtectedRoute>
+      } />
+      <Route path="/staff-profile" element={
+        <ProtectedRoute>
+          <StaffProfile />
+        </ProtectedRoute>
+      } />
+      <Route path="/staffs" element={
+        <ProtectedRoute>
+          <Staffs />
+        </ProtectedRoute>
+      } />
+      <Route path="/staffs/:id" element={
+        <ProtectedRoute>
+          <StudentViewStaffProfile />
+        </ProtectedRoute>
+      } />
+      <Route path="/subjects" element={
+        <ProtectedRoute>
+          <Subjects />
+        </ProtectedRoute>
+      } />
+      <Route path="/subjects/:id" element={
+        <ProtectedRoute>
+          <SubjectDetails />
+        </ProtectedRoute>
+      } />
+      <Route path="/profile" element={
+        <ProtectedRoute>
+          <Profile />
+        </ProtectedRoute>
+      } />
+      <Route path="/outpass" element={
+        <ProtectedRoute>
+          <Outpass />
+        </ProtectedRoute>
+      } />
+      <Route path="/passapproval" element={
+        <ProtectedRoute>
+          <PassApproval />
+        </ProtectedRoute>
+      } />
+      <Route path="/outpass/:id" element={
+        <ProtectedRoute>
+          <OutpassDetails />
+        </ProtectedRoute>
+      } />
+      <Route path="/new-outpass" element={
+        <ProtectedRoute>
+          <NewOutpass />
+        </ProtectedRoute>
+      } />
 
-        {/* Fallback */}
-        <Route path="*" element={<Login />} />
-      </Routes>
-    </BrowserRouter>
+      {/* Year Incharge Routes */}
+      <Route path="/year-incharge-login" element={<YearInchargeLogin />} />
+      <Route path="/year-incharge-dashboard" element={
+        <ProtectedRoute>
+          <YearInchargeDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/year-incharge/pending-outpass" element={
+        <ProtectedRoute>
+          <YearInchargePendingOutpass />
+        </ProtectedRoute>
+      } />
+      <Route path="/year-incharge/outpass-list" element={
+        <ProtectedRoute>
+          <YearInchargeOutpassList />
+        </ProtectedRoute>
+      } />
+      <Route path="/year-incharge/student/:id" element={
+        <ProtectedRoute>
+          <YearInchargeStudentView />
+        </ProtectedRoute>
+      } />
+      <Route path="/year-incharge-profile" element={
+        <ProtectedRoute>
+          <YearInchargeProfile />
+        </ProtectedRoute>
+      } />
+
+      {/* Fallback */}
+      <Route path="*" element={<Login />} />
+    </Routes>
+  </BrowserRouter>
 )
