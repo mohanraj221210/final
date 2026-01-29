@@ -8,8 +8,7 @@ const Welcome: React.FC = () => {
     <div className="landing-page">
       <nav className="landing-nav container">
         <div className="brand">
-          <span className="icon">🎓</span>
-          <span className="text">JIT Portal</span>
+          <img src="/jpgif.gif" alt="JIT Portal" className="brand-logo-gif" />
         </div>
         {/* <button className="btn btn-secondary login-nav-btn" onClick={() => navigate('/login')}>
           Login
@@ -154,13 +153,16 @@ const Welcome: React.FC = () => {
         }
 
         .brand {
-          display: flex;
+          width: 100%;
+          display: cover;
           align-items: center;
-          gap: 12px;
-          font-weight: 700;
-          font-size: 24px;
-          color: white;
-          letter-spacing: -0.5px;
+          justify-content: center;
+        }
+
+        .brand-logo-gif {
+            height: 100px; /* Slightly increased height */
+            width: 100%; 
+            object-fit: auto; /* Fill the area */
         }
 
         .login-nav-btn {
@@ -385,6 +387,7 @@ const Welcome: React.FC = () => {
         }
 
         .hero-img {
+        top: 300px;
           width: 100%;
           height: 100%;
           object-fit: cover;
