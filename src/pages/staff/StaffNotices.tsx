@@ -21,8 +21,9 @@ interface Community {
 
 const StaffNotices: React.FC = () => {
     const navigate = useNavigate();
-    const [activeCommunity, setActiveCommunity] = useState<number>(1);
+    const [activeCommunity] = useState<number>(1);
     const [newMessage, setNewMessage] = useState('');
+    
 
     // Dummy Data
     const communities: Community[] = [
@@ -76,7 +77,12 @@ const StaffNotices: React.FC = () => {
                 <div className="header-container">
                     <div className="header-left">
                         <div className="brand" onClick={() => navigate('/staff-dashboard')} style={{ cursor: 'pointer' }}>
-                            <span className="brand-icon">🔙</span>
+                            <span className="brand-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M19 12H5" />
+                                    <path d="M12 19l-7-7 7-7" />
+                                </svg>
+                            </span>
                             <span className="brand-text">Staff Dashboard</span>
                         </div>
                     </div>
@@ -84,7 +90,7 @@ const StaffNotices: React.FC = () => {
             </header>
 
             <div className="app-container">
-                {/* Sidebar */}
+                {/* Sidebar
                 <div className="sidebar">
                     <div className="sidebar-header">
                         <div className="profile-pic">👨‍🏫</div>
@@ -120,7 +126,7 @@ const StaffNotices: React.FC = () => {
                             </div>
                         ))}
                     </div>
-                </div>
+                </div> */}
 
                 {/* Chat Area */}
                 <div className="chat-area">
@@ -197,15 +203,19 @@ const StaffNotices: React.FC = () => {
 
                 /* Reuse Header styles minimally to match dashboard but fit layout */
                 .dashboard-header {
-                    background: #00a884; /* WhatsApp Green for header/brand area */
-                    height: 60px;
+                    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+                    height: 64px;
                     flex-shrink: 0;
                     display: flex;
                     align-items: center;
-                    padding: 0 20px;
+                    padding: 0 24px;
                     color: white;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+                    z-index: 10;
                 }
-                .brand { display: flex; align-items: center; gap: 10px; font-weight: bold; }
+                .brand { display: flex; align-items: center; gap: 10px; font-weight: bold; transition: opacity 0.2s; }
+                .brand:hover { opacity: 0.9; }
+                .brand-icon { display: flex; align-items: center; }
                 .brand-text { font-size: 1.1rem; }
 
                 /* Main Container */
@@ -213,19 +223,20 @@ const StaffNotices: React.FC = () => {
                     display: flex;
                     flex: 1;
                     max-width: 1600px;
-                    margin: 20px auto;
-                    width: calc(100% - 38px);
+                    margin: 10px auto;
+                    width: 98%;
                     background: white;
                     box-shadow: 0 1px 1px 0 rgba(11,20,26,.06), 0 2px 5px 0 rgba(11,20,26,.2);
-                    height: calc(100vh - 100px);
+                    height: calc(100vh - 80px);
                     overflow: hidden;
+                    border-radius: 4px;
                 }
 
                 /* Sidebar */
                 .sidebar {
-                    width: 30%; /* or 400px */
-                    min-width: 300px;
-                    max-width: 450px;
+                    flex: 0 0 30%;
+                    min-width: 320px;
+                    max-width: 420px;
                     display: flex;
                     flex-direction: column;
                     border-right: 1px solid #e9edef;
@@ -359,7 +370,7 @@ const StaffNotices: React.FC = () => {
 
                 /* Chat Area */
                 .chat-area {
-                    width: 70%;
+                    flex: 1;
                     display: flex;
                     flex-direction: column;
                     background: #efeae2; /* WhatsApp Classic Wallpaper color */
@@ -368,9 +379,9 @@ const StaffNotices: React.FC = () => {
                 }
 
                 .chat-header {
-                    height: 60px;
-                    background: #f0f2f5;
-                    border-bottom: 1px solid rgba(11,20,26,.08);
+                    height: 64px;
+                    background: white;
+                    border-bottom: 1px solid rgba(0,0,0,0.06);
                     display: flex;
                     align-items: center;
                     padding: 10px 16px;
@@ -488,16 +499,16 @@ const StaffNotices: React.FC = () => {
                 }
 
                 @media (max-width: 900px) {
-                    .sidebar { width: 35%; }
-                    .chat-area { width: 65%; }
+                    .sidebar { flex: 0 0 40%; min-width: 280px; }
+                    .chat-area { flex: 1; }
                 }
 
                 @media (max-width: 700px) {
-                    .app-container { width: 100%; height: 100vh; margin: 0; }
-                    .sidebar { width: 100%; display: ${activeCommunity ? 'none' : 'flex'}; }
-                    .chat-area { width: 100%; display: ${activeCommunity ? 'flex' : 'none'}; }
+                    .app-container { width: 100%; height: 100vh; margin: 0; border-radius: 0; box-shadow: none; }
+                    .sidebar { flex: 0 0 100%; width: 100%; display: ${activeCommunity ? 'none' : 'flex'}; }
+                    .chat-area { flex: 0 0 100%; width: 100%; display: ${activeCommunity ? 'flex' : 'none'}; }
                     .whatsapp-layout { background: white; }
-                    .dashboard-header { display: none; } /* On mobile, maybe hide the top nav or adapt it */
+                    .dashboard-header { display: none; }
                 }
             `}</style>
         </div>

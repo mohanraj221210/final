@@ -5,157 +5,160 @@ import axios from 'axios';
 import { toast, ToastContainer } from "react-toastify";
 
 const WatchmanLogin: React.FC = () => {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [showPassword, setShowPassword] = useState(false);
-    const [Loading, setLoading] = useState(false);
-    const [showToast, setShowToast] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [Loading, setLoading] = useState(false);
+  const [showToast, setShowToast] = useState(false);
 
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    const API_URL = import.meta.env.VITE_API_URL;
-    // Example: http://localhost:5000
+  const API_URL = import.meta.env.VITE_API_URL;
+  // Example: http://localhost:5000
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
-        if (!email || !password) {
-            toast.error("Please enter email and password");
-            return;
+    if (!email || !password) {
+      toast.error("Please enter email and password");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await axios.post(`${API_URL}/watchman/login`, {
+        email,
+        password
+      });
+
+      if (response.status === 200) {
+        const token = response.data.token;
+
+        // ✅ Save login data
+        localStorage.setItem("token", token);
+        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("userType", "watchman");
+
+        setShowToast(true);
+
+        setTimeout(() => {
+          navigate("/watchman-dashboard");
+        }, 1500);
+      }
+    } catch (error: any) {
+      console.error("Login error:", error);
+
+      if (error.response) {
+        const status = error.response.status;
+
+        if (status === 400) {
+          toast.error("Missing email or password", { position: "bottom-right", autoClose: 5000 });
+        } else if (status === 401) {
+          toast.error("Invalid email or password", { position: "bottom-right", autoClose: 5000 });
+        } else if (status === 404) {
+          toast.error("Watchman not found", { position: "bottom-right", autoClose: 5000 });
+        } else {
+          toast.error("Login failed. Try again.", { position: "bottom-right", autoClose: 5000 });
         }
+      } else {
+        toast.error("Server not reachable", { position: "bottom-right", autoClose: 5000 });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        setLoading(true);
+  return (
+    <div className="login-page">
+      <ToastContainer />
+      {showToast && (
+        <Toast
+          message="Watchman login successful! Redirecting..."
+          type="success"
+          onClose={() => setShowToast(false)}
+        />
+      )}
 
-        try {
-            const response = await axios.post(`${API_URL}/watchman/login`, {
-                email,
-                password
-            });
+      <div className="login-container">
+        <button className="back-home-btn" onClick={() => navigate('/')}>
+          ← Back to Welcome
+        </button>
+        <div className="login-card staff-theme">
 
-            if (response.status === 200) {
-                const token = response.data.token;
-
-                // ✅ Save login data
-                localStorage.setItem("token", token);
-                localStorage.setItem("isLoggedIn", "true");
-                localStorage.setItem("userType", "watchman");
-
-                setShowToast(true);
-
-                setTimeout(() => {
-                    navigate("/watchman-dashboard");
-                }, 1500);
-            }
-        } catch (error: any) {
-            console.error("Login error:", error);
-
-            if (error.response) {
-                const status = error.response.status;
-
-                if (status === 400) {
-                    toast.error("Missing email or password", { position: "bottom-right", autoClose: 5000 });
-                } else if (status === 401) {
-                    toast.error("Invalid email or password", { position: "bottom-right", autoClose: 5000 });
-                } else if (status === 404) {
-                    toast.error("Watchman not found", { position: "bottom-right", autoClose: 5000 });
-                } else {
-                    toast.error("Login failed. Try again.", { position: "bottom-right", autoClose: 5000 });
-                }
-            } else {
-                toast.error("Server not reachable", { position: "bottom-right", autoClose: 5000 });
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className="login-page">
-            <ToastContainer />
-            {showToast && (
-                <Toast
-                    message="Watchman login successful! Redirecting..."
-                    type="success"
-                    onClose={() => setShowToast(false)}
-                />
-            )}
-
-            <div className="login-container">
-                <div className="login-card staff-theme">
-
-                    <div className="login-tabs">
+          {/* <div className="login-tabs">
                         <button type="button" className="tab-btn" onClick={() => navigate('/wardenlogin')}>
                             Warden
                         </button>
                         <button type="button" className="tab-btn active">
                             Watchman
                         </button>
-                    </div>
+                    </div> */}
 
-                    <div className="login-header">
-                        <div className="logo-circle staff-logo">👮</div>
-                        <h1>Watchman Login</h1>
-                        <p className="text-muted">
-                            Enter your watchman credentials to access the portal
-                        </p>
-                    </div>
+          <div className="login-header">
+            <div className="logo-circle staff-logo">👮</div>
+            <h1>Watchman Login</h1>
+            <p className="text-muted">
+              Enter your watchman credentials to access the portal
+            </p>
+          </div>
 
-                    <form onSubmit={handleSubmit} className="login-form">
-                        <div className="form-group">
-                            <div className="input-wrapper">
-                                <input
-                                    type="text"
-                                    id="username"
-                                    className="input floating-input"
-                                    placeholder=" "
-                                    required
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                />
-                                <label htmlFor="username">Watchman Email / ID</label>
-                                <span className="input-icon">👤</span>
-                            </div>
-                        </div>
-
-                        <div className="form-group">
-                            <div className="input-wrapper">
-                                <input
-                                    type={showPassword ? "text" : "password"}
-                                    id="password"
-                                    className="input floating-input"
-                                    placeholder=" "
-                                    required
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                />
-                                <label htmlFor="password">Password</label>
-                                <button
-                                    type="button"
-                                    className="input-icon-btn"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                >
-                                    {showPassword ? "👁️" : "🔒"}
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="form-actions">
-                            <label className="checkbox-label">
-                                <input type="checkbox" />
-                                <span>Remember me</span>
-                            </label>
-                        </div>
-
-                        <button type="submit" className="btn btn-primary btn-block" disabled={Loading}>
-                            {Loading ? "Signing in..." : "Sign In"}
-                        </button>
-                    </form>
-
-                </div>
+          <form onSubmit={handleSubmit} className="login-form">
+            <div className="form-group">
+              <div className="input-wrapper">
+                <input
+                  type="text"
+                  id="username"
+                  className="input floating-input"
+                  placeholder=" "
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <label htmlFor="username">Watchman Email / ID</label>
+                <span className="input-icon">👤</span>
+              </div>
             </div>
 
+            <div className="form-group">
+              <div className="input-wrapper">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  className="input floating-input"
+                  placeholder=" "
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <label htmlFor="password">Password</label>
+                <button
+                  type="button"
+                  className="input-icon-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? "👁️" : "🔒"}
+                </button>
+              </div>
+            </div>
 
-            <style>{` 
+            <div className="form-actions">
+              <label className="checkbox-label">
+                <input type="checkbox" />
+                <span>Remember me</span>
+              </label>
+            </div>
+
+            <button type="submit" className="btn btn-primary btn-block" disabled={Loading}>
+              {Loading ? "Signing in..." : "Sign In"}
+            </button>
+          </form>
+
+        </div>
+      </div>
+
+
+      <style>{` 
       .login-page {
           min-height: 100vh;
           display: flex;
@@ -524,11 +527,32 @@ const WatchmanLogin: React.FC = () => {
             font-size: 22px;
           }
         }
+          .back-home-btn {
+          background: rgba(255, 255, 255, 0.2);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          color: white;
+          padding: 8px 16px;
+          border-radius: 8px;
+          cursor: pointer;
+          font-weight: 500;
+          margin-bottom: 16px;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 0.9rem;
+        }
+
+        .back-home-btn:hover {
+          background: rgba(255, 255, 255, 0.3);
+          transform: translateX(-4px);
+        }
 
       `}</style>
 
-        </div>
-    );
+    </div>
+  );
 };
 
 export default WatchmanLogin;

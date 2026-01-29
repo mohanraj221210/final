@@ -55,6 +55,12 @@ const StaffHeader: React.FC<StaffHeaderProps> = ({ activeMenu }) => {
                         Notice
                     </button>
                     <button
+                        className={`nav-item ${activeMenu === 'registration' ? 'active' : ''}`}
+                        onClick={() => handleNavigation('/staff-registration')}
+                    >
+                        Registration
+                    </button>
+                    <button
                         className={`nav-item ${activeMenu === 'profile' ? 'active' : ''}`}
                         onClick={() => handleNavigation('/staff-profile')}
                     >

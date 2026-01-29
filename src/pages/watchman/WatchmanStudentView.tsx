@@ -8,30 +8,160 @@ const WatchmanStudentView: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [student, setStudent] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
     fetchStudent();
-  }, []);
 
-  const fetchStudent = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      // Re-using warden endpoint since it provides the necessary details
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/watchman/outpass/${id}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
+    return () => {
+      isMounted = false;
+    };
+
+    // Helper function inside effect to access isMounted closure
+    async function fetchStudent() {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_URL}/watchman/outpass/${id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        if (isMounted) {
+          console.log("Student Details Response:", res.data);
+          setStudent(res.data.outpass || res.data.outpassdetail || res.data);
         }
-      );
-      setStudent(res.data.outpassdetail || null);
-    } catch (error) {
-      console.error("Failed to fetch student details:", error);
-      toast.error("Failed to load student details");
+      } catch (error) {
+        if (isMounted) {
+          console.error("Failed to fetch student details:", error);
+          toast.error("Failed to load student details");
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
     }
-  };
+  }, [id]);
 
 
-  if (!student) return <div className="loading-state">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="page-container warden-view-page loading-center">
+        <div className="loading-container">
+          <div className="loading-bar">
+            <div className="loading-progress"></div>
+          </div>
+          <p>Loading student details...</p>
+        </div>
+        <style>{`
+          .loading-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: #f8fafc;
+          }
+          .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            color: #64748b;
+            font-weight: 500;
+          }
+          .loading-bar {
+            width: 200px;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 99px;
+            overflow: hidden;
+            position: relative;
+          }
+          .loading-progress {
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, #2563eb, #3b82f6);
+            border-radius: 99px;
+            position: absolute;
+            animation: shimmer 1.5s infinite linear;
+          }
+          @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(200%); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  if (!student) {
+    return (
+      <div className="page-container warden-view-page error-center">
+        <WatchmanNav />
+        <div className="error-container">
+          <div className="error-icon">⚠️</div>
+          <h2>Student details not found</h2>
+          <p>Please check the ID and try again, or contact the administrator.</p>
+          <button className="back-btn-error" onClick={() => navigate(-1)}>
+            Go Back
+          </button>
+        </div>
+        <style>{`
+          .error-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: #f8fafc;
+            padding-top: 70px; /* Account for navbar */
+          }
+          .error-container {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            max-width: 400px;
+            width: 100%;
+            border: 1px solid #f1f5f9;
+          }
+          .error-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+          }
+          .error-container h2 {
+            color: #1e293b;
+            margin-bottom: 8px;
+            font-size: 20px;
+          }
+          .error-container p {
+            color: #64748b;
+            margin-bottom: 24px;
+            font-size: 14px;
+            line-height: 1.5;
+          }
+          .back-btn-error {
+            background: #1e3a8a;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+          }
+          .back-btn-error:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   const s = student.studentid || {};
 

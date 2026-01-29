@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import Toast from '../../components/Toast';
 import axios from 'axios';
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 
-const Wardenlogin: React.FC = () => {
+const YearInchargeLogin: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -14,7 +14,6 @@ const Wardenlogin: React.FC = () => {
   const navigate = useNavigate();
 
   const API_URL = import.meta.env.VITE_API_URL;
-  // Example: http://localhost:5000
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -27,7 +26,7 @@ const Wardenlogin: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${API_URL}/warden/login`, {
+      const response = await axios.post(`${API_URL}/incharge/login`, {
         email,
         password
       });
@@ -38,12 +37,12 @@ const Wardenlogin: React.FC = () => {
         // ✅ Save login data
         localStorage.setItem("token", token);
         localStorage.setItem("isLoggedIn", "true");
-        localStorage.setItem("userType", "warden");
+        localStorage.setItem("userType", "year-incharge");
 
         setShowToast(true);
 
         setTimeout(() => {
-          navigate("/warden-dashboard");
+          navigate("/year-incharge-dashboard");
         }, 1500);
       }
     } catch (error: any) {
@@ -53,16 +52,16 @@ const Wardenlogin: React.FC = () => {
         const status = error.response.status;
 
         if (status === 400) {
-          toast.error("Missing email or password", { position: "bottom-right", autoClose: 5000 });
+          toast.error("Missing email or password");
         } else if (status === 401) {
-          toast.error("Invalid email or password", { position: "bottom-right", autoClose: 5000 });
+          toast.error("Invalid email or password");
         } else if (status === 404) {
-          toast.error("Warden not found", { position: "bottom-right", autoClose: 5000 });
+          toast.error("User not found");
         } else {
-          toast.error("Login failed. Try again.", { position: "bottom-right", autoClose: 5000 });
+          toast.error("Login failed. Try again.");
         }
       } else {
-        toast.error("Server not reachable", { position: "bottom-right", autoClose: 5000 });
+        toast.error("Server not reachable");
       }
     } finally {
       setLoading(false);
@@ -71,10 +70,9 @@ const Wardenlogin: React.FC = () => {
 
   return (
     <div className="login-page">
-      <ToastContainer />
       {showToast && (
         <Toast
-          message="Warden login successful! Redirecting..."
+          message="Login successful! Redirecting..."
           type="success"
           onClose={() => setShowToast(false)}
         />
@@ -87,19 +85,16 @@ const Wardenlogin: React.FC = () => {
         <div className="login-card staff-theme">
 
           {/* <div className="login-tabs">
-            <button type="button" className="tab-btn active">
-              Warden
-            </button>
-            <button type="button" className="tab-btn" onClick={() => navigate('/watchmanlogin')}>
-              Watchman
-            </button>
-          </div> */}
+                        <button type="button" className="tab-btn active">
+                            Year Incharge
+                        </button>
+                    </div> */}
 
           <div className="login-header">
-            <div className="logo-circle staff-logo">🛡️</div>
-            <h1>Warden Login</h1>
+            <div className="logo-circle staff-logo">🎓</div>
+            <h1>Year Incharge Login</h1>
             <p className="text-muted">
-              Enter your warden credentials to access the portal
+              Enter credentials to access dashboard
             </p>
           </div>
 
@@ -115,7 +110,7 @@ const Wardenlogin: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
-                <label htmlFor="username">Warden Email / ID</label>
+                <label htmlFor="username">Email ID</label>
                 <span className="input-icon">👤</span>
               </div>
             </div>
@@ -156,7 +151,6 @@ const Wardenlogin: React.FC = () => {
 
         </div>
       </div>
-
 
       <style>{` 
       .login-page {
@@ -242,12 +236,14 @@ const Wardenlogin: React.FC = () => {
           box-shadow: 0 4px 12px rgba(0, 11, 25, 0.15);
         }
 
+        /* Student Login - Blue Theme */
         .tab-btn:first-child.active {
           color: var(--primary);
           background: linear-gradient(135deg, rgba(0, 71, 171, 0.05), rgba(0, 71, 171, 0.1));
           border: 2px solid rgba(0, 71, 171, 0.3);
         }
 
+        /* Staff Login - Purple Theme */
         .tab-btn:last-child.active {
           color: #7c3aed;
           background: linear-gradient(135deg, rgba(124, 58, 237, 0.05), rgba(124, 58, 237, 0.1));
@@ -265,6 +261,7 @@ const Wardenlogin: React.FC = () => {
           padding: 0 48px 48px;
         }
 
+        /* Shimmering Border Effect */
         .login-card::before {
           content: '';
           position: absolute;
@@ -289,6 +286,7 @@ const Wardenlogin: React.FC = () => {
           pointer-events: none;
         }
 
+        /* Glassy Reflection */
         .login-card::after {
           content: '';
           position: absolute;
@@ -509,21 +507,6 @@ const Wardenlogin: React.FC = () => {
           }
         }
 
-        @media (max-width: 480px) {
-          .login-header {
-            padding: 24px 20px 0;
-          }
-          .login-form {
-            padding: 0 20px 32px;
-          }
-          .login-card {
-            border-radius: 16px;
-          }
-          .login-header h1 {
-            font-size: 22px;
-          }
-        }
-
         .back-home-btn {
           background: rgba(255, 255, 255, 0.2);
           backdrop-filter: blur(10px);
@@ -545,11 +528,11 @@ const Wardenlogin: React.FC = () => {
           background: rgba(255, 255, 255, 0.3);
           transform: translateX(-4px);
         }
+
       `}</style>
 
     </div>
   );
 };
 
-export default Wardenlogin;
-
+export default YearInchargeLogin;

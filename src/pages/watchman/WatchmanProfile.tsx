@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Nav from "../../components/WatchmanNav";
 import Toast from "../../components/Toast";
 import watchmanProfile from "../../assets/jit.webp"; // Using placeholder for now
 import axios from "axios";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 
 interface Watchman {
     name: string;
@@ -13,6 +14,7 @@ interface Watchman {
 }
 
 const WatchmanProfile: React.FC = () => {
+    const navigate = useNavigate();
     const [watchman, setWatchman] = useState<Watchman>({
         name: "",
         email: "",
@@ -108,8 +110,12 @@ const WatchmanProfile: React.FC = () => {
                     onClose={() => setShowToast(false)}
                 />
             )}
+            <ToastContainer/>
 
             <div className="content-wrapper">
+                <button className="back-btn" onClick={() => navigate('/watchman-dashboard')}>
+                    ← Back
+                </button>
                 <div className="profile-layout">
                     {/* Sidebar */}
                     <div className="profile-sidebar">
@@ -219,7 +225,30 @@ const WatchmanProfile: React.FC = () => {
 
             <style>{`
         
-        .profile-page { margin-top: 80px; }
+        button.back-btn {
+          background: white;
+          border: 1px solid #cbd5e1;
+          color: #1e293b;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          padding: 8px 16px;
+          border-radius: 6px;
+          transition: all 0.2s;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+          margin-bottom: 24px;
+        }
+
+        button.back-btn:hover {
+          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+          transform: translateY(-1px);
+          background: #f8fafc;
+        }
+
+        .profile-page { margin-top: 10px; }
         .profile-layout { display: grid; grid-template-columns: 350px 1fr; gap: 32px; }
         .profile-card { text-align: center; }
         .avatar-container { position: relative; width: 120px; height: 120px; margin: 0 auto 16px; }
@@ -243,7 +272,7 @@ const WatchmanProfile: React.FC = () => {
           .avatar-container { width: 100px; height: 100px; }
           .profile-header h2 { font-size: 1.25rem; margin-bottom: 2px; }
           .profile-role { margin-bottom: 2px; }
-          .profile-badges { margin-top: -45px; }
+          .profile-badges { margin-top: 8px; }
           .input { font-size: 14px; padding: 10px; }
         }
       `}</style>

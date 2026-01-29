@@ -1,10 +1,10 @@
 import React from 'react';
 import Nav from '../../components/WatchmanNav'; // Import WatchmanNav
 import { useNavigate } from 'react-router-dom';
-
+import { toast, ToastContainer } from 'react-toastify';
 import axios from 'axios';
 import { useEffect } from 'react';
-import { toast } from 'react-toastify';
+
 
 interface User {
     name: string;
@@ -25,11 +25,13 @@ const WatchmanDashboard: React.FC = () => {
     const [zoomingPath, setZoomingPath] = React.useState<string | null>(null);
 
     useEffect(() => {
+        let isMounted = true;
+
         const fetchUserData = async () => {
             // Fallback or actual API call if needed
             const token = localStorage.getItem('token');
             if (!token) {
-                setLoading(false);
+                if (isMounted) setLoading(false);
                 return;
             }
 
@@ -39,18 +41,25 @@ const WatchmanDashboard: React.FC = () => {
                         authorization: `Bearer ${token}`,
                     },
                 });
-                if (response.status == 200) {
+                if (response.status == 200 && isMounted) {
                     setUser(response.data.watchman);
                 }
             } catch (error) {
-                console.error('Failed to fetch user data');
-                toast.error('Failed to fetch user data');
+                if (isMounted) {
+                    console.error('Failed to fetch user data');
+                    // Optional: Only show toast if it's a critical error or not just a cancellation
+                    toast.error('Failed to fetch user data'); 
+                }
             } finally {
-                setLoading(false);
+                if (isMounted) setLoading(false);
             }
         };
 
         fetchUserData();
+
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     const handleQuickAction = (path: string) => {
@@ -61,12 +70,21 @@ const WatchmanDashboard: React.FC = () => {
     };
 
     if (Loading) {
-        return <div className="card staff-card">Loading...</div>;
+        return (
+            <div className="page-container dashboard-page loading-center">
+                <div className="loading-container">
+                    <div className="loading-bar">
+                        <div className="loading-progress"></div>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     return (
         <div className="page-container dashboard-page">
             <Nav />
+            <ToastContainer/>
             <div className="content-wrapper">
                 {/* Hero Section */}
                 <div className="dashboard-hero">
@@ -155,8 +173,8 @@ const WatchmanDashboard: React.FC = () => {
                 /* Quick Actions Grid with 3D Perspective */
                 .quick-links-grid {
                     display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-                    gap: 20px;
+                    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+                    gap: 24px;
                     perspective: 1000px;
                     padding-bottom: 20px;
                 }
@@ -202,7 +220,8 @@ const WatchmanDashboard: React.FC = () => {
 
                 .action-card:hover {
                     transform: translateY(-8px) scale(1.02);
-                    box-shadow: 0 20px 50px rgba(255, 255, 255, 0.17);
+                    box-shadow: 0 20px 40px rgba(30, 58, 138, 0.15); /* More subtle, colored shadow */
+                    border-color: rgba(30, 58, 138, 0.1);
                 }
                 
                 .action-icon {
@@ -328,6 +347,40 @@ const WatchmanDashboard: React.FC = () => {
                         height: 48px;
                         font-size: 24px;
                     }
+                }
+                /* Loading Animation */
+                .loading-center {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100vh;
+                    width: 100%;
+                }
+                .loading-container {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 16px;
+                }
+                .loading-bar {
+                    width: 200px;
+                    height: 6px;
+                    background: #e2e8f0;
+                    border-radius: 99px;
+                    overflow: hidden;
+                    position: relative;
+                }
+                .loading-progress {
+                    width: 50%;
+                    height: 100%;
+                    background: linear-gradient(90deg, #2563eb, #3b82f6);
+                    border-radius: 99px;
+                    position: absolute;
+                    animation: shimmer 1.5s infinite linear;
+                }
+                @keyframes shimmer {
+                    0% { transform: translateX(-100%); }
+                    100% { transform: translateX(200%); }
                 }
             `}</style>
         </div>

@@ -467,6 +467,52 @@ const StudentViewStaffProfile: React.FC = () => {
                     --transition: all 0.2s ease-in-out;
                 }
 
+                 @media (max-width: 768px) {
+                    .mobile-menu-btn {
+                        display: block;
+                    }
+
+                    .header-nav-custom {
+                        position: absolute;
+                        top: 70px;
+                        left: 0;
+                        right: 0;
+                        background: white;
+                        flex-direction: column;
+                        padding: 0;
+                        border-bottom: 1px solid #e2e8f0;
+                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                        overflow: hidden;
+                        max-height: 0;
+                        transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
+                        gap: 0;
+                    }
+
+                    .header-nav-custom.mobile-open {
+                        max-height: 500px;
+                        padding: 16px 0;
+                    }
+
+                    .nav-item-custom, .logout-btn-custom {
+                        width: 100%;
+                        text-align: left;
+                        padding: 12px 24px;
+                        border-radius: 0;
+                        margin: 0;
+                    }
+
+                    .logout-btn-custom {
+                        border: none;
+                        border-top: 1px solid #fee2e2;
+                        color: #ef4444;
+                        margin-top: 8px;
+                    }
+
+                    .content-wrapper-custom {
+                        margin-top: 70px;
+                    }
+                }
+
                 /* Layout */
                 .staff-profile-page {
                     min-height: 100vh;
@@ -482,7 +528,7 @@ const StudentViewStaffProfile: React.FC = () => {
                 }
 
                 .page-container {
-                    padding-top: 20px;
+                    padding-top: 80px;
                 }
                 
                 /* Loading */

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { type Staff } from '../../data/sampleData';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import axios from 'axios';
 import StaffHeader from '../../components/StaffHeader';
 
@@ -34,6 +34,7 @@ const StaffDashboard: React.FC = () => {
 
     return (
         <div className="staff-dashboard">
+            <ToastContainer position="bottom-right" />
             <StaffHeader activeMenu="dashboard" />
 
             {/* Main Content */}

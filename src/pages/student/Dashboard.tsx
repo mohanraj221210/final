@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { RECENT_DOWNLOADS, type User } from '../../data/sampleData';
 import axios from 'axios';
 import { useEffect } from 'react';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 
 // Event types for calendar
 type EventType = 'working' | 'leave' | 'college_event' | 'cia_exam';
@@ -49,14 +49,22 @@ const Dashboard: React.FC = () => {
 
     // Sample events data
     const [events] = React.useState<CalendarEvent[]>([
-        { id: '1', date: new Date(2026, 0, 6), type: 'working', title: 'Regular Working Day', description: 'Normal classes' },
-        { id: '2', date: new Date(2026, 0, 8), type: 'college_event', title: 'Tech Symposium', description: 'Annual technical symposium', time: '9:00 AM - 5:00 PM' },
-        { id: '3', date: new Date(2026, 0, 10), type: 'leave', title: 'Holiday', leaveReason: 'Pongal Festival' },
-        { id: '4', date: new Date(2026, 0, 15), type: 'cia_exam', title: 'CIA 1 - Data Structures', description: 'First internal assessment', time: '10:00 AM - 12:00 PM' },
-        { id: '5', date: new Date(2026, 0, 20), type: 'working', title: 'Regular Working Day', description: 'Normal classes' },
-        { id: '6', date: new Date(2026, 0, 22), type: 'college_event', title: 'Sports Day', description: 'Annual sports meet', time: '8:00 AM - 4:00 PM' },
+        { id: '1', date: new Date(2026, 0, 5), type: 'cia_exam', title: 'CIA 1 - AI & ML', description: 'AI & ML', time: '8:45 AM - 9:15 AM' },
+        { id: '2', date: new Date(2026, 0, 6), type: 'cia_exam', title: 'CIA 1 - FDS', description: 'FDS', time: '8:45 AM - 9:15 AM' },
+        { id: '3', date: new Date(2026, 0, 7), type: 'cia_exam', title: 'CIA 1 - oops', description: 'oops', time: '8:45 AM - 9:15 AM' },
+        { id: '4', date: new Date(2026, 0, 8), type: 'cia_exam', title: 'CIA 1 - Data Structures', description: 'Data Structures', time: '8:45 AM - 9:15 AM' },
+        { id: '5', date: new Date(2026, 0, 9), type: 'college_event', title: 'event - DBMS and pongal festival', description: 'DBMS and pongal festival', time: '8:45 AM - 9:15 AM' },
+        { id: '6', date: new Date(2026, 0, 10), type: 'cia_exam', title: 'CIA 1 - tamil', description: 'tamil', time: '8:45 AM - 9:15 AM' },
         { id: '7', date: new Date(2026, 0, 26), type: 'leave', title: 'Republic Day', leaveReason: 'National Holiday' },
-        { id: '8', date: new Date(2026, 0, 28), type: 'cia_exam', title: 'CIA 1 - DBMS', description: 'Database Management Systems exam', time: '2:00 PM - 4:00 PM' },
+        { id: '8', date: new Date(2026, 0, 19), type: 'cia_exam', title: 'CIA 1 - english', description: 'english', time: '8:45 AM - 9:15 AM' },
+        { id: '9', date: new Date(2026, 0, 11), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
+        { id: '10', date: new Date(2026, 0, 12), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
+        { id: '11', date: new Date(2026, 0, 13), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
+        { id: '12', date: new Date(2026, 0, 14), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
+        { id: '13', date: new Date(2026, 0, 15), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
+        { id: '14', date: new Date(2026, 0, 16), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
+        { id: '15', date: new Date(2026, 0, 17), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
+        { id: '16', date: new Date(2026, 0, 18), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
     ]);
 
     useEffect(() => {
@@ -216,6 +224,7 @@ const Dashboard: React.FC = () => {
 
     return (
         <div className="page-container dashboard-page">
+            <ToastContainer position="bottom-right" />
             {/* Custom Dashboard Header */}
             <header className="dashboard-header-custom">
                 <div className="header-container-custom">
@@ -721,6 +730,8 @@ const Dashboard: React.FC = () => {
 
                 .content-wrapper-custom {
                     margin-top: 70px;
+                    margin-right: 20px;
+                    margin-left: 20px;
                     padding: 0;
                 }
 
@@ -918,7 +929,7 @@ const Dashboard: React.FC = () => {
                 }
 
                 .calendar-day.today .day-number {
-                    color: white;
+                    color: green;
                     font-weight: 800;
                 }
 
@@ -1053,6 +1064,7 @@ const Dashboard: React.FC = () => {
 
                 .panel-header h3 {
                     margin: 0;
+                    color: white;
                     font-size: 1.25rem;
                     font-weight: 700;
                 }
@@ -1621,6 +1633,7 @@ const Dashboard: React.FC = () => {
 
                 .hero-welcome .badge {
                     animation: pulse-glow 3s infinite;
+                    margin-bottom: 5px;
                 }
                 
                 /* Typing effect for H1 */
@@ -1634,6 +1647,7 @@ const Dashboard: React.FC = () => {
                         typing 2s steps(30, end) 0.5s both,
                         blink-caret 0.75s step-end infinite;
                     max-width: fit-content;
+                    padding-top: 15px 
                 }
 
                 /* Staggered Action Cards */
@@ -1646,10 +1660,78 @@ const Dashboard: React.FC = () => {
                 .action-card:nth-child(4) { animation-delay: 0.6s; }
 
                 @media (max-width: 968px) {
-                    .dashboard-layout { grid-template-columns: 20fr; }
-                    .dashboard-hero { flex-direction: column; align-items: flex-start; gap: 24px; }
-                    .hero-stats-grid { width: 100%; overflow-x: auto; padding-bottom: 12px; }
+                    .dashboard-layout { grid-template-columns: 1fr; }
+                    .dashboard-hero { flex-direction: column; align-items: flex-start; gap: 24px; padding: 24px; }
+                    .hero-stats-grid { 
+                        display: flex;
+                        flex-direction: column;
+                        width: 100%; 
+                        overflow-x: auto; 
+                        padding-bottom: 12px; 
+                        justify-content: flex-start;
+                        gap: 16px;
+                    }
+                    .stat-card {
+                        min-width: 160px;
+                        flex: 0 0 auto;
+                    }
                     .sidebar { animation: fadeInUp 0.8s ease-out 0.4s backwards; }
+                }
+
+                @media (max-width: 768px) {
+                    .quick-links-grid {
+                         grid-template-columns: repeat(2, 1fr);
+                         gap: 16px;
+                    }
+                    h3{
+                      font-size:
+                    }
+                    .action-card {
+                         padding: 16px;
+                    }
+                    .action-icon {
+                         width: 56px;
+                         height: 56px;
+                         font-size: 28px;
+                    }
+                    .calendar-header {
+                        flex-direction: column;
+                        align-items: flex-start;
+                        gap: 16px;
+                    }
+                    .calendar-card {
+                        width: 100vw;
+                        display: flex;
+                        flex-direction: column;
+                    }
+                    .calendar-header-day{
+                      padding: 2%;
+                    }
+                    .calendar-controls {
+                        width: 100%;
+                        justify-content: space-between;
+                    }
+                    .btn-nav, .btn-today {
+                        padding: 8px 16px;
+                        font-size: 0.85rem;
+                    }
+                    .vision-content {
+                        grid-template-columns: 1fr;
+                        gap: 24px;
+                    }
+                    .vision-divider {
+                         display: none;
+                    }
+                    .dashboard-hero h1 {
+                        font-size: 1.5rem;
+                    }
+                    .calendar-grid {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 8px;
+                    margin-bottom: 24px;
+                    overflow: visible;
+                }
                 }
 
                 /* Recent Downloads Premium Styles */

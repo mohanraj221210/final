@@ -8,6 +8,42 @@ const WardenStudentView: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [student, setStudent] = useState<any>(null);
+  const [roommates, setRoommates] = useState<any[]>([]);
+  const [loadingRoommates, setLoadingRoommates] = useState(false);
+
+  useEffect(() => {
+    if (student && student.studentid?.hostelname && student.studentid?.hostelroomno && student.studentid?.hostelname !== 'N/A') {
+      fetchRoommates();
+    }
+  }, [student]);
+
+  const fetchRoommates = async () => {
+    setLoadingRoommates(true);
+    try {
+      const token = localStorage.getItem("token");
+      // Attempt to leverage staff list API for students
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}/staff/students/list`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (res.status === 200) {
+        const allStudents = res.data.students || [];
+        const s = student.studentid;
+        const found = allStudents.filter((st: any) =>
+          st.residencetype === 'hostel' &&
+          st.hostelname?.toLowerCase() === s.hostelname?.toLowerCase() &&
+          st.hostelroomno === s.hostelroomno &&
+          st.registerNumber !== s.registerNumber
+        );
+        setRoommates(found);
+      }
+    } catch (error) {
+      console.error("Failed to fetch roommates:", error);
+    } finally {
+      setLoadingRoommates(false);
+    }
+  };
 
   useEffect(() => {
     fetchStudent();
@@ -63,7 +99,55 @@ const WardenStudentView: React.FC = () => {
     }
   };
 
-  if (!student) return <div className="loading-state">Loading...</div>;
+  if (!student) {
+    return (
+      <div className="loading-center">
+        <div className="loading-container">
+          <div className="loading-bar">
+            <div className="loading-progress"></div>
+          </div>
+          <p>Loading student details...</p>
+        </div>
+        <style>{`
+          .loading-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: #f8fafc;
+          }
+          .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            color: #64748b;
+            font-weight: 500;
+          }
+          .loading-bar {
+            width: 200px;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 99px;
+            overflow: hidden;
+            position: relative;
+          }
+          .loading-progress {
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, #2563eb, #3b82f6);
+            border-radius: 99px;
+            position: absolute;
+            animation: shimmer 1.5s infinite linear;
+          }
+          @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(200%); }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   const s = student.studentid || {};
 
@@ -142,6 +226,37 @@ const WardenStudentView: React.FC = () => {
             </div>
           </div>
         </div> */}
+
+        {/* Roommate Details */}
+        {s.hostelname && s.hostelname !== 'N/A' && (
+          <div className="section-card">
+            <div className="section-header">
+              <h3>👥 Roommate Details</h3>
+            </div>
+            <div className="section-body">
+              {loadingRoommates ? (
+                <div className="loading-state">Loading roommates...</div>
+              ) : roommates.length > 0 ? (
+                <div className="roommates-grid">
+                  {roommates.map((r: any) => (
+                    <div key={r._id} className="roommate-card">
+                      <div className="roommate-initials">
+                        {r.name?.charAt(0).toUpperCase() || 'R'}
+                      </div>
+                      <div className="roommate-info">
+                        <h4 className="r-name">{r.name}</h4>
+                        <span className="r-reg">{r.registerNumber}</span>
+                        <span className="r-dept">{r.department} - {r.year}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="no-data">No roommates found.</div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Section 3: Hostel Details */}
         <div className="section-card">
@@ -547,27 +662,68 @@ const WardenStudentView: React.FC = () => {
             justify-content: center; /* Center avatar on mobile */
           }
         }
-
-        @media (max-width: 480px) {
-          .content-wrapper { padding: 16px; }
-          .main-header { padding: 16px; }
-          .main-header h1 { font-size: 20px; }
-          .section-body { padding: 16px; }
+          .roommates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 16px;
+          }
           
-          .workflow-actions {
-            flex-direction: column;
+          .roommate-card {
+            display: flex;
+            align-items: center;
             gap: 12px;
-          }
-          .btn-approve, .btn-reject {
-            width: 100%;
+            background: #f8fafc;
             padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+          }
+
+          .roommate-initials {
+             width: 40px;
+             height: 40px;
+             background: #dbeafe;
+             color: #1e40af;
+             border-radius: 50%;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             font-weight: 700;
+             flex-shrink: 0;
+          }
+
+          .roommate-info {
+            display: flex;
+            flex-direction: column;
+          }
+
+          .r-name {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 0;
+            color: #1f2937;
+          }
+
+          .r-reg {
+            font-size: 12px;
+            color: #6b7280;
+          }
+
+          .r-dept {
+            font-size: 11px;
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 2px 6px;
+            border-radius: 4px;
+            width: fit-content;
+            margin-top: 4px;
+            font-weight: 500;
           }
           
-          .display-box {
-            font-size: 13px;
-            padding: 8px 12px;
+          .no-data {
+             font-style: italic;
+             color: #9ca3af;
+             text-align: center;
           }
-        }
 
         /* Modal Styles */
         .modal-overlay {
@@ -576,29 +732,27 @@ const WardenStudentView: React.FC = () => {
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(0, 0, 0, 0.5);
+          background: rgba(0, 0, 0, 0.6);
+          backdrop-filter: blur(4px);
           display: flex;
           align-items: center;
           justify-content: center;
           z-index: 1000;
-          backdrop-filter: blur(4px);
-          animation: fadeIn 0.3s;
         }
 
         .modal-card {
           background: white;
+          border-radius: 20px;
           width: 90%;
           max-width: 500px;
-          border-radius: 12px;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-          overflow: hidden;
-          animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+          animation: modalSlideUp 0.3s ease-out;
         }
 
         .modal-header {
-          background: #f8fafc;
-          padding: 16px 24px;
-          border-bottom: 1px solid #e2e8f0;
+          background: linear-gradient(135deg, #1e3a8a, #0f172a);
+          padding: 24px 28px;
+          border-radius: 20px 20px 0 0;
           display: flex;
           justify-content: space-between;
           align-items: center;
@@ -606,85 +760,115 @@ const WardenStudentView: React.FC = () => {
 
         .modal-header h3 {
           margin: 0;
-          color: #1e293b;
-          font-size: 18px;
+          color: white;
+          font-size: 1.4rem;
+          font-weight: 600;
         }
 
         .close-btn {
-          background: none;
+          background: rgba(255, 255, 255, 0.2);
           border: none;
-          font-size: 24px;
-          color: #64748b;
+          color: white;
+          width: 36px;
+          height: 36px;
+          border-radius: 8px;
+          font-size: 1.5rem;
           cursor: pointer;
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0;
+          line-height: 1;
+        }
+
+        .close-btn:hover {
+          background: rgba(255, 255, 255, 0.3);
+          color: white;
         }
 
         .modal-body {
-          padding: 24px;
+          padding: 28px;
         }
 
         .modal-body label {
           display: block;
-          font-size: 14px;
-          font-weight: 600;
-          color: #475569;
-          margin-bottom: 8px;
+          font-weight: 700;
+          color: #1e293b;
+          margin-bottom: 12px;
+          font-size: 1rem;
         }
 
         .remarks-input {
           width: 100%;
-          padding: 12px;
-          border: 1px solid #cbd5e1;
-          border-radius: 8px;
+          padding: 14px;
+          border: 2px solid #e2e8f0;
+          border-radius: 12px;
+          font-size: 1rem;
           font-family: inherit;
           resize: vertical;
-          outline: none;
-          transition: border-color 0.2s;
+          min-height: 100px;
+          color: #1f2937;
         }
+
         .remarks-input:focus {
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+          outline: none;
+          border-color: #1e3a8a;
         }
 
         .modal-footer {
-          padding: 16px 24px;
-          background: #f8fafc;
-          border-top: 1px solid #e2e8f0;
+          padding: 0 28px 28px 28px;
           display: flex;
-          justify-content: flex-end;
           gap: 12px;
+          justify-content: flex-end;
+          background: transparent;
+          border-top: none;
         }
 
         .btn-cancel {
-          padding: 10px 20px;
-          border-radius: 6px;
-          border: 1px solid #cbd5e1;
-          background: white;
-          color: #475569;
+          padding: 12px 28px;
+          border: none;
+          border-radius: 10px;
           font-weight: 600;
           cursor: pointer;
+          transition: all 0.3s;
+          background: #f1f5f9;
+          color: #475569;
         }
-        .btn-cancel:hover { background: #f1f5f9; }
+
+        .btn-cancel:hover {
+          background: #e2e8f0;
+        }
 
         .btn-confirm {
-          padding: 10px 20px;
-          border-radius: 6px;
+          padding: 12px 28px;
           border: none;
+          border-radius: 10px;
           font-weight: 600;
           cursor: pointer;
+          transition: all 0.3s;
           color: white;
         }
-        .btn-confirm.approved { background: #10b981; }
-        .btn-confirm.approved:hover { background: #059669; }
-        .btn-confirm.rejected { background: #ef4444; }
-        .btn-confirm.rejected:hover { background: #dc2626; }
 
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
+        .btn-confirm.approved {
+          background: linear-gradient(135deg, #10b981, #059669);
         }
-        @keyframes slideUp {
-          from { transform: translateY(20px); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
+        .btn-confirm.approved:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-confirm.rejected {
+          background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+        .btn-confirm.rejected:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        @keyframes modalSlideUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>

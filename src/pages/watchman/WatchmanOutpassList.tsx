@@ -29,10 +29,15 @@ const WatchmanOutpassList: React.FC = () => {
       });
 
       console.log("Full API Response:", res);
-      // Data extraction based on confirmed API response structure (outpasslist)
-      const outpassData = res.data.outpasslist || [];
+      // Data extraction based on confirmed API response structure (outpass)
+      const outpassData = res.data.outpass || [];
 
-      setOutpasses(outpassData);
+      // Filter for approved outpasses
+      const approvedOutpasses = outpassData.filter((item: any) =>
+        item.wardenapprovalstatus === 'approved' || item.status === 'approved'
+      );
+
+      setOutpasses(approvedOutpasses);
     } catch (err: any) {
       console.error("Failed to fetch outpasses", err);
       // Handle errors gracefully
@@ -53,6 +58,7 @@ const WatchmanOutpassList: React.FC = () => {
   return (
     <div className="page-container">
       <WatchmanNav />
+      
       <div className="list-container">
         <button className="back-btn" onClick={() => navigate("/watchman-dashboard")}>
           ← Back
@@ -77,7 +83,6 @@ const WatchmanOutpassList: React.FC = () => {
                   <th>Date</th>
                   <th>Reason</th>
                   <th>Status</th>
-                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -106,17 +111,6 @@ const WatchmanOutpassList: React.FC = () => {
                           {item.wardenapprovalstatus || "Approved"}
                         </span>
                       </td>
-                      <td data-label="Action">
-                        <button
-                          className="view-btn"
-                          onClick={() => {
-                            // Pass Outpass ID (_id) for the detail view
-                            navigate(`/watchman/student/${item._id}`);
-                          }}
-                        >
-                          View
-                        </button>
-                      </td>
                     </tr>
                   ))
                 )}
@@ -133,6 +127,7 @@ const WatchmanOutpassList: React.FC = () => {
                   </div>
                   <h3 className="card-name">{item.studentid?.name || item.studentName}</h3>
                   <p className="card-details">
+                    {item.studentid?.year ? `Year ${item.studentid.year} • ` : ''}
                     Applied on {new Date(item.createdAt || item.outDate).toLocaleDateString()}
                   </p>
 
@@ -140,14 +135,6 @@ const WatchmanOutpassList: React.FC = () => {
                     <span className="status-pill status-approved">
                       • {item.wardenapprovalstatus || "Approved"}
                     </span>
-                    <button
-                      className="card-view-link"
-                      onClick={() => {
-                        navigate(`/watchman/student/${item._id}`);
-                      }}
-                    >
-                      View →
-                    </button>
                   </div>
                 </div>
               ))}
@@ -329,17 +316,21 @@ const WatchmanOutpassList: React.FC = () => {
 }
 
 /* Loading Animation */
+.loading-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50vh;
+  width: 100%;
+}
 .loading-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 40px;
   gap: 16px;
   color: #64748b;
   font-weight: 500;
 }
-
 .loading-bar {
   width: 200px;
   height: 6px;
@@ -348,7 +339,6 @@ const WatchmanOutpassList: React.FC = () => {
   overflow: hidden;
   position: relative;
 }
-
 .loading-progress {
   width: 50%;
   height: 100%;
@@ -357,7 +347,6 @@ const WatchmanOutpassList: React.FC = () => {
   position: absolute;
   animation: shimmer 1.5s infinite linear;
 }
-
 @keyframes shimmer {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(200%); }
