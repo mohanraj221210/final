@@ -11,40 +11,6 @@ const YearInchargeStudentView: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [remarks, setRemarks] = useState('');
     const [actionLoading, setActionLoading] = useState(false);
-    const [roommates, setRoommates] = useState<any[]>([]);
-    const [loadingRoommates, setLoadingRoommates] = useState(false);
-
-    useEffect(() => {
-        if (outpass && outpass.studentid?.hostelname && outpass.studentid?.hostelroomno && outpass.studentid?.hostelname !== 'N/A') {
-            fetchRoommates();
-        }
-    }, [outpass]);
-
-    const fetchRoommates = async () => {
-        setLoadingRoommates(true);
-        try {
-            const token = localStorage.getItem('token');
-            const response = await axios.get(`${import.meta.env.VITE_API_URL}/staff/students/list`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (response.status === 200) {
-                const allStudents = response.data.students || [];
-                const s = outpass.studentid;
-                const found = allStudents.filter((st: any) =>
-                    st.residencetype === 'hostel' &&
-                    st.hostelname?.toLowerCase() === s.hostelname?.toLowerCase() &&
-                    st.hostelroomno === s.hostelroomno &&
-                    (st.registerNumber !== s.registerNumber)
-                );
-                setRoommates(found);
-            }
-        } catch (error) {
-            console.error("Failed to fetch roommates:", error);
-        } finally {
-            setLoadingRoommates(false);
-        }
-    };
 
     useEffect(() => {
         const fetchOutpassDetails = async () => {
@@ -187,38 +153,7 @@ const YearInchargeStudentView: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Roommate Details Card */}
-                    {outpass.studentid?.hostelname && outpass.studentid?.hostelname !== 'N/A' && (
-                        <div className="card profile-card">
-                            <div className="profile-header" style={{ borderBottom: '1px solid #f1f5f9', marginBottom: '16px', paddingBottom: '16px' }}>
-                                <h3 style={{ fontSize: '1.1rem', margin: 0, display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'center' }}>
-                                    👥 Roommates
-                                </h3>
-                            </div>
-                            <div className="section-body">
-                                {loadingRoommates ? (
-                                    <div className="loading-state" style={{ textAlign: 'center', color: '#64748b' }}>Loading...</div>
-                                ) : roommates.length > 0 ? (
-                                    <div className="roommates-grid">
-                                        {roommates.map((r: any) => (
-                                            <div key={r._id} className="roommate-card">
-                                                <div className="roommate-initials">
-                                                    {r.name?.charAt(0).toUpperCase() || 'R'}
-                                                </div>
-                                                <div className="roommate-info">
-                                                    <h4 className="r-name">{r.name}</h4>
-                                                    <span className="r-reg">{r.registerNumber}</span>
-                                                    <span className="r-dept">{r.department} - {r.year}</span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="no-data" style={{ textAlign: 'center', color: '#94a3b8', fontStyle: 'italic' }}>No roommates found.</div>
-                                )}
-                            </div>
-                        </div>
-                    )}
+
 
                     {/* Outpass Details Card */}
                     <div className="card details-card">
@@ -567,63 +502,7 @@ const YearInchargeStudentView: React.FC = () => {
                     }
                 }
 
-                /* Roommate Styles */
-                .roommates-grid {
-                    display: grid;
-                    grid-template-columns: 1fr;
-                    gap: 16px;
-                }
                 
-                .roommate-card {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    background: #f8fafc;
-                    padding: 12px;
-                    border-radius: 12px;
-                    border: 1px solid #e2e8f0;
-                }
-
-                .roommate-initials {
-                    width: 40px;
-                    height: 40px;
-                    background: #dbeafe;
-                    color: #1e40af;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-weight: 700;
-                    flex-shrink: 0;
-                }
-
-                .roommate-info {
-                    display: flex;
-                    flex-direction: column;
-                }
-
-                .r-name {
-                    font-size: 0.9rem;
-                    font-weight: 600;
-                    margin: 0;
-                    color: #1f2937;
-                }
-
-                .r-reg {
-                    font-size: 0.8rem;
-                    color: #6b7280;
-                }
-
-                .r-dept {
-                    font-size: 0.7rem;
-                    background: #e0f2fe;
-                    color: #0369a1;
-                    padding: 2px 6px;
-                    border-radius: 4px;
-                    width: fit-content;
-                    margin-top: 4px;
-                    font-weight: 500;
-                }
             `}</style>
         </div>
     );

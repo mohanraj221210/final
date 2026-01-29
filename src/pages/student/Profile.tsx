@@ -32,6 +32,7 @@ const Profile: React.FC = () => {
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
     const [completionPercentage, setCompletionPercentage] = useState(0);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
     const calculateCompletion = (userData: User) => {
         const commonFields = [
@@ -92,25 +93,27 @@ const Profile: React.FC = () => {
         setUser(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        const formData = new FormData();
-        formData.append('file', file);
-        try {
-            const response = await axios.put(`${import.meta.env.VITE_API_URL}/api/profile/update`, formData, {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'multipart/form-data'
-                }
-            });
-            if (response.status === 200) {
-                toast.success("Profile updated successfully");
-                setShowToast(true);
-            }
-        } catch (error) {
-            toast.error("Failed to update profile");
+
+        // Validation
+        const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+        if (!validTypes.includes(file.type)) {
+            toast.error("Only JPG, JPEG, and PNG formats are allowed");
+            return;
         }
+
+        if (file.size > 200 * 1024) { // 200 KB
+            toast.error("Image size must be less than 200 KB");
+            return;
+        }
+
+        // Preview and State Update
+        setSelectedFile(file);
+        setUser(prev => ({ ...prev, photo: URL.createObjectURL(file) }));
+        setIsEditing(true); // Auto-enable edit mode if not already
+        toast.info("Image selected. Click 'Save Changes' to upload.");
     };
 
     const handleLogout = () => {
@@ -123,17 +126,40 @@ const Profile: React.FC = () => {
     const handleSave = async () => {
         console.log(user);
         try {
-            const response = await axios.put(`${import.meta.env.VITE_API_URL}/api/profile/update`, user, {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`
-                }
-            });
+            let response;
+            if (selectedFile) {
+                const formData = new FormData();
+                // Append all user fields to formData
+                Object.keys(user).forEach(key => {
+                    const value = user[key as keyof User];
+                    if (value !== null && value !== undefined) {
+                        formData.append(key, value.toString());
+                    }
+                });
+                formData.append('file', selectedFile);
+
+                response = await axios.put(`${import.meta.env.VITE_API_URL}/api/profile/update`, formData, {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+            } else {
+                response = await axios.put(`${import.meta.env.VITE_API_URL}/api/profile/update`, user, {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+            }
+
             if (response.status === 200) {
                 toast.success("Profile updated successfully");
                 setShowToast(true);
+                setSelectedFile(null); // Clear selected file after successful upload
             }
         } catch (error) {
             toast.error("Failed to update profile");
+            console.error(error);
         }
         localStorage.setItem('userProfile', JSON.stringify(user));
         setIsEditing(false);

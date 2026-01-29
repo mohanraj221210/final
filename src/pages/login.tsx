@@ -14,7 +14,7 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [Loading, setLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
-  const [loginType, setLoginType] = useState<'student' | 'staff'>(initialType);
+  const [loginType] = useState<'student' | 'staff'>(initialType);
   const navigate = useNavigate();
 
   const API_URL = import.meta.env.VITE_API_URL;
