@@ -8,42 +8,6 @@ const WardenStudentView: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [student, setStudent] = useState<any>(null);
-  const [roommates, setRoommates] = useState<any[]>([]);
-  const [loadingRoommates, setLoadingRoommates] = useState(false);
-
-  useEffect(() => {
-    if (student && student.studentid?.hostelname && student.studentid?.hostelroomno && student.studentid?.hostelname !== 'N/A') {
-      fetchRoommates();
-    }
-  }, [student]);
-
-  const fetchRoommates = async () => {
-    setLoadingRoommates(true);
-    try {
-      const token = localStorage.getItem("token");
-      // Attempt to leverage staff list API for students
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/staff/students/list`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      if (res.status === 200) {
-        const allStudents = res.data.students || [];
-        const s = student.studentid;
-        const found = allStudents.filter((st: any) =>
-          st.residencetype === 'hostel' &&
-          st.hostelname?.toLowerCase() === s.hostelname?.toLowerCase() &&
-          st.hostelroomno === s.hostelroomno &&
-          st.registerNumber !== s.registerNumber
-        );
-        setRoommates(found);
-      }
-    } catch (error) {
-      console.error("Failed to fetch roommates:", error);
-    } finally {
-      setLoadingRoommates(false);
-    }
-  };
 
   useEffect(() => {
     fetchStudent();
@@ -169,36 +133,7 @@ const WardenStudentView: React.FC = () => {
           </div>
         </div> */}
 
-        {/* Roommate Details */}
-        {s.hostelname && s.hostelname !== 'N/A' && (
-          <div className="section-card">
-            <div className="section-header">
-              <h3>👥 Roommate Details</h3>
-            </div>
-            <div className="section-body">
-              {loadingRoommates ? (
-                <div className="loading-state">Loading roommates...</div>
-              ) : roommates.length > 0 ? (
-                <div className="roommates-grid">
-                  {roommates.map((r: any) => (
-                    <div key={r._id} className="roommate-card">
-                      <div className="roommate-initials">
-                        {r.name?.charAt(0).toUpperCase() || 'R'}
-                      </div>
-                      <div className="roommate-info">
-                        <h4 className="r-name">{r.name}</h4>
-                        <span className="r-reg">{r.registerNumber}</span>
-                        <span className="r-dept">{r.department} - {r.year}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="no-data">No roommates found.</div>
-              )}
-            </div>
-          </div>
-        )}
+
 
         {/* Section 3: Hostel Details */}
         <div className="section-card">
@@ -553,63 +488,6 @@ const WardenStudentView: React.FC = () => {
           }
           .avatar-box {
             margin-bottom: 16px;
-          }
-        }
-          .roommates-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 16px;
-          }
-          
-          .roommate-card {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: #f8fafc;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #e5e7eb;
-          }
-
-          .roommate-initials {
-             width: 40px;
-             height: 40px;
-             background: #dbeafe;
-             color: #1e40af;
-             border-radius: 50%;
-             display: flex;
-             align-items: center;
-             justify-content: center;
-             font-weight: 700;
-             flex-shrink: 0;
-          }
-
-          .roommate-info {
-            display: flex;
-            flex-direction: column;
-          }
-
-          .r-name {
-            font-size: 14px;
-            font-weight: 600;
-            margin: 0;
-            color: #1f2937;
-          }
-
-          .r-reg {
-            font-size: 12px;
-            color: #6b7280;
-          }
-
-          .r-dept {
-            font-size: 11px;
-            background: #e0f2fe;
-            color: #0369a1;
-            padding: 2px 6px;
-            border-radius: 4px;
-            width: fit-content;
-            margin-top: 4px;
-            font-weight: 500;
           }
           
           .no-data {
