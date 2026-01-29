@@ -29,8 +29,38 @@ const Profile: React.FC = () => {
     });
     const [isEditing, setIsEditing] = useState(false);
     const [showToast, setShowToast] = useState(false);
-     const navigate = useNavigate();
+    const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+    const [completionPercentage, setCompletionPercentage] = useState(0);
+
+    const calculateCompletion = (userData: User) => {
+        const commonFields = [
+            'name', 'email', 'phone', 'parentnumber', 'registerNumber',
+            'department', 'year', 'semester', 'batch', 'cgpa', 'gender',
+            'photo', 'residencetype'
+        ];
+
+        let requiredFields = [...commonFields];
+
+        if (userData.residencetype === 'hostel') {
+            requiredFields.push('hostelname', 'hostelroomno');
+        } else if (userData.residencetype === 'day scholar') {
+            requiredFields.push('busno', 'boardingpoint');
+        }
+
+        const filledFields = requiredFields.filter(field => {
+            const value = userData[field as keyof User];
+            // Check for non-null, non-undefined, and non-empty string/number
+            return value !== null && value !== undefined && value !== '' && value !== 0;
+        });
+
+        const percentage = Math.round((filledFields.length / requiredFields.length) * 100);
+        return percentage;
+    };
+
+    useEffect(() => {
+        setCompletionPercentage(calculateCompletion(user));
+    }, [user]);
 
     useEffect(() => {
         const fetchUserProfile = async () => {
@@ -83,7 +113,7 @@ const Profile: React.FC = () => {
         }
     };
 
-      const handleLogout = () => {
+    const handleLogout = () => {
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('userType');
         localStorage.removeItem('token');
@@ -112,8 +142,8 @@ const Profile: React.FC = () => {
 
     return (
         <div className="page-container profile-page">
-            < ToastContainer/>
-             <header className="dashboard-header-custom">
+            < ToastContainer />
+            <header className="dashboard-header-custom">
                 <div className="header-container-custom">
                     <div className="header-left-custom">
                         <div className="brand-custom">
@@ -183,6 +213,31 @@ const Profile: React.FC = () => {
             )}
 
             <div className="content-wrapper">
+                <button className="back-dashboard-btn" onClick={() => navigate('/dashboard')}>
+                    ← Back to Dashboard
+                </button>
+
+                <div className="completion-card">
+                    <div className="completion-header">
+                        <h3>Profile Completion</h3>
+                        <span className="completion-badge">{completionPercentage}%</span>
+                    </div>
+                    <div className="progress-container">
+                        <div
+                            className="progress-bar"
+                            style={{
+                                width: `${completionPercentage}%`,
+                                backgroundColor: completionPercentage === 100 ? '#10b981' : '#0047AB'
+                            }}
+                        ></div>
+                    </div>
+                    <p className="completion-text">
+                        {completionPercentage === 100
+                            ? "Great! Your profile is fully complete."
+                            : "Complete your profile to enable all features."}
+                    </p>
+                </div>
+
                 <div className="profile-layout">
                     {/* Left Column: Profile Card */}
                     <div className="profile-sidebar">
@@ -589,6 +644,81 @@ const Profile: React.FC = () => {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
+                }
+
+                .back-dashboard-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    background: white;
+                    border: 1px solid #e2e8f0;
+                    color: #64748b;
+                    font-size: 0.95rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    margin-bottom: 24px;
+                    padding: 10px 20px;
+                    border-radius: 10px;
+                    transition: all 0.2s;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                }
+
+                .back-dashboard-btn:hover {
+                    color: #0047AB;
+                    border-color: #0047AB;
+                    transform: translateX(-4px);
+                    box-shadow: 0 4px 12px rgba(0, 71, 171, 0.1);
+                }
+
+                .completion-card {
+                    background: white;
+                    padding: 24px;
+                    border-radius: 16px;
+                    margin-bottom: 24px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                    border: 1px solid #e2e8f0;
+                }
+
+                .completion-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 12px;
+                }
+
+                .completion-header h3 {
+                    margin: 0;
+                    font-size: 1.1rem;
+                    color: #1e293b;
+                }
+
+                .completion-badge {
+                    background: #f1f5f9;
+                    padding: 4px 12px;
+                    border-radius: 20px;
+                    font-weight: 700;
+                    color: #0047AB;
+                    font-size: 0.9rem;
+                }
+
+                .progress-container {
+                    height: 10px;
+                    background: #e2e8f0;
+                    border-radius: 5px;
+                    overflow: hidden;
+                    margin-bottom: 12px;
+                }
+
+                .progress-bar {
+                    height: 100%;
+                    transition: width 0.5s ease;
+                    border-radius: 5px;
+                }
+
+                .completion-text {
+                    margin: 0;
+                    font-size: 0.9rem;
+                    color: #64748b;
                 }
 
                 .header-left-custom {
