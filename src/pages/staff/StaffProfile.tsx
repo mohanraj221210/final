@@ -28,33 +28,40 @@ const StaffProfile: React.FC = () => {
     const [newSkill, setNewSkill] = useState('');
     const [newAchievement, setNewAchievement] = useState('');
 
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
     const navigate = useNavigate();
 
-    useEffect(() => {
-        const fetchStaffProfile = async () => {
-            try {
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}/staff/profile`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                if (response.status === 200) {
-                    setStaff(response.data.staff);
-                    setFormData(response.data.staff);
+    const fetchStaffProfile = async () => {
+        try {
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/staff/profile`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
                 }
-            } catch (error) {
-                console.error("Error fetching staff profile:", error);
-                toast.error("Failed to fetch profile data");
-            } finally {
-                setLoading(false);
+            });
+            if (response.status === 200) {
+                setStaff(response.data.staff);
+                setFormData({
+                    ...response.data.staff,
+                    subjects: response.data.staff.subjects || [],
+                    skills: response.data.staff.skills || [],
+                    achievements: response.data.staff.achievements || []
+                });
             }
-        };
+        } catch (error) {
+            console.error("Error fetching staff profile:", error);
+            toast.error("Failed to fetch profile data");
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchStaffProfile();
     }, []);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData((prev: any) => ({
             ...prev,
@@ -79,23 +86,83 @@ const StaffProfile: React.FC = () => {
     };
 
     const handleSave = async () => {
+        setIsEditing(false); // Optimistically close edit mode or show loading
+        const loadingToast = toast.loading("Updating profile...");
+
         try {
-            const response = await axios.put(`${import.meta.env.VITE_API_URL}/staff/profile/update`, formData, {
+            const submitData = new FormData();
+
+            // Append basic fields
+            Object.keys(formData).forEach(key => {
+                if (key === 'subjects' || key === 'skills' || key === 'achievements' || key === 'photo') return;
+                submitData.append(key, formData[key]);
+            });
+
+            // Append arrays
+            if (formData.subjects) formData.subjects.forEach((item: string) => submitData.append('subjects', item));
+            if (formData.skills) formData.skills.forEach((item: string) => submitData.append('skills', item));
+            if (formData.achievements) formData.achievements.forEach((item: string) => submitData.append('achievements', item));
+
+            // Append photo only if changed
+            if (selectedFile) {
+                submitData.append('file', selectedFile);
+            }
+
+            const response = await axios.put(`${import.meta.env.VITE_API_URL}/staff/profile/update`, submitData, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json'
+                    // Content-Type is set automatically by axios for FormData
                 }
             });
 
             if (response.status === 200) {
-                setStaff(response.data.staff || formData);
-                setIsEditing(false);
-                toast.success("Profile updated successfully!");
+                toast.update(loadingToast, { render: "Profile updated successfully!", type: "success", isLoading: false, autoClose: 3000 });
+                // Refetch to ensure we have the persisted data from backend
+                await fetchStaffProfile();
+                setSelectedFile(null); // Reset file selection
+            } else {
+                toast.update(loadingToast, { render: "Update failed.", type: "error", isLoading: false, autoClose: 3000 });
+                setIsEditing(true); // Re-enable edit on soft fail
             }
         } catch (error) {
             console.error("Error updating profile:", error);
-            toast.error("Failed to update profile");
+            toast.update(loadingToast, { render: "Failed to update profile", type: "error", isLoading: false, autoClose: 3000 });
+            setIsEditing(true); // Re-enable edit on error
         }
+    };
+
+    const getMissingFields = () => {
+        if (!staff && !formData.name) return [];
+
+        const data = { ...staff, ...formData };
+        const missing: string[] = [];
+
+        if (!data.name?.trim()) missing.push('Name');
+        if (!data.email?.trim()) missing.push('Email');
+        if (!data.contactNumber?.trim()) missing.push('Phone Number');
+        if (!data.department?.trim()) missing.push('Department');
+        if (!data.designation?.trim()) missing.push('Designation');
+        if (!data.photo?.trim()) missing.push('Profile Photo');
+
+        if (!data.subjects || data.subjects.length === 0) missing.push('Handling Subjects');
+        if (!data.skills || data.skills.length === 0) missing.push('Knowledge & Skills');
+        if (!data.achievements || data.achievements.length === 0) missing.push('Achievements');
+
+        return missing;
+    };
+
+    const completionPercentage = (() => {
+        const missingCount = getMissingFields().length;
+        // Total 9 fields now (Name, Email, Phone, Dept, Designation, Photo, Subjects, Skills, Achievements)
+        return Math.round(((9 - missingCount) / 9) * 100);
+    })();
+
+    const missingFields = getMissingFields();
+
+    const getProgressColor = (percent: number) => {
+        if (percent < 50) return '#ef4444'; // Red
+        if (percent < 80) return '#f59e0b'; // Orange
+        return '#10b981'; // Green
     };
 
     if (loading) {
@@ -127,7 +194,6 @@ const StaffProfile: React.FC = () => {
                 <ToastContainer position="bottom-right" />
                 <div className="content-wrapper">
                     {/* Header Actions */}
-                    {/* Header Actions */}
                     <div className="header-actions">
                         <button className="back-btn" onClick={() => navigate('/staff-dashboard')}>
                             ← Back to Dashboard
@@ -152,6 +218,35 @@ const StaffProfile: React.FC = () => {
                         )}
                     </div>
 
+                    {/* Completion Progress Bar */}
+                    <div className="completion-card">
+                        <div className="completion-header">
+                            <div>
+                                <span className="completion-title">Profile Completion</span>
+                                {missingFields.length > 0 && (
+                                    <div className="missing-fields-text">
+                                        Missing: {missingFields.join(', ')}
+                                    </div>
+                                )}
+                            </div>
+                            <span className="completion-value" style={{ color: getProgressColor(completionPercentage) }}>
+                                {completionPercentage}%
+                            </span>
+                        </div>
+                        <div className="progress-track">
+                            <div
+                                className="progress-fill"
+                                style={{
+                                    width: `${completionPercentage}%`,
+                                    backgroundColor: getProgressColor(completionPercentage)
+                                }}
+                            ></div>
+                        </div>
+                        {completionPercentage < 100 && (
+                            <p className="completion-hint">Complete your profile to ensure accurate records.</p>
+                        )}
+                    </div>
+
                     {/* Profile Header */}
                     <div className="profile-header">
                         <div className="profile-image-wrapper">
@@ -170,6 +265,26 @@ const StaffProfile: React.FC = () => {
                                         onChange={(e) => {
                                             const file = e.target.files?.[0];
                                             if (file) {
+                                                // Validation: Max 200KB
+                                                if (file.size > 200 * 1024) {
+                                                    toast.error("Image size must be 200 KB or less");
+                                                    e.target.value = ''; // Reset input
+                                                    setSelectedFile(null);
+                                                    return;
+                                                }
+
+                                                // Validation: Allowed types
+                                                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+                                                if (!allowedTypes.includes(file.type)) {
+                                                    toast.error("Only JPG, JPEG, and PNG formats are allowed");
+                                                    e.target.value = ''; // Reset input
+                                                    setSelectedFile(null);
+                                                    return;
+                                                }
+
+                                                setSelectedFile(file); // Set file for upload
+
+                                                // Preview
                                                 const reader = new FileReader();
                                                 reader.onloadend = () => {
                                                     setFormData((prev: any) => ({
@@ -446,9 +561,9 @@ const StaffProfile: React.FC = () => {
                                 )}
                             </ul>
                         </div>
-                    </div>
-                </div>
-            </div>
+                    </div >
+                </div >
+            </div >
 
             <style>{`
                 .staff-profile-page {
@@ -460,6 +575,61 @@ const StaffProfile: React.FC = () => {
                 @keyframes fadeIn {
                     from { opacity: 0; transform: translateY(10px); }
                     to { opacity: 1; transform: translateY(0); }
+                }
+
+                .completion-card {
+                    background: white;
+                    border-radius: var(--radius-lg);
+                    padding: 20px 24px;
+                    margin-bottom: 24px;
+                    box-shadow: var(--shadow-sm);
+                    border: 1px solid rgba(0,0,0,0.05);
+                }
+
+                .completion-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 12px;
+                }
+
+                .completion-title {
+                    font-weight: 700;
+                    color: var(--text-main);
+                    font-size: 16px;
+                }
+
+                .completion-value {
+                    font-weight: 800;
+                    font-size: 18px;
+                }
+
+                .missing-fields-text {
+                    font-size: 0.85rem;
+                    color: #ef4444;
+                    margin-top: 4px;
+                    font-weight: 500;
+                }
+
+                .progress-track {
+                    width: 100%;
+                    height: 10px;
+                    background: #f1f5f9;
+                    border-radius: 20px;
+                    overflow: hidden;
+                }
+
+                .progress-fill {
+                    height: 100%;
+                    border-radius: 20px;
+                    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s;
+                }
+
+                .completion-hint {
+                    margin: 8px 0 0 0;
+                    font-size: 13px;
+                    color: #64748b;
+                    font-style: italic;
                 }
 
                 .content-wrapper {
