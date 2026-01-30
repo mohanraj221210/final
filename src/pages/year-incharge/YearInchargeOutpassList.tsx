@@ -110,7 +110,7 @@ const YearInchargeOutpassList: React.FC = () => {
                             <thead>
                                 <tr>
                                     <th>Student Details</th>
-                                    <th>Pass Inforamtion</th>
+                                    <th>Pass Information</th>
                                     <th>Duration</th>
                                     <th>Residence</th>
                                     <th>Approvals</th>
@@ -175,6 +175,51 @@ const YearInchargeOutpassList: React.FC = () => {
                         </table>
                     </div>
                 )}
+
+                {!loading && filteredOutpasses.length > 0 && (
+                    <div className="mobile-cards-view">
+                        {filteredOutpasses.map((outpass) => (
+                            <div className="mobile-card" key={outpass._id}>
+                                <div className="card-header-mobile">
+                                    <div>
+                                        <h3 className="card-name">{outpass.studentid?.name}</h3>
+                                        <p className="card-reg">{outpass.studentid?.registerNumber}</p>
+                                    </div>
+                                    <span className="pass-type-mobile">{outpass.outpasstype}</span>
+                                </div>
+
+                                <div className="card-body-mobile">
+                                    <div className="info-row">
+                                        <span className="label">Dept/Year:</span>
+                                        <span className="value">{outpass.studentid?.department} - {outpass.studentid?.year}</span>
+                                    </div>
+                                    <div className="info-row">
+                                        <span className="label">From:</span>
+                                        <span className="value">{new Date(outpass.fromDate).toLocaleString()}</span>
+                                    </div>
+                                    <div className="info-row">
+                                        <span className="label">To:</span>
+                                        <span className="value">{new Date(outpass.toDate).toLocaleString()}</span>
+                                    </div>
+                                </div>
+
+                                <div className="card-footer-mobile">
+                                    <div className="status-grid">
+                                        <span className={`status-badge-mobile ${getStatusColor(outpass.staffapprovalstatus)}`}>
+                                            Staff: {outpass.staffapprovalstatus}
+                                        </span>
+                                        <span className={`status-badge-mobile ${getStatusColor(outpass.wardenapprovalstatus)}`}>
+                                            Warden: {outpass.wardenapprovalstatus}
+                                        </span>
+                                        <span className={`status-badge-mobile ${getStatusColor(outpass.yearinchargeapprovalstatus)}`}>
+                                            Incharge: {outpass.yearinchargeapprovalstatus}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             <style>{`
@@ -184,6 +229,7 @@ const YearInchargeOutpassList: React.FC = () => {
                     font-size: 16px;
                     color: #64748b;
                     cursor: pointer;
+                    margin-top: 80px;
                     margin-bottom: 24px;
                     display: flex;
                     align-items: center;
@@ -314,6 +360,127 @@ const YearInchargeOutpassList: React.FC = () => {
                 .text-gray-400 { color: #94a3b8; }
                 .residence-type { text-transform: capitalize; font-weight: 500; }
 
+                .residence-type { text-transform: capitalize; font-weight: 500; }
+
+                /* Mobile Card Styles */
+                .mobile-cards-view {
+                    display: none;
+                    flex-direction: column;
+                    gap: 16px;
+                }
+
+                .mobile-card {
+                    background: white;
+                    border-radius: 12px;
+                    padding: 16px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                    border: 1px solid #f1f5f9;
+                }
+
+                .card-header-mobile {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 12px;
+                    padding-bottom: 12px;
+                    border-bottom: 1px solid #f1f5f9;
+                }
+
+                .card-name {
+                    font-size: 1rem;
+                    font-weight: 700;
+                    color: #1e293b;
+                    margin: 0;
+                }
+
+                .card-reg {
+                    font-size: 0.8rem;
+                    color: #64748b;
+                    margin: 0;
+                }
+
+                .pass-type-mobile {
+                    background: #eff6ff;
+                    color: #3b82f6;
+                    padding: 4px 8px;
+                    border-radius: 8px;
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                }
+
+                .card-body-mobile {
+                    margin-bottom: 12px;
+                }
+
+                .info-row {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 6px;
+                    font-size: 0.85rem;
+                }
+                
+                .info-row:last-child {
+                    margin-bottom: 0;
+                }
+
+                .info-row .label {
+                    color: #64748b;
+                }
+
+                .info-row .value {
+                    color: #334155;
+                    font-weight: 500;
+                    text-align: right;
+                }
+
+                .card-footer-mobile {
+                    background: #f8fafc;
+                    margin: 0 -16px -16px -16px;
+                    padding: 12px;
+                    border-radius: 0 0 12px 12px;
+                }
+
+                .status-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr 1fr;
+                    gap: 6px;
+                }
+
+                .status-badge-mobile {
+                    font-size: 0.65rem;
+                    padding: 2px 4px;
+                    border-radius: 4px;
+                    text-align: center;
+                    font-weight: 600;
+                    border: 1px solid;
+                    text-transform: capitalize;
+                }
+
+                @media (max-width: 768px) {
+                    .table-container {
+                        display: none;
+                    }
+                    .mobile-cards-view {
+                        display: flex;
+                    }
+                    
+                    /* Adjust search bar for mobile */
+                    .search-input {
+                        font-size: 16px; /* Prevent zoom */
+                    }
+
+                    .page-header h1 {
+                        font-size: 1.5rem;
+                    }
+
+                    .list-container {
+                        padding: 16px;
+                    }
+
+                    .page-container {
+                        padding: 10px;
+                    }
+                }
             `}</style>
         </div>
     );

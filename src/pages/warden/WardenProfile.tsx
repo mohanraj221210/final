@@ -92,6 +92,20 @@ const WardenProfile: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validation: Max 200KB
+    if (file.size > 200 * 1024) {
+      toast.error("Image size must be less than 200KB");
+      e.target.value = ""; // Reset input
+      return;
+    }
+
+    // Validation: Only JPEG and PNG
+    if (!["image/jpeg", "image/png"].includes(file.type)) {
+      toast.error("Only JPEG and PNG formats are allowed");
+      e.target.value = ""; // Reset input
+      return;
+    }
+
     setSelectedPhoto(file);
     setPreviewUrl(URL.createObjectURL(file));
   };
@@ -187,7 +201,7 @@ const WardenProfile: React.FC = () => {
                       <span>📷</span>
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/jpeg, image/png"
                         onChange={handleImageUpload}
                         className="hidden-input"
                       />
@@ -377,8 +391,10 @@ const WardenProfile: React.FC = () => {
           .avatar-container { width: 100px; height: 100px; }
           .profile-header h2 { font-size: 1.25rem; margin-bottom: 2px; }
           .profile-role { margin-bottom: 2px; }
-          .profile-badges { margin-top: 8px; }
+          .profile-badges { margin-top: -10px; }
+          .profile-name { margin-top: -20px; }
           .input { font-size: 14px; padding: 10px; }
+          .back-btn { margin-top: 50px; }
         }
 
         /* Completion Card Styles */

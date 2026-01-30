@@ -121,6 +121,40 @@ const YearInchargePendingOutpass: React.FC = () => {
                     </table>
                 </div>
 
+                {!loading && pendingOutpasses.length > 0 && (
+                    <div className="mobile-cards-view">
+                        {pendingOutpasses.map((item) => (
+                            <div className="mobile-card" key={item._id}>
+                                <div className="card-header-mobile">
+                                    <div>
+                                        <h3 className="card-name">{item.studentid?.name}</h3>
+                                        <p className="card-reg">{item.studentid?.registerNumber}</p>
+                                    </div>
+                                    <span className="pass-type-mobile">{item.outpassType}</span>
+                                </div>
+
+                                <div className="card-body-mobile">
+                                    <div className="info-row">
+                                        <span className="label">Dept/Year:</span>
+                                        <span className="value">{item.studentid?.department} - {item.studentid?.year}</span>
+                                    </div>
+                                    <div className="info-row">
+                                        <span className="label">Date:</span>
+                                        <span className="value">{new Date(item.fromDate).toLocaleDateString()}</span>
+                                    </div>
+                                </div>
+
+                                <div className="card-footer-mobile">
+                                    <button className="view-btn-mobile" onClick={() => navigate(`/year-incharge/student/${item._id}`)}>
+                                        Review Application
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+
                 <style>{`
         /* Page Container */
         .list-container {
@@ -216,6 +250,92 @@ const YearInchargePendingOutpass: React.FC = () => {
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Mobile Card Styles */
+        .mobile-cards-view {
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .mobile-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid #f1f5f9;
+        }
+
+        .card-header-mobile {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .card-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .card-reg {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin: 0;
+        }
+
+        .pass-type-mobile {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+        }
+
+        .card-body-mobile {
+            margin-bottom: 12px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+        }
+
+        .info-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .view-btn-mobile {
+            width: 100%;
+            padding: 10px;
+            background: #1e3a8a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        @media (max-width: 768px) {
+            .outpass-card {
+                display: none; /* Hide table card */
+            }
+            .mobile-cards-view {
+                display: flex;
+            }
+            .list-container {
+                padding: 16px;
+                margin-top: 20px;
+            }
+            .list-container h1 {
+                font-size: 24px;
+            }
         }
       `}</style>
             </div>

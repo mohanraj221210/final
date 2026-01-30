@@ -117,7 +117,7 @@ const YearInchargeDashboard: React.FC = () => {
                             <span className="badge">Welcome Back</span>
                         </div>
                         <div>
-                            <h1 style={{ color: 'skyblue' }}>Hello, {user.name}! 👋</h1>
+                            <h1 style={{ color: 'skyblue', marginTop: '20px' }}>Hello, {user.name}! 👋</h1>
                             <p style={{ color: 'skyblue' }}>
                                 Year Incharge • {user.department}
                             </p>
@@ -348,12 +348,15 @@ const YearInchargeDashboard: React.FC = () => {
                 
                 .hero-welcome .badge {
                     animation: pulse-glow 3s infinite;
+                   
                 }
                 
                @media (max-width: 968px) {
                     .dashboard-hero { flex-direction: column; align-items: flex-start; gap: 24px; }
                     .hero-stats-grid { width: 100%; justify-content: flex-start; }
+                    
                 }
+                
             `}</style>
         </div>
     );

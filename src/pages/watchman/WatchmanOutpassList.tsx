@@ -8,6 +8,7 @@ const WatchmanOutpassList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [outpasses, setOutpasses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dateFilter, setDateFilter] = useState<'All' | 'Today' | 'Yesterday' | 'This Week' | 'This Month'>('All');
 
   const itemsPerPage = 8;
 
@@ -51,18 +52,76 @@ const WatchmanOutpassList: React.FC = () => {
     }
   };
 
-  const totalPages = Math.ceil(outpasses.length / itemsPerPage);
+  // Filter logic
+  const filteredOutpasses = outpasses.filter((item) => {
+    if (dateFilter === 'All') return true;
+
+    const itemDate = new Date(item.createdAt || item.outDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (dateFilter === 'Today') {
+      return itemDate >= today;
+    } else if (dateFilter === 'Yesterday') {
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const endYesterday = new Date(yesterday);
+      endYesterday.setHours(23, 59, 59, 999);
+      return itemDate >= yesterday && itemDate <= endYesterday;
+    } else if (dateFilter === 'This Week') {
+      const startOfWeek = new Date(today);
+      const day = startOfWeek.getDay() || 7;
+      if (day !== 1) startOfWeek.setHours(-24 * (day - 1));
+      else startOfWeek.setHours(0, 0, 0, 0);
+      startOfWeek.setHours(0, 0, 0, 0);
+      return itemDate >= startOfWeek;
+    } else if (dateFilter === 'This Month') {
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      return itemDate >= startOfMonth;
+    }
+    return true;
+  });
+
+  const totalPages = Math.ceil(filteredOutpasses.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentData = outpasses.slice(startIndex, startIndex + itemsPerPage);
+  const currentData = filteredOutpasses.slice(startIndex, startIndex + itemsPerPage);
 
   return (
     <div className="page-container">
       <WatchmanNav />
-      
+
       <div className="list-container">
-        <button className="back-btn" onClick={() => navigate("/watchman-dashboard")}>
-          ← Back
-        </button>
+        <div className="header-row">
+          <button className="back-btn" onClick={() => navigate("/watchman-dashboard")}>
+            ← Back
+          </button>
+
+          {/* Desktop Filters */}
+          <div className="filter-tabs desktop-only">
+            {['All', 'Today', 'Yesterday', 'This Week', 'This Month'].map((filter) => (
+              <button
+                key={filter}
+                className={`filter-btn ${dateFilter === filter ? 'active' : ''}`}
+                onClick={() => { setDateFilter(filter as any); setCurrentPage(1); }}
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
+
+          {/* Mobile Filter Dropdown */}
+          <div className="mobile-filter-container mobile-only">
+            <select
+              className="filter-dropdown"
+              value={dateFilter}
+              onChange={(e) => { setDateFilter(e.target.value as any); setCurrentPage(1); }}
+            >
+              {['All', 'Today', 'Yesterday', 'This Week', 'This Month'].map((filter) => (
+                <option key={filter} value={filter}>{filter}</option>
+              ))}
+            </select>
+          </div>
+        </div>
         <h1>Watchman Approved Outpass List</h1>
 
         <div className="outpass-card">
@@ -143,7 +202,7 @@ const WatchmanOutpassList: React.FC = () => {
         </div>
 
         {/* Pagination logic */}
-        {!loading && outpasses.length > 0 && (
+        {!loading && filteredOutpasses.length > itemsPerPage && (
           <div className="pagination">
             <button
               disabled={currentPage === 1}
@@ -171,6 +230,48 @@ const WatchmanOutpassList: React.FC = () => {
   padding: 24px 40px;
   animation: fadeInUp 0.6s ease;
   margin-top: 10px; 
+}
+
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.filter-tabs {
+    display: flex;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 12px;
+    gap: 4px;
+    overflow-x: auto; /* Handle overflow on smaller screens */
+}
+
+.filter-btn {
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.filter-btn:hover {
+    color: #1e293b;
+    background: rgba(255,255,255,0.5);
+}
+
+.filter-btn.active {
+    background: white;
+    color: #1e3a8a;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
 .back-btn {
@@ -364,6 +465,45 @@ const WatchmanOutpassList: React.FC = () => {
     margin-bottom: 12px;
   }
 
+  .header-row {
+      flex-direction: row; /* Keep row to have back on left, filter on right */
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+  }
+  
+  .desktop-only {
+      display: none !important;
+  }
+
+  .mobile-only {
+      display: block !important;
+  }
+  
+  .filter-dropdown {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: white;
+      color: #1e3a8a;
+      font-weight: 600;
+      font-size: 14px;
+      outline: none;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  }
+  
+  .filter-tabs {
+      width: 100%;
+      justify-content: space-between;
+      overflow-x: auto;
+  }
+  
+  .filter-btn {
+      flex: 1;
+      text-align: center;
+      padding: 10px;
+  }
+
   .outpass-card {
     padding: 0;
     background: transparent;
@@ -460,10 +600,19 @@ const WatchmanOutpassList: React.FC = () => {
   }
 }
 
+  .back-btn {
+      margin-bottom: 0;
+  }
+}
+
 @media (min-width: 769px) {
   .mobile-cards-view {
     display: none;
   }
+}
+
+.mobile-only {
+    display: none;
 }
       `}</style>
       </div>
