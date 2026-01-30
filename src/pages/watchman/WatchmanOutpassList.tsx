@@ -29,7 +29,7 @@ const WatchmanOutpassList: React.FC = () => {
         },
       });
 
-      console.log("Full API Response:", res);
+
       // Data extraction based on confirmed API response structure (outpass)
       const outpassData = res.data.outpass || [];
 
@@ -598,7 +598,6 @@ const WatchmanOutpassList: React.FC = () => {
   .mobile-cards-view {
     display: block;
   }
-}
 
   .back-btn {
       margin-bottom: 0;
