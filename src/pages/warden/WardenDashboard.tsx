@@ -29,13 +29,59 @@ const Dashboard: React.FC = () => {
     });
     const navigate = useNavigate();
     const [zoomingPath, setZoomingPath] = React.useState<string | null>(null);
+    const [isProfileComplete, setIsProfileComplete] = React.useState(true); // Default true to avoid flash, validated in fetch
+
+    const checkCompletion = (data: User) => {
+        const requiredFields = ['name', 'email', 'phone', 'gender', 'hostelname', 'photo'];
+        // Check if any required field is missing or empty or 'N/A' (for demo data)
+        const isComplete = requiredFields.every(field => {
+            const value = data[field as keyof User];
+            return value && value !== 'N/A' && value !== '';
+        });
+        return isComplete;
+    };
 
     useEffect(() => {
         const fetchUserData = async () => {
+            setLoading(true);
+            const token = localStorage.getItem('token');
             const userType = localStorage.getItem('userType');
+
+            // Try fetching real data if token exists
+            if (token) {
+                try {
+                    const endpoint = userType === 'warden'
+                        ? `${import.meta.env.VITE_API_URL}/warden/profile`
+                        : `${import.meta.env.VITE_API_URL}/api/profile`;
+
+                    const response = await axios.get(endpoint, {
+                        headers: {
+                            authorization: `Bearer ${token}`,
+                        },
+                    });
+
+                    if (response.status === 200) {
+                        const userData = userType === 'warden' ? response.data.warden : response.data.user;
+                        setUser(userData);
+                        const complete = checkCompletion(userData);
+                        setIsProfileComplete(complete);
+                        if (complete) {
+                            toast.success("User profile fetched successfully");
+                        } else {
+                            toast.warn("Please complete your profile to access all features");
+                        }
+                        setLoading(false);
+                        return;
+                    }
+                } catch (error) {
+                    console.error("Failed to fetch user data", error);
+                    toast.error('Failed to fetch user data');
+                }
+            }
+
+            // Fallback/Demo data for 'warden' if API failed or no token
             if (userType === 'warden') {
-                // For warden, set demo data
-                setUser({
+                const demoUser: User = {
                     name: "Sanjay.S",
                     registerNumber: "WARDEN001",
                     department: "Hostel Management",
@@ -43,7 +89,7 @@ const Dashboard: React.FC = () => {
                     semester: 0,
                     email: "warden@jit.edu",
                     phone: "+91 9876543210",
-                    photo: "",
+                    photo: "https://via.placeholder.com/150",
                     batch: "N/A",
                     gender: "male",
                     parentnumber: "N/A",
@@ -53,29 +99,11 @@ const Dashboard: React.FC = () => {
                     cgpa: 0,
                     hostelname: "N/A",
                     hostelroomno: "N/A"
-                });
+                };
+                setUser(demoUser);
+                setIsProfileComplete(checkCompletion(demoUser));
                 setLoading(false);
-                return;
-            }
-
-            const token = localStorage.getItem('token');
-            if (!token) return;
-
-            try {
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/profile`, {
-                    headers: {
-                        authorization: `Bearer ${token}`,
-                    },
-                });
-                if (response.status == 200) {
-                    setUser(response.data.user);
-                    toast.success("User profile fetched successfully");
-                } else {
-                    toast.error("Failed to fetch user profile");
-                }
-            } catch (error) {
-                toast.error('Failed to fetch user data');
-            } finally {
+            } else {
                 setLoading(false);
             }
         };
@@ -90,194 +118,89 @@ const Dashboard: React.FC = () => {
         }, 700);
     };
 
-    if (Loading) {
-        return <div className="card staff-card">Loading...</div>;
-    }
-
     return (
         <div className="page-container dashboard-page">
             <ToastContainer position="bottom-right" />
-            <Nav />
-            <div className="content-wrapper">
-                {/* Hero Section */}
-                <div className="dashboard-hero">
-                    <div className="hero-welcome">
-                        <div>
-                            <span className="badge">Welcome Back</span>
+            {Loading ? (
+                <div className="card staff-card" style={{ margin: '2rem auto', textAlign: 'center', padding: '2rem' }}>Loading...</div>
+            ) : (
+                <>
+                    <Nav />
+                    <div className="content-wrapper">
+
+                        {!isProfileComplete && (
+                            <div className="profile-incomplete-overlay">
+                                <div className="incomplete-card">
+                                    <div className="warning-icon">⚠️</div>
+                                    <h2>Profile Incomplete</h2>
+                                    <p>You must complete your profile information (including photo, phone number, and hostel name) before you can access the Warden Dashboard.</p>
+                                    <button
+                                        className="btn-complete-profile"
+                                        onClick={() => navigate('/warden-profile')}
+                                    >
+                                        Complete Profile Now →
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Hero Section */}
+                        <div className={`dashboard-hero ${!isProfileComplete ? 'blurred' : ''}`}>
+                            <div className="hero-welcome">
+                                <div>
+                                    <span className="badge">Welcome Back</span>
+                                </div>
+                                <div>
+                                    <h1 style={{ color: 'skyblue' }}>Hello, {user.name}! 👋</h1>
+                                    <p style={{ color: 'skyblue' }}>
+                                        {user.year} • {user.department}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="hero-stats-grid">
+                            </div>
                         </div>
-                        <div>
-                            <h1 style={{ color: 'skyblue' }}>Hello, {user.name}! 👋</h1>
-                            <p style={{ color: 'skyblue' }}>
-                                {user.year} • {user.department}
-                            </p>
+
+                        <div className={`dashboard-layout ${!isProfileComplete ? 'blurred' : ''}`}>
+                            {/* Main Content */}
+                            <div className="main-content">
+                                {/* Quick Actions */}
+                                <section className="section">
+                                    <h2 className="section-title">Quick Actions</h2>
+                                    <div className="quick-links-grid">
+
+                                        {/* Pending Outpass */}
+                                        <div
+                                            className={`action-card ${zoomingPath === '/warden/pending-outpass' ? 'zooming' : ''}`}
+                                            onClick={() => isProfileComplete ? handleQuickAction('/warden/pending-outpass') : null}
+                                            style={{ cursor: isProfileComplete ? 'pointer' : 'not-allowed' }}
+                                        >
+                                            <span className="action-icon">⏳</span>
+                                            <span className="action-text">Pending Outpass</span>
+                                        </div>
+
+                                        {/* Outpass List */}
+                                        <div
+                                            className={`action-card ${zoomingPath === '/warden/outpass-list' ? 'zooming' : ''}`}
+                                            onClick={() => isProfileComplete ? handleQuickAction('/warden/outpass-list') : null}
+                                            style={{ cursor: isProfileComplete ? 'pointer' : 'not-allowed' }}
+                                        >
+                                            <span className="action-icon">✅</span>
+                                            <span className="action-text">Outpass List</span>
+                                        </div>
+
+                                    </div>
+
+                                </section>
+                            </div>
+
+                            {/* Sidebar */}
+                            <aside className="sidebar">
+                            </aside>
                         </div>
                     </div>
-                    <div className="hero-stats-grid">
-                        {/* <div className="stat-card">
-                            <div className="stat-icon blue">📚</div>
-                            <div className="stat-info">
-                                <span className="stat-value">8 </span>
-                                <span className="stat-label">Subjects</span>
-                            </div>
-                        </div>
-                        <div className="stat-card">
-                            <div className="stat-icon orange">⬇️</div>
-                            <div className="stat-info">
-                                <span className="stat-value">12 </span>
-                                <span className="stat-label">Downloads</span>
-                            </div>
-
-                        </div> */}
-                        {/* <div className="stat-card">
-                            <div className="stat-icon green">✅</div>
-                            <div className="stat-info">
-                                <span className="stat-value">95%</span>
-                                <span className="stat-label">Attendance</span>
-                            </div>
-                        </div> */}
-                    </div>
-                </div>
-
-                <div className="dashboard-layout">
-                    {/* Main Content */}
-                    <div className="main-content">
-                        {/* Quick Actions */}
-                        <section className="section">
-                            <h2 className="section-title">Quick Actions</h2>
-                            <div className="quick-links-grid">
-
-                                {/* Pending Outpass */}
-                                <div
-                                    className={`action-card ${zoomingPath === '/warden/pending-outpass' ? 'zooming' : ''}`}
-                                    onClick={() => handleQuickAction('/warden/pending-outpass')}
-                                >
-                                    <span className="action-icon">⏳</span>
-                                    <span className="action-text">Pending Outpass</span>
-                                </div>
-
-                                {/* Outpass List */}
-                                <div
-                                    className={`action-card ${zoomingPath === '/warden/outpass-list' ? 'zooming' : ''}`}
-                                    onClick={() => handleQuickAction('/warden/outpass-list')}
-                                >
-                                    <span className="action-icon">✅</span>
-                                    <span className="action-text">Outpass List</span>
-                                </div>
-
-                            </div>
-
-                        </section>
-
-                        {/* Department Info */}
-                        {/* <section className="section">
-                            <div className="card info-card">
-                                <div className="card-header">
-                                    <div className="header-icon">🏛️</div>
-                                    <div>
-                                        <h3>Department of Information Technology</h3>
-                                        <p className="card-subtitle">Academic Overview</p>
-                                    </div>
-                                    <span className="badge">IT Dept</span>
-                                </div>
-                                <div className="info-grid">
-                                    <div className="info-item">
-                                        <div className="info-icon">👨‍🏫</div>
-                                        <div className="info-content">
-                                            <label>Head of Department</label>
-                                            <p>Dr. Selvam</p>
-                                        </div>
-                                    </div>
-                                    <div className="info-item">
-                                        <div className="info-icon">👩‍🏫</div>
-                                        <div className="info-content">
-                                            <label>Class Advisor</label>
-                                            <p>Mrs. Ruth Shobitha</p>
-                                        </div>
-                                    </div>
-                                    <div className="info-item">
-                                        <div className="info-icon">🎓</div>
-                                        <div className="info-content">
-                                            <label>Total Students</label>
-                                            <p>120</p>
-                                        </div>
-                                    </div>
-                                    <div className="info-item">
-                                        <div className="info-icon">📅</div>
-                                        <div className="info-content">
-                                            <label>Semester</label>
-                                            <p>7th</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </section> */}
-
-                        {/* Vision & Mission */}
-                        {/* <section className="section">
-                            <div className="card vision-card">
-                                <div className="card-header">
-                                    <div className="header-icon">🚀</div>
-                                    <h3 className="text-white">Vision & Mission</h3>
-                                </div>
-                                <div className="vision-content">
-                                    <div className="vision-block">
-                                        <h4>Vision</h4>
-                                        <p>Jeppiaar Institute of Technology aspires to provide technical education in futuristic technologies with the perspective of innovative, industrial, and social applications for the betterment of humanity.</p>
-                                    </div>
-                                    <div className="vision-divider"></div>
-                                    <div className="vision-block">
-                                        <h4>Mission</h4>
-                                        <ul>
-                                            <li style={{ color: '#d0c9c9ff' }}>To produce competent and disciplined high-quality professionals.</li>
-                                            <li style={{ color: '#d0c9c9ff' }}>To improve the quality of education through excellence in teaching.</li>
-                                            <li style={{ color: '#d0c9c9ff' }}>To provide excellent infrastructure and stimulating environment.</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </section> */}
-                    </div>
-
-                    {/* Sidebar */}
-                    <aside className="sidebar">
-                        {/* Events
-                        <div className="card sidebar-card">
-                            <h3>Upcoming Events</h3>
-                            <div className="events-list">
-                                {EVENTS_DATA.map(event => (
-                                    <div key={event.id} className="event-item">
-                                        <div className={`event-date ${event.type}`}>
-                                            <span>{event.date.split(' ')[0]}</span>
-                                            <strong>{event.date.split(' ')[1].replace(',', '')}</strong>
-                                        </div>
-                                        <div className="event-details">
-                                            <p className="event-title">{event.title}</p>
-                                            <span className="event-type">{event.type}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div> */}
-
-                        {/* Recent Downloads */}
-                        {/* <div className="card sidebar-card">
-                            <h3>Recent Downloads</h3>
-                            <div className="downloads-list">
-                                {RECENT_DOWNLOADS.map(download => (
-                                    <div key={download.id} className="download-item">
-                                        <div className="download-icon">📄</div>
-                                        <div className="download-info">
-                                            <p className="download-title">{download.title}</p>
-                                            <span className="download-meta">{download.subject} • {download.date}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                            <button className="btn btn-ghost btn-sm w-full mt-4">View All Downloads</button>
-                        </div> */}
-                    </aside>
-                </div>
-            </div>
+                </>
+            )}
 
             <style>{`
                 .dashboard-hero {
@@ -796,6 +719,76 @@ const Dashboard: React.FC = () => {
                     display: flex;
                     align-items: center;
                     gap: 10px;
+                }
+
+                /* Block Wrapper */
+                .blurred {
+                    filter: blur(5px);
+                    pointer-events: none;
+                    user-select: none;
+                    opacity: 0.5;
+                    transition: all 0.3s ease;
+                }
+
+                .profile-incomplete-overlay {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 50;
+                    height: 80vh; /* Approximate height of view */
+                }
+
+                .incomplete-card {
+                    background: white;
+                    padding: 40px;
+                    border-radius: 20px;
+                    text-align: center;
+                    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+                    max-width: 500px;
+                    animation: fadeInUp 0.5s ease-out;
+                    border: 1px solid #e2e8f0;
+                }
+
+                .warning-icon {
+                    font-size: 48px;
+                    margin-bottom: 20px;
+                }
+
+                .incomplete-card h2 {
+                    color: #1e293b;
+                    margin-bottom: 16px;
+                    font-size: 1.8rem;
+                }
+
+                .incomplete-card p {
+                    color: #64748b;
+                    margin-bottom: 32px;
+                    line-height: 1.6;
+                    font-size: 1.1rem;
+                }
+
+                .btn-complete-profile {
+                    background: #0047AB;
+                    color: white;
+                    border: none;
+                    padding: 14px 32px;
+                    border-radius: 12px;
+                    font-size: 1.1rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    box-shadow: 0 4px 12px rgba(0, 71, 171, 0.3);
+                }
+
+                .btn-complete-profile:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 16px rgba(0, 71, 171, 0.4);
+                    background: #1e40af;
                 }
 
                 .downloads-list {

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import WardenNav from "../../components/WardenNav";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 
 const WardenStudentView: React.FC = () => {
   const { id } = useParams();
@@ -66,6 +66,7 @@ const WardenStudentView: React.FC = () => {
   if (!student) {
     return (
       <div className="loading-center">
+        <ToastContainer />
         <div className="loading-container">
           <div className="loading-bar">
             <div className="loading-progress"></div>
@@ -118,6 +119,7 @@ const WardenStudentView: React.FC = () => {
   return (
     <div className="page-container warden-view-page">
       <WardenNav />
+      <ToastContainer />
 
       <div className="content-wrapper">
         <button className="back-btn" onClick={() => navigate(-1)}>

@@ -6,14 +6,16 @@ const Welcome: React.FC = () => {
 
   return (
     <div className="landing-page">
-      <nav className="landing-nav container">
-        <div className="brand">
-          <img src="/jpgif.gif" alt="JIT Portal" className="brand-logo-gif" />
-        </div>
-        {/* <button className="btn btn-secondary login-nav-btn" onClick={() => navigate('/login')}>
-          Login
-        </button> */}
-      </nav>
+       <nav className="landing-nav container">
+
+                <div className="brand">
+                    <span className="icon">🎓</span>
+                    <span className="text">JIT Portal</span>
+                </div>
+                <button className="btn btn-secondary login-nav-btn" onClick={() => navigate('/login')}>
+                    Login
+                </button>
+            </nav>
 
       <main className="hero-section">
         <div className="container hero-content">

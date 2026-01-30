@@ -4,7 +4,7 @@ import Nav from "../../components/WardenNav";
 import Toast from "../../components/Toast";
 import wardenProfile from "../../assets/jit.webp";
 import axios from "axios";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 
 interface Warden {
   name: string;
@@ -34,6 +34,25 @@ const WardenProfile: React.FC = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [showToast, setShowToast] = useState(false);
+
+  // Calculate completion percentage
+  const calculateCompletion = (wardenData: Warden) => {
+    const requiredFields = ['name', 'email', 'phone', 'gender', 'hostelname', 'photo'];
+
+    // Filter out fields that are present and not empty
+    const filledFields = requiredFields.filter(field => {
+      const value = wardenData[field as keyof Warden];
+      return value !== null && value !== undefined && value !== '' && value !== 'N/A';
+    });
+
+    return Math.round((filledFields.length / requiredFields.length) * 100);
+  };
+
+  const [completionPercentage, setCompletionPercentage] = useState(0);
+
+  useEffect(() => {
+    setCompletionPercentage(calculateCompletion(warden));
+  }, [warden]);
 
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -116,6 +135,7 @@ const WardenProfile: React.FC = () => {
   return (
     <div className="page-container profile-page">
       <Nav />
+      <ToastContainer />
 
       {showToast && (
         <Toast
@@ -129,6 +149,28 @@ const WardenProfile: React.FC = () => {
         <button className="back-btn" onClick={() => navigate('/warden-dashboard')}>
           ← Back
         </button>
+
+        <div className="completion-card">
+          <div className="completion-header">
+            <h3>Profile Completion</h3>
+            <span className="completion-badge">{completionPercentage}%</span>
+          </div>
+          <div className="progress-container">
+            <div
+              className="progress-bar"
+              style={{
+                width: `${completionPercentage}%`,
+                backgroundColor: completionPercentage === 100 ? '#10b981' : '#0047AB'
+              }}
+            ></div>
+          </div>
+          <p className="completion-text">
+            {completionPercentage === 100
+              ? "Great! Your profile is fully complete."
+              : "Complete your profile to enable all features."}
+          </p>
+        </div>
+
         <div className="profile-layout">
           {/* Sidebar */}
           <div className="profile-sidebar">
@@ -337,6 +379,58 @@ const WardenProfile: React.FC = () => {
           .profile-role { margin-bottom: 2px; }
           .profile-badges { margin-top: 8px; }
           .input { font-size: 14px; padding: 10px; }
+        }
+
+        /* Completion Card Styles */
+        .completion-card {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        .completion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .completion-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: #1e293b;
+        }
+
+        .completion-badge {
+            background: #f1f5f9;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+            color: #0047AB;
+            font-size: 0.9rem;
+        }
+
+        .progress-container {
+            height: 10px;
+            background: #e2e8f0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            transition: width 0.5s ease;
+            border-radius: 5px;
+        }
+
+        .completion-text {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #64748b;
         }
       `}</style>
     </div>

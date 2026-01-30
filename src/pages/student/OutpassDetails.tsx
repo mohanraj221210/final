@@ -20,6 +20,12 @@ interface OutpassData {
         approvedAt?: string;
         rejectedAt?: string;
     };
+    yearInchargeApproval: {
+        status: ApprovalStatus;
+        remarks?: string;
+        approvedAt?: string;
+        rejectedAt?: string;
+    };
     wardenApproval: {
         status: ApprovalStatus;
         remarks?: string;
@@ -61,6 +67,12 @@ const OutpassDetails: React.FC = () => {
                             approvedAt: item.staffapprovedAt,
                             rejectedAt: item.staffapprovalstatus === 'rejected' ? item.updatedAt : undefined // Approximation if not explicit
                         },
+                        yearInchargeApproval: {
+                            status: item.yearinchargeapprovalstatus || 'pending',
+                            remarks: item.yearinchargeremarks,
+                            approvedAt: item.yearinchargeapprovedAt,
+                            rejectedAt: item.yearinchargeapprovalstatus === 'rejected' ? item.updatedAt : undefined
+                        },
                         wardenApproval: {
                             status: item.wardenapprovalstatus || 'pending',
                             remarks: item.wardenremarks,
@@ -81,14 +93,18 @@ const OutpassDetails: React.FC = () => {
         fetchOutpasses();
     }, []);
 
-    const getStatusBadge = (status: ApprovalStatus) => {
-        const statusConfig = {
+    const getStatusBadge = (status: string) => {
+        const normalizedStatus = (status || 'pending').toLowerCase();
+        const statusConfig: Record<string, { dot: string, label: string, color: string, bg: string }> = {
             pending: { dot: '●', label: 'Pending', color: '#f59e0b', bg: '#fef3c7' },
             approved: { dot: '●', label: 'Approved', color: '#10b981', bg: '#d1fae5' },
             rejected: { dot: '●', label: 'Rejected', color: '#ef4444', bg: '#fee2e2' },
+            // Add fallback for potential other statuses
+            declined: { dot: '●', label: 'Rejected', color: '#ef4444', bg: '#fee2e2' },
         };
 
-        const config = statusConfig[status];
+        const config = statusConfig[normalizedStatus] || statusConfig['pending'];
+
         return (
             <span className="status-badge" style={{
                 color: config.color,
@@ -117,10 +133,10 @@ const OutpassDetails: React.FC = () => {
     };
 
     const handleLogout = () => {
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('userType');
-      localStorage.removeItem('token');
-      navigate('/login');
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userType');
+        localStorage.removeItem('token');
+        navigate('/login');
     };
 
     const handleBackToList = () => {
@@ -129,7 +145,7 @@ const OutpassDetails: React.FC = () => {
 
     return (
         <div className="page-container outpass-details-page">
-           <ToastContainer position="bottom-right" />
+            <ToastContainer position="bottom-right" />
             <header className="dashboard-header-custom">
                 <div className="header-container-custom">
                     <div className="header-left-custom">
@@ -318,6 +334,44 @@ const OutpassDetails: React.FC = () => {
                                             <label>STAFF REMARKS</label>
                                             <div className="approval-value">
                                                 {selectedOutpass.staffApproval.remarks}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Year Incharge Approval Card */}
+                            <div className="approval-card">
+                                <div className="approval-card-header">
+                                    <span className="approval-icon">🧑‍💼</span>
+                                    <h3>Year Incharge Approval</h3>
+                                </div>
+                                <div className="approval-card-body">
+                                    <div className="approval-field">
+                                        <label>STATUS</label>
+                                        {getStatusBadge(selectedOutpass.yearInchargeApproval.status)}
+                                    </div>
+                                    {selectedOutpass.yearInchargeApproval.approvedAt && (
+                                        <div className="approval-field">
+                                            <label>APPROVED AT</label>
+                                            <div className="approval-value">
+                                                {formatDateTime(selectedOutpass.yearInchargeApproval.approvedAt)}
+                                            </div>
+                                        </div>
+                                    )}
+                                    {selectedOutpass.yearInchargeApproval.rejectedAt && (
+                                        <div className="approval-field">
+                                            <label>REJECTED AT</label>
+                                            <div className="approval-value">
+                                                {formatDateTime(selectedOutpass.yearInchargeApproval.rejectedAt)}
+                                            </div>
+                                        </div>
+                                    )}
+                                    {selectedOutpass.yearInchargeApproval.remarks && (
+                                        <div className="approval-field">
+                                            <label>REMARKS</label>
+                                            <div className="approval-value">
+                                                {selectedOutpass.yearInchargeApproval.remarks}
                                             </div>
                                         </div>
                                     )}
@@ -769,8 +823,20 @@ const OutpassDetails: React.FC = () => {
                 /* Approval Section */
                 .approval-section {
                     display: grid;
-                    grid-template-columns: repeat(2, 1fr);
+                    grid-template-columns: repeat(3, 1fr);
                     gap: 24px;
+                }
+
+                @media (max-width: 1024px) {
+                     .approval-section {
+                        grid-template-columns: repeat(2, 1fr);
+                    }
+                }
+
+                @media (max-width: 768px) {
+                     .approval-section {
+                        grid-template-columns: 1fr;
+                    }
                 }
 
                 .approval-card {
