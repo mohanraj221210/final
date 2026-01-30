@@ -4,7 +4,7 @@ import Toast from '../../components/Toast';
 import axios from 'axios';
 import { toast, ToastContainer } from "react-toastify";
 
-const Wardenlogin: React.FC = () => {
+const WatchmanLogin: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -27,7 +27,7 @@ const Wardenlogin: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${API_URL}/warden/login`, {
+      const response = await axios.post(`${API_URL}/watchman/login`, {
         email,
         password
       });
@@ -38,12 +38,12 @@ const Wardenlogin: React.FC = () => {
         // ✅ Save login data
         localStorage.setItem("token", token);
         localStorage.setItem("isLoggedIn", "true");
-        localStorage.setItem("userType", "warden");
+        localStorage.setItem("userType", "watchman");
 
         setShowToast(true);
 
         setTimeout(() => {
-          navigate("/warden-dashboard");
+          navigate("/watchman-dashboard");
         }, 1500);
       }
     } catch (error: any) {
@@ -57,7 +57,7 @@ const Wardenlogin: React.FC = () => {
         } else if (status === 401) {
           toast.error("Invalid email or password", { position: "bottom-right", autoClose: 5000 });
         } else if (status === 404) {
-          toast.error("Warden not found", { position: "bottom-right", autoClose: 5000 });
+          toast.error("Watchman not found", { position: "bottom-right", autoClose: 5000 });
         } else {
           toast.error("Login failed. Try again.", { position: "bottom-right", autoClose: 5000 });
         }
@@ -74,7 +74,7 @@ const Wardenlogin: React.FC = () => {
       <ToastContainer />
       {showToast && (
         <Toast
-          message="Warden login successful! Redirecting..."
+          message="Watchman login successful! Redirecting..."
           type="success"
           onClose={() => setShowToast(false)}
         />
@@ -87,19 +87,19 @@ const Wardenlogin: React.FC = () => {
         <div className="login-card staff-theme">
 
           {/* <div className="login-tabs">
-            <button type="button" className="tab-btn active">
-              Warden
-            </button>
-            <button type="button" className="tab-btn" onClick={() => navigate('/watchmanlogin')}>
-              Watchman
-            </button>
-          </div> */}
+                        <button type="button" className="tab-btn" onClick={() => navigate('/wardenlogin')}>
+                            Warden
+                        </button>
+                        <button type="button" className="tab-btn active">
+                            Watchman
+                        </button>
+                    </div> */}
 
           <div className="login-header">
-            <div className="logo-circle staff-logo">🛡️</div>
-            <h1>Warden Login</h1>
+            <div className="logo-circle staff-logo">👮</div>
+            <h1>Watchman Login</h1>
             <p className="text-muted">
-              Enter your warden credentials to access the portal
+              Enter your watchman credentials to access the portal
             </p>
           </div>
 
@@ -115,7 +115,7 @@ const Wardenlogin: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
-                <label htmlFor="username">Warden Email / ID</label>
+                <label htmlFor="username">Watchman Email / ID</label>
                 <span className="input-icon">👤</span>
               </div>
             </div>
@@ -242,12 +242,14 @@ const Wardenlogin: React.FC = () => {
           box-shadow: 0 4px 12px rgba(0, 11, 25, 0.15);
         }
 
+        /* Student Login - Blue Theme */
         .tab-btn:first-child.active {
           color: var(--primary);
           background: linear-gradient(135deg, rgba(0, 71, 171, 0.05), rgba(0, 71, 171, 0.1));
           border: 2px solid rgba(0, 71, 171, 0.3);
         }
 
+        /* Staff Login - Purple Theme */
         .tab-btn:last-child.active {
           color: #7c3aed;
           background: linear-gradient(135deg, rgba(124, 58, 237, 0.05), rgba(124, 58, 237, 0.1));
@@ -265,6 +267,7 @@ const Wardenlogin: React.FC = () => {
           padding: 0 48px 48px;
         }
 
+        /* Shimmering Border Effect */
         .login-card::before {
           content: '';
           position: absolute;
@@ -289,6 +292,7 @@ const Wardenlogin: React.FC = () => {
           pointer-events: none;
         }
 
+        /* Glassy Reflection */
         .login-card::after {
           content: '';
           position: absolute;
@@ -523,8 +527,7 @@ const Wardenlogin: React.FC = () => {
             font-size: 22px;
           }
         }
-
-        .back-home-btn {
+          .back-home-btn {
           background: rgba(255, 255, 255, 0.2);
           backdrop-filter: blur(10px);
           border: 1px solid rgba(255, 255, 255, 0.3);
@@ -545,11 +548,11 @@ const Wardenlogin: React.FC = () => {
           background: rgba(255, 255, 255, 0.3);
           transform: translateX(-4px);
         }
+
       `}</style>
 
     </div>
   );
 };
 
-export default Wardenlogin;
-
+export default WatchmanLogin;
