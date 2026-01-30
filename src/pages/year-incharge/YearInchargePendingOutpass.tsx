@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import YearInchargeNav from "../../components/YearInchargeNav";
+import Loader from "../../components/Loader";
 
 interface StudentDetails {
     _id: string;
@@ -86,8 +87,8 @@ const YearInchargePendingOutpass: React.FC = () => {
                         <tbody>
                             {loading ? (
                                 <tr>
-                                    <td colSpan={6} style={{ textAlign: "center", padding: "20px" }}>
-                                        Loading...
+                                    <td colSpan={6} style={{ padding: "40px" }}>
+                                        <Loader />
                                     </td>
                                 </tr>
                             ) : pendingOutpasses.length === 0 ? (
@@ -99,17 +100,17 @@ const YearInchargePendingOutpass: React.FC = () => {
                             ) : (
                                 pendingOutpasses.map((item) => (
                                     <tr key={item._id}>
-                                        <td>
+                                        <td data-label="Student Name">
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                                 <span style={{ fontWeight: '600', color: '#0f172a' }}>{item.studentid?.name}</span>
                                                 <span style={{ fontSize: '0.85rem', color: '#64748b' }}>{item.studentid?.registerNumber}</span>
                                             </div>
                                         </td>
-                                        <td>{item.studentid?.department}</td>
-                                        <td>{item.studentid?.year}</td>
-                                        <td>{item.outpassType}</td>
-                                        <td>{new Date(item.fromDate).toLocaleDateString()}</td>
-                                        <td>
+                                        <td data-label="Department">{item.studentid?.department}</td>
+                                        <td data-label="Year">{item.studentid?.year}</td>
+                                        <td data-label="Outpass Type">{item.outpassType}</td>
+                                        <td data-label="Date">{new Date(item.fromDate).toLocaleDateString()}</td>
+                                        <td data-label="Action">
                                             <button className="view-btn" onClick={() => navigate(`/year-incharge/student/${item._id}`)}>
                                                 Review
                                             </button>
@@ -216,6 +217,88 @@ const YearInchargePendingOutpass: React.FC = () => {
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .list-container {
+                padding: 20px;
+                margin-top: 20px;
+            }
+
+            .outpass-card {
+                padding: 0;
+                background: transparent;
+                box-shadow: none;
+                border: none;
+            }
+
+            .outpass-table, .outpass-table thead, .outpass-table tbody, .outpass-table th, .outpass-table td, .outpass-table tr {
+                display: block;
+            }
+
+            .outpass-table thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+
+            .outpass-table tbody tr {
+                background: white;
+                margin-bottom: 20px;
+                border-radius: 16px;
+                padding: 20px;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+                border: 1px solid #e2e8f0;
+            }
+
+            .outpass-table td {
+                border: none;
+                padding: 8px 0;
+                position: relative;
+                padding-left: 0; /* Changed from typical padding-left 50% for this design */
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+            }
+
+            .outpass-table td:before {
+                content: attr(data-label);
+                font-size: 0.75rem;
+                font-weight: 600;
+                color: #64748b;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                margin-bottom: 2px;
+            }
+
+            /* Adjust first cell (Name) to look like a header */
+            .outpass-table td:first-child {
+                border-bottom: 1px solid #f1f5f9;
+                padding-bottom: 12px;
+                margin-bottom: 8px;
+            }
+            
+            .outpass-table td:first-child:before {
+                display: none; /* Hide label for name card header */
+            }
+
+            .outpass-table td:last-child {
+                 margin-top: 12px;
+                 width: 100%;
+            }
+
+            .view-btn {
+                width: 100%;
+                padding: 12px;
+                font-size: 1rem;
+            }
+
+            .outpass-table tbody tr:hover {
+                transform: none;
+                background: white;
+            }
         }
       `}</style>
             </div>

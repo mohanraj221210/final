@@ -445,7 +445,7 @@ const StudentDetails: React.FC = () => {
                     .card-actions { margin: 0; }
                 }
 
-                @media (max-width: 600px) {
+                @media (max-width: 768px) {
                     .profile-card {
                         flex-direction: column;
                         text-align: center;

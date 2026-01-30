@@ -64,7 +64,7 @@ const Welcome: React.FC = () => {
                 <span className="arrow-icon">→</span>
               </button>
 
-              <button className="btn-role admin-btn" onClick={() => navigate('/watchman-login')}>
+              <button className="btn-role admin-btn" onClick={() => navigate('/watchmanlogin')}>
                 <span className="role-icon">👮🏻</span>
                 <div className="role-text">
                   <span className="role-title">Watchman Login</span>

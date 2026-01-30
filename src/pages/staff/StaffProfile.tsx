@@ -570,6 +570,7 @@ const StaffProfile: React.FC = () => {
                     background: linear-gradient(135deg, var(--bg) 0%, #E0E8F0 100%);
                     animation: fadeIn 0.5s ease-out;
                     padding-bottom: 40px;
+                    padding-top: 20px; /* Reduced specific top padding */
                 }
 
                 @keyframes fadeIn {
@@ -638,19 +639,19 @@ const StaffProfile: React.FC = () => {
                     padding: 0 20px;
                 }
 
-                .back-btn {
+                .staff-profile-page .back-btn {
                     background: white;
                     border: 1px solid rgba(0,0,0,0.1);
                     color: var(--primary);
-                    font-size: 14px;
+                    font-size: 13px;
                     font-weight: 600;
                     cursor: pointer;
-                    padding: 8px 16px;
+                    padding: 6px 10px;
                     border-radius: var(--radius-sm);
                     transition: var(--transition);
                     display: inline-flex;
                     align-items: center;
-                    gap: 8px;
+                    gap: 6px;
                     box-shadow: var(--shadow-sm);
                 }
                 
@@ -798,6 +799,84 @@ const StaffProfile: React.FC = () => {
                     justify-content: center;
                     cursor: pointer;
                     border: 3px solid white;
+                }
+
+                @media (max-width: 768px) {
+                    .content-wrapper {
+                        padding: 0 16px;
+                    }
+
+                    .profile-header {
+                        flex-direction: column;
+                        align-items: center;
+                        text-align: center;
+                        gap: 20px;
+                        padding: 24px;
+                    }
+
+                    .profile-input-wrapper {
+                        margin: 0 auto;
+                    }
+                    
+                    .profile-header-info {
+                        width: 100%;
+                        display: flex; 
+                        flex-direction: column;
+                        align-items: center;
+                    }
+
+                    .profile-badges {
+                        justify-content: center;
+                    }
+
+                    .completion-header {
+                        flex-direction: column;
+                        align-items: flex-start;
+                        gap: 12px;
+                    }
+                    
+                    .completion-title {
+                        margin-bottom: 4px;
+                    }
+                    
+                    .completion-value {
+                        align-self: flex-end;
+                    }
+
+                    .header-actions {
+                        flex-direction: column;
+                        gap: 12px;
+                    }
+                    
+                    .staff-profile-page .back-btn {
+                        width: auto;
+                        min-width: 140px;
+                        justify-content: center;
+                        align-self: flex-start;
+                    }
+                    
+                    .header-actions .action-btn {
+                        width: 100%;
+                    }
+                    
+                    .edit-actions {
+                        width: 100%;
+                        display: flex;
+                        gap: 10px;
+                    }
+                    
+                    .edit-actions .action-btn {
+                        flex: 1;
+                    }
+
+                    .info-list, .contact-list {
+                        grid-template-columns: 1fr;
+                    }
+                    
+                    .fields-row {
+                        grid-template-columns: 1fr;
+                    }
+                }
                     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
                     transition: transform 0.2s;
                     font-size: 18px;

@@ -815,7 +815,7 @@ const StudentRegistration: React.FC = () => {
                     cursor: not-allowed;
                 }
 
-                @media (max-width: 640px) {
+                @media (max-width: 768px) {
                     .tab-content {
                         padding: 24px;
                     }

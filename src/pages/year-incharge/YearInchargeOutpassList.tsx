@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import YearInchargeNav from '../../components/YearInchargeNav';
+import Loader from '../../components/Loader';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
@@ -103,7 +104,7 @@ const YearInchargeOutpassList: React.FC = () => {
                 </div>
 
                 {loading ? (
-                    <div className="loading-state">Loading records...</div>
+                    <Loader />
                 ) : (
                     <div className="table-container">
                         <table className="custom-table">
@@ -120,25 +121,25 @@ const YearInchargeOutpassList: React.FC = () => {
                                 {filteredOutpasses.length > 0 ? (
                                     filteredOutpasses.map((outpass) => (
                                         <tr key={outpass._id}>
-                                            <td>
+                                            <td data-label="Student Details">
                                                 <div className="student-info">
                                                     <span className="font-bold">{outpass.studentid?.name}</span>
                                                     <span className="text-sm text-gray-500">{outpass.studentid?.registerNumber}</span>
                                                     <span className="text-xs text-gray-400">{outpass.studentid?.year} - {outpass.studentid?.department}</span>
                                                 </div>
                                             </td>
-                                            <td>
+                                            <td data-label="Pass Information">
                                                 <div className="pass-info">
                                                     <span className="pass-type">{outpass.outpasstype}</span>
                                                 </div>
                                             </td>
-                                            <td>
+                                            <td data-label="Duration">
                                                 <div className="date-info">
                                                     <span className="date-label">From: {new Date(outpass.fromDate).toLocaleString()}</span>
                                                     <span className="date-label">To: {new Date(outpass.toDate).toLocaleString()}</span>
                                                 </div>
                                             </td>
-                                            <td>
+                                            <td data-label="Residence">
                                                 <div className="residence-info">
                                                     <span className="residence-type">{outpass.studentid?.residencetype}</span>
                                                     {outpass.studentid?.residencetype !== 'dayscholar' && (
@@ -149,7 +150,7 @@ const YearInchargeOutpassList: React.FC = () => {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td>
+                                            <td data-label="Approvals">
                                                 <div className="status-stack">
                                                     <span className={`status-badge ${getStatusColor(outpass.staffapprovalstatus)}`}>
                                                         Staff: {outpass.staffapprovalstatus}
@@ -314,6 +315,79 @@ const YearInchargeOutpassList: React.FC = () => {
                 .text-gray-400 { color: #94a3b8; }
                 .residence-type { text-transform: capitalize; font-weight: 500; }
 
+                /* Mobile Responsiveness */
+                @media (max-width: 768px) {
+                    .content-wrapper {
+                        padding: 16px;
+                    }
+                    
+                    .page-header h1 {
+                        font-size: 1.5rem;
+                    }
+
+                    .table-container {
+                        background: transparent;
+                        box-shadow: none;
+                        overflow-x: visible;
+                    }
+
+                    .custom-table, .custom-table thead, .custom-table tbody, .custom-table th, .custom-table td, .custom-table tr {
+                        display: block;
+                    }
+
+                    .custom-table thead tr {
+                        position: absolute;
+                        top: -9999px;
+                        left: -9999px;
+                    }
+
+                    .custom-table tbody tr {
+                        background: white;
+                        margin-bottom: 16px;
+                        border-radius: 16px;
+                        padding: 20px;
+                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+                        border: 1px solid #e2e8f0;
+                    }
+
+                    .custom-table td {
+                        border: none;
+                        padding: 8px 0;
+                        position: relative;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: flex-start;
+                        gap: 4px;
+                    }
+
+                    .custom-table td:before {
+                        content: attr(data-label);
+                        font-size: 0.75rem;
+                        font-weight: 600;
+                        color: #64748b;
+                        text-transform: uppercase;
+                        letter-spacing: 0.05em;
+                        margin-bottom: 2px;
+                    }
+                    
+                    /* Adjust specific cells */
+                    .custom-table td:first-child {
+                        padding-top: 0;
+                        padding-bottom: 12px;
+                        border-bottom: 1px solid #f1f5f9;
+                        margin-bottom: 8px;
+                    }
+                    
+                    .custom-table td:first-child:before {
+                        display: none; /* Hide label for name/student info */
+                    }
+
+                    .status-stack {
+                        flex-direction: row;
+                        flex-wrap: wrap;
+                        gap: 8px;
+                    }
+                }
             `}</style>
         </div>
     );

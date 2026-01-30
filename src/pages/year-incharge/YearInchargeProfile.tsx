@@ -3,6 +3,7 @@ import YearInchargeNav from '../../components/YearInchargeNav';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
+import Loader from '../../components/Loader';
 import jitProfile from '../../assets/jit.webp'; // Fallback image similar to WardenProfile
 
 interface YearIncharge {
@@ -11,7 +12,8 @@ interface YearIncharge {
     phone: string;
     gender: string;
     photo: string;
-    department?: string; // Keep for fetching but don't display/edit
+    year: string;
+    role: string;
 }
 
 const YearInchargeProfile: React.FC = () => {
@@ -23,8 +25,13 @@ const YearInchargeProfile: React.FC = () => {
         email: '',
         phone: '',
         gender: '',
-        photo: ''
+        photo: '',
+        year: '',
+        role: ''
     });
+
+    const [completionPercentage, setCompletionPercentage] = useState(0);
+    const [imageError, setImageError] = useState<string>("");
 
     // For file upload
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -33,6 +40,20 @@ const YearInchargeProfile: React.FC = () => {
     useEffect(() => {
         fetchProfile();
     }, []);
+
+    const calculateCompletion = (data: YearIncharge) => {
+        const fields = ['name', 'email', 'phone', 'gender', 'year', 'photo'];
+        let completed = 0;
+
+        fields.forEach(field => {
+            const value = data[field as keyof YearIncharge];
+            if (value && value.trim() !== '') {
+                completed++;
+            }
+        });
+
+        setCompletionPercentage(Math.round((completed / 6) * 100));
+    };
 
     const fetchProfile = async () => {
         const token = localStorage.getItem('token');
@@ -47,15 +68,20 @@ const YearInchargeProfile: React.FC = () => {
             });
 
             if (response.status === 200) {
-                const data = response.data.user || response.data;
-                setProfile({
+                // Handle the nested yearincharge object structure
+                const data = response.data.yearincharge || response.data;
+                const profileData = {
                     name: data.name || '',
                     email: data.email || '',
                     phone: data.phone || '',
                     gender: data.gender || 'male',
-                    photo: data.photo || ''
-                });
+                    photo: data.photo || '',
+                    year: data.year || '',
+                    role: data.role || ''
+                };
+                setProfile(profileData);
                 setPreviewImage(data.photo || '');
+                calculateCompletion(profileData);
             }
         } catch (error) {
             console.error("Profile fetch error:", error);
@@ -76,16 +102,30 @@ const YearInchargeProfile: React.FC = () => {
 
         // Validation: Max 200KB
         if (file.size > 200 * 1024) {
-            toast.error("Image size must be 200KB or less");
+            const errorMsg = "Image size must be 200KB or less";
+            setImageError(errorMsg);
+            toast.error(errorMsg);
+            setSelectedFile(null);
+            // Revert to original
+            setPreviewImage(profile.photo);
+            // Reset input value
+            e.target.value = '';
             return;
         }
 
         // Validation: Type
         if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) {
-            toast.error("Only JPG, JPEG, and PNG formats are allowed");
+            const errorMsg = "Only JPG, JPEG, and PNG formats are allowed";
+            setImageError(errorMsg);
+            toast.error(errorMsg);
+            setSelectedFile(null);
+            setPreviewImage(profile.photo);
+            e.target.value = '';
             return;
         }
 
+        // All good
+        setImageError("");
         setSelectedFile(file);
 
         // Create preview
@@ -97,6 +137,11 @@ const YearInchargeProfile: React.FC = () => {
     };
 
     const handleSave = async () => {
+        if (imageError) {
+            toast.error("Please fix the image error before saving.");
+            return;
+        }
+
         const token = localStorage.getItem('token');
         try {
             const formData = new FormData();
@@ -104,6 +149,7 @@ const YearInchargeProfile: React.FC = () => {
             formData.append('email', profile.email);
             formData.append('phone', profile.phone);
             formData.append('gender', profile.gender);
+            // Year and Role are typically immutable by the user, so not appending them
 
             if (selectedFile) {
                 formData.append('photo', selectedFile);
@@ -111,7 +157,7 @@ const YearInchargeProfile: React.FC = () => {
 
             // Using FormData for single request update including image
             const response = await axios.put(
-                `${import.meta.env.VITE_API_URL}/api/incharge/profile/update`,
+                `${import.meta.env.VITE_API_URL}/incharge/profile/update`,
                 formData,
                 {
                     headers: {
@@ -125,6 +171,7 @@ const YearInchargeProfile: React.FC = () => {
                 toast.success("Profile updated successfully");
                 setIsEditing(false);
                 setSelectedFile(null);
+                setImageError("");
                 // Optionally refresh to get the returned URLs/data ensuring consistency
                 fetchProfile();
             }
@@ -134,7 +181,11 @@ const YearInchargeProfile: React.FC = () => {
         }
     };
 
-    if (loading) return <div className="loading-screen">Loading...</div>;
+    if (loading) return (
+        <div className="page-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Loader />
+        </div>
+    );
 
     return (
         <div className="page-container profile-page">
@@ -142,6 +193,20 @@ const YearInchargeProfile: React.FC = () => {
             <ToastContainer position="bottom-right" />
 
             <div className="content-wrapper">
+                {/* Profile Completion Indicator */}
+                <div className="completion-section">
+                    <div className="completion-header">
+                        <h3>Profile Completion</h3>
+                        <span className="completion-text">{completionPercentage}% Completed</span>
+                    </div>
+                    <div className="progress-bar-bg">
+                        <div
+                            className="progress-bar-fill"
+                            style={{ width: `${completionPercentage}%` }}
+                        ></div>
+                    </div>
+                </div>
+
                 <button className="back-btn" onClick={() => navigate('/year-incharge-dashboard')}>
                     ← Back to Dashboard
                 </button>
@@ -170,6 +235,7 @@ const YearInchargeProfile: React.FC = () => {
                                         </label>
                                     )}
                                 </div>
+                                {imageError && <p className="error-text">{imageError}</p>}
                                 <h2 className="profile-name">{profile.name}</h2>
                                 <p className="profile-role">Year Incharge</p>
                             </div>
@@ -180,11 +246,14 @@ const YearInchargeProfile: React.FC = () => {
                                 </button>
                             ) : (
                                 <div className="action-buttons">
-                                    <button onClick={handleSave} className="btn btn-primary">Save Changes</button>
+                                    <button onClick={handleSave} className="btn btn-primary" disabled={!!imageError}>
+                                        Save Changes
+                                    </button>
                                     <button onClick={() => {
                                         setIsEditing(false);
                                         setPreviewImage(profile.photo); // Revert preview
                                         setSelectedFile(null);
+                                        setImageError("");
                                     }} className="btn btn-ghost">Cancel</button>
                                 </div>
                             )}
@@ -249,6 +318,18 @@ const YearInchargeProfile: React.FC = () => {
                                         <option value="female">Female</option>
                                     </select>
                                 </div>
+
+                                <div className="form-group">
+                                    <label>Year / Block</label>
+                                    <input
+                                        type="text"
+                                        name="year"
+                                        value={profile.year}
+                                        disabled={true}
+                                        className="input"
+                                        style={{ backgroundColor: '#f8fafc', cursor: 'not-allowed' }}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -266,8 +347,59 @@ const YearInchargeProfile: React.FC = () => {
                     margin: 0 auto;
                     padding: 30px 20px;
                 }
+                
+                .error-text {
+                    color: #ef4444;
+                    font-size: 0.85rem;
+                    margin: -10px 0 16px;
+                    font-weight: 500;
+                }
 
-                .back-btn {
+                .completion-section {
+                    background: white;
+                    padding: 20px;
+                    border-radius: 16px;
+                    margin-bottom: 24px;
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+                    border: 1px solid #e2e8f0;
+                }
+
+                .completion-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 12px;
+                }
+
+                .completion-header h3 {
+                    margin: 0;
+                    font-size: 1.1rem;
+                    color: #1e293b;
+                    font-weight: 600;
+                }
+
+                .completion-text {
+                    color: #0047AB;
+                    font-weight: 700;
+                    font-size: 1rem;
+                }
+
+                .progress-bar-bg {
+                    width: 100%;
+                    height: 10px;
+                    background: #e2e8f0;
+                    border-radius: 999px;
+                    overflow: hidden;
+                }
+
+                .progress-bar-fill {
+                    height: 100%;
+                    background: #0047AB;
+                    border-radius: 999px;
+                    transition: width 0.5s ease-out;
+                }
+
+                .content-wrapper .back-btn {
                     background: none;
                     border: none;
                     font-size: 1rem;
@@ -280,15 +412,14 @@ const YearInchargeProfile: React.FC = () => {
                     font-weight: 500;
                     transition: color 0.2s;
                 }
-                .back-btn:hover { color: #0047AB; }
+                .content-wrapper .back-btn:hover { color: #0047AB; }
 
                 .profile-layout {
                     display: grid;
-                    grid-template-columns: 350px 1fr;
-                    gap: 32px;
+                    /* Layout defined in media queries */
                 }
 
-                .card {
+                .content-wrapper .card {
                     background: white;
                     border-radius: 20px;
                     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
@@ -298,7 +429,17 @@ const YearInchargeProfile: React.FC = () => {
 
                 .profile-card {
                     padding: 32px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
                     text-align: center;
+                }
+
+                .profile-header {
+                    width: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
                 }
 
                 .avatar-container {
@@ -376,8 +517,7 @@ const YearInchargeProfile: React.FC = () => {
 
                 .form-grid {
                     display: grid;
-                    grid-template-columns: repeat(2, 1fr);
-                    gap: 24px;
+                    /* Layout defined in media queries */
                 }
 
                 .form-group {
@@ -392,28 +532,31 @@ const YearInchargeProfile: React.FC = () => {
                     color: #475569;
                 }
 
-                .input {
+                .content-wrapper .input {
                     padding: 10px 16px;
                     border: 1px solid #cbd5e1;
                     border-radius: 10px;
                     font-size: 0.95rem;
                     color: #1e293b;
                     transition: all 0.2s;
+                    width: 100%; /* Ensure inputs take full width of their container */
+                    box-sizing: border-box; /* Good practice */
                 }
 
-                .input:disabled {
+                .content-wrapper .input:disabled {
                     background: #f8fafc;
                     color: #64748b;
                     cursor: not-allowed;
                 }
 
-                .input:focus {
+                .content-wrapper .input:focus {
                     outline: none;
                     border-color: #0047AB;
                     box-shadow: 0 0 0 3px rgba(0, 71, 171, 0.1);
                 }
 
-                .btn {
+                /* Scoped Button Styles */
+                .content-wrapper .btn {
                     padding: 12px 24px;
                     border-radius: 10px;
                     font-weight: 600;
@@ -423,22 +566,22 @@ const YearInchargeProfile: React.FC = () => {
                     font-size: 0.95rem;
                 }
 
-                .btn-primary {
+                .content-wrapper .btn-primary {
                     background: #0047AB;
                     color: white;
                 }
-                .btn-primary:hover {
+                .content-wrapper .btn-primary:hover {
                     background: #1e40af;
                     transform: translateY(-1px);
                     box-shadow: 0 4px 12px rgba(0, 71, 171, 0.2);
                 }
 
-                .btn-ghost {
+                .content-wrapper .btn-ghost {
                     background: transparent;
                     color: #64748b;
                     border: 1px solid #cbd5e1;
                 }
-                .btn-ghost:hover {
+                .content-wrapper .btn-ghost:hover {
                     background: #f1f5f9;
                     color: #475569;
                 }
@@ -459,12 +602,90 @@ const YearInchargeProfile: React.FC = () => {
                     color: #64748b;
                 }
 
-                @media (max-width: 900px) {
+/* Mobile First / Common Styles */
+                .profile-layout {
+                    display: grid;
+                    /* Layout defined in media queries */
+                }
+                .form-grid {
+                    display: grid;
+                    /* Layout defined in media queries */
+                }
+
+                /* Desktop View (>= 769px) */
+                @media (min-width: 769px) {
+                    .profile-layout {
+                        grid-template-columns: 350px 1fr;
+                        gap: 32px;
+                    }
+                    .form-grid {
+                        grid-template-columns: repeat(2, 1fr);
+                        gap: 24px;
+                    }
+                }
+
+                /* Mobile View (<= 768px) */
+                @media (max-width: 768px) {
                     .profile-layout {
                         grid-template-columns: 1fr;
+                        gap: 20px;
                     }
                     .form-grid {
                         grid-template-columns: 1fr;
+                        gap: 24px;
+                    }
+
+                    .content-wrapper {
+                        padding: 16px;
+                    }
+
+                    .content-wrapper .card {  /* Update usage in media query too if selector changed */
+                        padding: 24px 20px;
+                        border-radius: 16px;
+                    }
+                    /* .profile-card and .details-card are specific classes, but .card is the base */
+                    /* Wait, .profile-card and .details-card were used in previous CSS */
+
+                    .profile-card,
+                    .details-card { /* These are specific enough? They were not prefixed before. */
+                        padding: 24px 20px;
+                        /* border-radius inherited from .card */
+                    }
+
+                    .avatar-container {
+                        width: 120px;
+                        height: 120px;
+                        margin-bottom: 16px;
+                    }
+
+                    .profile-name {
+                        font-size: 1.35rem;
+                    }
+
+                    .profile-role {
+                        margin-bottom: 16px;
+                        font-size: 0.9rem;
+                    }
+
+                    .content-wrapper .btn {
+                        width: 100%;
+                        padding: 14px 20px;
+                        font-size: 1rem;
+                        display: flex;
+                        justify-content: center;
+                    }
+                    
+                    .action-buttons {
+                        width: 100%;
+                    }
+
+                    .content-wrapper .input {
+                        font-size: 16px;
+                        padding: 12px;
+                    }
+                    
+                    .content-wrapper .back-btn {
+                        margin-bottom: 16px;
                     }
                 }
             `}</style>
