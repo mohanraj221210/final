@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import YearInchargeNav from "../../components/YearInchargeNav";
+import Loader from "../../components/Loader";
 
 interface StudentDetails {
     _id: string;
@@ -86,8 +87,8 @@ const YearInchargePendingOutpass: React.FC = () => {
                         <tbody>
                             {loading ? (
                                 <tr>
-                                    <td colSpan={6} style={{ textAlign: "center", padding: "20px" }}>
-                                        Loading...
+                                    <td colSpan={6} style={{ padding: "40px" }}>
+                                        <Loader />
                                     </td>
                                 </tr>
                             ) : pendingOutpasses.length === 0 ? (
@@ -99,17 +100,17 @@ const YearInchargePendingOutpass: React.FC = () => {
                             ) : (
                                 pendingOutpasses.map((item) => (
                                     <tr key={item._id}>
-                                        <td>
+                                        <td data-label="Student Name">
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                                 <span style={{ fontWeight: '600', color: '#0f172a' }}>{item.studentid?.name}</span>
                                                 <span style={{ fontSize: '0.85rem', color: '#64748b' }}>{item.studentid?.registerNumber}</span>
                                             </div>
                                         </td>
-                                        <td>{item.studentid?.department}</td>
-                                        <td>{item.studentid?.year}</td>
-                                        <td>{item.outpassType}</td>
-                                        <td>{new Date(item.fromDate).toLocaleDateString()}</td>
-                                        <td>
+                                        <td data-label="Department">{item.studentid?.department}</td>
+                                        <td data-label="Year">{item.studentid?.year}</td>
+                                        <td data-label="Outpass Type">{item.outpassType}</td>
+                                        <td data-label="Date">{new Date(item.fromDate).toLocaleDateString()}</td>
+                                        <td data-label="Action">
                                             <button className="view-btn" onClick={() => navigate(`/year-incharge/student/${item._id}`)}>
                                                 Review
                                             </button>

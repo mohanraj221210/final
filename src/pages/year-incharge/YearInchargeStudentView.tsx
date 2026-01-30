@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import YearInchargeNav from '../../components/YearInchargeNav';
+import Loader from '../../components/Loader';
 
 const YearInchargeStudentView: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -99,7 +100,14 @@ const YearInchargeStudentView: React.FC = () => {
         }
     };
 
-    if (loading) return <div className="page-container"><div className="loading">Loading details...</div></div>;
+    if (loading) return (
+        <div className="page-container">
+            <YearInchargeNav />
+            <div className="content-wrapper">
+                <Loader />
+            </div>
+        </div>
+    );
     if (!outpass) return null;
 
     return (

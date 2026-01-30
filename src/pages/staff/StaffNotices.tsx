@@ -23,7 +23,7 @@ const StaffNotices: React.FC = () => {
     const navigate = useNavigate();
     const [activeCommunity] = useState<number>(1);
     const [newMessage, setNewMessage] = useState('');
-    
+
 
     // Dummy Data
     const communities: Community[] = [
@@ -503,7 +503,7 @@ const StaffNotices: React.FC = () => {
                     .chat-area { flex: 1; }
                 }
 
-                @media (max-width: 700px) {
+                @media (max-width: 768px) {
                     .app-container { width: 100%; height: 100vh; margin: 0; border-radius: 0; box-shadow: none; }
                     .sidebar { flex: 0 0 100%; width: 100%; display: ${activeCommunity ? 'none' : 'flex'}; }
                     .chat-area { flex: 0 0 100%; width: 100%; display: ${activeCommunity ? 'flex' : 'none'}; }

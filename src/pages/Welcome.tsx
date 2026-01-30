@@ -6,16 +6,15 @@ const Welcome: React.FC = () => {
 
   return (
     <div className="landing-page">
-       <nav className="landing-nav container">
-
-                <div className="brand">
-                    <span className="icon">🎓</span>
-                    <span className="text">JIT Portal</span>
-                </div>
-                <button className="btn btn-secondary login-nav-btn" onClick={() => navigate('/login')}>
-                    Login
-                </button>
-            </nav>
+      <nav className="landing-nav container">
+        <div className="brand">
+          <span className="icon">🎓</span>
+          <span className="text">JIT Portal</span>
+        </div>
+        {/* <button className="btn btn-secondary login-nav-btn" onClick={() => navigate('/login')}>
+          Login
+        </button> */}
+      </nav>
 
       <main className="hero-section">
         <div className="container hero-content">
@@ -155,16 +154,13 @@ const Welcome: React.FC = () => {
         }
 
         .brand {
-          width: 100%;
-          display: cover;
+          display: flex;
           align-items: center;
-          justify-content: center;
-        }
-
-        .brand-logo-gif {
-            height: 100px; /* Slightly increased height */
-            width: 100%; 
-            object-fit: auto; /* Fill the area */
+          gap: 12px;
+          font-weight: 700;
+          font-size: 24px;
+          color: white;
+          letter-spacing: -0.5px;
         }
 
         .login-nav-btn {

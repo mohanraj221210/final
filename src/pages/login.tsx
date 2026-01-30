@@ -529,7 +529,7 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
           }
         }
 
-        @media (max-width: 480px) {
+        @media (max-width: 768px) {
           .login-page {
             padding: 16px;
           }
@@ -540,7 +540,7 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
           
           .login-header {
             padding: 24px 24px 0;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
           }
           
           .logo-circle {

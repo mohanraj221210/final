@@ -3,26 +3,57 @@ import YearInchargeNav from '../../components/YearInchargeNav';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
+import Loader from '../../components/Loader';
+import jitProfile from '../../assets/jit.webp'; // Fallback image similar to WardenProfile
+
+interface YearIncharge {
+    name: string;
+    email: string;
+    phone: string;
+    gender: string;
+    photo: string;
+    year: string;
+    role: string;
+}
 
 const YearInchargeProfile: React.FC = () => {
     const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(true);
-    const [formData, setFormData] = useState({
+    const [profile, setProfile] = useState<YearIncharge>({
         name: '',
         email: '',
         phone: '',
-        department: '',
         gender: '',
-        photo: ''
+        photo: '',
+        year: '',
+        role: ''
     });
 
-    // To handle image preview
+    const [completionPercentage, setCompletionPercentage] = useState(0);
+    const [imageError, setImageError] = useState<string>("");
+
+    // For file upload
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewImage, setPreviewImage] = useState<string>("");
 
     useEffect(() => {
         fetchProfile();
     }, []);
+
+    const calculateCompletion = (data: YearIncharge) => {
+        const fields = ['name', 'email', 'phone', 'gender', 'year', 'photo'];
+        let completed = 0;
+
+        fields.forEach(field => {
+            const value = data[field as keyof YearIncharge];
+            if (value && value.trim() !== '') {
+                completed++;
+            }
+        });
+
+        setCompletionPercentage(Math.round((completed / 6) * 100));
+    };
 
     const fetchProfile = async () => {
         const token = localStorage.getItem('token');
@@ -37,16 +68,20 @@ const YearInchargeProfile: React.FC = () => {
             });
 
             if (response.status === 200) {
-                const data = response.data.user || response.data;
-                setFormData({
+                // Handle the nested yearincharge object structure
+                const data = response.data.yearincharge || response.data;
+                const profileData = {
                     name: data.name || '',
                     email: data.email || '',
                     phone: data.phone || '',
-                    department: data.department || '',
-                    gender: data.gender || '',
-                    photo: data.photo || ''
-                });
+                    gender: data.gender || 'male',
+                    photo: data.photo || '',
+                    year: data.year || '',
+                    role: data.role || ''
+                };
+                setProfile(profileData);
                 setPreviewImage(data.photo || '');
+                calculateCompletion(profileData);
             }
         } catch (error) {
             console.error("Profile fetch error:", error);
@@ -56,32 +91,89 @@ const YearInchargeProfile: React.FC = () => {
         }
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setProfile(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const base64String = reader.result as string;
-                setPreviewImage(base64String);
-                setFormData(prev => ({ ...prev, photo: base64String }));
-            };
-            reader.readAsDataURL(file);
+        if (!file) return;
+
+        // Validation: Max 200KB
+        if (file.size > 200 * 1024) {
+            const errorMsg = "Image size must be 200KB or less";
+            setImageError(errorMsg);
+            toast.error(errorMsg);
+            setSelectedFile(null);
+            // Revert to original
+            setPreviewImage(profile.photo);
+            // Reset input value
+            e.target.value = '';
+            return;
         }
+
+        // Validation: Type
+        if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) {
+            const errorMsg = "Only JPG, JPEG, and PNG formats are allowed";
+            setImageError(errorMsg);
+            toast.error(errorMsg);
+            setSelectedFile(null);
+            setPreviewImage(profile.photo);
+            e.target.value = '';
+            return;
+        }
+
+        // All good
+        setImageError("");
+        setSelectedFile(file);
+
+        // Create preview
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setPreviewImage(reader.result as string);
+        };
+        reader.readAsDataURL(file);
     };
 
     const handleSave = async () => {
+        if (imageError) {
+            toast.error("Please fix the image error before saving.");
+            return;
+        }
+
         const token = localStorage.getItem('token');
         try {
+            const formData = new FormData();
+            formData.append('name', profile.name);
+            formData.append('email', profile.email);
+            formData.append('phone', profile.phone);
+            formData.append('gender', profile.gender);
+            // Year and Role are typically immutable by the user, so not appending them
+
+            if (selectedFile) {
+                formData.append('photo', selectedFile);
+            }
+
+            // Using FormData for single request update including image
             const response = await axios.put(
-                `${import.meta.env.VITE_API_URL}/api/incharge/profile/update`,
+                `${import.meta.env.VITE_API_URL}/incharge/profile/update`,
                 formData,
-                { headers: { 'Authorization': `Bearer ${token}` } }
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'multipart/form-data'
+                    }
+                }
             );
 
             if (response.status === 200) {
                 toast.success("Profile updated successfully");
                 setIsEditing(false);
-                fetchProfile(); // Refresh data
+                setSelectedFile(null);
+                setImageError("");
+                // Optionally refresh to get the returned URLs/data ensuring consistency
+                fetchProfile();
             }
         } catch (error) {
             console.error("Update error:", error);
@@ -89,310 +181,511 @@ const YearInchargeProfile: React.FC = () => {
         }
     };
 
+    if (loading) return (
+        <div className="page-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Loader />
+        </div>
+    );
+
     return (
-        <div className="page-container">
-            <ToastContainer position="bottom-right" />
+        <div className="page-container profile-page">
             <YearInchargeNav />
+            <ToastContainer position="bottom-right" />
+
             <div className="content-wrapper">
+                {/* Profile Completion Indicator */}
+                <div className="completion-section">
+                    <div className="completion-header">
+                        <h3>Profile Completion</h3>
+                        <span className="completion-text">{completionPercentage}% Completed</span>
+                    </div>
+                    <div className="progress-bar-bg">
+                        <div
+                            className="progress-bar-fill"
+                            style={{ width: `${completionPercentage}%` }}
+                        ></div>
+                    </div>
+                </div>
+
                 <button className="back-btn" onClick={() => navigate('/year-incharge-dashboard')}>
                     ← Back to Dashboard
                 </button>
-                <div className="profile-container">
-                    <div className="hero-banner">
-                        <div className="profile-image-wrapper">
-                            {previewImage ? (
-                                <img src={previewImage} alt="Profile" className="profile-img-lg" />
-                            ) : (
-                                <div className="placeholder-avatar">
-                                    {formData.name.charAt(0)}
+
+                <div className="profile-layout">
+                    {/* Left Column: Sidebar with Avatar */}
+                    <div className="profile-sidebar">
+                        <div className="card profile-card">
+                            <div className="profile-header">
+                                <div className="avatar-container">
+                                    <img
+                                        src={previewImage || jitProfile}
+                                        alt="Profile"
+                                        className="profile-avatar"
+                                        onError={(e) => { e.currentTarget.src = jitProfile; }}
+                                    />
+                                    {isEditing && (
+                                        <label className="avatar-upload">
+                                            <span>📷</span>
+                                            <input
+                                                type="file"
+                                                accept="image/png, image/jpeg, image/jpg"
+                                                onChange={handleImageChange}
+                                                className="hidden-input"
+                                            />
+                                        </label>
+                                    )}
                                 </div>
-                            )}
-                            {isEditing && (
-                                <label className="edit-photo-btn">
-                                    📷
-                                    <input type="file" hidden accept="image/*" onChange={handleFileChange} />
-                                </label>
+                                {imageError && <p className="error-text">{imageError}</p>}
+                                <h2 className="profile-name">{profile.name}</h2>
+                                <p className="profile-role">Year Incharge</p>
+                            </div>
+
+                            {!isEditing ? (
+                                <button onClick={() => setIsEditing(true)} className="btn btn-primary w-full">
+                                    Edit Profile
+                                </button>
+                            ) : (
+                                <div className="action-buttons">
+                                    <button onClick={handleSave} className="btn btn-primary" disabled={!!imageError}>
+                                        Save Changes
+                                    </button>
+                                    <button onClick={() => {
+                                        setIsEditing(false);
+                                        setPreviewImage(profile.photo); // Revert preview
+                                        setSelectedFile(null);
+                                        setImageError("");
+                                    }} className="btn btn-ghost">Cancel</button>
+                                </div>
                             )}
                         </div>
                     </div>
 
-                    <div className="profile-form-card">
-                        <div className="form-header">
-                            <div>
-                                <h2>{formData.name}</h2>
-                                <p className="text-muted">Year Incharge • {formData.department}</p>
+                    {/* Right Column: Details Form */}
+                    <div className="profile-main">
+                        <div className="card details-card">
+                            <div className="card-header">
+                                <h3>Personal Information</h3>
+                                <p className="text-muted">Manage your personal details.</p>
                             </div>
-                            <button
-                                className={`btn ${isEditing ? 'btn-save' : 'btn-edit'}`}
-                                onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-                            >
-                                {isEditing ? 'Save Changes' : 'Edit Profile'}
-                            </button>
-                        </div>
 
-                        {loading ? <p>Loading...</p> : (
                             <div className="form-grid">
                                 <div className="form-group">
                                     <label>Full Name</label>
                                     <input
                                         type="text"
-                                        value={formData.name}
+                                        name="name"
+                                        value={profile.name}
+                                        onChange={handleChange}
                                         disabled={!isEditing}
-                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                        className="input"
                                     />
                                 </div>
+
                                 <div className="form-group">
-                                    <label>Email ID</label>
+                                    <label>Email Address</label>
                                     <input
                                         type="email"
-                                        value={formData.email}
-                                        disabled={true} // Usually email is not editable
-                                        className="disabled-input"
+                                        name="email"
+                                        value={profile.email}
+                                        onChange={handleChange}
+                                        disabled={!isEditing} // User requested editable
+                                        className="input"
                                     />
                                 </div>
+
                                 <div className="form-group">
                                     <label>Phone Number</label>
                                     <input
                                         type="tel"
-                                        value={formData.phone}
+                                        name="phone"
+                                        value={profile.phone}
+                                        onChange={handleChange}
                                         disabled={!isEditing}
-                                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                        className="input"
                                     />
                                 </div>
-                                <div className="form-group">
-                                    <label>Department</label>
-                                    <input
-                                        type="text"
-                                        value={formData.department}
-                                        disabled={!isEditing}
-                                        onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                                    />
-                                </div>
+
                                 <div className="form-group">
                                     <label>Gender</label>
                                     <select
-                                        value={formData.gender}
+                                        name="gender"
+                                        value={profile.gender}
+                                        onChange={handleChange}
                                         disabled={!isEditing}
-                                        onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                                        className="input"
                                     >
                                         <option value="male">Male</option>
                                         <option value="female">Female</option>
                                     </select>
                                 </div>
-                            </div>
-                        )}
 
-                        {isEditing && (
-                            <button
-                                className="btn-cancel"
-                                onClick={() => setIsEditing(false)}
-                            >
-                                Cancel
-                            </button>
-                        )}
+                                <div className="form-group">
+                                    <label>Year / Block</label>
+                                    <input
+                                        type="text"
+                                        name="year"
+                                        value={profile.year}
+                                        disabled={true}
+                                        className="input"
+                                        style={{ backgroundColor: '#f8fafc', cursor: 'not-allowed' }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <style>{`
-                .profile-container {
-                    max-width: 800px;
-                    margin: 0 auto;
+                .page-container {
+                    min-height: 100vh;
+                    background: #f1f5f9;
                 }
 
-                .back-btn {
+                .content-wrapper {
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    padding: 30px 20px;
+                }
+                
+                .error-text {
+                    color: #ef4444;
+                    font-size: 0.85rem;
+                    margin: -10px 0 16px;
+                    font-weight: 500;
+                }
+
+                .completion-section {
+                    background: white;
+                    padding: 20px;
+                    border-radius: 16px;
+                    margin-bottom: 24px;
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+                    border: 1px solid #e2e8f0;
+                }
+
+                .completion-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 12px;
+                }
+
+                .completion-header h3 {
+                    margin: 0;
+                    font-size: 1.1rem;
+                    color: #1e293b;
+                    font-weight: 600;
+                }
+
+                .completion-text {
+                    color: #0047AB;
+                    font-weight: 700;
+                    font-size: 1rem;
+                }
+
+                .progress-bar-bg {
+                    width: 100%;
+                    height: 10px;
+                    background: #e2e8f0;
+                    border-radius: 999px;
+                    overflow: hidden;
+                }
+
+                .progress-bar-fill {
+                    height: 100%;
+                    background: #0047AB;
+                    border-radius: 999px;
+                    transition: width 0.5s ease-out;
+                }
+
+                .content-wrapper .back-btn {
                     background: none;
                     border: none;
-                    font-size: 16px;
+                    font-size: 1rem;
                     color: #64748b;
                     cursor: pointer;
                     margin-bottom: 24px;
-                    display: flex;
+                    display: inline-flex;
                     align-items: center;
                     gap: 8px;
-                    transition: color 0.3s;
-                    padding: 0;
                     font-weight: 500;
+                    transition: color 0.2s;
                 }
-                .back-btn:hover {
-                    color: #1e3a8a;
-                    transform: translateX(-4px);
+                .content-wrapper .back-btn:hover { color: #0047AB; }
+
+                .profile-layout {
+                    display: grid;
+                    /* Layout defined in media queries */
                 }
 
-                .hero-banner {
-                    height: 160px;
-                    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
-                    border-radius: 24px 24px 0 0;
-                    position: relative;
-                    margin-bottom: 60px;
-                }
-
-                .profile-image-wrapper {
-                    position: absolute;
-                    bottom: -50px;
-                    left: 40px;
-                    width: 120px;
-                    height: 120px;
-                    border-radius: 50%;
-                    border: 4px solid white;
+                .content-wrapper .card {
                     background: white;
-                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                    border-radius: 20px;
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+                    border: 1px solid #e2e8f0;
+                    overflow: hidden;
                 }
 
-                .profile-img-lg {
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                    border-radius: 50%;
-                }
-
-                .placeholder-avatar {
-                    width: 100%;
-                    height: 100%;
-                    background: #e2e8f0;
-                    border-radius: 50%;
+                .profile-card {
+                    padding: 32px;
                     display: flex;
+                    flex-direction: column;
                     align-items: center;
-                    justify-content: center;
-                    font-size: 3rem;
-                    color: #94a3b8;
-                    font-weight: 700;
+                    text-align: center;
                 }
 
-                .edit-photo-btn {
+                .profile-header {
+                    width: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                }
+
+                .avatar-container {
+                    position: relative;
+                    width: 140px;
+                    height: 140px;
+                    margin: 0 auto 20px;
+                }
+
+                .profile-avatar {
+                    width: 100%;
+                    height: 100%;
+                    border-radius: 50%;
+                    object-fit: cover;
+                    border: 4px solid white;
+                    box-shadow: 0 0 0 4px #e0e7ff;
+                }
+
+                .avatar-upload {
                     position: absolute;
-                    bottom: 0;
-                    right: 0;
-                    background: #3b82f6;
-                    color: white;
-                    width: 32px;
-                    height: 32px;
+                    bottom: 5px;
+                    right: 5px;
+                    background: #0047AB;
+                    width: 40px;
+                    height: 40px;
                     border-radius: 50%;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     cursor: pointer;
-                    transition: all 0.2s;
+                    border: 3px solid white;
+                    transition: transform 0.2s;
+                    color: white;
+                    font-size: 1.2rem;
                 }
+                .avatar-upload:hover { transform: scale(1.1); }
+                
+                .hidden-input { display: none; }
 
-                .edit-photo-btn:hover {
-                    transform: scale(1.1);
-                }
-
-                .profile-form-card {
-                    background: white;
-                    border-radius: 0 0 24px 24px;
-                    padding: 24px 40px 40px;
-                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-                }
-
-                .form-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: flex-start;
-                    margin-bottom: 32px;
-                    padding-left: 140px; /* Space for avatar */
-                }
-
-                .form-header h2 {
-                    font-size: 1.8rem;
+                .profile-name {
+                    font-size: 1.5rem;
                     color: #1e293b;
-                    margin-bottom: 4px;
+                    margin: 0 0 4px;
+                    font-weight: 700;
+                }
+
+                .profile-role {
+                    color: #64748b;
+                    font-size: 0.95rem;
+                    margin-bottom: 20px;
+                }
+
+                .details-card {
+                    padding: 32px;
+                }
+
+                .card-header {
+                    margin-bottom: 24px;
+                    border-bottom: 1px solid #f1f5f9;
+                    padding-bottom: 16px;
+                }
+
+                .card-header h3 {
+                    font-size: 1.25rem;
+                    color: #1e293b;
+                    margin: 0 0 4px;
+                    font-weight: 600;
+                }
+
+                .text-muted {
+                    color: #64748b;
+                    font-size: 0.9rem;
+                    margin: 0;
                 }
 
                 .form-grid {
                     display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 24px;
+                    /* Layout defined in media queries */
+                }
+
+                .form-group {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
                 }
 
                 .form-group label {
-                    display: block;
-                    margin-bottom: 8px;
-                    color: #64748b;
                     font-size: 0.9rem;
-                    font-weight: 500;
+                    font-weight: 600;
+                    color: #475569;
                 }
 
-                .form-group input, .form-group select {
-                    width: 100%;
-                    padding: 12px;
-                    border: 1px solid #e2e8f0;
-                    border-radius: 12px;
-                    font-size: 1rem;
-                    transition: border-color 0.2s;
+                .content-wrapper .input {
+                    padding: 10px 16px;
+                    border: 1px solid #cbd5e1;
+                    border-radius: 10px;
+                    font-size: 0.95rem;
+                    color: #1e293b;
+                    transition: all 0.2s;
+                    width: 100%; /* Ensure inputs take full width of their container */
+                    box-sizing: border-box; /* Good practice */
                 }
 
-                .form-group input:disabled, .form-group select:disabled {
+                .content-wrapper .input:disabled {
                     background: #f8fafc;
                     color: #64748b;
                     cursor: not-allowed;
                 }
 
-                .form-group input:not(:disabled):focus, .form-group select:not(:disabled):focus {
-                    border-color: #3b82f6;
+                .content-wrapper .input:focus {
                     outline: none;
-                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+                    border-color: #0047AB;
+                    box-shadow: 0 0 0 3px rgba(0, 71, 171, 0.1);
                 }
 
-                .btn {
-                    padding: 10px 24px;
+                /* Scoped Button Styles */
+                .content-wrapper .btn {
+                    padding: 12px 24px;
                     border-radius: 10px;
                     font-weight: 600;
                     cursor: pointer;
-                    border: none;
                     transition: all 0.2s;
+                    border: none;
+                    font-size: 0.95rem;
                 }
 
-                .btn-edit {
-                    background: #eff6ff;
-                    color: #3b82f6;
-                }
-
-                .btn-edit:hover {
-                    background: #dbeafe;
-                }
-
-                .btn-save {
-                    background: #3b82f6;
+                .content-wrapper .btn-primary {
+                    background: #0047AB;
                     color: white;
                 }
-
-                .btn-save:hover {
-                    background: #2563eb;
+                .content-wrapper .btn-primary:hover {
+                    background: #1e40af;
+                    transform: translateY(-1px);
+                    box-shadow: 0 4px 12px rgba(0, 71, 171, 0.2);
                 }
-                
-                .btn-cancel {
-                    margin-top: 20px;
+
+                .content-wrapper .btn-ghost {
                     background: transparent;
-                    border: 1px solid #ef4444;
-                    color: #ef4444;
-                    padding: 10px 24px;
-                    border-radius: 10px;
-                    cursor: pointer;
-                    font-weight: 600;
-                    width: 100%;
+                    color: #64748b;
+                    border: 1px solid #cbd5e1;
                 }
-                
-                .btn-cancel:hover {
-                    background: #fef2f2;
+                .content-wrapper .btn-ghost:hover {
+                    background: #f1f5f9;
+                    color: #475569;
                 }
 
+                .w-full { width: 100%; }
+                .action-buttons {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                }
+
+                .loading-screen {
+                    height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 1.2rem;
+                    color: #64748b;
+                }
+
+/* Mobile First / Common Styles */
+                .profile-layout {
+                    display: grid;
+                    /* Layout defined in media queries */
+                }
+                .form-grid {
+                    display: grid;
+                    /* Layout defined in media queries */
+                }
+
+                /* Desktop View (>= 769px) */
+                @media (min-width: 769px) {
+                    .profile-layout {
+                        grid-template-columns: 350px 1fr;
+                        gap: 32px;
+                    }
+                    .form-grid {
+                        grid-template-columns: repeat(2, 1fr);
+                        gap: 24px;
+                    }
+                }
+
+                /* Mobile View (<= 768px) */
                 @media (max-width: 768px) {
+                    .profile-layout {
+                        grid-template-columns: 1fr;
+                        gap: 20px;
+                    }
                     .form-grid {
                         grid-template-columns: 1fr;
+                        gap: 24px;
                     }
-                    .form-header {
-                        flex-direction: column;
-                        padding-left: 0;
-                        margin-top: 60px;
-                        gap: 16px;
-                        text-align: center;
-                        align-items: center;
+
+                    .content-wrapper {
+                        padding: 16px;
                     }
-                    .profile-image-wrapper {
-                        left: 50%;
-                        transform: translateX(-50%);
+
+                    .content-wrapper .card {  /* Update usage in media query too if selector changed */
+                        padding: 24px 20px;
+                        border-radius: 16px;
+                    }
+                    /* .profile-card and .details-card are specific classes, but .card is the base */
+                    /* Wait, .profile-card and .details-card were used in previous CSS */
+
+                    .profile-card,
+                    .details-card { /* These are specific enough? They were not prefixed before. */
+                        padding: 24px 20px;
+                        /* border-radius inherited from .card */
+                    }
+
+                    .avatar-container {
+                        width: 120px;
+                        height: 120px;
+                        margin-bottom: 16px;
+                    }
+
+                    .profile-name {
+                        font-size: 1.35rem;
+                    }
+
+                    .profile-role {
+                        margin-bottom: 16px;
+                        font-size: 0.9rem;
+                    }
+
+                    .content-wrapper .btn {
+                        width: 100%;
+                        padding: 14px 20px;
+                        font-size: 1rem;
+                        display: flex;
+                        justify-content: center;
+                    }
+                    
+                    .action-buttons {
+                        width: 100%;
+                    }
+
+                    .content-wrapper .input {
+                        font-size: 16px;
+                        padding: 12px;
+                    }
+                    
+                    .content-wrapper .back-btn {
+                        margin-bottom: 16px;
                     }
                 }
             `}</style>
