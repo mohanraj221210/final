@@ -175,7 +175,7 @@ const WatchmanStudentView: React.FC = () => {
         </button>
 
         <div className="main-header">
-          <h1>Student Details (Watchman View)</h1>
+          <h1>Student Details (Security View)</h1>
         </div>
 
         {/* Section 1: Student Personal Details - FILTERED */}

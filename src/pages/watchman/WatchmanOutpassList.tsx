@@ -58,12 +58,12 @@ const WatchmanOutpassList: React.FC = () => {
   return (
     <div className="page-container">
       <WatchmanNav />
-      
+
       <div className="list-container">
         <button className="back-btn" onClick={() => navigate("/watchman-dashboard")}>
           ← Back
         </button>
-        <h1>Watchman Approved Outpass List</h1>
+        <h1>Security Approved Outpass List</h1>
 
         <div className="outpass-card">
           {loading ? (

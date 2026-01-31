@@ -110,7 +110,7 @@ const WatchmanProfile: React.FC = () => {
                     onClose={() => setShowToast(false)}
                 />
             )}
-            <ToastContainer/>
+            <ToastContainer />
 
             <div className="content-wrapper">
                 <button className="back-btn" onClick={() => navigate('/watchman-dashboard')}>
@@ -143,7 +143,7 @@ const WatchmanProfile: React.FC = () => {
                                 <h2 className="profile-name">{watchman.name}</h2>
 
                                 <div className="profile-badges">
-                                    <span className="badge">Watchman</span>
+                                    <span className="badge">Security</span>
                                 </div>
                             </div>
 

@@ -57,7 +57,7 @@ const WatchmanLogin: React.FC = () => {
         } else if (status === 401) {
           toast.error("Invalid email or password", { position: "bottom-right", autoClose: 5000 });
         } else if (status === 404) {
-          toast.error("Watchman not found", { position: "bottom-right", autoClose: 5000 });
+          toast.error("Security officer not found", { position: "bottom-right", autoClose: 5000 });
         } else {
           toast.error("Login failed. Try again.", { position: "bottom-right", autoClose: 5000 });
         }
@@ -74,7 +74,7 @@ const WatchmanLogin: React.FC = () => {
       <ToastContainer />
       {showToast && (
         <Toast
-          message="Watchman login successful! Redirecting..."
+          message="Security login successful! Redirecting..."
           type="success"
           onClose={() => setShowToast(false)}
         />
@@ -90,16 +90,16 @@ const WatchmanLogin: React.FC = () => {
                         <button type="button" className="tab-btn" onClick={() => navigate('/wardenlogin')}>
                             Warden
                         </button>
-                        <button type="button" className="tab-btn active">
-                            Watchman
-                        </button>
+                        <div className="role-badge">
+                            Security
+                        </div>
                     </div> */}
 
           <div className="login-header">
             <div className="logo-circle staff-logo">👮</div>
-            <h1>Watchman Login</h1>
-            <p className="text-muted">
-              Enter your watchman credentials to access the portal
+            <h1>Security Login</h1>
+            <p className="auth-subtitle">
+              Enter your security credentials to access the portal
             </p>
           </div>
 
@@ -115,7 +115,7 @@ const WatchmanLogin: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
-                <label htmlFor="username">Watchman Email / ID</label>
+                <label htmlFor="username">Security Email / ID</label>
                 <span className="input-icon">👤</span>
               </div>
             </div>
