@@ -61,6 +61,20 @@ const WatchmanProfile: React.FC = () => {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        // Validation: Max 200KB
+        if (file.size > 200 * 1024) {
+            toast.error("Image size must be less than 200KB");
+            e.target.value = ""; // Reset input
+            return;
+        }
+
+        // Validation: Only JPEG and PNG
+        if (!["image/jpeg", "image/png"].includes(file.type)) {
+            toast.error("Only JPEG and PNG formats are allowed");
+            e.target.value = ""; // Reset input
+            return;
+        }
+
         setSelectedFile(file);
         setPreviewUrl(URL.createObjectURL(file));
     };
@@ -110,7 +124,7 @@ const WatchmanProfile: React.FC = () => {
                     onClose={() => setShowToast(false)}
                 />
             )}
-            <ToastContainer/>
+            <ToastContainer />
 
             <div className="content-wrapper">
                 <button className="back-btn" onClick={() => navigate('/watchman-dashboard')}>
@@ -132,7 +146,7 @@ const WatchmanProfile: React.FC = () => {
                                             <span>📷</span>
                                             <input
                                                 type="file"
-                                                accept="image/*"
+                                                accept="image/jpeg, image/png"
                                                 onChange={handleImageUpload}
                                                 className="hidden-input"
                                             />

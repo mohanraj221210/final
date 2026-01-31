@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import YearInchargeNav from '../../components/YearInchargeNav';
+import Loader from '../../components/Loader';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
@@ -101,7 +102,14 @@ const YearInchargeDashboard: React.FC = () => {
     };
 
     if (loading) {
-        return <div className="card staff-card">Loading...</div>;
+        return (
+            <div className="page-container dashboard-page">
+                <YearInchargeNav />
+                <div className="content-wrapper">
+                    <Loader />
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -117,7 +125,7 @@ const YearInchargeDashboard: React.FC = () => {
                             <span className="badge">Welcome Back</span>
                         </div>
                         <div>
-                            <h1 style={{ color: 'skyblue' }}>Hello, {user.name}! 👋</h1>
+                            <h1 style={{ color: 'skyblue', marginTop: '20px' }}>Hello, {user.name}! 👋</h1>
                             <p style={{ color: 'skyblue' }}>
                                 Year Incharge • {user.department}
                             </p>
@@ -348,12 +356,15 @@ const YearInchargeDashboard: React.FC = () => {
                 
                 .hero-welcome .badge {
                     animation: pulse-glow 3s infinite;
+                   
                 }
                 
                @media (max-width: 968px) {
                     .dashboard-hero { flex-direction: column; align-items: flex-start; gap: 24px; }
                     .hero-stats-grid { width: 100%; justify-content: flex-start; }
+                    
                 }
+                
             `}</style>
         </div>
     );

@@ -40,6 +40,7 @@ interface StudentOutpass {
     staffApproval: ApprovalStatus;
     yearInchargeApproval: ApprovalStatus;
     wardenApproval: ApprovalStatus;
+    staffApprovedBy?: string;
 }
 
 const PassApproval: React.FC = () => {
@@ -52,8 +53,25 @@ const PassApproval: React.FC = () => {
     const [students, setStudents] = useState<StudentOutpass[]>([]);
     const [roommates, setRoommates] = useState<any[]>([]);
     const [loadingRoommates, setLoadingRoommates] = useState(false);
+    const [currentStaffName, setCurrentStaffName] = useState('');
 
-
+    useEffect(() => {
+        const fetchStaffProfile = async () => {
+            try {
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}/staff/profile`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                if (response.status === 200) {
+                    setCurrentStaffName(response.data.staff.name);
+                }
+            } catch (error) {
+                console.error("Failed to fetch staff profile", error);
+            }
+        };
+        fetchStaffProfile();
+    }, []);
 
     const fetchOutpassDetails = async (outpassId: string) => {
         try {
@@ -86,6 +104,7 @@ const PassApproval: React.FC = () => {
                     fromDate: data.fromDate,
                     toDate: data.toDate,
                     staffApproval: data.staffapprovalstatus || 'pending',
+                    staffApprovedBy: data.staffApprovedBy, // Map from API if available
                     yearInchargeApproval: data.yearinchargeapprovalstatus || 'pending',
                     wardenApproval: data.wardenapprovalstatus || 'pending',
                     lastOutpassFrom: data.lastOutpassFrom,
@@ -160,11 +179,8 @@ const PassApproval: React.FC = () => {
             student.studentId.toLowerCase().includes(searchQuery.toLowerCase()) ||
             student.studentname.toLowerCase().includes(searchQuery.toLowerCase());
 
-        const overallStatus = student.staffApproval === 'rejected' || student.wardenApproval === 'rejected'
-            ? 'rejected'
-            : student.staffApproval === 'approved' && student.wardenApproval === 'approved'
-                ? 'approved'
-                : 'pending';
+        // FIX: Filter based purely on Staff Approval status for this page
+        const overallStatus = student.staffApproval;
 
         const matchesFilter = filterStatus === 'all' || overallStatus === filterStatus;
 
@@ -231,19 +247,28 @@ const PassApproval: React.FC = () => {
             if (response.status === 200) {
                 toast.success(response.data.message || `Outpass ${actionType}d successfully`);
 
+                const newStatus = actionType === 'approve' ? 'approved' : 'rejected';
+
                 // Update local state to reflect changes immediately
                 setStudents(prev => prev.map(student =>
                     student.id === selectedStudent.id
                         ? {
                             ...student,
-                            staffApproval: actionType === 'approve' ? 'approved' : 'rejected'
+                            staffApproval: newStatus
                         }
                         : student
                 ));
 
+                // Update selectedStudent to reflect new status immediately without closing
+                setSelectedStudent(prev => prev ? ({
+                    ...prev,
+                    staffApproval: newStatus,
+                    staffApprovedBy: actionType === 'approve' ? currentStaffName : undefined
+                }) : null);
+
                 setShowActionModal(false);
                 setActionRemarks('');
-                setSelectedStudent(null);
+                // Removed setSelectedStudent(null) to keep user on the page
             }
         } catch (error: any) {
             console.error('Error updating outpass status:', error);
@@ -253,9 +278,7 @@ const PassApproval: React.FC = () => {
 
 
 
-    const canApprove = selectedStudent &&
-        (selectedStudent.staffApproval === 'pending' ||
-            (selectedStudent.staffApproval === 'approved' && selectedStudent.wardenApproval === 'pending'));
+    const canApprove = selectedStudent && selectedStudent.staffApproval === 'pending';
 
     return (
         <div className="page-container approval-page">
@@ -312,11 +335,8 @@ const PassApproval: React.FC = () => {
                         {/* Student List */}
                         <div className="student-list">
                             {filteredStudents.map((student) => {
-                                const overallStatus = student.staffApproval === 'rejected' || student.wardenApproval === 'rejected'
-                                    ? 'rejected'
-                                    : student.staffApproval === 'approved' && student.wardenApproval === 'approved'
-                                        ? 'approved'
-                                        : 'pending';
+                                // Staff View: Prioritize Staff Approval Status
+                                const overallStatus = student.staffApproval;
 
                                 return (
                                     <div
@@ -542,6 +562,9 @@ const PassApproval: React.FC = () => {
                                             <div className="step-content">
                                                 <h3>Staff Approval</h3>
                                                 {getStatusBadge(selectedStudent.staffApproval)}
+                                                {selectedStudent.staffApproval === 'approved' && (
+                                                    <span className="approver-name">by {selectedStudent.staffApprovedBy || 'Staff'}</span>
+                                                )}
                                             </div>
                                         </div>
                                         <div className={`step-connector ${selectedStudent.staffApproval === 'approved' ? 'active' : ''}`}></div>
@@ -622,6 +645,14 @@ const PassApproval: React.FC = () => {
             )}
 
             <style>{`
+                .approver-name {
+                    display: block;
+                    font-size: 0.8rem;
+                    color: #64748b;
+                    margin-top: 4px;
+                    font-style: italic;
+                }
+
                 .page-container {
                     min-height: 100vh;
                     padding-top: 0px;

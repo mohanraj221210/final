@@ -455,7 +455,7 @@ const OutpassList: React.FC = () => {
   }
 
   .header-row {
-      flex-direction: column-reverse; /* Put filters on top or buttons where convenient, or kept column */
+      flex-direction: column; /* Back button on top, filters below */
       align-items: flex-start;
       gap: 16px;
   }

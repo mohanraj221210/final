@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import StaffHeader from '../../components/StaffHeader';
 
 // Define Student Interface matching the API response
 interface Student {
@@ -130,112 +131,154 @@ const StudentDetails: React.FC = () => {
     return (
         <div className="details-page">
             <ToastContainer position="bottom-right" />
+            <StaffHeader activeMenu="registration" />
 
-            {/* Header */}
-            <header className="details-header">
-                <button className="back-btn" onClick={() => navigate('/staff-registration')}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M19 12H5" />
-                        <path d="M12 19l-7-7 7-7" />
-                    </svg>
-                    Back to List
-                </button>
-                <h1>Student Profile</h1>
+            <div className="page-wrapper">
+                {/* Header Actions */}
                 <div className="header-actions">
-                    {!isEditing ? (
-                        <button className="btn-edit" onClick={() => setIsEditing(true)}>Edit Profile</button>
-                    ) : (
-                        <div className="edit-actions">
-                            <button className="btn-cancel" onClick={() => { setIsEditing(false); setFormData(student); }}>Cancel</button>
-                            <button className="btn-save" onClick={handleUpdate}>Save Changes</button>
-                        </div>
-                    )}
-                </div>
-            </header>
+                    <button className="back-btn" onClick={() => navigate('/staff-registration')}>
+                        ← Back to List
+                    </button>
 
-            <div className="details-container">
-                {/* Profile Card */}
-                <div className="profile-card">
-                    <div className="profile-top">
-                        <div className="avatar-large">
-                            {student.photo ? (
-                                <img src={student.photo} alt={student.name} />
-                            ) : (
-                                <span>{student.name.charAt(0).toUpperCase()}</span>
-                            )}
-                        </div>
-                        <div className="profile-identity">
-                            <h2>{student.name}</h2>
-                            <p className="reg-no">{student.registerNumber}</p>
-                            <span className={`status-badge ${student.isblocked ? 'blocked' : 'active'}`}>
-                                {student.isblocked ? 'Blocked' : 'Active'}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="card-actions">
-                        <button
-                            className={`btn-block ${student.isblocked ? 'unblock' : 'block'}`}
-                            onClick={handleBlockToggle}
-                        >
-                            {student.isblocked ? 'Unblock Account' : 'Block Account'}
-                        </button>
-                        <button className="btn-delete" onClick={handleDelete}>
-                            Delete Student
-                        </button>
+                    <div className="action-buttons-group">
+                        {!isEditing ? (
+                            <button className="btn-edit" onClick={() => setIsEditing(true)}>
+                                ✏️ Edit Profile
+                            </button>
+                        ) : (
+                            <div className="edit-controls">
+                                <button className="btn-cancel" onClick={() => { setIsEditing(false); setFormData(student); }}>Cancel</button>
+                                <button className="btn-save" onClick={handleUpdate}>Save Changes</button>
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* Details Grid */}
-                <div className="info-grid">
-                    {/* Academic Info */}
-                    <div className="info-section">
-                        <h3>Academic Information</h3>
-                        <div className="fields-row">
-                            <Field label="Department" name="department" value={formData.department} isEditing={isEditing} onChange={handleInputChange} />
-                            <Field label="Batch" name="batch" value={formData.batch} isEditing={isEditing} onChange={handleInputChange} />
-                            <Field label="Year" name="year" value={formData.year} isEditing={isEditing} onChange={handleInputChange} />
-                            <Field label="Semester" name="semester" value={formData.semester} isEditing={isEditing} onChange={handleInputChange} />
-                            <Field label="CGPA" name="cgpa" value={formData.cgpa} isEditing={isEditing} onChange={handleInputChange} />
-                            <Field label="Arrears" name="arrears" value={formData.arrears} isEditing={isEditing} onChange={handleInputChange} />
+                <div className="details-grid">
+                    {/* Student Profile Card - Modern Design */}
+                    <div className="student-card-modern">
+                        <div className="card-header-gradient">
+                            <div className="avatar-large">
+                                {student.photo ? (
+                                    <img src={student.photo} alt={student.name} />
+                                ) : (
+                                    student.name.charAt(0).toUpperCase()
+                                )}
+                            </div>
+                            <h3>{student.name}</h3>
+                            <span className="badge-reg">{student.registerNumber}</span>
+                            {student.isblocked && <div className="blocked-status">BLOCKED</div>}
                         </div>
-                    </div>
+                        <div className="card-body-modern">
+                            <div className="info-row-modern">
+                                <span className="icon">🎓</span>
+                                <div>
+                                    <label>Department</label>
+                                    <p>{student.department} - Year {student.year}</p>
+                                </div>
+                            </div>
+                            <div className="info-row-modern">
+                                <span className="icon">🏠</span>
+                                <div>
+                                    <label>Residence Type</label>
+                                    <p style={{ textTransform: 'capitalize' }}>{student.residencetype}</p>
+                                </div>
+                            </div>
 
-                    {/* Personal Info */}
-                    <div className="info-section">
-                        <h3>Personal Information</h3>
-                        <div className="fields-row">
-                            <Field label="Email" name="email" value={formData.email} isEditing={isEditing} onChange={handleInputChange} />
-                            <Field label="Phone" name="phone" value={formData.phone} isEditing={isEditing} onChange={handleInputChange} />
-                            <Field label="Parent Phone" name="parentnumber" value={formData.parentnumber} isEditing={isEditing} onChange={handleInputChange} />
-                            <Field label="Gender" name="gender" value={formData.gender} isEditing={isEditing} onChange={handleInputChange} />
-                        </div>
-                    </div>
-
-                    {/* Residence Info */}
-                    <div className="info-section">
-                        <h3>Residence ({formData.residencetype})</h3>
-                        <div className="fields-row">
-                            <Field
-                                label="Residence Type"
-                                name="residencetype"
-                                value={formData.residencetype}
-                                isEditing={isEditing}
-                                onChange={handleInputChange}
-                                options={['hostel', 'day scholar']}
-                            />
-
-                            {formData.residencetype === 'hostel' ? (
-                                <>
-                                    <Field label="Hostel Name" name="hostelname" value={formData.hostelname} isEditing={isEditing} onChange={handleInputChange} />
-                                    <Field label="Room No" name="hostelroomno" value={formData.hostelroomno} isEditing={isEditing} onChange={handleInputChange} />
-                                </>
-                            ) : (
-                                <>
-                                    <Field label="Boarding Point" name="boardingpoint" value={formData.boardingpoint} isEditing={isEditing} onChange={handleInputChange} />
-                                    <Field label="Bus No" name="busno" value={formData.busno} isEditing={isEditing} onChange={handleInputChange} />
-                                </>
+                            {student.residencetype === 'hostel' && (
+                                <div className="info-row-modern">
+                                    <span className="icon">🏢</span>
+                                    <div>
+                                        <label>Accommodation</label>
+                                        <p>{student.hostelname || 'Hostel'} - {student.hostelroomno || 'No Room'}</p>
+                                    </div>
+                                </div>
                             )}
+
+                            {student.residencetype !== 'hostel' && (
+                                <div className="info-row-modern">
+                                    <span className="icon">🚌</span>
+                                    <div>
+                                        <label>Transport</label>
+                                        <p>{student.busno ? `Bus: ${student.busno}` : 'No Bus Info'}</p>
+                                        {(student.boardingpoint) && <p style={{ fontSize: '0.9em', color: '#64748b' }}>{student.boardingpoint}</p>}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="info-row-modern">
+                                <span className="icon">📞</span>
+                                <div>
+                                    <label>Contact Number</label>
+                                    <p>{student.phone || 'N/A'}</p>
+                                </div>
+                            </div>
+
+                            <div className="card-actions-modern">
+                                <button
+                                    className={`btn-block-modern ${student.isblocked ? 'unblock' : 'block'}`}
+                                    onClick={handleBlockToggle}
+                                >
+                                    {student.isblocked ? 'Unblock Account' : 'Block Account'}
+                                </button>
+                                <button className="btn-delete-modern" onClick={handleDelete}>
+                                    Delete Record
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Details Grid */}
+                    <div className="info-grid">
+                        {/* Academic Info */}
+                        <div className="info-section">
+                            <h3>Academic Information</h3>
+                            <div className="fields-row">
+                                <Field label="Department" name="department" value={formData.department} isEditing={isEditing} onChange={handleInputChange} />
+                                <Field label="Batch" name="batch" value={formData.batch} isEditing={isEditing} onChange={handleInputChange} />
+                                <Field label="Year" name="year" value={formData.year} isEditing={isEditing} onChange={handleInputChange} />
+                                <Field label="Semester" name="semester" value={formData.semester} isEditing={isEditing} onChange={handleInputChange} />
+                                <Field label="CGPA" name="cgpa" value={formData.cgpa} isEditing={isEditing} onChange={handleInputChange} />
+                                <Field label="Arrears" name="arrears" value={formData.arrears} isEditing={isEditing} onChange={handleInputChange} />
+                            </div>
+                        </div>
+
+                        {/* Personal Info */}
+                        <div className="info-section">
+                            <h3>Personal Information</h3>
+                            <div className="fields-row">
+                                <Field label="Email" name="email" value={formData.email} isEditing={isEditing} onChange={handleInputChange} />
+                                <Field label="Phone" name="phone" value={formData.phone} isEditing={isEditing} onChange={handleInputChange} />
+                                <Field label="Parent Phone" name="parentnumber" value={formData.parentnumber} isEditing={isEditing} onChange={handleInputChange} />
+                                <Field label="Gender" name="gender" value={formData.gender} isEditing={isEditing} onChange={handleInputChange} />
+                            </div>
+                        </div>
+
+                        {/* Residence Info */}
+                        <div className="info-section">
+                            <h3>Residence ({formData.residencetype})</h3>
+                            <div className="fields-row">
+                                <Field
+                                    label="Residence Type"
+                                    name="residencetype"
+                                    value={formData.residencetype}
+                                    isEditing={isEditing}
+                                    onChange={handleInputChange}
+                                    options={['hostel', 'day scholar']}
+                                />
+
+                                {formData.residencetype === 'hostel' ? (
+                                    <>
+                                        <Field label="Hostel Name" name="hostelname" value={formData.hostelname} isEditing={isEditing} onChange={handleInputChange} />
+                                        <Field label="Room No" name="hostelroomno" value={formData.hostelroomno} isEditing={isEditing} onChange={handleInputChange} />
+                                    </>
+                                ) : (
+                                    <>
+                                        <Field label="Boarding Point" name="boardingpoint" value={formData.boardingpoint} isEditing={isEditing} onChange={handleInputChange} />
+                                        <Field label="Bus No" name="busno" value={formData.busno} isEditing={isEditing} onChange={handleInputChange} />
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -244,64 +287,78 @@ const StudentDetails: React.FC = () => {
             <style>{`
                 .details-page {
                     min-height: 100vh;
-                    background: #f1f5f9;
+                    background: #f8fafc;
                     font-family: 'Inter', sans-serif;
                 }
 
-                .details-header {
-                    background: white;
-                    padding: 16px 32px;
+                .page-wrapper {
+                    max-width: 1100px;
+                    margin: 32px auto;
+                    padding: 0 24px;
+                }
+
+                .header-actions {
                     display: flex;
-                    align-items: center;
                     justify-content: space-between;
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                    position: sticky;
-                    top: 0;
-                    z-index: 100;
-                }
-
-                .details-header h1 {
-                    font-size: 1.25rem;
-                    color: #0f172a;
-                    margin: 0;
-                    font-weight: 600;
-                }
-
-                .back-btn {
-                    display: flex;
                     align-items: center;
-                    gap: 8px;
-                    background: none;
-                    border: none;
-                    color: #64748b;
-                    font-weight: 500;
+                    margin-bottom: 24px;
+                }
+
+                .details-grid {
+                    display: grid;
+                    grid-template-columns: 350px 1fr;
+                    gap: 32px;
+                }
+
+                /* Back Button */
+                .back-btn {
+                    background: white;
+                    border: 1px solid rgba(0,0,0,0.1);
+                    color: #2563eb;
+                    font-size: 13px;
+                    font-weight: 600;
                     cursor: pointer;
-                    padding: 8px 12px;
+                    padding: 6px 16px;
                     border-radius: 8px;
                     transition: all 0.2s;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
                 }
-                .back-btn:hover { background: #f8fafc; color: #0f172a; }
+                .back-btn:hover { 
+                    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+                    transform: translateY(-1px);
+                    color: #1e3a8a;
+                }
 
+                /* Action Buttons */
                 .btn-edit {
                     background: #2563eb;
                     color: white;
                     border: none;
-                    padding: 8px 20px;
+                    padding: 8px 16px;
                     border-radius: 8px;
                     font-weight: 500;
+                    font-size: 0.9rem;
                     cursor: pointer;
                     transition: bg 0.2s;
+                    box-shadow: 0 2px 4px rgba(37,99,235,0.2);
                 }
                 .btn-edit:hover { background: #1d4ed8; }
 
-                .edit-actions { display: flex; gap: 10px; }
+                .edit-controls { display: flex; gap: 10px; }
                 .btn-cancel {
                     background: white;
                     border: 1px solid #cbd5e1;
                     padding: 8px 16px;
                     border-radius: 8px;
                     cursor: pointer;
+                    font-weight: 500;
+                    color: #64748b;
                 }
+                .btn-cancel:hover { background: #f1f5f9; }
+
                 .btn-save {
                     background: #10b981;
                     color: white;
@@ -309,75 +366,158 @@ const StudentDetails: React.FC = () => {
                     padding: 8px 16px;
                     border-radius: 8px;
                     cursor: pointer;
+                    font-weight: 500;
+                    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
                 }
+                .btn-save:hover { background: #059669; }
 
-                .details-container {
-                    max-width: 1000px;
-                    margin: 32px auto;
-                    padding: 0 24px;
-                    display: grid;
-                    grid-template-columns: 300px 1fr;
-                    gap: 24px;
-                }
-
-                /* Profile Card */
-                .profile-card {
+                /* Modern Card Styles */
+                .student-card-modern {
                     background: white;
-                    border-radius: 16px;
-                    padding: 32px;
-                    text-align: center;
-                    height: fit-content;
+                    border-radius: 24px;
+                    overflow: hidden;
                     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+                    border: 1px solid #e2e8f0;
+                    height: fit-content;
+                    position: sticky;
+                    top: 100px; /* Sticky scroll for card */
+                }
+
+                .card-header-gradient {
+                    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+                    padding: 32px 24px;
+                    text-align: center;
+                    color: white;
+                }
+
+                .card-header-gradient h3 {
+                    font-size: 1.4rem;
+                    margin-bottom: 8px;
+                    font-weight: 700;
+                    color: white;
+                }
+
+                .badge-reg {
+                    background: rgba(255,255,255,0.15);
+                    padding: 4px 12px;
+                    border-radius: 20px;
+                    font-size: 0.9rem;
+                    font-weight: 500;
+                    letter-spacing: 0.5px;
+                }
+
+                .blocked-status {
+                    background: #ef4444;
+                    color: white;
+                    display: inline-block;
+                    margin-top: 12px;
+                    padding: 4px 12px;
+                    border-radius: 12px;
+                    font-size: 0.8rem;
+                    font-weight: 700;
                 }
 
                 .avatar-large {
-                    width: 120px;
-                    height: 120px;
-                    background: #e0f2fe;
-                    color: #0284c7;
+                    width: 90px;
+                    height: 90px;
+                    background: rgba(255,255,255,0.2);
+                    backdrop-filter: blur(10px);
+                    border: 3px solid rgba(255,255,255,0.3);
                     border-radius: 50%;
-                    font-size: 3rem;
                     display: flex;
                     align-items: center;
                     justify-content: center;
+                    font-size: 2.5rem;
+                    font-weight: 700;
                     margin: 0 auto 16px;
+                    color: white;
                     overflow: hidden;
                 }
-                .avatar-large img { width: 100%; height: 100%; object-fit: cover; }
-
-                .profile-identity h2 { margin: 0 0 4px; color: #0f172a; }
-                .reg-no { color: #64748b; margin: 0 0 16px; }
-
-                .status-badge {
-                    padding: 4px 12px;
-                    border-radius: 20px;
-                    font-size: 0.85rem;
-                    font-weight: 600;
+                
+                .avatar-large img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
                 }
-                .status-badge.active { background: #dcfce7; color: #166534; }
-                .status-badge.blocked { background: #fee2e2; color: #991b1b; }
 
-                .card-actions {
-                    margin-top: 32px;
+                .card-body-modern {
+                    padding: 24px;
+                }
+
+                .info-row-modern {
+                    display: flex;
+                    gap: 16px;
+                    margin-bottom: 24px;
+                    align-items: flex-start;
+                }
+
+                .info-row-modern:last-child {
+                    margin-bottom: 0;
+                }
+
+                .info-row-modern .icon {
+                    font-size: 1.2rem;
+                    background: #f1f5f9;
+                    width: 40px;
+                    height: 40px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 12px;
+                }
+
+                .info-row-modern label {
+                    display: block;
+                    font-size: 0.8rem;
+                    color: #64748b;
+                    margin-bottom: 2px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+
+                .info-row-modern p {
+                    font-size: 1rem;
+                    color: #1e293b;
+                    font-weight: 600;
+                    margin: 0;
+                }
+
+                .card-actions-modern {
+                    margin-top: 24px;
+                    padding-top: 24px;
+                    border-top: 1px solid #f1f5f9;
                     display: flex;
                     flex-direction: column;
                     gap: 12px;
                 }
 
-                .btn-block, .btn-delete {
+                .btn-block-modern {
                     width: 100%;
-                    padding: 10px;
+                    padding: 12px;
                     border: none;
-                    border-radius: 8px;
-                    font-weight: 500;
+                    border-radius: 12px;
+                    font-weight: 600;
                     cursor: pointer;
                     transition: all 0.2s;
                 }
-                .btn-block.block { background: #fee2e2; color: #991b1b; }
-                .btn-block.unblock { background: #dcfce7; color: #166534; }
+                .btn-block-modern.block { background: #fee2e2; color: #991b1b; }
+                .btn-block-modern.unblock { background: #dcfce7; color: #166534; }
                 
-                .btn-delete { background: white; border: 1px solid #fee2e2; color: #ef4444; }
-                .btn-delete:hover { background: #fee2e2; }
+                .btn-delete-modern {
+                    width: 100%;
+                    padding: 12px;
+                    background: white;
+                    border: 2px solid #fee2e2;
+                    color: #ef4444;
+                    border-radius: 12px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .btn-delete-modern:hover {
+                    background: #fee2e2;
+                }
 
                 /* Info Grid */
                 .info-grid {
@@ -439,31 +579,18 @@ const StudentDetails: React.FC = () => {
                 }
 
                 @media (max-width: 900px) {
-                    .details-container { grid-template-columns: 1fr; }
-                    .profile-card { display: flex; align-items: center; justify-content: space-between; text-align: left; }
-                    .avatar-large { margin: 0 24px 0 0; width: 80px; height: 80px; font-size: 2rem; }
-                    .card-actions { margin: 0; }
+                    .details-grid { grid-template-columns: 1fr; }
+                    .student-card-modern { position: relative; top: 0; margin-bottom: 20px; width: 100%; max-width: 450px; margin-left: auto; margin-right: auto; }
+                    .page-wrapper { padding: 0 16px; }
                 }
 
-                @media (max-width: 600px) {
-                    .profile-card {
-                        flex-direction: column;
-                        text-align: center;
-                        align-items: center;
-                    }
-                    .avatar-large {
-                        margin: 0 0 16px 0;
-                    }
-                    .card-actions {
-                        margin-top: 24px;
-                        width: 100%;
-                    }
-                    .details-header {
+                @media (max-width: 768px) {
+                    .header-actions {
                         flex-direction: column;
                         gap: 16px;
-                        padding: 16px;
+                        padding: 0; /* Already inside page-wrapper with padding */
                     }
-                    .header-actions {
+                    .action-buttons-group {
                         width: 100%;
                         display: flex;
                         justify-content: center;

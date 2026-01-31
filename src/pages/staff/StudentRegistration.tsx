@@ -799,6 +799,72 @@ const StudentRegistration: React.FC = () => {
                     border: 1px solid #fee2e2;
                 }
 
+                @media (max-width: 768px) {
+                    .main-content {
+                        margin: 20px auto;
+                        padding: 0 16px;
+                    }
+
+                    .page-header h1 {
+                        font-size: 1.8rem;
+                    }
+
+                    .registration-card {
+                        border-radius: 16px;
+                    }
+
+                    .tabs {
+                        flex-direction: column;
+                    }
+
+                    .tab-btn {
+                        padding: 16px;
+                        border-bottom: 1px solid #e2e8f0;
+                        border-right: none;
+                        justify-content: flex-start;
+                    }
+                    
+                    .tab-btn:last-child {
+                        border-bottom: none;
+                    }
+
+                    .tab-content {
+                        padding: 24px;
+                    }
+
+                    .upload-label {
+                        padding: 32px 16px;
+                    }
+                    
+                    .upload-icon {
+                        font-size: 32px;
+                    }
+
+                    .students-list {
+                        gap: 12px;
+                    }
+
+                    .student-item {
+                        flex-direction: column;
+                        align-items: flex-start;
+                        gap: 16px;
+                    }
+
+                    .student-avatar {
+                        margin-right: 0;
+                        margin-bottom: 8px;
+                    }
+
+                    .student-info {
+                        width: 100%;
+                    }
+
+                    .btn-view {
+                        width: 100%;
+                        margin-top: 8px;
+                    }
+                }
+
                 .btn-delete {
                     flex: 1;
                     padding: 12px;
@@ -815,7 +881,7 @@ const StudentRegistration: React.FC = () => {
                     cursor: not-allowed;
                 }
 
-                @media (max-width: 640px) {
+                @media (max-width: 768px) {
                     .tab-content {
                         padding: 24px;
                     }
