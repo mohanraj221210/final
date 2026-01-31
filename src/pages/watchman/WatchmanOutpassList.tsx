@@ -91,37 +91,9 @@ const WatchmanOutpassList: React.FC = () => {
       <WatchmanNav />
 
       <div className="list-container">
-        <div className="header-row">
-          <button className="back-btn" onClick={() => navigate("/watchman-dashboard")}>
-            ← Back
-          </button>
-
-          {/* Desktop Filters */}
-          <div className="filter-tabs desktop-only">
-            {['All', 'Today', 'Yesterday', 'This Week', 'This Month'].map((filter) => (
-              <button
-                key={filter}
-                className={`filter-btn ${dateFilter === filter ? 'active' : ''}`}
-                onClick={() => { setDateFilter(filter as any); setCurrentPage(1); }}
-              >
-                {filter}
-              </button>
-            ))}
-          </div>
-
-          {/* Mobile Filter Dropdown */}
-          <div className="mobile-filter-container mobile-only">
-            <select
-              className="filter-dropdown"
-              value={dateFilter}
-              onChange={(e) => { setDateFilter(e.target.value as any); setCurrentPage(1); }}
-            >
-              {['All', 'Today', 'Yesterday', 'This Week', 'This Month'].map((filter) => (
-                <option key={filter} value={filter}>{filter}</option>
-              ))}
-            </select>
-          </div>
-        </div>
+        <button className="back-btn" onClick={() => navigate("/watchman-dashboard")}>
+          ← Back
+        </button>
         <h1>Watchman Approved Outpass List</h1>
 
         <div className="outpass-card">

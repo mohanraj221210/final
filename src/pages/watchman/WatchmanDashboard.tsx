@@ -1,5 +1,5 @@
 import React from 'react';
-import Nav from '../../components/WatchmanNav'; // Import WatchmanNav
+import Nav from '../../components/WatchmanNav'; // Import WatchmanNav (Security Nav)
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import axios from 'axios';
@@ -48,7 +48,7 @@ const WatchmanDashboard: React.FC = () => {
                 if (isMounted) {
                     console.error('Failed to fetch user data');
                     // Optional: Only show toast if it's a critical error or not just a cancellation
-                    toast.error('Failed to fetch user data'); 
+                    toast.error('Failed to fetch user data');
                 }
             } finally {
                 if (isMounted) setLoading(false);
@@ -84,7 +84,7 @@ const WatchmanDashboard: React.FC = () => {
     return (
         <div className="page-container dashboard-page">
             <Nav />
-            <ToastContainer/>
+            <ToastContainer />
             <div className="content-wrapper">
                 {/* Hero Section */}
                 <div className="dashboard-hero">

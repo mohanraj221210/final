@@ -32,7 +32,7 @@ const WatchmanNav: React.FC = () => {
             <div className="container nav-container">
                 <Link to="/watchman-dashboard" className="nav-brand">
                     <span className="brand-icon">👮</span>
-                    <span className="brand-text">JIT Watchman</span>
+                    <span className="brand-text">JIT Security</span>
                 </Link>
 
                 <button
