@@ -639,6 +639,13 @@ const StaffProfile: React.FC = () => {
                     padding: 0 20px;
                 }
 
+                .header-actions {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 24px;
+                }
+
                 .staff-profile-page .back-btn {
                     background: white;
                     border: 1px solid rgba(0,0,0,0.1);
@@ -661,7 +668,8 @@ const StaffProfile: React.FC = () => {
                 }
 
                 .action-btn {
-                    padding: 8px 16px;
+                    padding: 5px 16px;
+                    margin-top: -35px;
                     border-radius: var(--radius-sm);
                     font-weight: 600;
                     cursor: pointer;
@@ -1230,6 +1238,10 @@ const StaffProfile: React.FC = () => {
 
                 /* Responsive Design */
                 @media (max-width: 768px) {
+                    .action-btn {
+                        margin-top: -25px;
+                        padding: 9px 16px;
+                    }
                     .profile-header {
                         flex-direction: column;
                         text-align: center;

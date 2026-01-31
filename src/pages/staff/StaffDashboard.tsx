@@ -485,6 +485,15 @@ const StaffDashboard: React.FC = () => {
                     .section-title {
                         font-size: 1.3rem;
                     }
+
+                    .info-card-header {
+                        flex-direction: column;
+                        gap: 16px;
+                    }
+                    
+                    .dept-badge {
+                        align-self: flex-start;
+                    }
                 }
 
                 @media (max-width: 480px) {

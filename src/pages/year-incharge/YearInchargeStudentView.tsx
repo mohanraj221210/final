@@ -121,42 +121,49 @@ const YearInchargeStudentView: React.FC = () => {
 
                 <div className="details-grid">
                     {/* Student Profile Card */}
-                    <div className="card profile-card">
-                        <div className="profile-header">
-                            <div className="profile-avatar">
+                    {/* New Student Profile Card */}
+                    <div className="student-card-modern">
+                        <div className="card-header-gradient">
+                            <div className="avatar-large">
                                 {outpass.studentid?.name?.charAt(0) || 'S'}
                             </div>
                             <h3>{outpass.studentid?.name}</h3>
-                            <p className="text-muted">{outpass.studentid?.registerNumber}</p>
+                            <span className="badge-reg">{outpass.studentid?.registerNumber}</span>
                         </div>
-                        <div className="info-list">
-                            <div className="info-item">
-                                <label>Department</label>
-                                <span>{outpass.studentid?.department}</span>
+                        <div className="card-body-modern">
+                            <div className="info-row-modern">
+                                <span className="icon">🎓</span>
+                                <div>
+                                    <label>Department & Year</label>
+                                    <p>{outpass.studentid?.department} - Year {outpass.studentid?.year}</p>
+                                </div>
                             </div>
-                            <div className="info-item">
-                                <label>Year</label>
-                                <span>{outpass.studentid?.year}</span>
-                            </div>
-                            <div className="info-item">
-                                <label>Residence</label>
-                                <span>{outpass.studentid?.residencetype}</span>
+                            <div className="info-row-modern">
+                                <span className="icon">🏠</span>
+                                <div>
+                                    <label>Residence Type</label>
+                                    <p style={{ textTransform: 'capitalize' }}>{outpass.studentid?.residencetype}</p>
+                                </div>
                             </div>
                             {outpass.studentid?.residencetype !== 'dayscholar' && (
-                                <>
-                                    <div className="info-item">
-                                        <label>Hostel/Bus</label>
-                                        <span>{outpass.studentid?.hostelname || outpass.studentid?.busno || 'N/A'}</span>
+                                <div className="info-row-modern">
+                                    <span className="icon">🏢</span>
+                                    <div>
+                                        <label>Accommodation</label>
+                                        <p>
+                                            {outpass.studentid?.hostelname || 'Hostel'} - {outpass.studentid?.hostelroomno || 'N/A'}
+                                            {(outpass.studentid?.busno || outpass.studentid?.boardingpoint) &&
+                                                ` (Bus: ${outpass.studentid?.busno || '-'}, Pt: ${outpass.studentid?.boardingpoint || '-'})`}
+                                        </p>
                                     </div>
-                                    <div className="info-item">
-                                        <label>Room/Point</label>
-                                        <span>{outpass.studentid?.hostelroomno || outpass.studentid?.boardingpoint || 'N/A'}</span>
-                                    </div>
-                                </>
+                                </div>
                             )}
-                            <div className="info-item">
-                                <label>Phone</label>
-                                <span>{outpass.studentid?.phone || 'N/A'}</span>
+                            <div className="info-row-modern">
+                                <span className="icon">📞</span>
+                                <div>
+                                    <label>Contact Number</label>
+                                    <p>{outpass.studentid?.phone || 'N/A'}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -268,48 +275,95 @@ const YearInchargeStudentView: React.FC = () => {
                     border: 1px solid rgba(0,0,0,0.05);
                 }
 
-                .profile-header {
-                    text-align: center;
-                    margin-bottom: 24px;
-                    padding-bottom: 24px;
-                    border-bottom: 1px solid #f1f5f9;
+                .student-card-modern {
+                    background: white;
+                    border-radius: 24px;
+                    overflow: hidden;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+                    border: 1px solid rgba(0,0,0,0.05);
+                    height: fit-content;
                 }
 
-                .profile-avatar {
-                    width: 80px;
-                    height: 80px;
-                    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+                .card-header-gradient {
+                    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+                    padding: 32px 24px;
+                    text-align: center;
                     color: white;
+                }
+
+                .avatar-large {
+                    width: 90px;
+                    height: 90px;
+                    background: rgba(255,255,255,0.2);
+                    backdrop-filter: blur(10px);
+                    border: 3px solid rgba(255,255,255,0.3);
                     border-radius: 50%;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    font-size: 2rem;
+                    font-size: 2.5rem;
                     font-weight: 700;
                     margin: 0 auto 16px;
+                    color: white;
                 }
 
-                .info-list {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 16px;
+                .card-header-gradient h3 {
+                    font-size: 1.4rem;
+                    margin-bottom: 8px;
+                    font-weight: 700;
+                    color: white;
                 }
 
-                .info-item {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                }
-
-                .info-item label {
-                    color: #64748b;
+                .badge-reg {
+                    background: rgba(255,255,255,0.15);
+                    padding: 4px 12px;
+                    border-radius: 20px;
                     font-size: 0.9rem;
+                    font-weight: 500;
+                    letter-spacing: 0.5px;
                 }
 
-                .info-item span {
-                    font-weight: 500;
-                    color: #0f172a;
-                    text-transform: capitalize;
+                .card-body-modern {
+                    padding: 24px;
+                }
+
+                .info-row-modern {
+                    display: flex;
+                    gap: 16px;
+                    margin-bottom: 24px;
+                    align-items: flex-start;
+                }
+
+                .info-row-modern:last-child {
+                    margin-bottom: 0;
+                }
+
+                .info-row-modern .icon {
+                    font-size: 1.2rem;
+                    background: #f1f5f9;
+                    width: 40px;
+                    height: 40px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 12px;
+                }
+
+                .info-row-modern label {
+                    display: block;
+                    font-size: 0.8rem;
+                    color: #64748b;
+                    margin-bottom: 2px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+
+                .info-row-modern p {
+                    font-size: 1rem;
+                    color: #1e293b;
+                    font-weight: 600;
+                    margin: 0;
                 }
 
                 .status-timeline {
@@ -502,15 +556,6 @@ const YearInchargeStudentView: React.FC = () => {
                         left: 15px;
                     }
                 }
-                    .status-step:not(:last-child)::after {
-                        width: 2px;
-                        height: 100%;
-                        top: 14px;
-                        left: 15px;
-                    }
-                }
-
-                
             `}</style>
         </div>
     );
