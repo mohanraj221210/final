@@ -64,7 +64,7 @@ const Dashboard: React.FC = () => {
         { id: '13', date: new Date(2026, 0, 15), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
         { id: '14', date: new Date(2026, 0, 16), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
         { id: '15', date: new Date(2026, 0, 17), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
-        { id: '16', date: new Date(2026, 0, 18), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
+        { id: '16', date: new Date(2026, 1, 18), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
     ]);
 
     useEffect(() => {
@@ -442,7 +442,7 @@ const Dashboard: React.FC = () => {
                                         <div className="info-icon">📅</div>
                                         <div className="info-content">
                                             <label>Semester</label>
-                                            <p>7th</p>
+                                            <p>{user.semester}th</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1187,32 +1187,125 @@ const Dashboard: React.FC = () => {
 
                 @media (max-width: 768px) {
                     .calendar-grid {
-                        gap: 4px;
+                        gap: 3px;
                     }
 
                     .calendar-day {
-                        padding: 8px;
+                        padding: 6px 4px;
+                        border-radius: 8px;
                     }
 
                     .day-number {
-                        font-size: 0.85rem;
+                        font-size: 0.8rem;
                     }
 
                     .event-symbol {
-                        font-size: 1rem;
+                        font-size: 0.8rem;
                     }
 
                     .calendar-controls {
-                        flex-direction: column;
+                        flex-direction: row;
                         width: 100%;
+                        gap: 8px;
                     }
 
                     .btn-nav, .btn-today {
-                        width: 100%;
+                        width: auto;
+                        flex: 1;
+                        padding: 8px 12px;
+                        font-size: 0.75rem;
                     }
 
                     .legend-items {
                         grid-template-columns: 1fr;
+                        gap: 8px;
+                    }
+                    
+                    .calendar-card {
+                        padding: 16px;
+                    }
+                    
+                    .calendar-header-day {
+                        padding: 6px 4px;
+                        font-size: 0.7rem;
+                    }
+                }
+
+                @media (max-width: 480px) {
+                    /* Department Card - Extra Small Screens */
+                    .info-card {
+                        padding: 16px;
+                    }
+                    
+                    .card-header h3 {
+                        font-size: 1rem;
+                    }
+                    
+                    .card-subtitle {
+                        font-size: 0.75rem;
+                    }
+                    
+                    .header-icon {
+                        font-size: 28px;
+                        padding: 8px;
+                    }
+                    
+                    .info-item {
+                        padding: 12px;
+                        gap: 10px;
+                    }
+                    
+                    .info-icon {
+                        font-size: 18px;
+                        padding: 7px;
+                    }
+                    
+                    .info-content label {
+                        font-size: 0.65rem;
+                    }
+                    
+                    .info-content p {
+                        font-size: 0.85rem;
+                    }
+                    
+                    /* Calendar - Extra Small Screens */
+                    .calendar-card {
+                        padding: 12px;
+                    }
+                    
+                    .calendar-header-day {
+                        padding: 4px 2px;
+                        font-size: 0.6rem;
+                    }
+                    
+                    .calendar-day {
+                        padding: 4px 2px;
+                        gap: 1px;
+                    }
+                    
+                    .day-number {
+                        font-size: 0.7rem;
+                    }
+                    
+                    .event-symbol {
+                        font-size: 0.65rem;
+                    }
+                    
+                    .calendar-month-year h3 {
+                        font-size: 1.1rem;
+                    }
+                    
+                    .btn-nav, .btn-today {
+                        padding: 6px 8px;
+                        font-size: 0.7rem;
+                    }
+                    
+                    .calendar-title h2 {
+                        font-size: 1.2rem;
+                    }
+                    
+                    .calendar-subtitle {
+                        font-size: 0.75rem;
                     }
                 }
 
@@ -1562,9 +1655,74 @@ const Dashboard: React.FC = () => {
                 }
 
                 @media (max-width: 768px) {
+                    /* Department Info Card Mobile Styles */
+                    .info-card {
+                        padding: 20px;
+                        border-radius: 16px;
+                    }
+                    
+                    
+                    .card-header {
+                        flex-direction: row;
+                        flex-wrap: wrap;
+                        gap: 12px;
+                        margin-bottom: 16px;
+                        padding-bottom: 12px;
+                        align-items: center;
+                    }
+                    
+                    .header-icon {
+                        font-size: 28px;
+                        padding: 8px;
+                        flex-shrink: 0;
+                    }
+                    
+                    .card-header > div:nth-child(2) {
+                        flex: 1;
+                        min-width: 0;
+                    }
+                    
+                    .card-header h3 {
+                        font-size: 1rem;
+                        line-height: 1.3;
+                        margin: 0 0 2px 0;
+                    }
+                    
+                    .card-subtitle {
+                        font-size: 0.75rem;
+                        margin-top: 0;
+                    }
+                    
+                    .card-header .badge {
+                        font-size: 0.7rem;
+                        padding: 4px 10px;
+                        white-space: nowrap;
+                    }
+                    
                     .info-grid {
                         grid-template-columns: 1fr;
+                        gap: 12px;
                     }
+                    
+                    .info-item {
+                        padding: 14px;
+                        gap: 12px;
+                    }
+                    
+                    .info-icon {
+                        font-size: 20px;
+                        padding: 8px;
+                        flex-shrink: 0;
+                    }
+                    
+                    .info-content label {
+                        font-size: 0.7rem;
+                    }
+                    
+                    .info-content p {
+                        font-size: 0.9rem;
+                    }
+                    
                     .vision-content {
                         grid-template-columns: 1fr;
                     }
@@ -1659,6 +1817,7 @@ const Dashboard: React.FC = () => {
                 .action-card:nth-child(3) { animation-delay: 0.5s; }
                 .action-card:nth-child(4) { animation-delay: 0.6s; }
 
+                /* Tablet and below */
                 @media (max-width: 968px) {
                     .dashboard-layout { grid-template-columns: 1fr; }
                     .dashboard-hero { flex-direction: column; align-items: flex-start; gap: 24px; padding: 24px; }
@@ -1700,20 +1859,51 @@ const Dashboard: React.FC = () => {
                         gap: 16px;
                     }
                     .calendar-card {
-                        width: 100vw;
-                        display: flex;
-                        flex-direction: column;
+                        padding: 16px;
+                        border-radius: 16px;
                     }
                     .calendar-header-day{
-                      padding: 2%;
+                        padding: 4px 2px;
+                        font-size: 0.65rem;
                     }
                     .calendar-controls {
                         width: 100%;
                         justify-content: space-between;
+                        flex-direction: row;
+                        gap: 8px;
                     }
                     .btn-nav, .btn-today {
-                        padding: 8px 16px;
+                        padding: 8px 12px;
+                        font-size: 0.75rem;
+                        flex: 1;
+                    }
+                    .calendar-month-year h3 {
+                        font-size: 1.25rem;
+                    }
+                    .calendar-grid {
+                        gap: 4px;
+                    }
+                    .calendar-day {
+                        padding: 4px;
+                        border-radius: 8px;
+                        gap: 2px;
+                    }
+                    .day-number {
+                        font-size: 0.75rem;
+                    }
+                    .event-symbol {
+                        font-size: 0.7rem;
+                    }
+                    .calendar-legend {
+                        padding: 12px;
+                    }
+                    .calendar-legend h4 {
                         font-size: 0.85rem;
+                        margin-bottom: 8px;
+                    }
+                    .legend-item {
+                        font-size: 0.75rem;
+                        gap: 6px;
                     }
                     .vision-content {
                         grid-template-columns: 1fr;
@@ -1725,13 +1915,6 @@ const Dashboard: React.FC = () => {
                     .dashboard-hero h1 {
                         font-size: 1.5rem;
                     }
-                    .calendar-grid {
-                    display: grid;
-                    grid-template-columns: repeat(3, 1fr);
-                    gap: 8px;
-                    margin-bottom: 24px;
-                    overflow: visible;
-                }
                 }
 
                 /* Recent Downloads Premium Styles */
