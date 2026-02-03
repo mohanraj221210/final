@@ -8,7 +8,7 @@ const WatchmanOutpassList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [outpasses, setOutpasses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dateFilter] = useState<'All' | 'Today' | 'Yesterday' | 'This Week' | 'This Month'>('All');
+  const [dateFilter, setDateFilter] = useState<'All' | 'Today' | 'Yesterday' | 'This Week' | 'This Month'>('All');
 
   const itemsPerPage = 8;
 
@@ -33,10 +33,15 @@ const WatchmanOutpassList: React.FC = () => {
       // Data extraction based on confirmed API response structure (outpass)
       const outpassData = res.data.outpass || [];
 
-      // Filter for approved outpasses
-      const approvedOutpasses = outpassData.filter((item: any) =>
-        item.wardenapprovalstatus === 'approved' || item.status === 'approved'
-      );
+      // Filter for approved outpasses based on residence type
+      const approvedOutpasses = outpassData.filter((item: any) => {
+        const resType = (item.studentid?.residencetype || '').toLowerCase().trim().replace(/\s/g, '');
+        const isDayScholar = resType === 'dayscholar';
+        if (isDayScholar) {
+          return item.yearinchargeapprovalstatus === 'approved';
+        }
+        return item.wardenapprovalstatus === 'approved';
+      });
 
       setOutpasses(approvedOutpasses);
     } catch (err: any) {
@@ -49,6 +54,14 @@ const WatchmanOutpassList: React.FC = () => {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'approved': return 'bg-green-100 text-green-800 border-green-200';
+      case 'rejected': return 'bg-red-100 text-red-800 border-red-200';
+      default: return 'bg-yellow-100 text-yellow-800 border-yellow-200';
     }
   };
 
@@ -91,10 +104,38 @@ const WatchmanOutpassList: React.FC = () => {
       <WatchmanNav />
 
       <div className="list-container">
-        <button className="back-btn" onClick={() => navigate("/watchman-dashboard")}>
-          ← Back
-        </button>
-        <h1>Watchman Approved Outpass List</h1>
+        <div className="header-row">
+          <div>
+            <button className="back-btn" onClick={() => navigate("/watchman-dashboard")}>
+              ← Back
+            </button>
+            <h1 style={{ marginTop: "10px", marginBottom: "10px" }}>Watchman Approved Outpass List</h1>
+          </div>
+
+          <div className="filter-controls">
+            <div className="filter-tabs desktop-only">
+              {['All', 'Today', 'Yesterday', 'This Week', 'This Month'].map((filter) => (
+                <button
+                  key={filter}
+                  className={`filter-btn ${dateFilter === filter ? 'active' : ''}`}
+                  onClick={() => setDateFilter(filter as any)}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
+
+            <select
+              className="filter-dropdown mobile-only"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value as any)}
+            >
+              {['All', 'Today', 'Yesterday', 'This Week', 'This Month'].map((filter) => (
+                <option key={filter} value={filter}>{filter}</option>
+              ))}
+            </select>
+          </div>
+        </div>
 
         <div className="outpass-card">
           {loading ? (
@@ -110,7 +151,8 @@ const WatchmanOutpassList: React.FC = () => {
                 <tr>
                   <th>#</th>
                   <th>Name</th>
-                  <th>Register No</th>
+                  <th>Reg No</th>
+                  <th>Dept / Year</th>
                   <th>Date</th>
                   <th>Reason</th>
                   <th>Status</th>
@@ -133,14 +175,27 @@ const WatchmanOutpassList: React.FC = () => {
                       <td data-label="Register No">
                         {item.studentid?.registerNumber || "N/A"}
                       </td>
+                      <td data-label="Dept / Year">
+                        {item.studentid?.department || "-"} / {item.studentid?.year || "-"}
+                      </td>
                       <td data-label="Date">
                         {new Date(item.createdAt || item.outDate).toLocaleDateString()}
                       </td>
                       <td data-label="Reason">{item.reason}</td>
                       <td data-label="Status">
-                        <span className="status approved">
-                          {item.wardenapprovalstatus || "Approved"}
-                        </span>
+                        <div className="status-stack">
+                          <span className={`status-badge ${getStatusColor(item.staffapprovalstatus)}`}>
+                            Staff: {item.staffapprovalstatus}
+                          </span>
+                          <span className={`status-badge ${getStatusColor(item.yearinchargeapprovalstatus)}`}>
+                            Incharge: {item.yearinchargeapprovalstatus}
+                          </span>
+                          {(item.studentid?.residencetype || '').toLowerCase().trim().replace(/\s/g, '') !== 'dayscholar' && (
+                            <span className={`status-badge ${getStatusColor(item.wardenapprovalstatus)}`}>
+                              Warden: {item.wardenapprovalstatus}
+                            </span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -157,15 +212,37 @@ const WatchmanOutpassList: React.FC = () => {
                     {item.studentid?.registerNumber || item.register_number}
                   </div>
                   <h3 className="card-name">{item.studentid?.name || item.studentName}</h3>
-                  <p className="card-details">
-                    {item.studentid?.year ? `Year ${item.studentid.year} • ` : ''}
-                    Applied on {new Date(item.createdAt || item.outDate).toLocaleDateString()}
-                  </p>
+                  <div className="card-details-grid">
+                    <div className="detail-row">
+                      <span className="label">Pass Type:</span>
+                      <span className="value">{item.outpasstype}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="label">Dept/Year:</span>
+                      <span className="value">{item.studentid?.department} - {item.studentid?.year}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="label">From:</span>
+                      <span className="value">{new Date(item.fromDate).toLocaleString()}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="label">To:</span>
+                      <span className="value">{new Date(item.toDate).toLocaleString()}</span>
+                    </div>
+                  </div>
 
-                  <div className="card-footer">
-                    <span className="status-pill status-approved">
-                      • {item.wardenapprovalstatus || "Approved"}
+                  <div className="card-footer-grid">
+                    <span className={`status-badge-mobile ${getStatusColor(item.staffapprovalstatus)}`}>
+                      Staff: {item.staffapprovalstatus}
                     </span>
+                    <span className={`status-badge-mobile ${getStatusColor(item.yearinchargeapprovalstatus)}`}>
+                      Incharge: {item.yearinchargeapprovalstatus}
+                    </span>
+                    {(item.studentid?.residencetype || '').toLowerCase().trim().replace(/\s/g, '') !== 'dayscholar' && (
+                      <span className={`status-badge-mobile ${getStatusColor(item.wardenapprovalstatus)}`}>
+                        Warden: {item.wardenapprovalstatus}
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}
@@ -584,6 +661,77 @@ const WatchmanOutpassList: React.FC = () => {
 
 .mobile-only {
     display: none;
+}
+
+/* Status Styles */
+.status-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.status-badge {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    border: 1px solid;
+    width: fit-content;
+}
+
+.bg-green-100 { background-color: #dcfce7; }
+.text-green-800 { color: #166534; }
+.border-green-200 { border-color: #bbf7d0; }
+
+.bg-red-100 { background-color: #fee2e2; }
+.text-red-800 { color: #991b1b; }
+.border-red-200 { border-color: #fecaca; }
+
+.bg-yellow-100 { background-color: #fef9c3; }
+.text-yellow-800 { color: #854d0e; }
+.border-yellow-200 { border-color: #fde047; }
+
+/* Mobile Card Updates */
+.card-details-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.detail-row .label {
+    color: #64748b;
+}
+
+.detail-row .value {
+    color: #334155;
+    font-weight: 500;
+    text-align: right;
+}
+
+.card-footer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 16px;
+}
+
+.status-badge-mobile {
+    font-size: 0.7rem;
+    padding: 4px 8px;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 600;
+    border: 1px solid;
+    text-transform: capitalize;
 }
       `}</style>
       </div>

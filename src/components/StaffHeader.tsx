@@ -13,7 +13,7 @@ const StaffHeader: React.FC<StaffHeaderProps> = ({ activeMenu }) => {
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('userType');
         localStorage.removeItem('token');
-        navigate('/login');
+        navigate('/staff-login');
     };
 
     const handleNavigation = (path: string) => {
@@ -239,7 +239,8 @@ const StaffHeader: React.FC<StaffHeaderProps> = ({ activeMenu }) => {
                         width: 100%;
                         text-align: center;
                         margin-left: 0;
-                        margin-top: auto;
+                        margin-top: 20px;
+                        display: block; 
                     }
 
                     .brand-text {

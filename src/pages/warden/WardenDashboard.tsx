@@ -108,7 +108,42 @@ const Dashboard: React.FC = () => {
             }
         };
 
+        const checkEmergencyRequests = async () => {
+            const userType = localStorage.getItem('userType');
+            if (userType !== 'warden') return;
+
+            try {
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}/warden/outpass/list`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                // Warden API returns outpasses/data/students
+                const outpasses = response.data.outpasses || response.data.data || response.data.students || [];
+
+                const emergencyRequests = outpasses.filter((o: any) => {
+                    const type = (o.outpasstype || o.type || '').toLowerCase();
+                    const status = (o.wardenapprovalstatus || '').toLowerCase();
+                    return type === 'emergency' && status === 'pending';
+                });
+
+                if (emergencyRequests.length > 0) {
+                    toast.error(`⚠️ ${emergencyRequests.length} Emergency Request(s) Pending!`, {
+                        position: "top-center",
+                        autoClose: false,
+                        hideProgressBar: false,
+                        closeOnClick: false,
+                        pauseOnHover: true,
+                        draggable: true,
+                        theme: "colored",
+                        style: { fontWeight: 'bold', fontSize: '16px' }
+                    });
+                }
+            } catch (error) {
+                console.error("Failed to check emergency requests", error);
+            }
+        };
+
         fetchUserData();
+        checkEmergencyRequests();
     }, []);
 
     const handleQuickAction = (path: string) => {

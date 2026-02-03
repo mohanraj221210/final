@@ -81,6 +81,25 @@ const YearInchargeDashboard: React.FC = () => {
                         approved,
                         rejected
                     });
+
+                    // Check for Emergency Requests
+                    const emergencyRequests = outpasses.filter((o: any) =>
+                        (o.outpasstype || '').toLowerCase() === 'emergency' &&
+                        o.yearinchargeapprovalstatus === 'pending'
+                    );
+
+                    if (emergencyRequests.length > 0) {
+                        toast.error(`⚠️ ${emergencyRequests.length} Emergency Request(s) Pending!`, {
+                            position: "top-center",
+                            autoClose: false,
+                            hideProgressBar: false,
+                            closeOnClick: false,
+                            pauseOnHover: true,
+                            draggable: true,
+                            theme: "colored",
+                            style: { fontWeight: 'bold', fontSize: '16px' }
+                        });
+                    }
                 }
 
             } catch (error) {
