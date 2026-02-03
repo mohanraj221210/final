@@ -43,10 +43,8 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
       }
     } catch (error: any) {
       if (error.response?.status === 401) {
-        console.log("Invalid credentials");
         toast.error("Invalid credentials. Please try again.", { position: "bottom-right", autoClose: 5000 });
       } else if (error.response?.status === 404) {
-        console.log("User not found");
         toast.error("User not found. Please check your email.", { position: "bottom-right", autoClose: 5000 });
       } else {
         toast.error("Something went wrong. Please try again later.", { position: "bottom-right", autoClose: 5000 });
@@ -94,7 +92,7 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
             <div className={`logo-circle ${loginType === 'staff' ? 'staff-logo' : ''}`}>
               {loginType === 'student' ? '🎓' : '👨‍🏫'}
             </div>
-            <h1>{loginType === 'student' ? 'Welcome Back' : 'Staff Portal'}</h1>
+            <h1>{loginType === 'student' ? 'Student Login' : 'Staff Login'}</h1>
             <p className="text-muted">
               {loginType === 'student'
                 ? 'Enter your credentials to access the portal'
@@ -115,7 +113,7 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
                   onChange={(e) => setEmail(e.target.value)}
                 />
                 <label htmlFor="username">
-                  {loginType === 'student' ? 'Username / Register No' : 'Staff Email / ID'}
+                  {loginType === 'student' ? 'Student Mail ID ' : 'Staff Email / ID'}
                 </label>
                 <span className="input-icon">👤</span>
               </div>
@@ -408,7 +406,7 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
 
         .floating-input {
           height: 56px;
-          padding: 24px 16px 8px;
+          padding: 24px 48px 8px 16px;
           font-size: 16px;
           background: #f8fafc;
           border: 2px solid transparent;

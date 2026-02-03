@@ -392,7 +392,7 @@ const WatchmanLogin: React.FC = () => {
 
         .floating-input {
           height: 56px;
-          padding: 24px 16px 8px;
+          padding: 24px 48px 8px 16px;
           font-size: 16px;
           background: #f8fafc;
           border: 2px solid transparent;

@@ -536,7 +536,7 @@ const PassApproval: React.FC = () => {
                             </div>
 
                             {/* Roommate Details */}
-                            {selectedStudent.hostelname && selectedStudent.hostelname !== 'N/A' && (
+                            {selectedStudent.residenceType === 'hostel' && (
                                 <div className="detail-card">
                                     <div className="card-header">
                                         <span className="card-icon">👥</span>
@@ -1415,6 +1415,40 @@ const PassApproval: React.FC = () => {
                     color: #94a3b8;
                     font-style: italic;
                     padding: 20px;
+                }
+
+                /* Mobile Approval Workflow */
+                @media (max-width: 768px) {
+                    .approval-stepper {
+                        padding: 10px 0;
+                    }
+
+                    .approval-step {
+                        padding: 12px 0;
+                        gap: 16px;
+                    }
+
+                    .step-circle {
+                        width: 48px;
+                        height: 48px;
+                        font-size: 1.2rem;
+                        border-width: 3px;
+                    }
+
+                    .step-connector {
+                        margin-left: 22px; /* 0px padding + 24px (half circle) - 2px (half line) */
+                        height: 30px;
+                    }
+
+                    .step-content {
+                        flex-direction: column;
+                        align-items: flex-start;
+                        gap: 4px;
+                    }
+
+                    .step-content h3 {
+                        font-size: 1.1rem;
+                    }
                 }
             `}</style>
         </div>

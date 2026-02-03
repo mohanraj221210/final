@@ -14,6 +14,9 @@ interface YearIncharge {
     photo: string;
     year: string;
     role: string;
+    handlingYear: string[];
+    handlingBatch: string[];
+    handlingDepartment: string[];
 }
 
 const YearInchargeProfile: React.FC = () => {
@@ -27,7 +30,10 @@ const YearInchargeProfile: React.FC = () => {
         gender: '',
         photo: '',
         year: '',
-        role: ''
+        role: '',
+        handlingYear: [],
+        handlingBatch: [],
+        handlingDepartment: []
     });
 
     const [completionPercentage, setCompletionPercentage] = useState(0);
@@ -42,17 +48,19 @@ const YearInchargeProfile: React.FC = () => {
     }, []);
 
     const calculateCompletion = (data: YearIncharge) => {
-        const fields = ['name', 'email', 'phone', 'gender', 'year', 'photo'];
+        const fields = ['name', 'email', 'phone', 'gender', 'year', 'photo', 'handlingYear', 'handlingBatch', 'handlingDepartment'];
         let completed = 0;
 
         fields.forEach(field => {
             const value = data[field as keyof YearIncharge];
-            if (value && value.trim() !== '') {
+            if (Array.isArray(value)) {
+                if (value.length > 0) completed++;
+            } else if (value && (value as string).trim() !== '') {
                 completed++;
             }
         });
 
-        setCompletionPercentage(Math.round((completed / 6) * 100));
+        setCompletionPercentage(Math.round((completed / 9) * 100));
     };
 
     const fetchProfile = async () => {
@@ -77,7 +85,10 @@ const YearInchargeProfile: React.FC = () => {
                     gender: data.gender || 'male',
                     photo: data.photo || '',
                     year: data.year || '',
-                    role: data.role || ''
+                    role: data.role || '',
+                    handlingYear: Array.isArray(data.handlingYear) ? data.handlingYear : data.handlingYear ? [data.handlingYear] : [],
+                    handlingBatch: Array.isArray(data.handlingBatch) ? data.handlingBatch : data.handlingBatch ? [data.handlingBatch] : [],
+                    handlingDepartment: Array.isArray(data.handlingDepartment) ? data.handlingDepartment : data.handlingDepartment ? [data.handlingDepartment] : []
                 };
                 setProfile(profileData);
                 setPreviewImage(data.photo || '');
@@ -94,6 +105,24 @@ const YearInchargeProfile: React.FC = () => {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setProfile(prev => ({ ...prev, [name]: value }));
+    };
+
+    // Helper to add item to array
+    const handleAddMulti = (field: keyof YearIncharge, value: string) => {
+        if (!value) return;
+        setProfile(prev => {
+            const currentArray = prev[field] as string[];
+            if (currentArray.includes(value)) return prev;
+            return { ...prev, [field]: [...currentArray, value] };
+        });
+    };
+
+    // Helper to remove item from array
+    const handleRemoveMulti = (field: keyof YearIncharge, valueToRemove: string) => {
+        setProfile(prev => {
+            const currentArray = prev[field] as string[];
+            return { ...prev, [field]: currentArray.filter(item => item !== valueToRemove) };
+        });
     };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -142,6 +171,11 @@ const YearInchargeProfile: React.FC = () => {
             return;
         }
 
+        if (profile.handlingYear.length === 0 || profile.handlingBatch.length === 0 || profile.handlingDepartment.length === 0) {
+            toast.error("Please select at least one option for all handling details");
+            return;
+        }
+
         const token = localStorage.getItem('token');
         try {
             const formData = new FormData();
@@ -149,6 +183,11 @@ const YearInchargeProfile: React.FC = () => {
             formData.append('email', profile.email);
             formData.append('phone', profile.phone);
             formData.append('gender', profile.gender);
+
+            // Append arrays
+            profile.handlingYear.forEach(val => formData.append('handlingYear', val));
+            profile.handlingBatch.forEach(val => formData.append('handlingBatch', val));
+            profile.handlingDepartment.forEach(val => formData.append('handlingDepartment', val));
             // Year and Role are typically immutable by the user, so not appending them
 
             if (selectedFile) {
@@ -329,6 +368,121 @@ const YearInchargeProfile: React.FC = () => {
                                         className="input"
                                         style={{ backgroundColor: '#f8fafc', cursor: 'not-allowed' }}
                                     />
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Handling Year </label>
+                                    <div className="multi-select-container">
+                                        <div className="chips-container">
+                                            {profile.handlingYear.map((item) => (
+                                                <span key={item} className="chip">
+                                                    {item}
+                                                    {isEditing && (
+                                                        <button
+                                                            type="button"
+                                                            className="chip-remove"
+                                                            onClick={() => handleRemoveMulti('handlingYear', item)}
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    )}
+                                                </span>
+                                            ))}
+                                        </div>
+                                        {isEditing && (
+                                            <select
+                                                value=""
+                                                onChange={(e) => handleAddMulti('handlingYear', e.target.value)}
+                                                className="input"
+                                            >
+                                                <option value="" disabled>+ Add Year</option>
+                                                {['1st Year', '2nd Year', '3rd Year', '4th Year']
+                                                    .filter(opt => !profile.handlingYear.includes(opt))
+                                                    .map(opt => (
+                                                        <option key={opt} value={opt}>{opt}</option>
+                                                    ))}
+                                            </select>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Handling Batch</label>
+                                    <div className="multi-select-container">
+                                        <div className="chips-container">
+                                            {profile.handlingBatch.map((item) => (
+                                                <span key={item} className="chip">
+                                                    {item}
+                                                    {isEditing && (
+                                                        <button
+                                                            type="button"
+                                                            className="chip-remove"
+                                                            onClick={() => handleRemoveMulti('handlingBatch', item)}
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    )}
+                                                </span>
+                                            ))}
+                                        </div>
+                                        {isEditing && (
+                                            <select
+                                                value=""
+                                                onChange={(e) => handleAddMulti('handlingBatch', e.target.value)}
+                                                className="input"
+                                            >
+                                                <option value="" disabled>+ Add Batch</option>
+                                                {['2022–2026', '2023–2027', '2024–2028', '2025–2029', '2026–2030']
+                                                    .filter(opt => !profile.handlingBatch.includes(opt))
+                                                    .map(opt => (
+                                                        <option key={opt} value={opt}>{opt}</option>
+                                                    ))}
+                                            </select>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Handling Department</label>
+                                    <div className="multi-select-container">
+                                        <div className="chips-container">
+                                            {profile.handlingDepartment.map((item) => (
+                                                <span key={item} className="chip">
+                                                    {item}
+                                                    {isEditing && (
+                                                        <button
+                                                            type="button"
+                                                            className="chip-remove"
+                                                            onClick={() => handleRemoveMulti('handlingDepartment', item)}
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    )}
+                                                </span>
+                                            ))}
+                                        </div>
+                                        {isEditing && (
+                                            <select
+                                                value=""
+                                                onChange={(e) => handleAddMulti('handlingDepartment', e.target.value)}
+                                                className="input"
+                                            >
+                                                <option value="" disabled>+ Add Department</option>
+                                                {[
+                                                    'Information Technology',
+                                                    'Computer Science and Engineering',
+                                                    'Mechanical Engineering',
+                                                    'Artificial Intelligence and Data Science',
+                                                    'Master of Business Administration',
+                                                    'Electronics and Communication Engineering'
+                                                ]
+                                                    .filter(opt => !profile.handlingDepartment.includes(opt))
+                                                    .map(opt => (
+                                                        <option key={opt} value={opt}>{opt}</option>
+                                                    ))}
+                                            </select>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -687,6 +841,54 @@ const YearInchargeProfile: React.FC = () => {
                     .content-wrapper .back-btn {
                         margin-bottom: 16px;
                     }
+                }
+
+                .multi-select-container {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                }
+
+                .chips-container {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 8px;
+                    min-height: 40px; /* Ensure space even if empty */
+                }
+
+                .chip {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    background: #e0f2fe;
+                    color: #0369a1;
+                    padding: 6px 12px;
+                    border-radius: 20px;
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                }
+
+                .chip-remove {
+                    background: none;
+                    border: none;
+                    color: #0369a1;
+                    font-size: 1.1rem;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 20px;
+                    height: 20px;
+                    border-radius: 50%;
+                    line-height: 1;
+                    padding: 0;
+                    opacity: 0.7;
+                    transition: all 0.2s;
+                }
+
+                .chip-remove:hover {
+                    opacity: 1;
+                    background: rgba(3, 105, 161, 0.1);
                 }
             `}</style>
         </div>

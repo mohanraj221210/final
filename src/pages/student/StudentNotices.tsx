@@ -1,54 +1,149 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { io, Socket } from 'socket.io-client';
 
 interface Message {
-    id: number;
+    _id: string;
     text: string;
-    sender: string;
-    timestamp: string;
-    isMe: boolean;
-    readBy?: number;
+    from: string;
+    to: string;
+    createdAt: string;
+    senderName?: string;
+    isMe?: boolean;
+}
+
+interface Group {
+    _id: string;
+    groupname: string;
+    members: string[];
+    admin: string;
 }
 
 const StudentNotices: React.FC = () => {
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+    const [group, setGroup] = useState<Group | null>(null);
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [loading, setLoading] = useState(true);
+    const socketRef = useRef<Socket | null>(null);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    // Notices Data (Only relevant ones kept)
-    const [messages] = useState<Message[]>([
-        { id: 1, text: "Welcome to the Official Announcements channel.", sender: "Admin", timestamp: "09:00 AM", isMe: false },
-        { id: 2, text: "Tomorrow is a holiday due to heavy rain forecast.", sender: "Principal", timestamp: "10:30 AM", isMe: false },
-        { id: 3, text: "Project submission deadline extended to Monday.", sender: "HOD", timestamp: "Yesterday", isMe: false },
-        { id: 4, text: "Meeting at 3 PM for IT Department.", sender: "IT Dept", timestamp: "Yesterday", isMe: false },
-    ]);
+    const API_URL = import.meta.env.VITE_API_URL;
+
+    useEffect(() => {
+        fetchCommunityAndMessages();
+
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.disconnect();
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    const fetchCommunityAndMessages = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert("Authentication token missing");
+                navigate('/login');
+                return;
+            }
+
+            const groupRes = await axios.get(`${API_URL}/api/community/my-group`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            const myGroup = groupRes.data.group;
+            setGroup(myGroup);
+
+            if (myGroup) {
+                const messagesRes = await axios.get(`${API_URL}/api/messages/${myGroup._id}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setMessages(messagesRes.data.messages);
+
+                initSocket(token, myGroup._id);
+            }
+        } catch (error) {
+            console.error("Error fetching data:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const initSocket = (token: string, groupId: string) => {
+        socketRef.current = io(API_URL, {
+            query: { token }
+        });
+
+        socketRef.current.on('connect', () => {
+            console.log("Socket connected");
+        });
+
+        socketRef.current.on('group-message', (data: any) => {
+            console.log("New message received:", data);
+            const incomingMsg: Message = {
+                _id: Date.now().toString(),
+                text: data.message,
+                from: data.from,
+                to: groupId,
+                createdAt: new Date().toISOString(),
+                senderName: data.from,
+                isMe: false
+            };
+            setMessages(prev => [...prev, incomingMsg]);
+        });
+    };
 
     const handleLogout = () => {
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('userType');
-      localStorage.removeItem('token');
-      navigate('/login');
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userType');
+        localStorage.removeItem('token');
+        navigate('/login');
     };
+
+    if (loading) return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '50px' }}>Loading Community...</div>;
+
+    if (!group) return (
+        <div className="whatsapp-layout">
+            <header className="dashboard-header-custom">
+                <div className="header-container-custom">
+                    <div className="header-left-custom">
+                        <div className="brand-custom">
+                            <span className="brand-icon-custom">🎓</span>
+                            <span className="brand-text-custom">JIT Student Portal</span>
+                        </div>
+                    </div>
+                    <button className="mobile-menu-btn" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+                        {isMobileMenuOpen ? '✕' : '☰'}
+                    </button>
+                    <nav className={`header-nav-custom ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
+                        <button className="logout-btn-custom" onClick={handleLogout}>Logout</button>
+                    </nav>
+                </div>
+            </header>
+            <div className="app-container">
+                <div style={{ textAlign: 'center', marginTop: '50px', color: '#54656f' }}>
+                    <h2>No Community Found</h2>
+                    <p>You are not part of any class group yet.</p>
+                </div>
+            </div>
+            <style>{`/* Styles reused below */`}</style>
+        </div>
+    );
 
     return (
         <div className="whatsapp-layout">
-            {/* Header */}
-            {/* <header className="dashboard-header">
-                <div className="header-container">
-                    <div className="header-left">
-                        <div className="brand" onClick={() => navigate('/dashboard')} style={{ cursor: 'pointer' }}>
-                            <span className="brand-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M19 12H5" />
-                                    <path d="M12 19l-7-7 7-7" />
-                                </svg>
-                            </span>
-                            <span className="brand-text">Student Dashboard</span>
-                        </div>
-                    </div>
-                </div>
-            </header> */}
-
-             <header className="dashboard-header-custom">
+            <header className="dashboard-header-custom">
                 <div className="header-container-custom">
                     <div className="header-left-custom">
                         <div className="brand-custom">
@@ -66,78 +161,48 @@ const StudentNotices: React.FC = () => {
                     </button>
 
                     <nav className={`header-nav-custom ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/dashboard')}
-                        >
-                            Dashboard
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/staffs')}
-                        >
-                            Staffs
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/student-notice')}
-                        >
-                            Notices
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/outpass')}
-                        >
-                            Outpass
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/subjects')}
-                        >
-                            Subjects
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/profile')}
-                        >
-                            Profile
-                        </button>
-                        <button className="logout-btn-custom" onClick={handleLogout}>
-                            Logout
-                        </button>
+                        <button className="nav-item-custom" onClick={() => navigate('/dashboard')}>Dashboard</button>
+                        <button className="nav-item-custom" onClick={() => navigate('/staffs')}>Staffs</button>
+                        <button className="nav-item-custom" onClick={() => navigate('/student-notice')}>Notices</button>
+                        <button className="nav-item-custom" onClick={() => navigate('/outpass')}>Outpass</button>
+                        <button className="nav-item-custom" onClick={() => navigate('/subjects')}>Subjects</button>
+                        <button className="nav-item-custom" onClick={() => navigate('/profile')}>Profile</button>
+                        <button className="logout-btn-custom" onClick={handleLogout}>Logout</button>
                     </nav>
                 </div>
             </header>
 
             <div className="app-container">
-                {/* Chat Area (Full Width) */}
                 <div className="chat-area">
                     <div className="chat-header">
                         <div className="chat-header-info">
                             <div className="comm-icon small">📢</div>
                             <div className="header-text">
-                                <h3>Official Notices</h3>
-                                <p>College Announcements</p>
+                                <h3>{group.groupname}</h3>
+                                <p>Official Notices</p>
                             </div>
                         </div>
                     </div>
 
                     <div className="messages-container">
                         <div className="encryption-notice">
-                            🔒 Messages are end-to-end encrypted. No one outside of this chat, not even WhatsApp, can read or listen to them.
+                            🔒 Messages are end-to-end encrypted.
                         </div>
 
-                        {messages.map((msg) => (
-                            <div key={msg.id} className={`message-row ${msg.isMe ? 'my-message' : 'other-message'}`}>
+                        {messages.map((msg, idx) => (
+                            <div key={msg._id || idx} className={`message-row ${msg.isMe ? 'my-message' : 'other-message'}`}>
                                 <div className="message-bubble">
-                                    {!msg.isMe && <div className="sender-name">{msg.sender}</div>}
+                                    {!msg.isMe && <div className="sender-name">{msg.senderName || msg.from}</div>}
                                     <div className="message-text">{msg.text}</div>
                                     <div className="message-meta">
-                                        <span className="timestamp">{msg.timestamp}</span>
+                                        <span className="timestamp">
+                                            {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
                         ))}
+                        <div ref={messagesEndRef} />
 
                         <div className="read-only-banner">
                             Only admins can send messages in this group.
@@ -461,3 +526,4 @@ const StudentNotices: React.FC = () => {
 };
 
 export default StudentNotices;
+

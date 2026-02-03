@@ -377,14 +377,12 @@ const Profile: React.FC = () => {
                                         className="input"
                                     >
                                         <option value="">Select Department</option>
-                                        <option value="CSE">Computer Science and Engineering</option>
-                                        <option value="IT">Information Technology</option>
-                                        <option value="ECE">Electronics and Communication Engineering</option>
-                                        <option value="EEE">Electrical and Electronics Engineering</option>
-                                        <option value="MECH">Mechanical Engineering</option>
-                                        <option value="CIVIL">Civil Engineering</option>
-                                        <option value="AIDS">Artificial Intelligence and Data Science</option>
-                                        <option value="AIML">Artificial Intelligence and Machine Learning</option>
+                                        <option value="Computer Science and Engineering">Computer Science and Engineering</option>
+                                        <option value="Information Technology">Information Technology</option>
+                                        <option value="Electronics and Communication Engineering">Electronics and Communication Engineering</option>
+                                        <option value="Mechanical Engineering">Mechanical Engineering</option>
+                                        <option value="Artificial Intelligence and Data Science">Artificial Intelligence and Data Science</option>
+                                        <option value="Master of Business Administration">Master of Business Administration</option>
                                     </select>
                                 </div>
 

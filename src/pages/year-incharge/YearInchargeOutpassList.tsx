@@ -155,12 +155,14 @@ const YearInchargeOutpassList: React.FC = () => {
                                                     <span className={`status-badge ${getStatusColor(outpass.staffapprovalstatus)}`}>
                                                         Staff: {outpass.staffapprovalstatus}
                                                     </span>
-                                                    <span className={`status-badge ${getStatusColor(outpass.wardenapprovalstatus)}`}>
-                                                        Warden: {outpass.wardenapprovalstatus}
-                                                    </span>
                                                     <span className={`status-badge ${getStatusColor(outpass.yearinchargeapprovalstatus)}`}>
                                                         Incharge: {outpass.yearinchargeapprovalstatus}
                                                     </span>
+                                                    {outpass.studentid?.residencetype?.toLowerCase().replace(/\s/g, '') !== 'dayscholar' && (
+                                                        <span className={`status-badge ${getStatusColor(outpass.wardenapprovalstatus)}`}>
+                                                            Warden: {outpass.wardenapprovalstatus}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
@@ -209,12 +211,14 @@ const YearInchargeOutpassList: React.FC = () => {
                                         <span className={`status-badge-mobile ${getStatusColor(outpass.staffapprovalstatus)}`}>
                                             Staff: {outpass.staffapprovalstatus}
                                         </span>
-                                        <span className={`status-badge-mobile ${getStatusColor(outpass.wardenapprovalstatus)}`}>
-                                            Warden: {outpass.wardenapprovalstatus}
-                                        </span>
                                         <span className={`status-badge-mobile ${getStatusColor(outpass.yearinchargeapprovalstatus)}`}>
                                             Incharge: {outpass.yearinchargeapprovalstatus}
                                         </span>
+                                        {outpass.studentid?.residencetype?.toLowerCase().replace(/\s/g, '') !== 'dayscholar' && (
+                                            <span className={`status-badge-mobile ${getStatusColor(outpass.wardenapprovalstatus)}`}>
+                                                Warden: {outpass.wardenapprovalstatus}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
