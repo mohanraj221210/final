@@ -20,9 +20,12 @@ interface StudentOutpass {
     // Parents Details
     parentContact: string;
 
-    // Hostel Details
-    hostelname: string;
-    hostelroomno: string;
+    // Hostel/Bus Details
+    residenceType: string;
+    hostelname?: string;
+    hostelroomno?: string;
+    busNo?: string;
+    boardingPoint?: string;
 
     // Last Outpass
     lastOutpassFrom?: string;
@@ -98,8 +101,11 @@ const PassApproval: React.FC = () => {
                     appliedDate: data.createdAt,
                     photo: studentDetails.photo || 'Student',
                     parentContact: studentDetails.parentnumber || 'N/A',
+                    residenceType: studentDetails.residencetype?.toLowerCase() || 'dayscholar', // Fallback to dayscholar if undefined
                     hostelname: studentDetails.hostelname || 'N/A',
                     hostelroomno: studentDetails.hostelroomno || 'N/A',
+                    busNo: studentDetails.busno || 'N/A',
+                    boardingPoint: studentDetails.boardingpoint || 'N/A',
                     reason: data.reason,
                     fromDate: data.fromDate,
                     toDate: data.toDate,
@@ -433,24 +439,45 @@ const PassApproval: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="detail-card">
-                                <div className="card-header">
-                                    <span className="card-icon">🏢</span>
-                                    <h2>Hostel Details</h2>
-                                </div>
-                                <div className="card-body">
-                                    <div className="info-grid">
-                                        <div className="info-field">
-                                            <label>HOSTEL NAME</label>
-                                            <div className="field-value">{selectedStudent.hostelname}</div>
-                                        </div>
-                                        <div className="info-field">
-                                            <label>ROOM NUMBER</label>
-                                            <div className="field-value">{selectedStudent.hostelroomno}</div>
+                            {selectedStudent.residenceType === 'hostel' ? (
+                                <div className="detail-card">
+                                    <div className="card-header">
+                                        <span className="card-icon">🏢</span>
+                                        <h2>Hostel Details</h2>
+                                    </div>
+                                    <div className="card-body">
+                                        <div className="info-grid">
+                                            <div className="info-field">
+                                                <label>HOSTEL NAME</label>
+                                                <div className="field-value">{selectedStudent.hostelname}</div>
+                                            </div>
+                                            <div className="info-field">
+                                                <label>ROOM NUMBER</label>
+                                                <div className="field-value">{selectedStudent.hostelroomno}</div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <div className="detail-card">
+                                    <div className="card-header">
+                                        <span className="card-icon">🚌</span>
+                                        <h2>Bus Details</h2>
+                                    </div>
+                                    <div className="card-body">
+                                        <div className="info-grid">
+                                            <div className="info-field">
+                                                <label>BUS NUMBER</label>
+                                                <div className="field-value">{selectedStudent.busNo}</div>
+                                            </div>
+                                            <div className="info-field">
+                                                <label>BOARDING POINT</label>
+                                                <div className="field-value">{selectedStudent.boardingPoint}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Last Outpass Details */}
                             {selectedStudent.lastOutpassFrom && (
