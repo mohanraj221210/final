@@ -1,59 +1,83 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Nav from "../../components/WardenNav";
 import Toast from "../../components/Toast";
 import wardenProfile from "../../assets/jit.webp";
 import axios from "axios";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 
 interface Warden {
   name: string;
-  staffId: string;
-  department: string;
+  // staffId: string;
+  // department: string;
   hostelname: string;
   email: string;
   phone: string;
   photo: string;
-  designation: string;
+  // designation: string;
   gender: string;
 }
 
 const WardenProfile: React.FC = () => {
+  const navigate = useNavigate();
   const [warden, setWarden] = useState<Warden>({
     name: "",
-    staffId: "",
-    department: "",
+    // staffId: "",
+    // department: "",
     hostelname: "",
     email: "",
     phone: "",
     photo: "",
-    designation: "Warden",
+    // designation: "Warden",
     gender: "male",
   });
 
   const [isEditing, setIsEditing] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
+  // Calculate completion percentage
+  const calculateCompletion = (wardenData: Warden) => {
+    const requiredFields = ['name', 'email', 'phone', 'gender', 'hostelname', 'photo'];
+
+    // Filter out fields that are present and not empty
+    const filledFields = requiredFields.filter(field => {
+      const value = wardenData[field as keyof Warden];
+      return value !== null && value !== undefined && value !== '' && value !== 'N/A';
+    });
+
+    return Math.round((filledFields.length / requiredFields.length) * 100);
+  };
+
+  const [completionPercentage, setCompletionPercentage] = useState(0);
+
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_URL}/warden/profile`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+    setCompletionPercentage(calculateCompletion(warden));
+  }, [warden]);
 
-        if (response.status === 200) {
-          setWarden(response.data.warden);
-          toast.success("Warden profile loaded");
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const fetchProfile = async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/warden/profile`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         }
-      } catch (err) {
-        toast.error("Failed to load profile");
-      }
-    };
+      );
 
+      if (response.status === 200) {
+        setWarden(response.data.warden);
+        // toast.success("Warden profile loaded");
+      }
+    } catch (err) {
+      toast.error("Failed to load profile");
+    }
+  };
+
+  useEffect(() => {
     fetchProfile();
   }, []);
 
@@ -64,12 +88,33 @@ const WardenProfile: React.FC = () => {
     setWarden((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validation: Max 200KB
+    if (file.size > 200 * 1024) {
+      toast.error("Image size must be less than 200KB");
+      e.target.value = ""; // Reset input
+      return;
+    }
+
+    // Validation: Only JPEG and PNG
+    if (!["image/jpeg", "image/png"].includes(file.type)) {
+      toast.error("Only JPEG and PNG formats are allowed");
+      e.target.value = ""; // Reset input
+      return;
+    }
+
+    setSelectedPhoto(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const handleSave = async () => {
     const formData = new FormData();
-    formData.append("photo", file);
+    if (selectedPhoto) {
+      formData.append("photo", selectedPhoto);
+    }
     formData.append("name", warden.name);
     formData.append("hostelname", warden.hostelname);
     formData.append("email", warden.email);
@@ -89,30 +134,12 @@ const WardenProfile: React.FC = () => {
       );
 
       if (response.status === 200) {
-        toast.success("Photo updated");
-        setShowToast(true);
-      }
-    } catch (err) {
-      toast.error("Failed to upload photo");
-    }
-  };
-
-  const handleSave = async () => {
-    try {
-      const response = await axios.put(
-        `${import.meta.env.VITE_API_URL}/warden/profile/update`,
-        warden,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-
-      if (response.status === 200) {
         toast.success("Profile updated");
         setShowToast(true);
         setIsEditing(false);
+        fetchProfile(); // Refresh data from server
+        setPreviewUrl(null); // Clear preview 
+        setSelectedPhoto(null);
       }
     } catch (err) {
       toast.error("Failed to update profile");
@@ -122,6 +149,7 @@ const WardenProfile: React.FC = () => {
   return (
     <div className="page-container profile-page">
       <Nav />
+      <ToastContainer />
 
       {showToast && (
         <Toast
@@ -132,6 +160,31 @@ const WardenProfile: React.FC = () => {
       )}
 
       <div className="content-wrapper">
+        <button className="back-btn" onClick={() => navigate('/warden-dashboard')}>
+          ← Back
+        </button>
+
+        <div className="completion-card">
+          <div className="completion-header">
+            <h3>Profile Completion</h3>
+            <span className="completion-badge">{completionPercentage}%</span>
+          </div>
+          <div className="progress-container">
+            <div
+              className="progress-bar"
+              style={{
+                width: `${completionPercentage}%`,
+                backgroundColor: completionPercentage === 100 ? '#10b981' : '#0047AB'
+              }}
+            ></div>
+          </div>
+          <p className="completion-text">
+            {completionPercentage === 100
+              ? "Great! Your profile is fully complete."
+              : "Complete your profile to enable all features."}
+          </p>
+        </div>
+
         <div className="profile-layout">
           {/* Sidebar */}
           <div className="profile-sidebar">
@@ -139,7 +192,7 @@ const WardenProfile: React.FC = () => {
               <div className="profile-header">
                 <div className="avatar-container">
                   <img
-                    src={warden.photo || wardenProfile}
+                    src={previewUrl || warden.photo || wardenProfile}
                     alt="Profile"
                     className="profile-avatar"
                   />
@@ -148,7 +201,7 @@ const WardenProfile: React.FC = () => {
                       <span>📷</span>
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/jpeg, image/png"
                         onChange={handleImageUpload}
                         className="hidden-input"
                       />
@@ -157,10 +210,10 @@ const WardenProfile: React.FC = () => {
                 </div>
 
                 <h2 className="profile-name">{warden.name}</h2>
-                <p className="profile-role">{warden.designation}</p>
+                {/* <p className="profile-role">{warden.designation}</p> */}
 
                 <div className="profile-badges">
-                  <span className="badge">{warden.department}</span>
+                  <span className="badge">Warden</span>
                 </div>
               </div>
 
@@ -192,7 +245,7 @@ const WardenProfile: React.FC = () => {
             <div className="card details-card">
               <div className="card-header">
                 <h3>Personal Information</h3>
-                <p className="text-muted">
+                <p className="text-muted" style={{ marginTop: '16px', marginBottom: '16px' }}>
                   Manage your personal and contact details.
                 </p>
               </div>
@@ -234,7 +287,7 @@ const WardenProfile: React.FC = () => {
                   />
                 </div>
 
-                <div className="form-group">
+                {/* <div className="form-group">
                   <label>Designation</label>
                   <input
                     type="text"
@@ -243,7 +296,7 @@ const WardenProfile: React.FC = () => {
                     disabled
                     className="input"
                   />
-                </div>
+                </div> */}
 
                 <div className="form-group">
                   <label>Gender</label>
@@ -259,7 +312,7 @@ const WardenProfile: React.FC = () => {
                   </select>
                 </div>
 
-                <div className="form-group">
+                {/* <div className="form-group">
                   <label>Email</label>
                   <input
                     type="email"
@@ -269,7 +322,7 @@ const WardenProfile: React.FC = () => {
                     disabled={!isEditing}
                     className="input"
                   />
-                </div>
+                </div> */}
 
                 <div className="form-group">
                   <label>Phone</label>
@@ -288,13 +341,38 @@ const WardenProfile: React.FC = () => {
         </div>
       </div>
 
-      {/* ✅ REUSE SAME CSS FROM STUDENT PROFILE PAGE */}
+
       <style>{`
-        /* EXACT SAME CSS SYSTEM AS STUDENT PROFILE */
+        
+        button.back-btn {
+          background: white;
+          border: 1px solid #cbd5e1;
+          color: #1e293b;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          padding: 8px 16px;
+          border-radius: 6px;
+          transition: all 0.2s;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+          margin-bottom: 24px;
+        }
+
+        button.back-btn:hover {
+          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+          transform: translateY(-1px);
+          background: #f8fafc;
+        }
+
+        .profile-page { margin-top: 10px; }
         .profile-layout { display: grid; grid-template-columns: 350px 1fr; gap: 32px; }
         .profile-card { text-align: center; }
         .avatar-container { position: relative; width: 120px; height: 120px; margin: 0 auto 16px; }
         .profile-header { display: flex; flex-direction: column; align-items: center; }
+        .profile-badges { margin-top: 10px; }
         .profile-avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 0 0 4px var(--primary-light); }
         .avatar-upload { position: absolute; bottom: 0; right: 0; background: var(--primary); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid white; transition: var(--transition); }
         .avatar-upload:hover { transform: scale(1.1); }
@@ -305,6 +383,70 @@ const WardenProfile: React.FC = () => {
         @media (max-width: 968px) {
           .profile-layout { grid-template-columns: 1fr; }
           .form-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 480px) {
+          .page-container { padding: 16px; }
+          .profile-card, .details-card { padding: 20px; }
+          .avatar-container { width: 100px; height: 100px; }
+          .profile-header h2 { font-size: 1.25rem; margin-bottom: 2px; }
+          .profile-role { margin-bottom: 2px; }
+          .profile-badges { margin-top: -10px; }
+          .profile-name { margin-top: -20px; }
+          .input { font-size: 14px; padding: 10px; }
+          .back-btn { margin-top: 50px; }
+        }
+
+        /* Completion Card Styles */
+        .completion-card {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        .completion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .completion-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: #1e293b;
+        }
+
+        .completion-badge {
+            background: #f1f5f9;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+            color: #0047AB;
+            font-size: 0.9rem;
+        }
+
+        .progress-container {
+            height: 10px;
+            background: #e2e8f0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            transition: width 0.5s ease;
+            border-radius: 5px;
+        }
+
+        .completion-text {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #64748b;
         }
       `}</style>
     </div>

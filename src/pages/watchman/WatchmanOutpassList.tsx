@@ -1,17 +1,14 @@
 import React, { useState, useEffect } from "react";
-
 import axios from "axios";
-
 import { useNavigate } from "react-router-dom";
+import WatchmanNav from "../../components/WatchmanNav";
 
-import WardenNav from "../../components/WardenNav";
-
-const OutpassList: React.FC = () => {
+const WatchmanOutpassList: React.FC = () => {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [outpasses, setOutpasses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState<'All' | 'Approved' | 'Rejected'>('All');
+  const [dateFilter] = useState<'All' | 'Today' | 'Yesterday' | 'This Week' | 'This Month'>('All');
 
   const itemsPerPage = 8;
 
@@ -23,18 +20,33 @@ const OutpassList: React.FC = () => {
     try {
       const token = localStorage.getItem("token");
 
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/warden/outpass/list/all`, {
+      // Using the same endpoint as warden for now, assuming watchman has access or it's public enough
+      // In a real scenario, this might need a specific /watchman endpoint
+      // Watchman API Endpoint
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/watchman/outpass/list`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      const outpassData = res.data.outpasses || res.data.data || res.data || [];
-      // Initially set all data, filtering happens on render/derived state
-      setOutpasses(Array.isArray(outpassData) ? outpassData : []);
+
+      // Data extraction based on confirmed API response structure (outpass)
+      const outpassData = res.data.outpass || [];
+
+      // Filter for approved outpasses
+      const approvedOutpasses = outpassData.filter((item: any) =>
+        item.wardenapprovalstatus === 'approved' || item.status === 'approved'
+      );
+
+      setOutpasses(approvedOutpasses);
     } catch (err: any) {
       console.error("Failed to fetch outpasses", err);
-      // Error handling...
+      // Handle errors gracefully
+      if (err.response?.status === 401) {
+        // Token might be invalid or maybe watchman type isn't allowed on this specific endpoint
+        // For now we just alert
+        console.error("Authentication error");
+      }
     } finally {
       setLoading(false);
     }
@@ -42,10 +54,31 @@ const OutpassList: React.FC = () => {
 
   // Filter logic
   const filteredOutpasses = outpasses.filter((item) => {
-    const status = item.wardenapprovalstatus?.toLowerCase() || '';
-    if (filterStatus === 'All') return status === 'approved' || status === 'rejected' || status === 'declined';
-    if (filterStatus === 'Approved') return status === 'approved';
-    if (filterStatus === 'Rejected') return status === 'rejected' || status === 'declined';
+    if (dateFilter === 'All') return true;
+
+    const itemDate = new Date(item.createdAt || item.outDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (dateFilter === 'Today') {
+      return itemDate >= today;
+    } else if (dateFilter === 'Yesterday') {
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const endYesterday = new Date(yesterday);
+      endYesterday.setHours(23, 59, 59, 999);
+      return itemDate >= yesterday && itemDate <= endYesterday;
+    } else if (dateFilter === 'This Week') {
+      const startOfWeek = new Date(today);
+      const day = startOfWeek.getDay() || 7;
+      if (day !== 1) startOfWeek.setHours(-24 * (day - 1));
+      else startOfWeek.setHours(0, 0, 0, 0);
+      startOfWeek.setHours(0, 0, 0, 0);
+      return itemDate >= startOfWeek;
+    } else if (dateFilter === 'This Month') {
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      return itemDate >= startOfMonth;
+    }
     return true;
   });
 
@@ -53,44 +86,15 @@ const OutpassList: React.FC = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentData = filteredOutpasses.slice(startIndex, startIndex + itemsPerPage);
 
-  const capitalize = (str: any) => {
-    if (!str) return "Pending";
-    const s = String(str);
-    return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
-  };
-
   return (
     <div className="page-container">
-      <WardenNav />
+      <WatchmanNav />
+
       <div className="list-container">
-        <div className="header-row">
-          <button className="back-btn" onClick={() => navigate("/warden-dashboard")}>
-            ← Back
-          </button>
-
-          <div className="filter-tabs">
-            <button
-              className={`filter-btn ${filterStatus === 'All' ? 'active' : ''}`}
-              onClick={() => { setFilterStatus('All'); setCurrentPage(1); }}
-            >
-              All
-            </button>
-            <button
-              className={`filter-btn ${filterStatus === 'Approved' ? 'active' : ''}`}
-              onClick={() => { setFilterStatus('Approved'); setCurrentPage(1); }}
-            >
-              Approved
-            </button>
-            <button
-              className={`filter-btn ${filterStatus === 'Rejected' ? 'active' : ''}`}
-              onClick={() => { setFilterStatus('Rejected'); setCurrentPage(1); }}
-            >
-              Rejected
-            </button>
-          </div>
-        </div>
-
-        <h1>Outpass List</h1>
+        <button className="back-btn" onClick={() => navigate("/watchman-dashboard")}>
+          ← Back
+        </button>
+        <h1>Watchman Approved Outpass List</h1>
 
         <div className="outpass-card">
           {loading ? (
@@ -110,41 +114,33 @@ const OutpassList: React.FC = () => {
                   <th>Date</th>
                   <th>Reason</th>
                   <th>Status</th>
-                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {currentData.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="no-data-cell" style={{ textAlign: "center", padding: "20px" }}>
-                      No outpasses found
+                      No approved outpasses found
                     </td>
                   </tr>
                 ) : (
                   currentData.map((item, index) => (
                     <tr key={item.id || index}>
                       <td data-label="#">{startIndex + index + 1}</td>
-                      <td data-label="Name">{item.studentid.name || item.studentName}</td>
-                      <td data-label="Register No">{item.studentid.registerNumber || item.register_number}</td>
+                      <td data-label="Name">
+                        {item.studentid?.name || "N/A"}
+                      </td>
+                      <td data-label="Register No">
+                        {item.studentid?.registerNumber || "N/A"}
+                      </td>
                       <td data-label="Date">
                         {new Date(item.createdAt || item.outDate).toLocaleDateString()}
                       </td>
                       <td data-label="Reason">{item.reason}</td>
                       <td data-label="Status">
-                        <span className={`status ${item.status?.toLowerCase() === 'rejected' ? 'rejected' : 'approved'}`}>
-                          {capitalize(item.status)}
+                        <span className="status approved">
+                          {item.wardenapprovalstatus || "Approved"}
                         </span>
-                      </td>
-                      <td data-label="Action">
-                        <button
-                          className="view-btn"
-                          onClick={() => {
-                            const studentId = item.studentID || item.studentId || item.id || item._id;
-                            navigate(`/warden/student/${studentId}`);
-                          }}
-                        >
-                          View
-                        </button>
                       </td>
                     </tr>
                   ))
@@ -158,27 +154,18 @@ const OutpassList: React.FC = () => {
               {currentData.map((item, index) => (
                 <div className="mobile-card" key={item.id || index}>
                   <div className="card-badge">
-                    {item.studentid.registerNumber || item.register_number}
+                    {item.studentid?.registerNumber || item.register_number}
                   </div>
-                  <h3 className="card-name">{item.studentid.name || item.studentName}</h3>
+                  <h3 className="card-name">{item.studentid?.name || item.studentName}</h3>
                   <p className="card-details">
-                    {item.studentid.year ? `Year ${item.studentid.year} • ` : ''}
+                    {item.studentid?.year ? `Year ${item.studentid.year} • ` : ''}
                     Applied on {new Date(item.createdAt || item.outDate).toLocaleDateString()}
                   </p>
 
                   <div className="card-footer">
-                    <span className={`status-pill ${item.status?.toLowerCase() === 'rejected' ? 'status-rejected' : 'status-approved'}`}>
-                      • {capitalize(item.status)}
+                    <span className="status-pill status-approved">
+                      • {item.wardenapprovalstatus || "Approved"}
                     </span>
-                    <button
-                      className="card-view-link"
-                      onClick={() => {
-                        const studentId = item.studentID || item.studentId || item.id || item._id;
-                        navigate(`/warden/student/${studentId}`);
-                      }}
-                    >
-                      View →
-                    </button>
                   </div>
                 </div>
               ))}
@@ -186,8 +173,8 @@ const OutpassList: React.FC = () => {
           )}
         </div>
 
-        {/* Pagination logic ... */}
-        {!loading && outpasses.length > 0 && (
+        {/* Pagination logic */}
+        {!loading && filteredOutpasses.length > itemsPerPage && (
           <div className="pagination">
             <button
               disabled={currentPage === 1}
@@ -214,9 +201,8 @@ const OutpassList: React.FC = () => {
 .list-container {
   padding: 24px 40px;
   animation: fadeInUp 0.6s ease;
-  margin-top: 10px; /* Reduced to move content upward */
+  margin-top: 10px; 
 }
-
 
 .header-row {
     display: flex;
@@ -233,6 +219,7 @@ const OutpassList: React.FC = () => {
     padding: 4px;
     border-radius: 12px;
     gap: 4px;
+    overflow-x: auto; /* Handle overflow on smaller screens */
 }
 
 .filter-btn {
@@ -245,6 +232,7 @@ const OutpassList: React.FC = () => {
     cursor: pointer;
     border-radius: 8px;
     transition: all 0.3s ease;
+    white-space: nowrap;
 }
 
 .filter-btn:hover {
@@ -264,7 +252,7 @@ const OutpassList: React.FC = () => {
   font-size: 16px;
   color: #1e3a8a;
   cursor: pointer;
-  /* margin-bottom: 20px; Removed margin since it's in header-row now */
+  margin-bottom: 20px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -282,8 +270,8 @@ const OutpassList: React.FC = () => {
 }
 
 .list-container h1 {
-  font-size: 22px; /* Reduced from 28px */
-  margin-bottom: 16px; /* Reduced from 24px */
+  font-size: 22px; 
+  margin-bottom: 16px; 
   color: #1e3a8a;
   font-weight: 700;
 }
@@ -401,17 +389,21 @@ const OutpassList: React.FC = () => {
 }
 
 /* Loading Animation */
+.loading-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50vh;
+  width: 100%;
+}
 .loading-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 40px;
   gap: 16px;
   color: #64748b;
   font-weight: 500;
 }
-
 .loading-bar {
   width: 200px;
   height: 6px;
@@ -420,7 +412,6 @@ const OutpassList: React.FC = () => {
   overflow: hidden;
   position: relative;
 }
-
 .loading-progress {
   width: 50%;
   height: 100%;
@@ -429,40 +420,54 @@ const OutpassList: React.FC = () => {
   position: absolute;
   animation: shimmer 1.5s infinite linear;
 }
-
 @keyframes shimmer {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(200%); }
 }
 
-/* Page Container */
-.list-container {
-  padding: 24px 40px; /* Adjusted padding */
-}
-
-/* ... existing styles ... */
-
 /* Mobile */
 @media (max-width: 768px) {
   .list-container {
     padding: 16px;
-    margin-top: 5px; /* Significantly reduced for upward movement */
+    margin-top: 5px; 
   }
 
   .list-container h1 {
-    font-size: 18px; /* Further reduced for mobile */
+    font-size: 18px; 
     margin-bottom: 12px;
   }
 
   .header-row {
-      flex-direction: column; /* Back button on top, filters below */
-      align-items: flex-start;
-      gap: 16px;
+      flex-direction: row; /* Keep row to have back on left, filter on right */
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+  }
+  
+  .desktop-only {
+      display: none !important;
+  }
+
+  .mobile-only {
+      display: block !important;
+  }
+  
+  .filter-dropdown {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: white;
+      color: #1e3a8a;
+      font-weight: 600;
+      font-size: 14px;
+      outline: none;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
   }
   
   .filter-tabs {
       width: 100%;
       justify-content: space-between;
+      overflow-x: auto;
   }
   
   .filter-btn {
@@ -478,7 +483,6 @@ const OutpassList: React.FC = () => {
     border: none;
   }
 
-  /* Mobile specific card view */
   .mobile-cards-view {
     display: flex;
     flex-direction: column;
@@ -547,12 +551,6 @@ const OutpassList: React.FC = () => {
     border: 1px solid #86efac;
   }
 
-  .status-pill.status-rejected {
-    background: #fee2e2;
-    color: #991b1b;
-    border: 1px solid #f87171;
-  }
-
   .card-view-link {
     background: none;
     border: none;
@@ -566,19 +564,26 @@ const OutpassList: React.FC = () => {
   }
 
   .outpass-table {
-    display: none; /* Hide standard table on mobile */
+    display: none; 
   }
 
   .mobile-cards-view {
     display: block;
   }
+
+  .back-btn {
+      margin-bottom: 0;
+  }
 }
 
-/* Desktop: Hide mobile view */
 @media (min-width: 769px) {
   .mobile-cards-view {
     display: none;
   }
+}
+
+.mobile-only {
+    display: none;
 }
       `}</style>
       </div>
@@ -586,4 +591,4 @@ const OutpassList: React.FC = () => {
   );
 };
 
-export default OutpassList;
+export default WatchmanOutpassList;

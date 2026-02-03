@@ -2,91 +2,129 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const Welcome: React.FC = () => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    return (
-        <div className="landing-page">
-            <nav className="landing-nav container">
-                <div className="brand">
-                    <span className="icon">🎓</span>
-                    <span className="text">JIT Portal</span>
+  return (
+    <div className="landing-page">
+      <nav className="landing-nav container">
+        <div className="brand">
+          <span className="icon">🎓</span>
+          <span className="text">JIT Portal</span>
+        </div>
+        {/* <button className="btn btn-secondary login-nav-btn" onClick={() => navigate('/login')}>
+          Login
+        </button> */}
+      </nav>
+
+      <main className="hero-section">
+        <div className="container hero-content">
+          <div className="hero-text fade-in-up">
+            <span className="badge badge-glow">JIT Student Portal</span>
+            <h1 className="hero-title">
+              Your Academic Journey,<br />
+              <span className="text-gradient">Elevated.</span>
+            </h1>
+            <p className="hero-subtitle">
+              Seamlessly access your subjects, track your performance, and stay connected with your faculty. The future of academic management is here.
+            </p>
+            <div className="hero-actions-grid">
+              <button className="btn-role student-btn" onClick={() => navigate('/student-login')}>
+                <span className="role-icon">🎓</span>
+                <div className="role-text">
+                  <span className="role-title">Student Login</span>
+                  <span className="role-desc">Access your portal</span>
                 </div>
-                <button className="btn btn-secondary login-nav-btn" onClick={() => navigate('/login')}>
-                    Login
-                </button>
-            </nav>
+                <span className="arrow-icon">→</span>
+              </button>
 
-            <main className="hero-section">
-                <div className="container hero-content">
-                    <div className="hero-text fade-in-up">
-                        <span className="badge badge-glow">JIT Student Portal</span>
-                        <h1 className="hero-title">
-                            Your Academic Journey,<br />
-                            <span className="text-gradient">Elevated.</span>
-                        </h1>
-                        <p className="hero-subtitle">
-                            Seamlessly access your subjects, track your performance, and stay connected with your faculty. The future of academic management is here.
-                        </p>
-                        <div className="hero-actions">
-                            <button className="btn btn-primary btn-lg glow-effect" onClick={() => navigate('/login')}>
-                                Get Started <span className="arrow-icon">→</span>
-                            </button>
-                            {/* <button className="btn btn-ghost btn-lg text-white-hover">
-                                Explore Features
-                            </button> */}
-                        </div>
-                        <div className="hero-stats">
-                            <div className="stat-item fade-delay-1">
-                                <strong>1000+</strong>
-                                <span>Students</span>
-                            </div>
-                            <div className="stat-separator"></div>
-                            <div className="stat-item fade-delay-2">
-                                <strong>50+</strong>
-                                <span>Faculty</span>
-                            </div>
-                            <div className="stat-separator"></div>
-                            <div className="stat-item fade-delay-3">
-                                <strong>100%</strong>
-                                <span>Digital</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="hero-visual fade-in">
-                        <div className="visual-card main-card floating-card">
-                            <img src="/src/assets/main.jpg" alt="JIT Campus" className="hero-img" />
-                            <div className="hero-overlay">
-                                <div className="overlay-content">
-                                    <span className="campus-badge">Jeppiaar Institute of Technology</span>
-                                    <div className="pulse-indicator">
-                                        <span className="ping"></span>
-                                        <span className="dot"></span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="visual-card float-card card-1 float-animation-1">
-                            <span className="float-icon">📊</span>
-                            <div className="float-content">
-                                <strong>Crack sem</strong>
-                                <span>Track Subjects</span>
-                            </div>
-                        </div>
-
-                        <div className="visual-card float-card card-2 float-animation-2">
-                            <span className="float-icon">📚</span>
-                            <div className="float-content">
-                                <strong>Connect with Faculty</strong>
-                                <span>Ask doubts</span>
-                            </div>
-                        </div>
-                    </div>
+              <button className="btn-role staff-btn" onClick={() => navigate('/staff-login')}>
+                <span className="role-icon">👨‍🏫</span>
+                <div className="role-text">
+                  <span className="role-title">Staff Login</span>
+                  <span className="role-desc">Manage academics</span>
                 </div>
-            </main>
+                <span className="arrow-icon">→</span>
+              </button>
 
-            <style>{`
+              <button className="btn-role warden-btn" onClick={() => navigate('/warden-login')}>
+                <span className="role-icon">🏠</span>
+                <div className="role-text">
+                  <span className="role-title">Warden Login</span>
+                  <span className="role-desc">Hostel management</span>
+                </div>
+                <span className="arrow-icon">→</span>
+              </button>
+
+              <button className="btn-role admin-btn" onClick={() => navigate('/year-incharge-login')}>
+                <span className="role-icon">⚡</span>
+                <div className="role-text">
+                  <span className="role-title">Year Incharge</span>
+                  <span className="role-desc">Administrative controls</span>
+                </div>
+                <span className="arrow-icon">→</span>
+              </button>
+
+              <button className="btn-role admin-btn" onClick={() => navigate('/watchmanlogin')}>
+                <span className="role-icon">👮🏻</span>
+                <div className="role-text">
+                  <span className="role-title">Security Login</span>
+                  <span className="role-desc">Gate control</span>
+                </div>
+                <span className="arrow-icon">→</span>
+              </button>
+            </div>
+            <div className="hero-stats">
+              <div className="stat-item fade-delay-1">
+                <strong>1000+</strong>
+                <span>Students</span>
+              </div>
+              <div className="stat-separator"></div>
+              <div className="stat-item fade-delay-2">
+                <strong>50+</strong>
+                <span>Faculty</span>
+              </div>
+              <div className="stat-separator"></div>
+              <div className="stat-item fade-delay-3">
+                <strong>100%</strong>
+                <span>Digital</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="hero-visual fade-in">
+            <div className="visual-card main-card floating-card">
+              <img src="/main.jpg" alt="JIT Campus" className="hero-img" />
+              <div className="hero-overlay">
+                <div className="overlay-content">
+                  <span className="campus-badge">Jeppiaar Institute of Technology</span>
+                  <div className="pulse-indicator">
+                    <span className="ping"></span>
+                    <span className="dot"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="visual-card float-card card-1 float-animation-1">
+              <span className="float-icon">📊</span>
+              <div className="float-content">
+                <strong>Crack sem</strong>
+                <span>Track Subjects</span>
+              </div>
+            </div>
+
+            <div className="visual-card float-card card-2 float-animation-2">
+              <span className="float-icon">📚</span>
+              <div className="float-content">
+                <strong>Connect with Faculty</strong>
+                <span>Ask doubts</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <style>{`
         .landing-page {
           min-height: 100vh;
           background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
@@ -195,31 +233,93 @@ const Welcome: React.FC = () => {
           max-width: 500px;
         }
 
-        .hero-actions {
-          display: flex;
+        .hero-actions-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
           gap: 16px;
           margin-bottom: 48px;
+          max-width: 600px;
         }
 
-        .btn-lg {
-          padding: 16px 36px;
-          font-size: 16px;
+        .btn-role {
+          display: flex;
+          align-items: center;
+          padding: 16px;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 16px;
+          color: white;
+          cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          backdrop-filter: blur(10px);
+          text-align: left;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .btn-role:hover {
+          background: rgba(255, 255, 255, 0.15);
+          transform: translateY(-2px);
+          border-color: rgba(255, 255, 255, 0.3);
+          box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.2);
+        }
+
+        .role-icon {
+          font-size: 24px;
+          margin-right: 16px;
+          background: rgba(255, 255, 255, 0.1);
+          width: 48px;
+          height: 48px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           border-radius: 12px;
+          transition: transform 0.3s ease;
         }
 
-        .glow-effect {
-          box-shadow: 0 0 20px rgba(37, 99, 235, 0.5);
+        .btn-role:hover .role-icon {
+          transform: scale(1.1) rotate(5deg);
+          background: rgba(255, 255, 255, 0.2);
+        }
+
+        .role-text {
+          flex: 1;
+        }
+
+        .role-title {
+          display: block;
+          font-weight: 700;
+          font-size: 16px;
+          margin-bottom: 2px;
+        }
+
+        .role-desc {
+          display: block;
+          font-size: 12px;
+          color: rgba(255, 255, 255, 0.6);
+          font-weight: 500;
+        }
+
+        .student-btn:hover { border-color: #60a5fa; box-shadow: 0 0 20px rgba(96, 165, 250, 0.2); }
+        .staff-btn:hover { border-color: #c084fc; box-shadow: 0 0 20px rgba(192, 132, 252, 0.2); }
+        .warden-btn:hover { border-color: #34d399; box-shadow: 0 0 20px rgba(52, 211, 153, 0.2); }
+        .admin-btn:hover { border-color: #fbbf24; box-shadow: 0 0 20px rgba(251, 191, 36, 0.2); }
+
+        .btn-role .arrow-icon {
+          opacity: 0;
+          transform: translateX(-10px);
           transition: all 0.3s ease;
         }
 
-        .glow-effect:hover {
-          box-shadow: 0 0 30px rgba(37, 99, 235, 0.7);
-          transform: translateY(-2px);
+        .btn-role:hover .arrow-icon {
+          opacity: 1;
+          transform: translateX(0);
         }
 
-        .text-white-hover:hover {
-          color: white;
-          background: rgba(255,255,255,0.1);
+        @media (max-width: 640px) {
+          .hero-actions-grid {
+            grid-template-columns: 1fr;
+          }
         }
 
         .arrow-icon {
@@ -269,7 +369,7 @@ const Welcome: React.FC = () => {
 
         .main-card {
           width: 100%;
-          height: 450px;
+          height: 480px;
           background: white;
           border-radius: 24px;
           overflow: hidden;
@@ -285,6 +385,7 @@ const Welcome: React.FC = () => {
         }
 
         .hero-img {
+        top: 300px;
           width: 100%;
           height: 100%;
           object-fit: cover;
@@ -343,7 +444,7 @@ const Welcome: React.FC = () => {
           position: absolute;
           background: rgba(30, 41, 59, 0.8);
           backdrop-filter: blur(12px);
-          padding: 16px 20px;
+          padding: 16px 16px;
           border-radius: 16px;
           display: flex;
           align-items: center;
@@ -370,7 +471,7 @@ const Welcome: React.FC = () => {
           background: rgba(255,255,255,0.1);
           border-radius: 12px;
           display: flex;
-          align-items: center;
+          align-items: center ;
           justify-content: center;
           font-size: 20px;
         }
@@ -470,8 +571,8 @@ const Welcome: React.FC = () => {
           .card-1, .card-2 { display: none; }
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 };
 
 export default Welcome;

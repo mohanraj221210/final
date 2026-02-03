@@ -38,7 +38,9 @@ interface StudentOutpass {
 
     // Approval Status
     staffApproval: ApprovalStatus;
+    yearInchargeApproval: ApprovalStatus;
     wardenApproval: ApprovalStatus;
+    staffApprovedBy?: string;
 }
 
 const PassApproval: React.FC = () => {
@@ -49,6 +51,79 @@ const PassApproval: React.FC = () => {
     const [actionType, setActionType] = useState<'approve' | 'reject'>('approve');
     const [actionRemarks, setActionRemarks] = useState('');
     const [students, setStudents] = useState<StudentOutpass[]>([]);
+    const [roommates, setRoommates] = useState<any[]>([]);
+    const [loadingRoommates, setLoadingRoommates] = useState(false);
+    const [currentStaffName, setCurrentStaffName] = useState('');
+
+    useEffect(() => {
+        const fetchStaffProfile = async () => {
+            try {
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}/staff/profile`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                if (response.status === 200) {
+                    setCurrentStaffName(response.data.staff.name);
+                }
+            } catch (error) {
+                console.error("Failed to fetch staff profile", error);
+            }
+        };
+        fetchStaffProfile();
+    }, []);
+
+    const fetchOutpassDetails = async (outpassId: string) => {
+        try {
+            setLoadingRoommates(true);
+            const token = localStorage.getItem('token');
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/staff/outpass/${outpassId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.status === 200) {
+                const data = response.data.outpass;
+                const roomMatesData = response.data.roomMates || [];
+                const studentDetails = data.studentid || {};
+
+                const mappedStudent: StudentOutpass = {
+                    id: data._id,
+                    studentId: studentDetails.registerNumber || 'N/A',
+                    registerNumber: studentDetails.registerNumber || 'N/A',
+                    studentname: studentDetails.name || 'Student',
+                    year: studentDetails.year || 'N/A',
+                    section: 'N/A',
+                    department: studentDetails.department || 'N/A',
+                    mobile: studentDetails.phone || 'N/A',
+                    appliedDate: data.createdAt,
+                    photo: studentDetails.photo || 'Student',
+                    parentContact: studentDetails.parentnumber || 'N/A',
+                    hostelname: studentDetails.hostelname || 'N/A',
+                    hostelroomno: studentDetails.hostelroomno || 'N/A',
+                    reason: data.reason,
+                    fromDate: data.fromDate,
+                    toDate: data.toDate,
+                    staffApproval: data.staffapprovalstatus || 'pending',
+                    staffApprovedBy: data.staffApprovedBy, // Map from API if available
+                    yearInchargeApproval: data.yearinchargeapprovalstatus || 'pending',
+                    wardenApproval: data.wardenapprovalstatus || 'pending',
+                    lastOutpassFrom: data.lastOutpassFrom,
+                    lastOutpassTo: data.lastOutpassTo,
+                    lastOutpassReason: data.lastOutpassReason,
+                    lastOutpassApprovedBy: data.lastOutpassApprovedBy,
+                    lastOutpassStatus: data.lastOutpassStatus
+                };
+
+                setSelectedStudent(mappedStudent);
+                setRoommates(roomMatesData);
+            }
+        } catch (error) {
+            console.error("Failed to fetch outpass details:", error);
+            toast.error("Failed to load details");
+        } finally {
+            setLoadingRoommates(false);
+        }
+    };
 
     useEffect(() => {
         const fetchRequests = async () => {
@@ -61,7 +136,6 @@ const PassApproval: React.FC = () => {
 
                 if (response.status === 200) {
                     const mappedStudents = (response.data.outpasses || [])
-                        // .filter((item: any) => item.studentid?.residencetype === 'hostel')
                         .map((item: any) => {
                             const studentDetails = item.studentid || {};
                             return {
@@ -70,7 +144,7 @@ const PassApproval: React.FC = () => {
                                 registerNumber: studentDetails.registerNumber || 'N/A',
                                 studentname: studentDetails.name || 'Student',
                                 year: studentDetails.year || 'N/A',
-                                section: 'N/A', // Not provided in API
+                                section: 'N/A',
                                 department: studentDetails.department || 'N/A',
                                 mobile: studentDetails.phone || 'N/A',
                                 appliedDate: item.createdAt,
@@ -82,6 +156,7 @@ const PassApproval: React.FC = () => {
                                 fromDate: item.fromDate,
                                 toDate: item.toDate,
                                 staffApproval: item.staffapprovalstatus || 'pending',
+                                yearInchargeApproval: item.yearinchargeapprovalstatus || 'pending',
                                 wardenApproval: item.wardenapprovalstatus || 'pending'
                             };
                         });
@@ -104,11 +179,8 @@ const PassApproval: React.FC = () => {
             student.studentId.toLowerCase().includes(searchQuery.toLowerCase()) ||
             student.studentname.toLowerCase().includes(searchQuery.toLowerCase());
 
-        const overallStatus = student.staffApproval === 'rejected' || student.wardenApproval === 'rejected'
-            ? 'rejected'
-            : student.staffApproval === 'approved' && student.wardenApproval === 'approved'
-                ? 'approved'
-                : 'pending';
+        // FIX: Filter based purely on Staff Approval status for this page
+        const overallStatus = student.staffApproval;
 
         const matchesFilter = filterStatus === 'all' || overallStatus === filterStatus;
 
@@ -163,7 +235,7 @@ const PassApproval: React.FC = () => {
                 {
                     outpassId: selectedStudent.id,
                     staffapprovalstatus: actionType === 'approve' ? 'approved' : 'rejected',
-                    remarks: actionRemarks
+                    staffremarks: actionRemarks
                 },
                 {
                     headers: {
@@ -175,19 +247,28 @@ const PassApproval: React.FC = () => {
             if (response.status === 200) {
                 toast.success(response.data.message || `Outpass ${actionType}d successfully`);
 
+                const newStatus = actionType === 'approve' ? 'approved' : 'rejected';
+
                 // Update local state to reflect changes immediately
                 setStudents(prev => prev.map(student =>
                     student.id === selectedStudent.id
                         ? {
                             ...student,
-                            staffApproval: actionType === 'approve' ? 'approved' : 'rejected'
+                            staffApproval: newStatus
                         }
                         : student
                 ));
 
+                // Update selectedStudent to reflect new status immediately without closing
+                setSelectedStudent(prev => prev ? ({
+                    ...prev,
+                    staffApproval: newStatus,
+                    staffApprovedBy: actionType === 'approve' ? currentStaffName : undefined
+                }) : null);
+
                 setShowActionModal(false);
                 setActionRemarks('');
-                setSelectedStudent(null);
+                // Removed setSelectedStudent(null) to keep user on the page
             }
         } catch (error: any) {
             console.error('Error updating outpass status:', error);
@@ -197,14 +278,12 @@ const PassApproval: React.FC = () => {
 
 
 
-    const canApprove = selectedStudent &&
-        (selectedStudent.staffApproval === 'pending' ||
-            (selectedStudent.staffApproval === 'approved' && selectedStudent.wardenApproval === 'pending'));
+    const canApprove = selectedStudent && selectedStudent.staffApproval === 'pending';
 
     return (
         <div className="page-container approval-page">
-            <ToastContainer position="bottom-right" />
             <StaffHeader activeMenu="dashboard" />
+            <ToastContainer position="bottom-right" />
 
             <div className="content-wrapper">
                 {!selectedStudent ? (
@@ -256,17 +335,14 @@ const PassApproval: React.FC = () => {
                         {/* Student List */}
                         <div className="student-list">
                             {filteredStudents.map((student) => {
-                                const overallStatus = student.staffApproval === 'rejected' || student.wardenApproval === 'rejected'
-                                    ? 'rejected'
-                                    : student.staffApproval === 'approved' && student.wardenApproval === 'approved'
-                                        ? 'approved'
-                                        : 'pending';
+                                // Staff View: Prioritize Staff Approval Status
+                                const overallStatus = student.staffApproval;
 
                                 return (
                                     <div
                                         key={student.id}
                                         className="student-card"
-                                        onClick={() => setSelectedStudent(student)}
+                                        onClick={() => fetchOutpassDetails(student.id)}
                                     >
                                         <div className="student-card-main">
                                             <div className="student-id-highlight">
@@ -338,6 +414,8 @@ const PassApproval: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
+
+
 
                             {/* Parents Details */}
                             <div className="detail-card">
@@ -430,6 +508,44 @@ const PassApproval: React.FC = () => {
                                 </div>
                             </div>
 
+                            {/* Roommate Details */}
+                            {selectedStudent.hostelname && selectedStudent.hostelname !== 'N/A' && (
+                                <div className="detail-card">
+                                    <div className="card-header">
+                                        <span className="card-icon">👥</span>
+                                        <h2>Roommate Details</h2>
+                                    </div>
+                                    <div className="card-body">
+                                        {loadingRoommates ? (
+                                            <div className="loading-text">Loading roommates...</div>
+                                        ) : roommates.length > 0 ? (
+                                            <div className="roommates-grid">
+                                                {roommates.map((roommate: any) => (
+                                                    <div key={roommate._id} className="roommate-card">
+                                                        <div className="roommate-avatar">
+                                                            <img
+                                                                src={roommate.photo || `https://ui-avatars.com/api/?name=${roommate.name}&background=random`}
+                                                                alt={roommate.name}
+                                                                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                                                            />
+                                                        </div>
+                                                        <div className="roommate-info">
+                                                            <h4>{roommate.name}</h4>
+                                                            <p style={{ margin: 0 }}>{roommate.registerNumber}</p>
+                                                            <span className="dept-badge">{roommate.department}</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="no-data">
+                                                <p>No roommates assigned or found.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Approval Workflow */}
                             <div className="detail-card">
                                 <div className="card-header">
@@ -446,13 +562,29 @@ const PassApproval: React.FC = () => {
                                             <div className="step-content">
                                                 <h3>Staff Approval</h3>
                                                 {getStatusBadge(selectedStudent.staffApproval)}
+                                                {selectedStudent.staffApproval === 'approved' && (
+                                                    <span className="approver-name">by {selectedStudent.staffApprovedBy || 'Staff'}</span>
+                                                )}
                                             </div>
                                         </div>
                                         <div className={`step-connector ${selectedStudent.staffApproval === 'approved' ? 'active' : ''}`}></div>
+
                                         <div className="approval-step">
-                                            <div className={`step-circle ${selectedStudent.wardenApproval} ${selectedStudent.staffApproval !== 'approved' ? 'disabled' : ''}`}>
+                                            <div className={`step-circle ${selectedStudent.yearInchargeApproval} ${selectedStudent.staffApproval !== 'approved' ? 'disabled' : ''}`}>
+                                                {selectedStudent.yearInchargeApproval === 'approved' ? '✓' :
+                                                    selectedStudent.yearInchargeApproval === 'rejected' ? '✗' : '2'}
+                                            </div>
+                                            <div className="step-content">
+                                                <h3>Year Incharge</h3>
+                                                {getStatusBadge(selectedStudent.yearInchargeApproval)}
+                                            </div>
+                                        </div>
+                                        <div className={`step-connector ${selectedStudent.yearInchargeApproval === 'approved' ? 'active' : ''}`}></div>
+
+                                        <div className="approval-step">
+                                            <div className={`step-circle ${selectedStudent.wardenApproval} ${selectedStudent.yearInchargeApproval !== 'approved' ? 'disabled' : ''}`}>
                                                 {selectedStudent.wardenApproval === 'approved' ? '✓' :
-                                                    selectedStudent.wardenApproval === 'rejected' ? '✗' : '2'}
+                                                    selectedStudent.wardenApproval === 'rejected' ? '✗' : '3'}
                                             </div>
                                             <div className="step-content">
                                                 <h3>Warden Approval</h3>
@@ -513,8 +645,17 @@ const PassApproval: React.FC = () => {
             )}
 
             <style>{`
+                .approver-name {
+                    display: block;
+                    font-size: 0.8rem;
+                    color: #64748b;
+                    margin-top: 4px;
+                    font-style: italic;
+                }
+
                 .page-container {
                     min-height: 100vh;
+                    padding-top: 0px;
                     background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
                 }
 
@@ -1185,6 +1326,68 @@ const PassApproval: React.FC = () => {
                         width: 100%;
                         justify-content: center;
                     }
+                }
+
+                /* Roommate Styles */
+                .roommates-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                    gap: 20px;
+                }
+
+                .roommate-card {
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+                    padding: 16px;
+                    background: #f8fafc;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 12px;
+                    transition: all 0.2s;
+                }
+
+                .roommate-card:hover {
+                    background: white;
+                    border-color: #0047AB;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                }
+
+                .roommate-avatar {
+                    width: 48px;
+                    height: 48px;
+                    background: #e0f2fe;
+                    color: #0369a1;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 1.2rem;
+                    font-weight: 700;
+                    flex-shrink: 0;
+                }
+
+                .roommate-info h4 {
+                    margin: 0 0 4px;
+                    font-size: 1rem;
+                    color: #0f172a;
+                }
+
+                .dept-badge {
+                    font-size: 0.75rem;
+                    background: #f1f5f9;
+                    padding: 2px 8px;
+                    border-radius: 12px;
+                    color: #475569;
+                    font-weight: 600;
+                    display: inline-block;
+                    margin-top: 4px;
+                }
+
+                .loading-text, .no-data {
+                    text-align: center;
+                    color: #94a3b8;
+                    font-style: italic;
+                    padding: 20px;
                 }
             `}</style>
         </div>

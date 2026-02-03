@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 
-const WardenNav: React.FC = () => {
+const WatchmanNav: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -22,7 +22,7 @@ const WardenNav: React.FC = () => {
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('userType');
         localStorage.removeItem('token');
-        navigate('/wardenlogin');
+        navigate('/watchmanlogin');
     };
 
     const isActive = (path: string) => location.pathname === path;
@@ -30,9 +30,9 @@ const WardenNav: React.FC = () => {
     return (
         <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
             <div className="container nav-container">
-                <Link to="/warden-dashboard" className="nav-brand">
-                    <span className="brand-icon">🎓</span>
-                    <span className="brand-text">JIT Warden</span>
+                <Link to="/watchman-dashboard" className="nav-brand">
+                    <span className="brand-icon">👮</span>
+                    <span className="brand-text">JIT Security</span>
                 </Link>
 
                 <button
@@ -47,22 +47,15 @@ const WardenNav: React.FC = () => {
 
                 <div className={`nav-menu ${isMenuOpen ? 'active' : ''}`}>
                     <Link
-                        to="/warden/pending-outpass"
-                        className={`nav-link ${isActive('/warden/pending-outpass') ? 'active' : ''}`}
-                        onClick={closeMenu}
-                    >
-                        Pending Outpass
-                    </Link>
-                    <Link
-                        to="/warden/outpass-list"
-                        className={`nav-link ${isActive('/warden/outpass-list') || isActive('/warden/outpass/list') ? 'active' : ''}`}
+                        to="/watchman/outpass-list"
+                        className={`nav-link ${isActive('/watchman/outpass-list') ? 'active' : ''}`}
                         onClick={closeMenu}
                     >
                         Outpass List
                     </Link>
                     <Link
-                        to="/warden-profile"
-                        className={`nav-link ${isActive('/warden-profile') ? 'active' : ''}`}
+                        to="/watchman-profile"
+                        className={`nav-link ${isActive('/watchman-profile') ? 'active' : ''}`}
                         onClick={closeMenu}
                     >
                         Profile
@@ -199,4 +192,4 @@ const WardenNav: React.FC = () => {
     );
 };
 
-export default WardenNav;
+export default WatchmanNav;

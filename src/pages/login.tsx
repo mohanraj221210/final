@@ -4,13 +4,17 @@ import Toast from '../components/Toast';
 import axios from 'axios';
 import { toast, ToastContainer } from "react-toastify";
 
-const Login: React.FC = () => {
+interface LoginProps {
+  initialType?: 'student' | 'staff';
+}
+
+const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [Loading, setLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
-  const [loginType, setLoginType] = useState<'student' | 'staff'>('student');
+  const [loginType] = useState<'student' | 'staff'>(initialType);
   const navigate = useNavigate();
 
   const API_URL = import.meta.env.VITE_API_URL;
@@ -39,15 +43,13 @@ const Login: React.FC = () => {
       }
     } catch (error:any) { 
     if(error.response?.status === 401) {
-        console.log("Invalid credentials");
         toast.error("Invalid credentials. Please try again.", { position: "bottom-right", autoClose: 5000 });
     } else if (error.response?.status === 404) {
-        console.log("User not found");
         toast.error("User not found. Please check your email.", { position: "bottom-right", autoClose: 5000 });
-    } else {
+      } else {
         toast.error("Something went wrong. Please try again later.", { position: "bottom-right", autoClose: 5000 });
-    }
-    }finally{
+      }
+    } finally {
       setLoading(false);
     }
   };
@@ -64,9 +66,12 @@ const Login: React.FC = () => {
       )}
 
       <div className="login-container">
+        <button className="back-home-btn" onClick={() => navigate('/')}>
+          ← Back to Welcome
+        </button>
         <div className={`login-card ${loginType === 'staff' ? 'staff-theme' : 'student-theme'}`}>
           {/* Tab Toggle */}
-          <div className="login-tabs">
+          {/* <div className="login-tabs">
             <button
               type="button"
               className={`tab-btn ${loginType === 'student' ? 'active' : ''}`}
@@ -81,7 +86,7 @@ const Login: React.FC = () => {
             >
               Staff Login
             </button>
-          </div>
+          </div> */}
 
           <div className="login-header">
             <div className={`logo-circle ${loginType === 'staff' ? 'staff-logo' : ''}`}>
@@ -522,7 +527,7 @@ const Login: React.FC = () => {
           }
         }
 
-        @media (max-width: 480px) {
+        @media (max-width: 768px) {
           .login-page {
             padding: 16px;
           }
@@ -533,7 +538,7 @@ const Login: React.FC = () => {
           
           .login-header {
             padding: 24px 24px 0;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
           }
           
           .logo-circle {
@@ -555,6 +560,28 @@ const Login: React.FC = () => {
             padding: 12px 16px;
             font-size: 14px;
           }
+        }
+
+        .back-home-btn {
+          background: rgba(255, 255, 255, 0.2);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          color: white;
+          padding: 8px 16px;
+          border-radius: 8px;
+          cursor: pointer;
+          font-weight: 500;
+          margin-bottom: 16px;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 0.9rem;
+        }
+
+        .back-home-btn:hover {
+          background: rgba(255, 255, 255, 0.3);
+          transform: translateX(-4px);
         }
       `}</style>
     </div>

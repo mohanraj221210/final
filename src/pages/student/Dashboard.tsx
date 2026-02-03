@@ -64,7 +64,7 @@ const Dashboard: React.FC = () => {
         { id: '13', date: new Date(2026, 0, 15), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
         { id: '14', date: new Date(2026, 0, 16), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
         { id: '15', date: new Date(2026, 0, 17), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
-        { id: '16', date: new Date(2026, 0, 18), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
+        { id: '16', date: new Date(2026, 1, 18), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
     ]);
 
     useEffect(() => {
@@ -442,7 +442,7 @@ const Dashboard: React.FC = () => {
                                         <div className="info-icon">📅</div>
                                         <div className="info-content">
                                             <label>Semester</label>
-                                            <p>7th</p>
+                                            <p>{user.semester}th</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1187,32 +1187,125 @@ const Dashboard: React.FC = () => {
 
                 @media (max-width: 768px) {
                     .calendar-grid {
-                        gap: 4px;
+                        gap: 3px;
                     }
 
                     .calendar-day {
-                        padding: 8px;
+                        padding: 6px 4px;
+                        border-radius: 8px;
                     }
 
                     .day-number {
-                        font-size: 0.85rem;
+                        font-size: 0.8rem;
                     }
 
                     .event-symbol {
-                        font-size: 1rem;
+                        font-size: 0.8rem;
                     }
 
                     .calendar-controls {
-                        flex-direction: column;
+                        flex-direction: row;
                         width: 100%;
+                        gap: 8px;
                     }
 
                     .btn-nav, .btn-today {
-                        width: 100%;
+                        width: auto;
+                        flex: 1;
+                        padding: 8px 12px;
+                        font-size: 0.75rem;
                     }
 
                     .legend-items {
                         grid-template-columns: 1fr;
+                        gap: 8px;
+                    }
+                    
+                    .calendar-card {
+                        padding: 16px;
+                    }
+                    
+                    .calendar-header-day {
+                        padding: 6px 4px;
+                        font-size: 0.7rem;
+                    }
+                }
+
+                @media (max-width: 480px) {
+                    /* Department Card - Extra Small Screens */
+                    .info-card {
+                        padding: 16px;
+                    }
+                    
+                    .card-header h3 {
+                        font-size: 1rem;
+                    }
+                    
+                    .card-subtitle {
+                        font-size: 0.75rem;
+                    }
+                    
+                    .header-icon {
+                        font-size: 28px;
+                        padding: 8px;
+                    }
+                    
+                    .info-item {
+                        padding: 12px;
+                        gap: 10px;
+                    }
+                    
+                    .info-icon {
+                        font-size: 18px;
+                        padding: 7px;
+                    }
+                    
+                    .info-content label {
+                        font-size: 0.65rem;
+                    }
+                    
+                    .info-content p {
+                        font-size: 0.85rem;
+                    }
+                    
+                    /* Calendar - Extra Small Screens */
+                    .calendar-card {
+                        padding: 12px;
+                    }
+                    
+                    .calendar-header-day {
+                        padding: 4px 2px;
+                        font-size: 0.6rem;
+                    }
+                    
+                    .calendar-day {
+                        padding: 4px 2px;
+                        gap: 1px;
+                    }
+                    
+                    .day-number {
+                        font-size: 0.7rem;
+                    }
+                    
+                    .event-symbol {
+                        font-size: 0.65rem;
+                    }
+                    
+                    .calendar-month-year h3 {
+                        font-size: 1.1rem;
+                    }
+                    
+                    .btn-nav, .btn-today {
+                        padding: 6px 8px;
+                        font-size: 0.7rem;
+                    }
+                    
+                    .calendar-title h2 {
+                        font-size: 1.2rem;
+                    }
+                    
+                    .calendar-subtitle {
+                        font-size: 0.75rem;
                     }
                 }
 
@@ -1562,9 +1655,74 @@ const Dashboard: React.FC = () => {
                 }
 
                 @media (max-width: 768px) {
+                    /* Department Info Card Mobile Styles */
+                    .info-card {
+                        padding: 20px;
+                        border-radius: 16px;
+                    }
+                    
+                    
+                    .card-header {
+                        flex-direction: row;
+                        flex-wrap: wrap;
+                        gap: 12px;
+                        margin-bottom: 16px;
+                        padding-bottom: 12px;
+                        align-items: center;
+                    }
+                    
+                    .header-icon {
+                        font-size: 28px;
+                        padding: 8px;
+                        flex-shrink: 0;
+                    }
+                    
+                    .card-header > div:nth-child(2) {
+                        flex: 1;
+                        min-width: 0;
+                    }
+                    
+                    .card-header h3 {
+                        font-size: 1rem;
+                        line-height: 1.3;
+                        margin: 0 0 2px 0;
+                    }
+                    
+                    .card-subtitle {
+                        font-size: 0.75rem;
+                        margin-top: 0;
+                    }
+                    
+                    .card-header .badge {
+                        font-size: 0.7rem;
+                        padding: 4px 10px;
+                        white-space: nowrap;
+                    }
+                    
                     .info-grid {
                         grid-template-columns: 1fr;
+                        gap: 12px;
                     }
+                    
+                    .info-item {
+                        padding: 14px;
+                        gap: 12px;
+                    }
+                    
+                    .info-icon {
+                        font-size: 20px;
+                        padding: 8px;
+                        flex-shrink: 0;
+                    }
+                    
+                    .info-content label {
+                        font-size: 0.7rem;
+                    }
+                    
+                    .info-content p {
+                        font-size: 0.9rem;
+                    }
+                    
                     .vision-content {
                         grid-template-columns: 1fr;
                     }
@@ -1633,6 +1791,7 @@ const Dashboard: React.FC = () => {
 
                 .hero-welcome .badge {
                     animation: pulse-glow 3s infinite;
+                    margin-bottom: 5px;
                 }
                 
                 /* Typing effect for H1 */
@@ -1646,6 +1805,7 @@ const Dashboard: React.FC = () => {
                         typing 2s steps(30, end) 0.5s both,
                         blink-caret 0.75s step-end infinite;
                     max-width: fit-content;
+                    padding-top: 15px 
                 }
 
                 /* Staggered Action Cards */
@@ -1659,478 +1819,101 @@ const Dashboard: React.FC = () => {
 
                 /* Tablet and below */
                 @media (max-width: 968px) {
-                    .dashboard-layout { 
-                        grid-template-columns: 1fr; 
-                    }
-                    
-                    .dashboard-hero { 
-                        flex-direction: column; 
-                        align-items: flex-start; 
-                        gap: 24px; 
-                        padding: 32px 24px;
-                    }
-                    
+                    .dashboard-layout { grid-template-columns: 1fr; }
+                    .dashboard-hero { flex-direction: column; align-items: flex-start; gap: 24px; padding: 24px; }
                     .hero-stats-grid { 
+                        display: flex;
+                        flex-direction: column;
                         width: 100%; 
                         overflow-x: auto; 
-                        padding-bottom: 12px;
+                        padding-bottom: 12px; 
                         justify-content: flex-start;
+                        gap: 16px;
                     }
-                    
-                    .sidebar { 
-                        animation: fadeInUp 0.8s ease-out 0.4s backwards; 
-                    }
-
-                    .section-title {
-                        font-size: 1.1rem;
-                    }
-                }
-
-                /* Mobile devices */
-                @media (max-width: 768px) {
-                    /* Remove empty space - zero margins */
-                    .content-wrapper-custom {
-                        margin-left: 0;
-                        margin-right: 0;
-                        padding: 12px;
-                        overflow-x: hidden;
-                    }
-
-                    /* Full-width hero with better padding */
-                    .dashboard-hero {
-                        padding: 28px 20px;
-                        border-radius: 12px;
-                        margin-bottom: 16px;
-                        width: 100%;
-                    }
-
-                    /* Larger, more readable text */
-                    .hero-welcome h1 {
-                        font-size: 1.75rem;
-                        white-space: normal;
-                        border-right: none;
-                        animation: fadeInUp 0.8s ease-out 0.2s backwards;
-                        line-height: 1.3;
-                    }
-
-                    .hero-welcome p {
-                        font-size: 1rem;
-                        margin-top: 8px;
-                    }
-
-                    .hero-welcome .badge {
-                        font-size: 0.85rem;
-                        padding: 6px 14px;
-                    }
-
-                    /* Stat cards with better spacing */
-                    .hero-stats-grid {
-                        flex-wrap: nowrap;
-                        gap: 12px;
-                        padding-bottom: 8px;
-                    }
-
                     .stat-card {
                         min-width: 160px;
-                        padding: 18px 22px;
-                        flex-shrink: 0;
+                        flex: 0 0 auto;
                     }
+                    .sidebar { animation: fadeInUp 0.8s ease-out 0.4s backwards; }
+                }
 
-                    .stat-icon {
-                        font-size: 1.75rem;
-                    }
-
-                    .stat-value {
-                        font-size: 1.75rem;
-                        font-weight: 700;
-                    }
-
-                    .stat-label {
-                        font-size: 0.95rem;
-                    }
-
-                    /* Touch-friendly quick actions */
+                @media (max-width: 768px) {
                     .quick-links-grid {
-                        grid-template-columns: repeat(2, 1fr);
-                        gap: 14px;
-                        width: 100%;
+                         grid-template-columns: repeat(2, 1fr);
+                         gap: 16px;
                     }
-
+                    h3{
+                      font-size:
+                    }
                     .action-card {
-                        padding: 24px 18px;
-                        min-height: 120px;
-                        width: 100%;
+                         padding: 16px;
                     }
-
                     .action-icon {
-                        width: 64px;
-                        height: 64px;
-                        font-size: 32px;
+                         width: 56px;
+                         height: 56px;
+                         font-size: 28px;
                     }
-
-                    .action-text {
-                        font-size: 1rem;
-                        font-weight: 600;
-                    }
-
-                    /* Full-width cards with better padding */
-                    .card {
-                        padding: 24px;
-                        border-radius: 12px;
-                        width: 100%;
-                        margin-bottom: 16px;
-                    }
-
-                    .info-card {
-                        padding: 24px;
-                        width: 100%;
-                    }
-
-                    .card-header {
-                        flex-direction: column;
-                        align-items: flex-start;
-                        gap: 12px;
-                    }
-
-                    .card-header h3 {
-                        font-size: 1.15rem;
-                    }
-
-                    /* Better section spacing */
-                    .section {
-                        margin-bottom: 20px;
-                    }
-
-                    .section-title {
-                        font-size: 1.15rem;
-                        margin-bottom: 16px;
-                        font-weight: 700;
-                    }
-
-                    /* Full-width calendar */
-                    .calendar-card {
-                        padding: 24px;
-                        border-radius: 12px;
-                        width: 100%;
-                    }
-
                     .calendar-header {
                         flex-direction: column;
                         align-items: flex-start;
                         gap: 16px;
                     }
-
-                    .calendar-title h2 {
-                        font-size: 1.3rem;
+                    .calendar-card {
+                        padding: 16px;
+                        border-radius: 16px;
                     }
-
-                    .calendar-subtitle {
-                        font-size: 0.95rem;
+                    .calendar-header-day{
+                        padding: 4px 2px;
+                        font-size: 0.65rem;
                     }
-
-                    /* Touch-friendly calendar controls */
                     .calendar-controls {
                         width: 100%;
-                        gap: 10px;
+                        justify-content: space-between;
+                        flex-direction: row;
+                        gap: 8px;
                     }
-
                     .btn-nav, .btn-today {
-                        padding: 14px 20px;
-                        font-size: 0.95rem;
-                        min-height: 48px;
-                        border-radius: 10px;
+                        padding: 8px 12px;
+                        font-size: 0.75rem;
+                        flex: 1;
                     }
-
                     .calendar-month-year h3 {
-                        font-size: 1.5rem;
+                        font-size: 1.25rem;
                     }
-
-                    /* Full-width sidebar cards */
-                    .sidebar-card {
-                        padding: 24px;
-                        width: 100%;
-                        margin-bottom: 16px;
+                    .calendar-grid {
+                        gap: 4px;
                     }
-
-                    .sidebar-card h3 {
-                        font-size: 1.1rem;
-                    }
-
-                    /* Touch-friendly download items */
-                    .download-item {
-                        padding: 14px;
-                        min-height: 60px;
-                    }
-
-                    .download-icon {
-                        width: 44px;
-                        height: 44px;
-                        font-size: 20px;
-                    }
-
-                    .download-title {
-                        font-size: 0.95rem;
-                    }
-
-                    .download-meta {
-                        font-size: 0.8rem;
-                    }
-
-                    /* Full-width vision card */
-                    .vision-card {
-                        padding: 24px;
-                        width: 100%;
-                    }
-
-                    .vision-block h4 {
-                        font-size: 1.1rem;
-                    }
-
-                    .vision-block p, .vision-block li {
-                        font-size: 0.95rem;
-                        line-height: 1.6;
-                    }
-
-                    /* Touch-friendly navigation */
-                    .nav-item-custom {
-                        padding: 14px 24px;
-                        font-size: 1rem;
-                        min-height: 48px;
-                    }
-
-                    .logout-btn-custom {
-                        padding: 14px 24px;
-                        font-size: 1rem;
-                        min-height: 48px;
-                    }
-
-                    /* Info grid full-width items */
-                    .info-item {
-                        padding: 18px;
-                        width: 100%;
-                    }
-
-                    .info-content label {
-                        font-size: 0.85rem;
-                    }
-
-                    .info-content p {
-                        font-size: 1rem;
-                    }
-                }
-
-                /* Small mobile devices */
-                @media (max-width: 480px) {
-                    /* Zero margins for maximum space */
-                    .content-wrapper-custom {
-                        margin-left: 0;
-                        margin-right: 0;
-                        padding: 10px;
-                    }
-
-                    /* Compact hero section */
-                    .dashboard-hero {
-                        padding: 24px 16px;
-                        border-radius: 10px;
-                        margin-bottom: 12px;
-                    }
-
-                    .hero-welcome h1 {
-                        font-size: 1.5rem;
-                        line-height: 1.3;
-                    }
-
-                    .hero-welcome p {
-                        font-size: 0.95rem;
-                    }
-
-                    .hero-welcome .badge {
-                        font-size: 0.8rem;
-                        padding: 5px 12px;
-                    }
-
-                    /* Optimized stat cards */
-                    .stat-card {
-                        min-width: 150px;
-                        padding: 16px 18px;
-                    }
-
-                    .stat-icon {
-                        font-size: 1.5rem;
-                    }
-
-                    .stat-value {
-                        font-size: 1.5rem;
-                    }
-
-                    .stat-label {
-                        font-size: 0.9rem;
-                    }
-
-                    /* Full-width quick actions */
-                    .quick-links-grid {
-                        grid-template-columns: repeat(2, 1fr);
-                        gap: 10px;
-                        width: 100%;
-                    }
-
-                    .action-card {
-                        padding: 20px 14px;
-                        min-height: 110px;
-                        width: 100%;
-                    }
-
-                    .action-icon {
-                        width: 56px;
-                        height: 56px;
-                        font-size: 28px;
-                    }
-
-                    .action-text {
-                        font-size: 0.95rem;
-                        font-weight: 600;
-                    }
-
-                    /* Compact cards */
-                    .card, .info-card {
-                        padding: 18px;
-                        border-radius: 10px;
-                        width: 100%;
-                        margin-bottom: 12px;
-                    }
-
-                    .section-title {
-                        font-size: 1.05rem;
-                        font-weight: 700;
-                    }
-
-                    .section {
-                        margin-bottom: 16px;
-                    }
-
-                    /* Compact calendar */
-                    .calendar-card {
-                        padding: 18px;
-                        border-radius: 10px;
-                        width: 100%;
-                    }
-
-                    .calendar-title h2 {
-                        font-size: 1.2rem;
-                    }
-
-                    .calendar-month-year h3 {
-                        font-size: 1.3rem;
-                    }
-
                     .calendar-day {
-                        padding: 6px;
-                        border-radius: 10px;
+                        padding: 4px;
+                        border-radius: 8px;
+                        gap: 2px;
                     }
-
                     .day-number {
-                        font-size: 0.85rem;
-                    }
-
-                    .event-symbol {
-                        font-size: 0.95rem;
-                    }
-
-                    /* Touch-friendly buttons */
-                    .btn-nav, .btn-today {
-                        padding: 12px 18px;
-                        font-size: 0.9rem;
-                        min-height: 48px;
-                    }
-
-                    /* Compact info grid */
-                    .info-grid {
-                        gap: 14px;
-                    }
-
-                    .info-item {
-                        padding: 14px;
-                        width: 100%;
-                    }
-
-                    .info-icon {
-                        font-size: 20px;
-                        padding: 8px;
-                    }
-
-                    .info-content label {
-                        font-size: 0.8rem;
-                    }
-
-                    .info-content p {
-                        font-size: 0.95rem;
-                    }
-
-                    /* Compact sidebar */
-                    .sidebar-card {
-                        padding: 18px;
-                        width: 100%;
-                        margin-bottom: 12px;
-                    }
-
-                    .sidebar-card h3 {
-                        font-size: 1.05rem;
-                    }
-
-                    .download-item {
-                        padding: 12px;
-                        min-height: 56px;
-                    }
-
-                    .download-icon {
-                        width: 44px;
-                        height: 44px;
-                        font-size: 20px;
-                    }
-
-                    .download-title {
-                        font-size: 0.9rem;
-                    }
-
-                    .download-meta {
                         font-size: 0.75rem;
                     }
-
-                    /* Compact vision card */
-                    .vision-card {
-                        padding: 20px;
-                        width: 100%;
+                    .event-symbol {
+                        font-size: 0.7rem;
                     }
-
-                    .vision-block h4 {
-                        font-size: 1.05rem;
+                    .calendar-legend {
+                        padding: 12px;
                     }
-
-                    .vision-block p, .vision-block li {
-                        font-size: 0.9rem;
-                        line-height: 1.6;
+                    .calendar-legend h4 {
+                        font-size: 0.85rem;
+                        margin-bottom: 8px;
                     }
-
-                    /* Compact branding */
-                    .brand-text-custom {
-                        font-size: 1.15rem;
+                    .legend-item {
+                        font-size: 0.75rem;
+                        gap: 6px;
                     }
-
-                    .brand-icon-custom {
-                        font-size: 24px;
+                    .vision-content {
+                        grid-template-columns: 1fr;
+                        gap: 24px;
                     }
-
-                    /* Touch-friendly navigation */
-                    .nav-item-custom {
-                        padding: 14px 20px;
-                        font-size: 0.95rem;
-                        min-height: 48px;
+                    .vision-divider {
+                         display: none;
                     }
-
-                    .logout-btn-custom {
-                        padding: 14px 20px;
-                        font-size: 0.95rem;
-                        min-height: 48px;
+                    .dashboard-hero h1 {
+                        font-size: 1.5rem;
                     }
                 }
 

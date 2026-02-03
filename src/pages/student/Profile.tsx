@@ -29,8 +29,39 @@ const Profile: React.FC = () => {
     });
     const [isEditing, setIsEditing] = useState(false);
     const [showToast, setShowToast] = useState(false);
-     const navigate = useNavigate();
+    const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+    const [completionPercentage, setCompletionPercentage] = useState(0);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+    const calculateCompletion = (userData: User) => {
+        const commonFields = [
+            'name', 'email', 'phone', 'parentnumber', 'registerNumber',
+            'department', 'year', 'semester', 'batch', 'cgpa', 'gender',
+            'photo', 'residencetype'
+        ];
+
+        let requiredFields = [...commonFields];
+
+        if (userData.residencetype === 'hostel') {
+            requiredFields.push('hostelname', 'hostelroomno');
+        } else if (userData.residencetype === 'day scholar') {
+            requiredFields.push('busno', 'boardingpoint');
+        }
+
+        const filledFields = requiredFields.filter(field => {
+            const value = userData[field as keyof User];
+            // Check for non-null, non-undefined, and non-empty string/number
+            return value !== null && value !== undefined && value !== '' && value !== 0;
+        });
+
+        const percentage = Math.round((filledFields.length / requiredFields.length) * 100);
+        return percentage;
+    };
+
+    useEffect(() => {
+        setCompletionPercentage(calculateCompletion(user));
+    }, [user]);
 
     useEffect(() => {
         const fetchUserProfile = async () => {
@@ -62,28 +93,30 @@ const Profile: React.FC = () => {
         setUser(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        const formData = new FormData();
-        formData.append('file', file);
-        try {
-            const response = await axios.put(`${import.meta.env.VITE_API_URL}/api/profile/update`, formData, {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'multipart/form-data'
-                }
-            });
-            if (response.status === 200) {
-                toast.success("Profile updated successfully");
-                setShowToast(true);
-            }
-        } catch (error) {
-            toast.error("Failed to update profile");
+
+        // Validation
+        const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+        if (!validTypes.includes(file.type)) {
+            toast.error("Only JPG, JPEG, and PNG formats are allowed");
+            return;
         }
+
+        if (file.size > 200 * 1024) { // 200 KB
+            toast.error("Image size must be less than 200 KB");
+            return;
+        }
+
+        // Preview and State Update
+        setSelectedFile(file);
+        setUser(prev => ({ ...prev, photo: URL.createObjectURL(file) }));
+        setIsEditing(true); // Auto-enable edit mode if not already
+        toast.info("Image selected. Click 'Save Changes' to upload.");
     };
 
-      const handleLogout = () => {
+    const handleLogout = () => {
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('userType');
         localStorage.removeItem('token');
@@ -93,17 +126,40 @@ const Profile: React.FC = () => {
     const handleSave = async () => {
         console.log(user);
         try {
-            const response = await axios.put(`${import.meta.env.VITE_API_URL}/api/profile/update`, user, {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`
-                }
-            });
+            let response;
+            if (selectedFile) {
+                const formData = new FormData();
+                // Append all user fields to formData
+                Object.keys(user).forEach(key => {
+                    const value = user[key as keyof User];
+                    if (value !== null && value !== undefined) {
+                        formData.append(key, value.toString());
+                    }
+                });
+                formData.append('file', selectedFile);
+
+                response = await axios.put(`${import.meta.env.VITE_API_URL}/api/profile/update`, formData, {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+            } else {
+                response = await axios.put(`${import.meta.env.VITE_API_URL}/api/profile/update`, user, {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+            }
+
             if (response.status === 200) {
                 toast.success("Profile updated successfully");
                 setShowToast(true);
+                setSelectedFile(null); // Clear selected file after successful upload
             }
         } catch (error) {
             toast.error("Failed to update profile");
+            console.error(error);
         }
         localStorage.setItem('userProfile', JSON.stringify(user));
         setIsEditing(false);
@@ -112,8 +168,8 @@ const Profile: React.FC = () => {
 
     return (
         <div className="page-container profile-page">
-            < ToastContainer/>
-             <header className="dashboard-header-custom">
+            < ToastContainer />
+            <header className="dashboard-header-custom">
                 <div className="header-container-custom">
                     <div className="header-left-custom">
                         <div className="brand-custom">
@@ -183,6 +239,31 @@ const Profile: React.FC = () => {
             )}
 
             <div className="content-wrapper">
+                <button className="back-dashboard-btn" onClick={() => navigate('/dashboard')}>
+                    ← Back to Dashboard
+                </button>
+
+                <div className="completion-card">
+                    <div className="completion-header">
+                        <h3>Profile Completion</h3>
+                        <span className="completion-badge">{completionPercentage}%</span>
+                    </div>
+                    <div className="progress-container">
+                        <div
+                            className="progress-bar"
+                            style={{
+                                width: `${completionPercentage}%`,
+                                backgroundColor: completionPercentage === 100 ? '#10b981' : '#0047AB'
+                            }}
+                        ></div>
+                    </div>
+                    <p className="completion-text">
+                        {completionPercentage === 100
+                            ? "Great! Your profile is fully complete."
+                            : "Complete your profile to enable all features."}
+                    </p>
+                </div>
+
                 <div className="profile-layout">
                     {/* Left Column: Profile Card */}
                     <div className="profile-sidebar">
@@ -296,14 +377,12 @@ const Profile: React.FC = () => {
                                         className="input"
                                     >
                                         <option value="">Select Department</option>
-                                        <option value="CSE">Computer Science and Engineering</option>
-                                        <option value="IT">Information Technology</option>
-                                        <option value="ECE">Electronics and Communication Engineering</option>
-                                        <option value="EEE">Electrical and Electronics Engineering</option>
-                                        <option value="MECH">Mechanical Engineering</option>
-                                        <option value="CIVIL">Civil Engineering</option>
-                                        <option value="AIDS">Artificial Intelligence and Data Science</option>
-                                        <option value="AIML">Artificial Intelligence and Machine Learning</option>
+                                        <option value="Computer Science and Engineering">Computer Science and Engineering</option>
+                                        <option value="Information Technology">Information Technology</option>
+                                        <option value="Electronics and Communication Engineering">Electronics and Communication Engineering</option>
+                                        <option value="Mechanical Engineering">Mechanical Engineering</option>
+                                        <option value="Artificial Intelligence and Data Science">Artificial Intelligence and Data Science</option>
+                                        <option value="Master of Business Administration">Master of Business Administration</option>
                                     </select>
                                 </div>
 
@@ -591,6 +670,81 @@ const Profile: React.FC = () => {
                     align-items: center;
                 }
 
+                .back-dashboard-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    background: white;
+                    border: 1px solid #e2e8f0;
+                    color: #64748b;
+                    font-size: 0.95rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    margin-bottom: 24px;
+                    padding: 10px 20px;
+                    border-radius: 10px;
+                    transition: all 0.2s;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                }
+
+                .back-dashboard-btn:hover {
+                    color: #0047AB;
+                    border-color: #0047AB;
+                    transform: translateX(-4px);
+                    box-shadow: 0 4px 12px rgba(0, 71, 171, 0.1);
+                }
+
+                .completion-card {
+                    background: white;
+                    padding: 24px;
+                    border-radius: 16px;
+                    margin-bottom: 24px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                    border: 1px solid #e2e8f0;
+                }
+
+                .completion-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 12px;
+                }
+
+                .completion-header h3 {
+                    margin: 0;
+                    font-size: 1.1rem;
+                    color: #1e293b;
+                }
+
+                .completion-badge {
+                    background: #f1f5f9;
+                    padding: 4px 12px;
+                    border-radius: 20px;
+                    font-weight: 700;
+                    color: #0047AB;
+                    font-size: 0.9rem;
+                }
+
+                .progress-container {
+                    height: 10px;
+                    background: #e2e8f0;
+                    border-radius: 5px;
+                    overflow: hidden;
+                    margin-bottom: 12px;
+                }
+
+                .progress-bar {
+                    height: 100%;
+                    transition: width 0.5s ease;
+                    border-radius: 5px;
+                }
+
+                .completion-text {
+                    margin: 0;
+                    font-size: 0.9rem;
+                    color: #64748b;
+                }
+
                 .header-left-custom {
                     display: flex;
                     align-items: center;
@@ -807,6 +961,52 @@ const Profile: React.FC = () => {
 
                 .setting-info h4 { font-size: 16px; margin-bottom: 4px; }
                 .setting-info p { font-size: 14px; color: var(--text-muted); }
+
+                 @media (max-width: 768px) {
+                    .mobile-menu-btn {
+                        display: block;
+                    }
+
+                    .header-nav-custom {
+                        position: absolute;
+                        top: 70px;
+                        left: 0;
+                        right: 0;
+                        background: white;
+                        flex-direction: column;
+                        padding: 0;
+                        border-bottom: 1px solid #e2e8f0;
+                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                        overflow: hidden;
+                        max-height: 0;
+                        transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
+                        gap: 0;
+                    }
+
+                    .header-nav-custom.mobile-open {
+                        max-height: 500px;
+                        padding: 16px 0;
+                    }
+
+                    .nav-item-custom, .logout-btn-custom {
+                        width: 100%;
+                        text-align: left;
+                        padding: 12px 24px;
+                        border-radius: 0;
+                        margin: 0;
+                    }
+
+                    .logout-btn-custom {
+                        border: none;
+                        border-top: 1px solid #fee2e2;
+                        color: #ef4444;
+                        margin-top: 8px;
+                    }
+
+                    .content-wrapper-custom {
+                        margin-top: 70px;
+                    }
+                }
 
                 /* Switch Toggle */
                 .switch {

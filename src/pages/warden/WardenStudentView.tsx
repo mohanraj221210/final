@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import WardenNav from "../../components/WardenNav";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 
 const WardenStudentView: React.FC = () => {
   const { id } = useParams();
@@ -29,9 +29,18 @@ const WardenStudentView: React.FC = () => {
     }
   };
 
-  const handleStatusUpdate = async (status: string) => {
-    const remarks = prompt("Enter remarks:", "Reviewed by Warden");
-    if (remarks === null) return;
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState<'approved' | 'rejected' | null>(null);
+  const [remarks, setRemarks] = useState("");
+
+  const openConfirmation = (type: 'approved' | 'rejected') => {
+    setModalType(type);
+    setRemarks(type === 'approved' ? "Approved by Warden" : "Rejected by Warden");
+    setShowModal(true);
+  };
+
+  const handleConfirmAction = async () => {
+    if (!modalType) return;
 
     try {
       const token = localStorage.getItem("token");
@@ -39,13 +48,14 @@ const WardenStudentView: React.FC = () => {
         `${import.meta.env.VITE_API_URL}/warden/outpass/update`,
         {
           outpassId: id,
-          wardenapprovalstatus: status,
+          wardenapprovalstatus: modalType,
           wardenremarks: remarks,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      toast.success(`Outpass ${status} successfully!`);
+      toast.success(`Outpass ${modalType} successfully!`);
+      setShowModal(false);
       fetchStudent();
     } catch (err: any) {
       console.error("Failed to update status:", err);
@@ -53,17 +63,67 @@ const WardenStudentView: React.FC = () => {
     }
   };
 
-  if (!student) return <div className="loading-state">Loading...</div>;
+  if (!student) {
+    return (
+      <div className="loading-center">
+        <ToastContainer />
+        <div className="loading-container">
+          <div className="loading-bar">
+            <div className="loading-progress"></div>
+          </div>
+          <p>Loading student details...</p>
+        </div>
+        <style>{`
+          .loading-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: #f8fafc;
+          }
+          .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            color: #64748b;
+            font-weight: 500;
+          }
+          .loading-bar {
+            width: 200px;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 99px;
+            overflow: hidden;
+            position: relative;
+          }
+          .loading-progress {
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, #2563eb, #3b82f6);
+            border-radius: 99px;
+            position: absolute;
+            animation: shimmer 1.5s infinite linear;
+          }
+          @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(200%); }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   const s = student.studentid || {};
 
   return (
     <div className="page-container warden-view-page">
       <WardenNav />
+      <ToastContainer />
 
       <div className="content-wrapper">
         <button className="back-btn" onClick={() => navigate(-1)}>
-          ← Back to Student List
+          ← Back
         </button>
 
         <div className="main-header">
@@ -78,12 +138,12 @@ const WardenStudentView: React.FC = () => {
           <div className="section-body info-grid-with-avatar">
             <div className="avatar-box">
               {s.name ? (
-                <div> <img src={s.photo} alt="Student" className="initials-avatar"   /></div>
+                <div> <img src={s.photo} alt="Student" className="initials-avatar" /></div>
               ) : (
                 <div className="initials-avatar">NA</div>
               )}
             </div>
-            <div className="info-fields"> 
+            <div className="info-fields">
               <div className="field-group">
                 <label>STUDENT ID</label>
                 <div className="display-box">{s._id || "N/A"}</div>
@@ -132,6 +192,8 @@ const WardenStudentView: React.FC = () => {
             </div>
           </div>
         </div> */}
+
+
 
         {/* Section 3: Hostel Details */}
         <div className="section-card">
@@ -224,13 +286,13 @@ const WardenStudentView: React.FC = () => {
             <div className="workflow-actions">
               <button
                 className="btn-approve"
-                onClick={() => handleStatusUpdate("approved")}
+                onClick={() => openConfirmation("approved")}
               >
                 Approve Request
               </button>
               <button
                 className="btn-reject"
-                onClick={() => handleStatusUpdate("rejected")}
+                onClick={() => openConfirmation("rejected")}
               >
                 Reject Request
               </button>
@@ -240,11 +302,42 @@ const WardenStudentView: React.FC = () => {
 
       </div>
 
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="modal-card">
+            <div className="modal-header">
+              <h3>{modalType === 'approved' ? 'Approve Request' : 'Reject Request'}</h3>
+              <button className="close-btn" onClick={() => setShowModal(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <label>Warden Remarks</label>
+              <textarea
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                rows={4}
+                className="remarks-input"
+                placeholder="Enter remarks here..."
+              />
+            </div>
+            <div className="modal-footer">
+              <button className="btn-cancel" onClick={() => setShowModal(false)}>Cancel</button>
+              <button
+                className={`btn-confirm ${modalType}`}
+                onClick={handleConfirmAction}
+              >
+                Submit Remark
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
         .warden-view-page {
-          background-color: #f3f4f6;
+          background-color: #f8fafc; /* Lighter background matching list page */
           min-height: 100vh;
           font-family: 'Inter', sans-serif;
+          padding-top: 85px; /* Added for fixed navbar */
           padding-bottom: 40px;
         }
 
@@ -256,20 +349,29 @@ const WardenStudentView: React.FC = () => {
 
         .back-btn {
           background: white;
-          border: 1px solid #ddd;
-          padding: 8px 16px;
-          border-radius: 8px;
+          border: 1px solid #cbd5e1;
+          font-size: 16px;
+          color: #1e3a8a;
           cursor: pointer;
-          font-weight: 500;
           margin-bottom: 20px;
-          transition: 0.2s;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          transition: all 0.3s ease;
+          padding: 10px 24px;
+          border-radius: 50px;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          font-weight: 600;
         }
+
         .back-btn:hover {
-          background: #f9fafb;
+          background: #f1f5f9;
+          transform: translateX(-5px);
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
 
         .main-header {
-          background: #2563eb;
+          background: linear-gradient(135deg, #1e3a8a, #0f172a);
           color: white;
           padding: 16px 24px;
           border-radius: 12px;
@@ -280,15 +382,16 @@ const WardenStudentView: React.FC = () => {
           margin: 0;
           font-size: 24px;
           font-weight: 700;
+          color: white;
         }
 
         .section-card {
           background: white;
-          border-radius: 12px;
+          border-radius: 24px;
           overflow: hidden;
           margin-bottom: 24px;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-          border: 1px solid #e5e7eb;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+          border: 1px solid rgba(0,0,0,0.05);
         }
 
         .highlight-border {
@@ -296,9 +399,9 @@ const WardenStudentView: React.FC = () => {
         }
 
         .section-header {
-          background: #2563eb;
+          background: linear-gradient(135deg, #1e3a8a, #0f172a);
           color: white;
-          padding: 12px 24px;
+          padding: 14px 24px;
         }
         .section-header h3 {
           margin: 0;
@@ -307,6 +410,7 @@ const WardenStudentView: React.FC = () => {
           display: flex;
           align-items: center;
           gap: 8px;
+          color: white;
         }
 
         .section-body {
@@ -328,7 +432,7 @@ const WardenStudentView: React.FC = () => {
         .initials-avatar {
           width: 100px;
           height: 100px;
-          background: #0369a1;
+          background: linear-gradient(135deg, #1e3a8a, #2563eb);
           color: white;
           font-size: 36px;
           font-weight: bold;
@@ -466,16 +570,22 @@ const WardenStudentView: React.FC = () => {
         }
 
         .btn-approve {
-          background: #10b981;
+          background: linear-gradient(135deg, #10b981, #059669);
           color: white;
         }
-        .btn-approve:hover { background: #059669; }
+        .btn-approve:hover { 
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        }
 
         .btn-reject {
-          background: #ef4444;
+          background: linear-gradient(135deg, #ef4444, #dc2626);
           color: white;
         }
-        .btn-reject:hover { background: #dc2626; }
+        .btn-reject:hover { 
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+        }
 
         @media (max-width: 768px) {
           .info-grid-with-avatar,
@@ -485,8 +595,160 @@ const WardenStudentView: React.FC = () => {
             grid-template-columns: 1fr;
           }
           .avatar-box {
-            margin-bottom: 16px;
+            margin-bottom: 24px;
+            justify-content: center; /* Center avatar on mobile */
           }
+          
+          .no-data {
+             font-style: italic;
+             color: #9ca3af;
+             text-align: center;
+          }
+
+        /* Modal Styles */
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.6);
+          backdrop-filter: blur(4px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+
+        .modal-card {
+          background: white;
+          border-radius: 20px;
+          width: 90%;
+          max-width: 500px;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+          animation: modalSlideUp 0.3s ease-out;
+        }
+
+        .modal-header {
+          background: linear-gradient(135deg, #1e3a8a, #0f172a);
+          padding: 24px 28px;
+          border-radius: 20px 20px 0 0;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .modal-header h3 {
+          margin: 0;
+          color: white;
+          font-size: 1.4rem;
+          font-weight: 600;
+        }
+
+        .close-btn {
+          background: rgba(255, 255, 255, 0.2);
+          border: none;
+          color: white;
+          width: 36px;
+          height: 36px;
+          border-radius: 8px;
+          font-size: 1.5rem;
+          cursor: pointer;
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0;
+          line-height: 1;
+        }
+
+        .close-btn:hover {
+          background: rgba(255, 255, 255, 0.3);
+          color: white;
+        }
+
+        .modal-body {
+          padding: 28px;
+        }
+
+        .modal-body label {
+          display: block;
+          font-weight: 700;
+          color: #1e293b;
+          margin-bottom: 12px;
+          font-size: 1rem;
+        }
+
+        .remarks-input {
+          width: 100%;
+          padding: 14px;
+          border: 2px solid #e2e8f0;
+          border-radius: 12px;
+          font-size: 1rem;
+          font-family: inherit;
+          resize: vertical;
+          min-height: 100px;
+          color: #1f2937;
+        }
+
+        .remarks-input:focus {
+          outline: none;
+          border-color: #1e3a8a;
+        }
+
+        .modal-footer {
+          padding: 0 28px 28px 28px;
+          display: flex;
+          gap: 12px;
+          justify-content: flex-end;
+          background: transparent;
+          border-top: none;
+        }
+
+        .btn-cancel {
+          padding: 12px 28px;
+          border: none;
+          border-radius: 10px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s;
+          background: #f1f5f9;
+          color: #475569;
+        }
+
+        .btn-cancel:hover {
+          background: #e2e8f0;
+        }
+
+        .btn-confirm {
+          padding: 12px 28px;
+          border: none;
+          border-radius: 10px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s;
+          color: white;
+        }
+
+        .btn-confirm.approved {
+          background: linear-gradient(135deg, #10b981, #059669);
+        }
+        .btn-confirm.approved:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-confirm.rejected {
+          background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+        .btn-confirm.rejected:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        @keyframes modalSlideUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>
