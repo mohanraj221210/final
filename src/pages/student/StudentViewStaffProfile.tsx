@@ -29,13 +29,7 @@ const StudentViewStaffProfile: React.FC = () => {
                 if (response.status === 200) {
                     setStaff(response.data.staff);
                 }
-            } catch (error: any) {
-                // Check for authentication errors
-                if (error.response?.status === 401 || error.response?.status === 403) {
-                    alert("Session expired or invalid. Please login again.");
-                    handleLogout();
-                    return;
-                }
+            } catch (error) {
                 console.error("Error valid fetching staff data by ID, falling back to list:", error);
 
                 // Fallback to searching the list if direct endpoint fails (robustness)
@@ -49,13 +43,7 @@ const StudentViewStaffProfile: React.FC = () => {
                         const found = listResponse.data.staff.find((s: any) => s._id === id);
                         if (found) setStaff(found);
                     }
-                } catch (listError: any) {
-                    // Check for authentication errors in fallback
-                    if (listError.response?.status === 401 || listError.response?.status === 403) {
-                        alert("Session expired or invalid. Please login again.");
-                        handleLogout();
-                        return;
-                    }
+                } catch (listError) {
                     console.error("Fallback fetch failed", listError);
                 }
             } finally {

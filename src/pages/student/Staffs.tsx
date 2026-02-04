@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import StaffCard from '../../components/StaffCard';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { toast } from 'react-toastify';
 
 const Staffs: React.FC = () => {
     const [Loading, setLoading] = useState(true);
@@ -26,12 +25,6 @@ const Staffs: React.FC = () => {
                     console.log("staff data", response.data);
                 }
             } catch (error: any) {
-                // Check for authentication errors
-                if (error.response?.status === 401 || error.response?.status === 403) {
-                    toast.error("Session expired or invalid. Please login again.");
-                    handleLogout();
-                    return;
-                }
                 console.error("Error fetching staff data:", error.message);
             } finally {
                 setLoading(false)

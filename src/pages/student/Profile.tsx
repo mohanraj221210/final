@@ -5,7 +5,6 @@ import jitProfile from '../../assets/jit.webp';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
-import LoadingSpinner from '../../components/LoadingSpinner';
 
 const Profile: React.FC = () => {
     const [user, setUser] = useState<User>({
@@ -28,7 +27,6 @@ const Profile: React.FC = () => {
         busno: '',
         boardingpoint: '',
     });
-    const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [showToast, setShowToast] = useState(false);
     const navigate = useNavigate();
@@ -83,16 +81,8 @@ const Profile: React.FC = () => {
                 } else {
                     toast.error("Failed to fetch user profile");
                 }
-            } catch (error: any) {
-                // Check for authentication errors
-                if (error.response?.status === 401 || error.response?.status === 403) {
-                    toast.error("Session expired or invalid. Please login again.");
-                    handleLogout();
-                    return;
-                }
+            } catch (error) {
                 toast.error("Failed to fetch user profile");
-            } finally {
-                setLoading(false);
             }
         }
         fetchUserProfile();
@@ -167,13 +157,7 @@ const Profile: React.FC = () => {
                 setShowToast(true);
                 setSelectedFile(null); // Clear selected file after successful upload
             }
-        } catch (error: any) {
-            // Check for authentication errors
-            if (error.response?.status === 401 || error.response?.status === 403) {
-                toast.error("Session expired or invalid. Please login again.");
-                handleLogout();
-                return;
-            }
+        } catch (error) {
             toast.error("Failed to update profile");
             console.error(error);
         }
@@ -181,8 +165,6 @@ const Profile: React.FC = () => {
         setIsEditing(false);
 
     };
-
-    if (loading) return <LoadingSpinner />;
 
     return (
         <div className="page-container profile-page">

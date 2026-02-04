@@ -52,13 +52,7 @@ const Outpass: React.FC = () => {
                         navigate('/dashboard');
                     }
                 }
-            } catch (error: any) {
-                // Check for authentication errors
-                if (error.response?.status === 401 || error.response?.status === 403) {
-                    toast.error("Session expired or invalid. Please login again.");
-                    handleLogout();
-                    return;
-                }
+            } catch (error) {
                 console.error("Error checking profile:", error);
             }
         };
@@ -84,12 +78,6 @@ const Outpass: React.FC = () => {
                 setTimeout(() => navigate('/dashboard'), 3000);
             }
         } catch (error: any) {
-            // Check for authentication errors
-            if (error.response?.status === 401 || error.response?.status === 403) {
-                toast.error("Session expired or invalid. Please login again.");
-                handleLogout();
-                return;
-            }
             console.error('Error submitting outpass:', error);
             toast.error(error.response?.data?.message || 'Failed to submit application');
         } finally {

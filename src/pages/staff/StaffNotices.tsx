@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { io, Socket } from 'socket.io-client';
-import LoadingSpinner from '../../components/LoadingSpinner';
 
 interface Message {
     _id: string;
@@ -73,16 +72,7 @@ const StaffNotices: React.FC = () => {
 
                 initSocket(token, myGroup._id);
             }
-        } catch (error: any) {
-            // Check for authentication errors
-            if (error.response?.status === 401 || error.response?.status === 403) {
-                alert("Session expired or invalid. Please login again.");
-                localStorage.removeItem('isLoggedIn');
-                localStorage.removeItem('userType');
-                localStorage.removeItem('token');
-                window.location.href = '/login';
-                return;
-            }
+        } catch (error) {
             console.error("Error fetching data:", error);
         } finally {
             setLoading(false);
@@ -132,7 +122,7 @@ const StaffNotices: React.FC = () => {
         });
     };
 
-    if (loading) return <LoadingSpinner />;
+    if (loading) return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '50px' }}>Loading Community...</div>;
 
     if (!group) return (
         <div className="whatsapp-layout">
