@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import YearInchargeNav from "../../components/YearInchargeNav";
-import Loader from "../../components/Loader";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 interface StudentDetails {
     _id: string;
@@ -63,6 +63,10 @@ const YearInchargePendingOutpass: React.FC = () => {
         }
     };
 
+    if (loading) {
+        return <LoadingSpinner />;
+    }
+
     return (
         <div className="page-container">
             <YearInchargeNav />
@@ -85,13 +89,7 @@ const YearInchargePendingOutpass: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {loading ? (
-                                <tr>
-                                    <td colSpan={6} style={{ padding: "40px" }}>
-                                        <Loader />
-                                    </td>
-                                </tr>
-                            ) : pendingOutpasses.length === 0 ? (
+                            {pendingOutpasses.length === 0 ? (
                                 <tr>
                                     <td colSpan={6} style={{ textAlign: "center", padding: "20px" }}>
                                         No pending approvals found

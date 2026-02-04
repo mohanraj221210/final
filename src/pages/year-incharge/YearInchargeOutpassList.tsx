@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import YearInchargeNav from '../../components/YearInchargeNav';
-import Loader from '../../components/Loader';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
@@ -79,6 +79,8 @@ const YearInchargeOutpassList: React.FC = () => {
         outpass.studentid?.registerNumber?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    if (loading) return <LoadingSpinner />;
+
     return (
         <div className="page-container">
             <ToastContainer position="bottom-right" />
@@ -103,81 +105,77 @@ const YearInchargeOutpassList: React.FC = () => {
                     />
                 </div>
 
-                {loading ? (
-                    <Loader />
-                ) : (
-                    <div className="table-container">
-                        <table className="custom-table">
-                            <thead>
-                                <tr>
-                                    <th>Student Details</th>
-                                    <th>Pass Information</th>
-                                    <th>Duration</th>
-                                    <th>Residence</th>
-                                    <th>Approvals</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredOutpasses.length > 0 ? (
-                                    filteredOutpasses.map((outpass) => (
-                                        <tr key={outpass._id}>
-                                            <td data-label="Student Details">
-                                                <div className="student-info">
-                                                    <span className="font-bold">{outpass.studentid?.name}</span>
-                                                    <span className="text-sm text-gray-500">{outpass.studentid?.registerNumber}</span>
-                                                    <span className="text-xs text-gray-400">{outpass.studentid?.year} - {outpass.studentid?.department}</span>
-                                                </div>
-                                            </td>
-                                            <td data-label="Pass Information">
-                                                <div className="pass-info">
-                                                    <span className="pass-type">{outpass.outpasstype}</span>
-                                                </div>
-                                            </td>
-                                            <td data-label="Duration">
-                                                <div className="date-info">
-                                                    <span className="date-label">From: {new Date(outpass.fromDate).toLocaleString()}</span>
-                                                    <span className="date-label">To: {new Date(outpass.toDate).toLocaleString()}</span>
-                                                </div>
-                                            </td>
-                                            <td data-label="Residence">
-                                                <div className="residence-info">
-                                                    <span className="residence-type">{outpass.studentid?.residencetype}</span>
-                                                    {outpass.studentid?.residencetype !== 'dayscholar' && (
-                                                        <>
-                                                            <span className="text-xs">Bus: {outpass.studentid?.busno || 'N/A'}</span>
-                                                            <span className="text-xs">Boarding: {outpass.studentid?.boardingpoint || 'N/A'}</span>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td data-label="Approvals">
-                                                <div className="status-stack">
-                                                    <span className={`status-badge ${getStatusColor(outpass.staffapprovalstatus)}`}>
-                                                        Staff: {outpass.staffapprovalstatus}
+                <div className="table-container">
+                    <table className="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Student Details</th>
+                                <th>Pass Information</th>
+                                <th>Duration</th>
+                                <th>Residence</th>
+                                <th>Approvals</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredOutpasses.length > 0 ? (
+                                filteredOutpasses.map((outpass) => (
+                                    <tr key={outpass._id}>
+                                        <td data-label="Student Details">
+                                            <div className="student-info">
+                                                <span className="font-bold">{outpass.studentid?.name}</span>
+                                                <span className="text-sm text-gray-500">{outpass.studentid?.registerNumber}</span>
+                                                <span className="text-xs text-gray-400">{outpass.studentid?.year} - {outpass.studentid?.department}</span>
+                                            </div>
+                                        </td>
+                                        <td data-label="Pass Information">
+                                            <div className="pass-info">
+                                                <span className="pass-type">{outpass.outpasstype}</span>
+                                            </div>
+                                        </td>
+                                        <td data-label="Duration">
+                                            <div className="date-info">
+                                                <span className="date-label">From: {new Date(outpass.fromDate).toLocaleString()}</span>
+                                                <span className="date-label">To: {new Date(outpass.toDate).toLocaleString()}</span>
+                                            </div>
+                                        </td>
+                                        <td data-label="Residence">
+                                            <div className="residence-info">
+                                                <span className="residence-type">{outpass.studentid?.residencetype}</span>
+                                                {outpass.studentid?.residencetype !== 'dayscholar' && (
+                                                    <>
+                                                        <span className="text-xs">Bus: {outpass.studentid?.busno || 'N/A'}</span>
+                                                        <span className="text-xs">Boarding: {outpass.studentid?.boardingpoint || 'N/A'}</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td data-label="Approvals">
+                                            <div className="status-stack">
+                                                <span className={`status-badge ${getStatusColor(outpass.staffapprovalstatus)}`}>
+                                                    Staff: {outpass.staffapprovalstatus}
+                                                </span>
+                                                <span className={`status-badge ${getStatusColor(outpass.yearinchargeapprovalstatus)}`}>
+                                                    Incharge: {outpass.yearinchargeapprovalstatus}
+                                                </span>
+                                                {outpass.studentid?.residencetype?.toLowerCase().replace(/\s/g, '') !== 'dayscholar' && (
+                                                    <span className={`status-badge ${getStatusColor(outpass.wardenapprovalstatus)}`}>
+                                                        Warden: {outpass.wardenapprovalstatus}
                                                     </span>
-                                                    <span className={`status-badge ${getStatusColor(outpass.yearinchargeapprovalstatus)}`}>
-                                                        Incharge: {outpass.yearinchargeapprovalstatus}
-                                                    </span>
-                                                    {outpass.studentid?.residencetype?.toLowerCase().replace(/\s/g, '') !== 'dayscholar' && (
-                                                        <span className={`status-badge ${getStatusColor(outpass.wardenapprovalstatus)}`}>
-                                                            Warden: {outpass.wardenapprovalstatus}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan={5} className="text-center py-8 text-gray-500">
-                                            No outpass records found
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={5} className="text-center py-8 text-gray-500">
+                                        No outpass records found
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
 
                 {!loading && filteredOutpasses.length > 0 && (
                     <div className="mobile-cards-view">

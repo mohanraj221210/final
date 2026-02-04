@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { io, Socket } from 'socket.io-client';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 interface Message {
     _id: string;
@@ -92,7 +93,7 @@ const StaffNotices: React.FC = () => {
             console.log("New message received:", data);
 
             const incomingMsg: Message = {
-                _id: Date.now().toString(), 
+                _id: Date.now().toString(),
                 text: data.message,
                 from: data.from,
                 to: groupId,
@@ -114,7 +115,7 @@ const StaffNotices: React.FC = () => {
         if (!newMessage.trim() || !group || !socketRef.current) return;
 
         const msgText = newMessage;
-        setNewMessage(''); 
+        setNewMessage('');
 
         socketRef.current.emit('group-message', {
             groupId: group._id,
@@ -122,7 +123,7 @@ const StaffNotices: React.FC = () => {
         });
     };
 
-    if (loading) return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '50px' }}>Loading Community...</div>;
+    if (loading) return <LoadingSpinner />;
 
     if (!group) return (
         <div className="whatsapp-layout">

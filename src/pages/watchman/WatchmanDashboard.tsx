@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import axios from 'axios';
 import { useEffect } from 'react';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 
 interface User {
@@ -71,13 +72,7 @@ const WatchmanDashboard: React.FC = () => {
 
     if (Loading) {
         return (
-            <div className="page-container dashboard-page loading-center">
-                <div className="loading-container">
-                    <div className="loading-bar">
-                        <div className="loading-progress"></div>
-                    </div>
-                </div>
-            </div>
+            <LoadingSpinner />
         );
     }
 
