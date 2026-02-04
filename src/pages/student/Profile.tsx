@@ -5,6 +5,7 @@ import jitProfile from '../../assets/jit.webp';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const Profile: React.FC = () => {
     const [user, setUser] = useState<User>({
@@ -27,6 +28,7 @@ const Profile: React.FC = () => {
         busno: '',
         boardingpoint: '',
     });
+    const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [showToast, setShowToast] = useState(false);
     const navigate = useNavigate();
@@ -89,6 +91,8 @@ const Profile: React.FC = () => {
                     return;
                 }
                 toast.error("Failed to fetch user profile");
+            } finally {
+                setLoading(false);
             }
         }
         fetchUserProfile();
@@ -177,6 +181,8 @@ const Profile: React.FC = () => {
         setIsEditing(false);
 
     };
+
+    if (loading) return <LoadingSpinner />;
 
     return (
         <div className="page-container profile-page">

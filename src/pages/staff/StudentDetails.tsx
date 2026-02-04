@@ -4,6 +4,33 @@ import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import StaffHeader from '../../components/StaffHeader';
+import LoadingSpinner from '../../components/LoadingSpinner';
+
+const DEPARTMENTS = [
+    "Computer Science and Engineering",
+    "Information Technology",
+    "Electronics and Communication Engineering",
+    "Mechanical Engineering",
+    "Artificial Intelligence and Data Science",
+    "Master of Business Administration"
+];
+
+const YEARS = ["1", "2", "3", "4"];
+const SEMESTERS = ["1", "2", "3", "4", "5", "6", "7", "8"];
+const GENDERS = ["male", "female"];
+
+// Generate some recent batches
+const CURRENT_YEAR = new Date().getFullYear();
+const BATCHES = Array.from({ length: 5 }, (_, i) => {
+    const start = CURRENT_YEAR - i;
+    return `${start}-${start + 4}`;
+}).reverse();
+// Add future batches
+const FUTURE_BATCHES = Array.from({ length: 2 }, (_, i) => {
+    const start = CURRENT_YEAR + 1 + i;
+    return `${start}-${start + 4}`;
+});
+const ALL_BATCHES = [...BATCHES, ...FUTURE_BATCHES].sort();
 
 // Define Student Interface matching the API response
 interface Student {
@@ -38,6 +65,12 @@ const StudentDetails: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState<Partial<Student>>({});
+    const [showForgotPassword, setShowForgotPassword] = useState(false);
+    const [passwordData, setPasswordData] = useState({
+        email: '',
+        newPassword: '',
+        confirmPassword: ''
+    });
 
     // Fetch Student Details
     useEffect(() => {
@@ -161,7 +194,33 @@ const StudentDetails: React.FC = () => {
         }
     };
 
-    if (loading) return <div className="loading-screen">Loading...</div>;
+    const handleForgotPassword = async () => {
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+            toast.error("Passwords do not match");
+            return;
+        }
+        if (!passwordData.email || !passwordData.newPassword) {
+            toast.error("Please fill all fields");
+            return;
+        }
+
+        try {
+            await axios.post(`${API_URL}/staff/student/forgot-password`, {
+                id,
+                email: passwordData.email,
+                newPassword: passwordData.newPassword
+            }, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            toast.success("Password reset successfully");
+            setShowForgotPassword(false);
+            setPasswordData({ email: '', newPassword: '', confirmPassword: '' });
+        } catch (error) {
+            toast.error("Failed to reset password");
+        }
+    };
+
+    if (loading) return <LoadingSpinner />;
     if (!student) return <div className="error-screen">Student not found</div>;
 
     return (
@@ -260,6 +319,12 @@ const StudentDetails: React.FC = () => {
                                 <button className="btn-delete-modern" onClick={handleDelete}>
                                     Delete Record
                                 </button>
+                                <button className="btn-forgot-modern" onClick={() => {
+                                    setPasswordData(prev => ({ ...prev, email: student.email }));
+                                    setShowForgotPassword(true);
+                                }}>
+                                    Forgot Password
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -270,12 +335,53 @@ const StudentDetails: React.FC = () => {
                         <div className="info-section">
                             <h3>Academic Information</h3>
                             <div className="fields-row">
-                                <Field label="Department" name="department" value={formData.department} isEditing={isEditing} onChange={handleInputChange} />
-                                <Field label="Batch" name="batch" value={formData.batch} isEditing={isEditing} onChange={handleInputChange} />
-                                <Field label="Year" name="year" value={formData.year} isEditing={isEditing} onChange={handleInputChange} />
-                                <Field label="Semester" name="semester" value={formData.semester} isEditing={isEditing} onChange={handleInputChange} />
-                                <Field label="CGPA" name="cgpa" value={formData.cgpa} isEditing={isEditing} onChange={handleInputChange} />
-                                <Field label="Arrears" name="arrears" value={formData.arrears} isEditing={isEditing} onChange={handleInputChange} />
+                                <Field label="Register Number" name="registerNumber" value={formData.registerNumber} isEditing={isEditing} onChange={handleInputChange} />
+                                <Field
+                                    label="Department"
+                                    name="department"
+                                    value={formData.department}
+                                    isEditing={isEditing}
+                                    onChange={handleInputChange}
+                                    options={DEPARTMENTS}
+                                />
+                                <Field
+                                    label="Batch"
+                                    name="batch"
+                                    value={formData.batch}
+                                    isEditing={isEditing}
+                                    onChange={handleInputChange}
+                                    options={ALL_BATCHES}
+                                />
+                                <Field
+                                    label="Year"
+                                    name="year"
+                                    value={formData.year}
+                                    isEditing={isEditing}
+                                    onChange={handleInputChange}
+                                    options={YEARS}
+                                />
+                                <Field
+                                    label="Semester"
+                                    name="semester"
+                                    value={formData.semester}
+                                    isEditing={isEditing}
+                                    onChange={handleInputChange}
+                                    options={SEMESTERS}
+                                />
+                                <Field
+                                    label="CGPA"
+                                    name="cgpa"
+                                    value={formData.cgpa}
+                                    isEditing={isEditing}
+                                    onChange={handleInputChange}
+                                />
+                                <Field
+                                    label="Arrears"
+                                    name="arrears"
+                                    value={formData.arrears}
+                                    isEditing={isEditing}
+                                    onChange={handleInputChange}
+                                />
                             </div>
                         </div>
 
@@ -286,7 +392,14 @@ const StudentDetails: React.FC = () => {
                                 <Field label="Email" name="email" value={formData.email} isEditing={isEditing} onChange={handleInputChange} />
                                 <Field label="Phone" name="phone" value={formData.phone} isEditing={isEditing} onChange={handleInputChange} />
                                 <Field label="Parent Phone" name="parentnumber" value={formData.parentnumber} isEditing={isEditing} onChange={handleInputChange} />
-                                <Field label="Gender" name="gender" value={formData.gender} isEditing={isEditing} onChange={handleInputChange} />
+                                <Field
+                                    label="Gender"
+                                    name="gender"
+                                    value={formData.gender}
+                                    isEditing={isEditing}
+                                    onChange={handleInputChange}
+                                    options={GENDERS}
+                                />
                             </div>
                         </div>
 
@@ -320,6 +433,51 @@ const StudentDetails: React.FC = () => {
                 </div>
             </div>
 
+            {/* Forgot Password Modal */}
+            {showForgotPassword && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h3>Reset Password</h3>
+                        <div className="modal-form">
+                            <div className="field-group">
+                                <label>Email ID</label>
+                                <input
+                                    type="email"
+                                    value={passwordData.email}
+                                    onChange={e => setPasswordData({ ...passwordData, email: e.target.value })}
+                                    className="field-input"
+                                    disabled
+                                />
+                            </div>
+                            <div className="field-group">
+                                <label>New Password</label>
+                                <input
+                                    type="password"
+                                    value={passwordData.newPassword}
+                                    onChange={e => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                                    className="field-input"
+                                    placeholder="Enter new password"
+                                />
+                            </div>
+                            <div className="field-group">
+                                <label>Confirm Password</label>
+                                <input
+                                    type="password"
+                                    value={passwordData.confirmPassword}
+                                    onChange={e => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                                    className="field-input"
+                                    placeholder="Confirm new password"
+                                />
+                            </div>
+                            <div className="modal-actions">
+                                <button className="btn-cancel" onClick={() => setShowForgotPassword(false)}>Cancel</button>
+                                <button className="btn-save" onClick={handleForgotPassword}>Reset Password</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <style>{`
                 .details-page {
                     min-height: 100vh;
@@ -346,7 +504,6 @@ const StudentDetails: React.FC = () => {
                     gap: 32px;
                 }
 
-                /* Back Button */
                 .back-btn {
                     background: white;
                     border: 1px solid rgba(0,0,0,0.1);
@@ -368,7 +525,6 @@ const StudentDetails: React.FC = () => {
                     color: #1e3a8a;
                 }
 
-                /* Action Buttons */
                 .btn-edit {
                     background: #2563eb;
                     color: white;
@@ -407,7 +563,6 @@ const StudentDetails: React.FC = () => {
                 }
                 .btn-save:hover { background: #059669; }
 
-                /* Modern Card Styles */
                 .student-card-modern {
                     background: white;
                     border-radius: 24px;
@@ -416,7 +571,7 @@ const StudentDetails: React.FC = () => {
                     border: 1px solid #e2e8f0;
                     height: fit-content;
                     position: sticky;
-                    top: 100px; /* Sticky scroll for card */
+                    top: 100px;
                 }
 
                 .card-header-gradient {
@@ -486,7 +641,6 @@ const StudentDetails: React.FC = () => {
                     margin-bottom: 24px;
                     align-items: flex-start;
                 }
-
                 .info-row-modern:last-child {
                     margin-bottom: 0;
                 }
@@ -555,7 +709,63 @@ const StudentDetails: React.FC = () => {
                     background: #fee2e2;
                 }
 
-                /* Info Grid */
+                .btn-forgot-modern {
+                    width: 100%;
+                    padding: 12px;
+                    background: white;
+                    border: 2px solid #e2e8f0;
+                    color: #475569;
+                    border-radius: 12px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .btn-forgot-modern:hover {
+                    border-color: #cbd5e1;
+                    background: #f8fafc;
+                }
+
+                .modal-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0,0,0,0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 1000;
+                }
+
+                .modal-content {
+                    background: white;
+                    padding: 24px;
+                    border-radius: 16px;
+                    width: 90%;
+                    max-width: 400px;
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+                }
+
+                .modal-content h3 {
+                    margin-top: 0;
+                    margin-bottom: 20px;
+                    color: #1e293b;
+                }
+
+                .modal-form {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                }
+
+                .modal-actions {
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 12px;
+                    margin-top: 8px;
+                }
+
                 .info-grid {
                     display: flex;
                     flex-direction: column;
@@ -656,6 +866,7 @@ const Field = ({ label, name, value, isEditing, onChange, options }: any) => (
         {isEditing ? (
             options ? (
                 <select name={name} value={value || ''} onChange={onChange} className="field-input">
+                    <option value="">Select {label}</option>
                     {options.map((opt: string) => (
                         <option key={opt} value={opt}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</option>
                     ))}
@@ -676,3 +887,5 @@ const Field = ({ label, name, value, isEditing, onChange, options }: any) => (
 );
 
 export default StudentDetails;
+
+

@@ -4,6 +4,7 @@ import Toast from '../components/Toast';
 import axios from 'axios';
 import { toast, ToastContainer } from "react-toastify";
 
+
 interface LoginProps {
   initialType?: 'student' | 'staff';
 }
@@ -57,6 +58,7 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
   return (
     <div className="login-page">
       <ToastContainer />
+
       {showToast && (
         <Toast
           message="Login successful! Redirecting..."
@@ -92,7 +94,7 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
             <div className={`logo-circle ${loginType === 'staff' ? 'staff-logo' : ''}`}>
               {loginType === 'student' ? '🎓' : '👨‍🏫'}
             </div>
-            <h1>{loginType === 'student' ? 'Welcome Back' : 'Staff Portal'}</h1>
+            <h1>{loginType === 'student' ? 'Student Login' : 'Staff Login'}</h1>
             <p className="text-muted">
               {loginType === 'student'
                 ? 'Enter your credentials to access the portal'
@@ -113,7 +115,7 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
                   onChange={(e) => setEmail(e.target.value)}
                 />
                 <label htmlFor="username">
-                  {loginType === 'student' ? 'Username / Register No' : 'Staff Email / ID'}
+                  {loginType === 'student' ? 'Student Mail ID ' : 'Staff Email / ID'}
                 </label>
                 <span className="input-icon">👤</span>
               </div>
@@ -406,7 +408,7 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
 
         .floating-input {
           height: 56px;
-          padding: 24px 16px 8px;
+          padding: 24px 48px 8px 16px;
           font-size: 16px;
           background: #f8fafc;
           border: 2px solid transparent;

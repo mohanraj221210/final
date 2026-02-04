@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import YearInchargeNav from '../../components/YearInchargeNav';
-import Loader from '../../components/Loader';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
@@ -33,6 +33,8 @@ const YearInchargeDashboard: React.FC = () => {
     const [zoomingPath, setZoomingPath] = useState<string | null>(null);
 
     useEffect(() => {
+        let isMounted = true;
+
         const fetchDashboardData = async () => {
             const token = localStorage.getItem('token');
             if (!token) {
@@ -41,57 +43,94 @@ const YearInchargeDashboard: React.FC = () => {
             }
 
             try {
-                // Fetch Profile
-                const profileResponse = await axios.get(`${import.meta.env.VITE_API_URL}/incharge/profile`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (profileResponse.status === 200) {
-                    // Ensure we handle the user data correctly if it comes nested
-                    const userData = profileResponse.data.user || profileResponse.data;
-                    setUser({
-                        name: userData.name || "Year Incharge",
-                        registerNumber: userData.registerNumber || "INCHARGE001",
-                        department: userData.department || "Administration",
-                        year: userData.year || "N/A",
-                        email: userData.email || "incharge@jit.edu"
-                    });
+                // Run requests in parallel
+                const [profileResult, outpassResult] = await Promise.allSettled([
+                    axios.get(`${import.meta.env.VITE_API_URL}/incharge/profile`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }),
+                    axios.get(`${import.meta.env.VITE_API_URL}/incharge/outpass/list`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    })
+                ]);
+
+                if (!isMounted) return;
+
+                // Handle Profile Response
+                if (profileResult.status === 'fulfilled') {
+                    const profileResponse = profileResult.value;
+                    if (profileResponse.status === 200) {
+                        const userData = profileResponse.data.user || profileResponse.data;
+                        setUser({
+                            name: userData.name || "Year Incharge",
+                            registerNumber: userData.registerNumber || "INCHARGE001",
+                            department: userData.department || "Administration",
+                            year: userData.year || "N/A",
+                            email: userData.email || "incharge@jit.edu"
+                        });
+                    }
+                } else {
+                    console.error("Failed to fetch profile:", profileResult.reason);
+                    if (profileResult.reason?.response?.status === 401) {
+                        navigate('/year-incharge-login');
+                        return;
+                    }
                 }
 
-                // Fetch Outpasses for Stats
-                const outpassResponse = await axios.get(`${import.meta.env.VITE_API_URL}/incharge/outpass/list`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                // Handle Outpass Response
+                if (outpassResult.status === 'fulfilled') {
+                    const outpassResponse = outpassResult.value;
+                    if (outpassResponse.status === 200) {
+                        const outpasses = outpassResponse.data.outpasslist || [];
+                        const pending = outpasses.filter((o: any) =>
+                            o.staffapprovalstatus === 'approved' &&
+                            o.yearinchargeapprovalstatus === 'pending'
+                        ).length;
 
-                if (outpassResponse.status === 200) {
-                    const outpasses = outpassResponse.data.outpasslist || [];
-                    const pending = outpasses.filter((o: any) =>
-                        o.staffapprovalstatus === 'approved' &&
-                        o.yearinchargeapprovalstatus === 'pending'
-                    ).length;
+                        const approved = outpasses.filter((o: any) => o.yearinchargeapprovalstatus === 'approved').length;
+                        const rejected = outpasses.filter((o: any) => o.yearinchargeapprovalstatus === 'rejected').length;
 
-                    // Approved by year incharge
-                    const approved = outpasses.filter((o: any) => o.yearinchargeapprovalstatus === 'approved').length;
+                        setStats({
+                            total: outpasses.length,
+                            pending,
+                            approved,
+                            rejected
+                        });
 
-                    // Rejected by year incharge
-                    const rejected = outpasses.filter((o: any) => o.yearinchargeapprovalstatus === 'rejected').length;
+                        // Check for Emergency Requests
+                        const emergencyRequests = outpasses.filter((o: any) =>
+                            (o.outpasstype || '').toLowerCase() === 'emergency' &&
+                            o.yearinchargeapprovalstatus === 'pending'
+                        );
 
-                    setStats({
-                        total: outpasses.length,
-                        pending,
-                        approved,
-                        rejected
-                    });
+                        if (emergencyRequests.length > 0) {
+                            toast.error(`⚠️ ${emergencyRequests.length} Emergency Request(s) Pending!`, {
+                                position: "top-center",
+                                autoClose: false,
+                                theme: "colored",
+                                style: { fontWeight: 'bold', fontSize: '16px' }
+                            });
+                        }
+                    }
+                } else {
+                    console.error("Failed to fetch outpasses:", outpassResult.reason);
+                    if (outpassResult.reason?.response?.status === 401) {
+                        navigate('/year-incharge-login');
+                        return;
+                    }
+                    // Only toast if it's NOT a 401 (which is handled above)
+                    toast.error("Failed to update dashboard statistics");
                 }
 
             } catch (error) {
-                console.error("Error fetching data:", error);
-                toast.error("Failed to load dashboard data");
+                console.error("Unexpected error in dashboard fetch:", error);
             } finally {
-                setLoading(false);
+                if (isMounted) setLoading(false);
             }
         };
 
         fetchDashboardData();
+
+        return () => { isMounted = false; };
     }, [navigate]);
 
     const handleQuickAction = (path: string) => {
@@ -102,14 +141,7 @@ const YearInchargeDashboard: React.FC = () => {
     };
 
     if (loading) {
-        return (
-            <div className="page-container dashboard-page">
-                <YearInchargeNav />
-                <div className="content-wrapper">
-                    <Loader />
-                </div>
-            </div>
-        );
+        return <LoadingSpinner />;
     }
 
     return (

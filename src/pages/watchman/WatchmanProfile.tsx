@@ -2,9 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Nav from "../../components/WatchmanNav";
 import Toast from "../../components/Toast";
-import watchmanProfile from "../../assets/jit.webp"; // Using placeholder for now
+import watchmanProfile from "../../assets/jit.webp";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 interface Watchman {
     name: string;
@@ -21,6 +22,7 @@ const WatchmanProfile: React.FC = () => {
         phone: "",
         photo: "",
     });
+    const [loading, setLoading] = useState(true);
 
     const [isEditing, setIsEditing] = useState(false);
     const [showToast, setShowToast] = useState(false);
@@ -43,6 +45,8 @@ const WatchmanProfile: React.FC = () => {
             }
         } catch (err) {
             toast.error("Failed to load profile");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -112,6 +116,8 @@ const WatchmanProfile: React.FC = () => {
             toast.error("Failed to update profile");
         }
     };
+
+    if (loading) return <LoadingSpinner />;
 
     return (
         <div className="page-container profile-page">

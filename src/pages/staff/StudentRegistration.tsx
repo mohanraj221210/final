@@ -4,6 +4,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import 'react-toastify/dist/ReactToastify.css';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 interface Student {
     _id: string;
@@ -368,7 +369,7 @@ const StudentRegistration: React.FC = () => {
                         {activeTab === 'added-students' && (
                             <div className="added-students-view animate-fade">
                                 {loading && studentsList.length === 0 ? (
-                                    <div className="loading-state">Loading students...</div>
+                                    <LoadingSpinner />
                                 ) : studentsList.length === 0 ? (
                                     <div className="empty-state">No students added yet.</div>
                                 ) : (

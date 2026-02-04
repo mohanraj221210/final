@@ -4,161 +4,152 @@ import Toast from '../../components/Toast';
 import axios from 'axios';
 import { toast, ToastContainer } from "react-toastify";
 
-const Wardenlogin: React.FC = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [Loading, setLoading] = useState(false);
-  const [showToast, setShowToast] = useState(false);
+const AdminLogin: React.FC = () => {
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [showToast, setShowToast] = useState(false);
 
-  const navigate = useNavigate();
+    const navigate = useNavigate();
 
-  const API_URL = import.meta.env.VITE_API_URL;
-  // Example: http://localhost:5000
+    const API_URL = import.meta.env.VITE_API_URL;
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
 
-    if (!email || !password) {
-      toast.error("Please enter email and password");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const response = await axios.post(`${API_URL}/warden/login`, {
-        email,
-        password
-      });
-
-      if (response.status === 200) {
-        const token = response.data.token;
-
-        // ✅ Save login data
-        localStorage.setItem("token", token);
-        localStorage.setItem("isLoggedIn", "true");
-        localStorage.setItem("userType", "warden");
-
-        setShowToast(true);
-
-        setTimeout(() => {
-          navigate("/warden-dashboard");
-        }, 1500);
-      }
-    } catch (error: any) {
-      console.error("Login error:", error);
-
-      if (error.response) {
-        const status = error.response.status;
-
-        if (status === 400) {
-          toast.error("Missing email or password", { position: "bottom-right", autoClose: 5000 });
-        } else if (status === 401) {
-          toast.error("Invalid email or password", { position: "bottom-right", autoClose: 5000 });
-        } else if (status === 404) {
-          toast.error("Warden not found", { position: "bottom-right", autoClose: 5000 });
-        } else {
-          toast.error("Login failed. Try again.", { position: "bottom-right", autoClose: 5000 });
+        if (!email || !password) {
+            toast.error("Please enter email and password");
+            return;
         }
-      } else {
-        toast.error("Server not reachable", { position: "bottom-right", autoClose: 5000 });
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  return (
-    <div className="login-page">
-      <ToastContainer />
-      {showToast && (
-        <Toast
-          message="Warden login successful! Redirecting..."
-          type="success"
-          onClose={() => setShowToast(false)}
-        />
-      )}
+        setLoading(true);
 
-      <div className="login-container">
-        <button className="back-home-btn" onClick={() => navigate('/')}>
-          ← Back to Welcome
-        </button>
-        <div className="login-card staff-theme">
+        try {
+            const response = await axios.post(`${API_URL}/admin/login`, {
+                email,
+                password
+            });
 
-          {/* <div className="login-tabs">
-            <button type="button" className="tab-btn active">
-              Warden
-            </button>
-            <button type="button" className="tab-btn" onClick={() => navigate('/watchmanlogin')}>
-              Watchman
-            </button>
-          </div> */}
+            if (response.status === 200) {
+                const token = response.data.token;
 
-          <div className="login-header">
-            <div className="logo-circle staff-logo">🛡️</div>
-            <h1>Warden Login</h1>
-            <p className="text-muted">
-              Enter your warden credentials to access the portal
-            </p>
-          </div>
+                // ✅ Save login data
+                localStorage.setItem("token", token);
+                localStorage.setItem("isLoggedIn", "true");
+                localStorage.setItem("userType", "admin");
 
-          <form onSubmit={handleSubmit} className="login-form">
-            <div className="form-group">
-              <div className="input-wrapper">
-                <input
-                  type="text"
-                  id="username"
-                  className="input floating-input"
-                  placeholder=" "
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                setShowToast(true);
+
+                // Redirect to home/welcome since no Admin Dashboard exists
+                setTimeout(() => {
+                    navigate("/");
+                }, 1500);
+            }
+        } catch (error: any) {
+            console.error("Login error:", error);
+
+            if (error.response) {
+                const status = error.response.status;
+
+                if (status === 400) {
+                    toast.error("Missing email or password", { position: "bottom-right", autoClose: 5000 });
+                } else if (status === 401) {
+                    toast.error("Invalid email or password", { position: "bottom-right", autoClose: 5000 });
+                } else if (status === 404) {
+                    toast.error("Admin not found", { position: "bottom-right", autoClose: 5000 });
+                } else {
+                    toast.error("Login failed. Try again.", { position: "bottom-right", autoClose: 5000 });
+                }
+            } else {
+                toast.error("Server not reachable", { position: "bottom-right", autoClose: 5000 });
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="login-page">
+            <ToastContainer />
+            {showToast && (
+                <Toast
+                    message="Admin login successful!"
+                    type="success"
+                    onClose={() => setShowToast(false)}
                 />
-                <label htmlFor="username">Warden Email / ID</label>
-                <span className="input-icon">👤</span>
-              </div>
-            </div>
+            )}
 
-            <div className="form-group">
-              <div className="input-wrapper">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  id="password"
-                  className="input floating-input"
-                  placeholder=" "
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <label htmlFor="password">Password</label>
-                <button
-                  type="button"
-                  className="input-icon-btn"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? "👁️" : "🔒"}
+            <div className="login-container">
+                <button className="back-home-btn" onClick={() => navigate('/')}>
+                    ← Back to Welcome
                 </button>
-              </div>
+                <div className="login-card admin-theme">
+
+                    <div className="login-header">
+                        <div className="logo-circle admin-logo">🛡️</div>
+                        <h1>Admin Login</h1>
+                        <p className="auth-subtitle">
+                            Enter your credentials specifically for admin access
+                        </p>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="login-form">
+                        <div className="form-group">
+                            <div className="input-wrapper">
+                                <input
+                                    type="text"
+                                    id="email"
+                                    className="input floating-input"
+                                    placeholder=" "
+                                    required
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                />
+                                <label htmlFor="email">Admin Email</label>
+                                <span className="input-icon">✉️</span>
+                            </div>
+                        </div>
+
+                        <div className="form-group">
+                            <div className="input-wrapper">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    id="password"
+                                    className="input floating-input"
+                                    placeholder=" "
+                                    required
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
+                                <label htmlFor="password">Password</label>
+                                <button
+                                    type="button"
+                                    className="input-icon-btn"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    {showPassword ? "👁️" : "🔒"}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="form-actions">
+                            <label className="checkbox-label">
+                                <input type="checkbox" />
+                                <span>Remember me</span>
+                            </label>
+                        </div>
+
+                        <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
+                            {loading ? "Signing in..." : "Sign In"}
+                        </button>
+                    </form>
+
+                </div>
             </div>
 
-            <div className="form-actions">
-              <label className="checkbox-label">
-                <input type="checkbox" />
-                <span>Remember me</span>
-              </label>
-            </div>
 
-            <button type="submit" className="btn btn-primary btn-block" disabled={Loading}>
-              {Loading ? "Signing in..." : "Sign In"}
-            </button>
-          </form>
-
-        </div>
-      </div>
-
-
-      <style>{` 
+            <style>{` 
       .login-page {
           min-height: 100vh;
           display: flex;
@@ -192,67 +183,8 @@ const Wardenlogin: React.FC = () => {
           transition: background 0.4s ease;
         }
 
-        .login-card.student-theme {
-          background: linear-gradient(to bottom, rgba(255, 255, 255, 0.95), rgba(224, 242, 254, 0.6));
-        }
-
-        .login-card.staff-theme {
-          background: linear-gradient(to bottom, rgba(255, 255, 255, 0.95), rgba(237, 233, 254, 0.6));
-        }
-
-        .login-tabs {
-          display: flex;
-          gap: 0;
-          padding: 8px;
-          background: #f1f5f9;
-          border-radius: 24px 24px 0 0;
-          position: relative;
-          z-index: 10;
-        }
-
-        .tab-btn {
-          flex: 1;
-          padding: 14px 24px;
-          font-size: 15px;
-          font-weight: 600;
-          border: none;
-          background: transparent;
-          color: #3b6cb2ff;
-          border-radius: 16px;
-          cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          position: relative;
-          letter-spacing: 0.3px;
-        }
-
-        .tab-btn:hover {
-          color: var(--primary);
-        }
-
-        .tab-btn:first-child:hover {
-          color: var(--primary);
-        }
-
-        .tab-btn:last-child:hover {
-          color: #5510cdff;
-        }
-
-        .tab-btn.active {
-          background: white;
-          box-shadow: 0 4px 12px rgba(0, 11, 25, 0.15);
-        }
-
-        .tab-btn:first-child.active {
-          color: var(--primary);
-          background: linear-gradient(135deg, rgba(0, 71, 171, 0.05), rgba(0, 71, 171, 0.1));
-          border: 2px solid rgba(0, 71, 171, 0.3);
-        }
-
-        .tab-btn:last-child.active {
-          color: #7c3aed;
-          background: linear-gradient(135deg, rgba(124, 58, 237, 0.05), rgba(124, 58, 237, 0.1));
-          border: 2px solid rgba(124, 58, 237, 0.3);
-          box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15);
+        .login-card.admin-theme {
+          background: linear-gradient(to bottom, rgba(255, 255, 255, 0.95), rgba(203, 213, 225, 0.6));
         }
 
         .login-header {
@@ -265,6 +197,7 @@ const Wardenlogin: React.FC = () => {
           padding: 0 48px 48px;
         }
 
+        /* Shimmering Border Effect */
         .login-card::before {
           content: '';
           position: absolute;
@@ -289,6 +222,7 @@ const Wardenlogin: React.FC = () => {
           pointer-events: none;
         }
 
+        /* Glassy Reflection */
         .login-card::after {
           content: '';
           position: absolute;
@@ -345,9 +279,9 @@ const Wardenlogin: React.FC = () => {
           transition: all 0.3s ease;
         }
 
-        .logo-circle.staff-logo {
-          background: linear-gradient(135deg, #64748b, #475569);
-          box-shadow: 0 10px 25px -5px rgba(71, 85, 105, 0.3);
+        .logo-circle.admin-logo {
+          background: linear-gradient(135deg, #475569, #1e293b);
+          box-shadow: 0 10px 25px -5px rgba(30, 41, 59, 0.3);
         }
 
         @keyframes float {
@@ -388,7 +322,7 @@ const Wardenlogin: React.FC = () => {
 
         .floating-input {
           height: 56px;
-          padding: 24px 48px 8px 16px;
+          padding: 24px 16px 8px;
           font-size: 16px;
           background: #f8fafc;
           border: 2px solid transparent;
@@ -398,14 +332,14 @@ const Wardenlogin: React.FC = () => {
 
         .floating-input:focus {
           background: white;
-          border-color: var(--primary);
-          box-shadow: 0 0 0 4px rgba(0, 71, 171, 0.1);
+          border-color: #475569;
+          box-shadow: 0 0 0 4px rgba(71, 85, 105, 0.1);
         }
 
         .floating-input:focus ~ label,
         .floating-input:not(:placeholder-shown) ~ label {
           transform: translateY(-14px) scale(0.85);
-          color: var(--primary);
+          color: #475569;
           font-weight: 600;
         }
 
@@ -457,7 +391,7 @@ const Wardenlogin: React.FC = () => {
         }
 
         .checkbox-label:hover {
-          color: var(--primary);
+          color: #475569;
         }
 
         .btn-block {
@@ -467,7 +401,7 @@ const Wardenlogin: React.FC = () => {
           font-weight: 600;
           border-radius: 12px;
           letter-spacing: 0.5px;
-          background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+          background: linear-gradient(135deg, #475569, #1e293b);
           position: relative;
           overflow: hidden;
           opacity: 0;
@@ -487,7 +421,7 @@ const Wardenlogin: React.FC = () => {
 
         .btn-block:hover {
           transform: translateY(-2px);
-          box-shadow: 0 10px 20px -5px rgba(0, 71, 171, 0.4);
+          box-shadow: 0 10px 20px -5px rgba(30, 41, 59, 0.4);
         }
 
         .btn-block:hover::after {
@@ -523,8 +457,7 @@ const Wardenlogin: React.FC = () => {
             font-size: 22px;
           }
         }
-
-        .back-home-btn {
+          .back-home-btn {
           background: rgba(255, 255, 255, 0.2);
           backdrop-filter: blur(10px);
           border: 1px solid rgba(255, 255, 255, 0.3);
@@ -545,11 +478,11 @@ const Wardenlogin: React.FC = () => {
           background: rgba(255, 255, 255, 0.3);
           transform: translateX(-4px);
         }
+
       `}</style>
 
-    </div>
-  );
+        </div>
+    );
 };
 
-export default Wardenlogin;
-
+export default AdminLogin;

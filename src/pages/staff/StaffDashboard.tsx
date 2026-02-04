@@ -5,6 +5,8 @@ import { toast, ToastContainer } from 'react-toastify';
 import axios from 'axios';
 import StaffHeader from '../../components/StaffHeader';
 
+import LoadingSpinner from '../../components/LoadingSpinner';
+
 const StaffDashboard: React.FC = () => {
     const [staff, setStaff] = useState<Staff | null>(null);
     const navigate = useNavigate();
@@ -35,11 +37,41 @@ const StaffDashboard: React.FC = () => {
         }
 
 
+        const checkEmergencyRequests = async () => {
+            try {
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}/staff/outpass/list`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                if (response.status === 200) {
+                    const outpasses = response.data.outpasses || [];
+                    const emergencyRequests = outpasses.filter((o: any) =>
+                        (o.outpasstype || '').toLowerCase() === 'emergency' &&
+                        o.staffapprovalstatus === 'pending'
+                    );
+
+                    if (emergencyRequests.length > 0) {
+                        toast.error(`⚠️ ${emergencyRequests.length} Emergency Request(s) Pending!`, {
+                            position: "top-center",
+                            autoClose: false,
+                            hideProgressBar: false,
+                            closeOnClick: false,
+                            pauseOnHover: true,
+                            draggable: true,
+                            theme: "colored",
+                            style: { fontWeight: 'bold', fontSize: '16px' }
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to check emergency requests", error);
+            }
+        };
+
         fetchStaffData();
+        checkEmergencyRequests();
     }, []);
 
-
-    if (!staff) return <div className="loading-screen">Loading...</div>;
+    if (!staff) return <LoadingSpinner />;
 
     return (
         <div className="staff-dashboard">

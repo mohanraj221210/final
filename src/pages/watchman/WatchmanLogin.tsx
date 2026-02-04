@@ -4,6 +4,7 @@ import Toast from '../../components/Toast';
 import axios from 'axios';
 import { toast, ToastContainer } from "react-toastify";
 
+
 const WatchmanLogin: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -79,6 +80,7 @@ const WatchmanLogin: React.FC = () => {
           onClose={() => setShowToast(false)}
         />
       )}
+
 
       <div className="login-container">
         <button className="back-home-btn" onClick={() => navigate('/')}>
@@ -392,7 +394,7 @@ const WatchmanLogin: React.FC = () => {
 
         .floating-input {
           height: 56px;
-          padding: 24px 16px 8px;
+          padding: 24px 48px 8px 16px;
           font-size: 16px;
           background: #f8fafc;
           border: 2px solid transparent;

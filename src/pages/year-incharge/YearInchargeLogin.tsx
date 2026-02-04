@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import Toast from '../../components/Toast';
 import axios from 'axios';
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+
 
 const YearInchargeLogin: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -22,6 +23,8 @@ const YearInchargeLogin: React.FC = () => {
       toast.error("Please enter email and password");
       return;
     }
+
+    if (Loading) return;
 
     setLoading(true);
 
@@ -44,9 +47,13 @@ const YearInchargeLogin: React.FC = () => {
         setTimeout(() => {
           navigate("/year-incharge-dashboard");
         }, 1500);
+        // Do NOT set loading to false here, to prevent re-submission during redirect delay
+      } else {
+        setLoading(false);
       }
     } catch (error: any) {
       console.error("Login error:", error);
+      setLoading(false);
 
       if (error.response) {
         const status = error.response.status;
@@ -63,13 +70,13 @@ const YearInchargeLogin: React.FC = () => {
       } else {
         toast.error("Server not reachable");
       }
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
     <div className="login-page">
+      <ToastContainer />
+
       {showToast && (
         <Toast
           message="Login successful! Redirecting..."
@@ -386,7 +393,7 @@ const YearInchargeLogin: React.FC = () => {
 
         .floating-input {
           height: 56px;
-          padding: 24px 16px 8px;
+          padding: 24px 48px 8px 16px;
           font-size: 16px;
           background: #f8fafc;
           border: 2px solid transparent;
