@@ -606,18 +606,22 @@ const PassApproval: React.FC = () => {
                                                 {getStatusBadge(selectedStudent.yearInchargeApproval)}
                                             </div>
                                         </div>
-                                        <div className={`step-connector ${selectedStudent.yearInchargeApproval === 'approved' ? 'active' : ''}`}></div>
+                                        {selectedStudent.residenceType === 'hostel' && (
+                                            <>
+                                                <div className={`step-connector ${selectedStudent.yearInchargeApproval === 'approved' ? 'active' : ''}`}></div>
 
-                                        <div className="approval-step">
-                                            <div className={`step-circle ${selectedStudent.wardenApproval} ${selectedStudent.yearInchargeApproval !== 'approved' ? 'disabled' : ''}`}>
-                                                {selectedStudent.wardenApproval === 'approved' ? '✓' :
-                                                    selectedStudent.wardenApproval === 'rejected' ? '✗' : '3'}
-                                            </div>
-                                            <div className="step-content">
-                                                <h3>Warden Approval</h3>
-                                                {getStatusBadge(selectedStudent.wardenApproval)}
-                                            </div>
-                                        </div>
+                                                <div className="approval-step">
+                                                    <div className={`step-circle ${selectedStudent.wardenApproval} ${selectedStudent.yearInchargeApproval !== 'approved' ? 'disabled' : ''}`}>
+                                                        {selectedStudent.wardenApproval === 'approved' ? '✓' :
+                                                            selectedStudent.wardenApproval === 'rejected' ? '✗' : '3'}
+                                                    </div>
+                                                    <div className="step-content">
+                                                        <h3>Warden Approval</h3>
+                                                        {getStatusBadge(selectedStudent.wardenApproval)}
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             </div>

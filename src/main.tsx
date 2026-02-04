@@ -43,8 +43,11 @@ import AdminLogin from './pages/admin/AdminLogin'
 
 
 
+import AxiosInterceptor from './components/AxiosInterceptor'
+
 createRoot(document.getElementById('root')!).render(
   <BrowserRouter>
+    <AxiosInterceptor />
     <Routes>
       <Route path="/admin-login" element={<AdminLogin />} />
       <Route path="/" element={<Welcome />} />
