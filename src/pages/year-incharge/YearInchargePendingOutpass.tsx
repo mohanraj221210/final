@@ -15,7 +15,7 @@ interface StudentDetails {
 interface Outpass {
     _id: string;
     studentid: StudentDetails;
-    outpassType: string;
+    outpasstype: string;
     fromDate: string;
     toDate: string;
     staffapprovalstatus: string;
@@ -106,7 +106,7 @@ const YearInchargePendingOutpass: React.FC = () => {
                                         </td>
                                         <td data-label="Department">{item.studentid?.department}</td>
                                         <td data-label="Year">{item.studentid?.year}</td>
-                                        <td data-label="Outpass Type">{item.outpassType}</td>
+                                        <td data-label="Outpass Type">{item.outpasstype}</td>
                                         <td data-label="Date">{new Date(item.fromDate).toLocaleDateString()}</td>
                                         <td data-label="Action">
                                             <button className="view-btn" onClick={() => navigate(`/year-incharge/student/${item._id}`)}>
@@ -129,7 +129,7 @@ const YearInchargePendingOutpass: React.FC = () => {
                                         <h3 className="card-name">{item.studentid?.name}</h3>
                                         <p className="card-reg">{item.studentid?.registerNumber}</p>
                                     </div>
-                                    <span className="pass-type-mobile">{item.outpassType}</span>
+                                    <span className="pass-type-mobile">{item.outpasstype}</span>
                                 </div>
 
                                 <div className="card-body-mobile">
