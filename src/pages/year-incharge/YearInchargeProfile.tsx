@@ -396,7 +396,7 @@ const YearInchargeProfile: React.FC = () => {
                                                 className="input"
                                             >
                                                 <option value="" disabled>+ Add Year</option>
-                                                {['1st Year', '2nd Year', '3rd Year', '4th Year']
+                                                {['1', '2', '3', '4']
                                                     .filter(opt => !profile.handlingyears.includes(opt))
                                                     .map(opt => (
                                                         <option key={opt} value={opt}>{opt}</option>
