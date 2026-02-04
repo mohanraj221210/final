@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import YearInchargeNav from '../../components/YearInchargeNav';
-import Loader from '../../components/Loader';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
@@ -121,14 +121,7 @@ const YearInchargeDashboard: React.FC = () => {
     };
 
     if (loading) {
-        return (
-            <div className="page-container dashboard-page">
-                <YearInchargeNav />
-                <div className="content-wrapper">
-                    <Loader />
-                </div>
-            </div>
-        );
+        return <LoadingSpinner />;
     }
 
     return (

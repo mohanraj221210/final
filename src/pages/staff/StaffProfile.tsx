@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import StaffHeader from '../../components/StaffHeader';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const DEPARTMENTS = [
     "Computer Science and Engineering",
@@ -20,6 +21,8 @@ const DESIGNATIONS = [
     "Head of Department",
     "Lab Assistant",
 ];
+
+
 
 const StaffProfile: React.FC = () => {
     const [loading, setLoading] = useState(true);
@@ -183,7 +186,7 @@ const StaffProfile: React.FC = () => {
     };
 
     if (loading) {
-        return <div className="card staff-card">Loading...</div>;
+        return <LoadingSpinner />;
     }
 
     if (!staff) {

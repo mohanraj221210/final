@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import Toast from '../../components/Toast';
 import axios from 'axios';
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+
 
 const YearInchargeLogin: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -74,6 +75,8 @@ const YearInchargeLogin: React.FC = () => {
 
   return (
     <div className="login-page">
+      <ToastContainer />
+
       {showToast && (
         <Toast
           message="Login successful! Redirecting..."

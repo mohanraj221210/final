@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import WatchmanNav from "../../components/WatchmanNav";
 import { toast } from "react-toastify";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 const WatchmanStudentView: React.FC = () => {
   const { id } = useParams();
@@ -48,53 +49,7 @@ const WatchmanStudentView: React.FC = () => {
 
 
   if (loading) {
-    return (
-      <div className="page-container warden-view-page loading-center">
-        <div className="loading-container">
-          <div className="loading-bar">
-            <div className="loading-progress"></div>
-          </div>
-          <p>Loading student details...</p>
-        </div>
-        <style>{`
-          .loading-center {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            background: #f8fafc;
-          }
-          .loading-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 16px;
-            color: #64748b;
-            font-weight: 500;
-          }
-          .loading-bar {
-            width: 200px;
-            height: 6px;
-            background: #e2e8f0;
-            border-radius: 99px;
-            overflow: hidden;
-            position: relative;
-          }
-          .loading-progress {
-            width: 50%;
-            height: 100%;
-            background: linear-gradient(90deg, #2563eb, #3b82f6);
-            border-radius: 99px;
-            position: absolute;
-            animation: shimmer 1.5s infinite linear;
-          }
-          @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(200%); }
-          }
-        `}</style>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (!student) {

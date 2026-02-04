@@ -4,6 +4,7 @@ import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import StaffHeader from '../../components/StaffHeader';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const DEPARTMENTS = [
     "Computer Science and Engineering",
@@ -183,7 +184,7 @@ const StudentDetails: React.FC = () => {
         }
     };
 
-    if (loading) return <div className="loading-screen">Loading...</div>;
+    if (loading) return <LoadingSpinner />;
     if (!student) return <div className="error-screen">Student not found</div>;
 
     return (
@@ -331,19 +332,19 @@ const StudentDetails: React.FC = () => {
                                     onChange={handleInputChange}
                                     options={SEMESTERS}
                                 />
-                                <Field 
-                                    label="CGPA" 
-                                    name="cgpa" 
-                                    value={formData.cgpa} 
-                                    isEditing={isEditing} 
-                                    onChange={handleInputChange} 
+                                <Field
+                                    label="CGPA"
+                                    name="cgpa"
+                                    value={formData.cgpa}
+                                    isEditing={isEditing}
+                                    onChange={handleInputChange}
                                 />
-                                <Field 
-                                    label="Arrears" 
-                                    name="arrears" 
-                                    value={formData.arrears} 
-                                    isEditing={isEditing} 
-                                    onChange={handleInputChange} 
+                                <Field
+                                    label="Arrears"
+                                    name="arrears"
+                                    value={formData.arrears}
+                                    isEditing={isEditing}
+                                    onChange={handleInputChange}
                                 />
                             </div>
                         </div>

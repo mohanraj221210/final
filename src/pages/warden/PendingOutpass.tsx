@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import WardenNav from "../../components/WardenNav";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 interface Student {
   _id?: string;
@@ -23,6 +24,7 @@ interface Student {
 
 const PendingOutpass: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const itemsPerPage = 8;
   const navigate = useNavigate();
@@ -32,21 +34,26 @@ const PendingOutpass: React.FC = () => {
   }, []);
 
   const fetchStudents = async () => {
-    const token = localStorage.getItem("token");
-    const res = await axios.get(
-      `${import.meta.env.VITE_API_URL}/warden/outpass/list`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}/warden/outpass/list`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
-    const allData = res.data.outpasses || res.data.data || res.data.students || [];
-    const pendingData = allData.filter((item: any) => {
-      const ws = item.wardenapprovalstatus?.toLowerCase() || "";
-
-      return ws !== 'Approved' && ws !== 'Rejected' && ws !== 'Declined';
-    });
-    setStudents(pendingData);
+      const allData = res.data.outpasses || res.data.data || res.data.students || [];
+      const pendingData = allData.filter((item: any) => {
+        const ws = item.wardenapprovalstatus?.toLowerCase() || "";
+        return ws !== 'Approved' && ws !== 'Rejected' && ws !== 'Declined';
+      });
+      setStudents(pendingData);
+    } catch (error) {
+      console.error("Failed to fetch data", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -59,48 +66,52 @@ const PendingOutpass: React.FC = () => {
         <h1>Pending Outpass Students</h1>
 
         <div className="outpass-card">
-          <table className="outpass-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Register No</th>
-                <th>Date</th>
-                <th>Reason</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {students.length === 0 ? (
+          {loading ? (
+            <LoadingSpinner />
+          ) : (
+            <table className="outpass-table">
+              <thead>
                 <tr>
-                  <td colSpan={6} style={{ textAlign: "center", padding: "20px" }}>
-                    No pending outpasses
-                  </td>
+                  <th>Name</th>
+                  <th>Register No</th>
+                  <th>Date</th>
+                  <th>Reason</th>
+                  <th>Status</th>
+                  <th>Action</th>
                 </tr>
-              ) : (
-                students.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((s) => (
-                  <tr key={s._id || s.id}>
-                    <td data-label="Name">{s.studentid?.name || s.studentName || s.name}</td>
-                    <td data-label="Register No">{s.studentid?.registerNumber || s.register_number || 'N/A'}</td>
-                    <td data-label="Date">
-                      {new Date(s.createdAt || s.outDate || Date.now()).toLocaleDateString()}
-                    </td>
-                    <td data-label="Reason">{s.reason}</td>
-                    <td data-label="Status">
-                      <span className="status-pill status-pending">
-                        Pending
-                      </span>
-                    </td>
-                    <td data-label="Action">
-                      <button className="view-btn" onClick={() => navigate(`/warden/student/${s._id || s.id}`)}>
-                        View
-                      </button>
+              </thead>
+              <tbody>
+                {students.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} style={{ textAlign: "center", padding: "20px" }}>
+                      No pending outpasses
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  students.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((s) => (
+                    <tr key={s._id || s.id}>
+                      <td data-label="Name">{s.studentid?.name || s.studentName || s.name}</td>
+                      <td data-label="Register No">{s.studentid?.registerNumber || s.register_number || 'N/A'}</td>
+                      <td data-label="Date">
+                        {new Date(s.createdAt || s.outDate || Date.now()).toLocaleDateString()}
+                      </td>
+                      <td data-label="Reason">{s.reason}</td>
+                      <td data-label="Status">
+                        <span className="status-pill status-pending">
+                          Pending
+                        </span>
+                      </td>
+                      <td data-label="Action">
+                        <button className="view-btn" onClick={() => navigate(`/warden/student/${s._id || s.id}`)}>
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
 
         {students.length > 0 && (

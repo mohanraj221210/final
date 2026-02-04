@@ -35,12 +35,12 @@ const WardenStudentView: React.FC = () => {
 
   const openConfirmation = (type: 'approved' | 'rejected') => {
     setModalType(type);
-    setRemarks(type === 'approved' ? "Approved by Warden" : "Rejected by Warden");
+    setRemarks("");
     setShowModal(true);
   };
 
   const handleConfirmAction = async () => {
-    if (!modalType) return;
+    if (!modalType || !remarks.trim()) return;
 
     try {
       const token = localStorage.getItem("token");
@@ -303,20 +303,20 @@ const WardenStudentView: React.FC = () => {
       </div>
 
       {showModal && (
-        <div className="modal-overlay">
-          <div className="modal-card">
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>{modalType === 'approved' ? 'Approve Request' : 'Reject Request'}</h3>
-              <button className="close-btn" onClick={() => setShowModal(false)}>×</button>
+              <h3>{modalType === 'approved' ? 'Approve Outpass Request' : 'Reject Outpass Request'}</h3>
+              <button className="close-btn" onClick={() => setShowModal(false)}>✕</button>
             </div>
             <div className="modal-body">
-              <label>Warden Remarks</label>
+              <label>Remarks (Required)</label>
               <textarea
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
                 rows={4}
                 className="remarks-input"
-                placeholder="Enter remarks here..."
+                placeholder={modalType === 'approved' ? 'Please provide approval remarks...' : 'Please provide reason for rejection...'}
               />
             </div>
             <div className="modal-footer">
@@ -324,8 +324,9 @@ const WardenStudentView: React.FC = () => {
               <button
                 className={`btn-confirm ${modalType}`}
                 onClick={handleConfirmAction}
+                disabled={!remarks.trim()}
               >
-                Submit Remark
+                {modalType === 'approved' ? 'Confirm Approval' : 'Confirm Rejection'}
               </button>
             </div>
           </div>
@@ -604,9 +605,10 @@ const WardenStudentView: React.FC = () => {
              color: #9ca3af;
              text-align: center;
           }
+        }
 
         /* Modal Styles */
-        .modal-overlay {
+        .page-container .modal-overlay {
           position: fixed;
           top: 0;
           left: 0;
@@ -620,7 +622,7 @@ const WardenStudentView: React.FC = () => {
           z-index: 1000;
         }
 
-        .modal-card {
+        .page-container .modal-card {
           background: white;
           border-radius: 20px;
           width: 90%;
@@ -629,7 +631,7 @@ const WardenStudentView: React.FC = () => {
           animation: modalSlideUp 0.3s ease-out;
         }
 
-        .modal-header {
+        .page-container .modal-header {
           background: linear-gradient(135deg, #1e3a8a, #0f172a);
           padding: 24px 28px;
           border-radius: 20px 20px 0 0;
@@ -638,14 +640,14 @@ const WardenStudentView: React.FC = () => {
           align-items: center;
         }
 
-        .modal-header h3 {
+        .page-container .modal-header h3 {
           margin: 0;
           color: white;
           font-size: 1.4rem;
           font-weight: 600;
         }
 
-        .close-btn {
+        .page-container .close-btn {
           background: rgba(255, 255, 255, 0.2);
           border: none;
           color: white;
@@ -662,16 +664,16 @@ const WardenStudentView: React.FC = () => {
           line-height: 1;
         }
 
-        .close-btn:hover {
+        .page-container .close-btn:hover {
           background: rgba(255, 255, 255, 0.3);
           color: white;
         }
 
-        .modal-body {
+        .page-container .modal-body {
           padding: 28px;
         }
 
-        .modal-body label {
+        .page-container .modal-body label {
           display: block;
           font-weight: 700;
           color: #1e293b;
@@ -679,7 +681,7 @@ const WardenStudentView: React.FC = () => {
           font-size: 1rem;
         }
 
-        .remarks-input {
+        .page-container .remarks-input {
           width: 100%;
           padding: 14px;
           border: 2px solid #e2e8f0;
@@ -691,12 +693,12 @@ const WardenStudentView: React.FC = () => {
           color: #1f2937;
         }
 
-        .remarks-input:focus {
+        .page-container .remarks-input:focus {
           outline: none;
           border-color: #1e3a8a;
         }
 
-        .modal-footer {
+        .page-container .modal-footer {
           padding: 0 28px 28px 28px;
           display: flex;
           gap: 12px;
@@ -705,7 +707,7 @@ const WardenStudentView: React.FC = () => {
           border-top: none;
         }
 
-        .btn-cancel {
+        .page-container .btn-cancel {
           padding: 12px 28px;
           border: none;
           border-radius: 10px;
@@ -716,11 +718,11 @@ const WardenStudentView: React.FC = () => {
           color: #475569;
         }
 
-        .btn-cancel:hover {
+        .page-container .btn-cancel:hover {
           background: #e2e8f0;
         }
 
-        .btn-confirm {
+        .page-container .btn-confirm {
           padding: 12px 28px;
           border: none;
           border-radius: 10px;
@@ -730,20 +732,25 @@ const WardenStudentView: React.FC = () => {
           color: white;
         }
 
-        .btn-confirm.approved {
+        .page-container .btn-confirm.approved {
           background: linear-gradient(135deg, #10b981, #059669);
         }
-        .btn-confirm.approved:hover {
+        .page-container .btn-confirm.approved:hover:not(:disabled) {
           transform: translateY(-2px);
           box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
 
-        .btn-confirm.rejected {
+        .page-container .btn-confirm.rejected {
           background: linear-gradient(135deg, #ef4444, #dc2626);
         }
-        .btn-confirm.rejected:hover {
+        .page-container .btn-confirm.rejected:hover:not(:disabled) {
           transform: translateY(-2px);
           box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .page-container .btn-confirm:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
         }
 
         @keyframes modalSlideUp {

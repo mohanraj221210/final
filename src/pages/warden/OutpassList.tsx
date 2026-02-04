@@ -5,6 +5,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 import WardenNav from "../../components/WardenNav";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 const OutpassList: React.FC = () => {
   const navigate = useNavigate();
@@ -94,12 +95,7 @@ const OutpassList: React.FC = () => {
 
         <div className="outpass-card">
           {loading ? (
-            <div className="loading-container">
-              <div className="loading-bar">
-                <div className="loading-progress"></div>
-              </div>
-              <p>Loading outpasses...</p>
-            </div>
+            <LoadingSpinner />
           ) : (
             <table className="outpass-table">
               <thead>

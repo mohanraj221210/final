@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import WatchmanNav from "../../components/WatchmanNav";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 const WatchmanOutpassList: React.FC = () => {
   const navigate = useNavigate();
@@ -99,6 +100,8 @@ const WatchmanOutpassList: React.FC = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentData = filteredOutpasses.slice(startIndex, startIndex + itemsPerPage);
 
+  if (loading) return <LoadingSpinner />;
+
   return (
     <div className="page-container">
       <WatchmanNav />
@@ -138,71 +141,63 @@ const WatchmanOutpassList: React.FC = () => {
         </div>
 
         <div className="outpass-card">
-          {loading ? (
-            <div className="loading-container">
-              <div className="loading-bar">
-                <div className="loading-progress"></div>
-              </div>
-              <p>Loading outpasses...</p>
-            </div>
-          ) : (
-            <table className="outpass-table">
-              <thead>
+          <table className="outpass-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Reg No</th>
+                <th>Dept / Year</th>
+                <th>Date</th>
+                <th>Reason</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentData.length === 0 ? (
                 <tr>
-                  <th>#</th>
-                  <th>Name</th>
-                  <th>Reg No</th>
-                  <th>Dept / Year</th>
-                  <th>Date</th>
-                  <th>Reason</th>
-                  <th>Status</th>
+                  <td colSpan={7} className="no-data-cell" style={{ textAlign: "center", padding: "20px" }}>
+                    No approved outpasses found
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {currentData.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="no-data-cell" style={{ textAlign: "center", padding: "20px" }}>
-                      No approved outpasses found
+              ) : (
+                currentData.map((item, index) => (
+                  <tr key={item.id || index}>
+                    <td data-label="#">{startIndex + index + 1}</td>
+                    <td data-label="Name">
+                      {item.studentid?.name || "N/A"}
+                    </td>
+                    <td data-label="Register No">
+                      {item.studentid?.registerNumber || "N/A"}
+                    </td>
+                    <td data-label="Dept / Year">
+                      {item.studentid?.department || "-"} / {item.studentid?.year || "-"}
+                    </td>
+                    <td data-label="Date">
+                      {new Date(item.createdAt || item.outDate).toLocaleDateString()}
+                    </td>
+                    <td data-label="Reason">{item.reason}</td>
+                    <td data-label="Status">
+                      <div className="status-stack">
+                        <span className={`status-badge ${getStatusColor(item.staffapprovalstatus)}`}>
+                          Staff: {item.staffapprovalstatus}
+                        </span>
+                        <span className={`status-badge ${getStatusColor(item.yearinchargeapprovalstatus)}`}>
+                          Incharge: {item.yearinchargeapprovalstatus}
+                        </span>
+                        {(item.studentid?.residencetype || '').toLowerCase().trim().replace(/\s/g, '') !== 'dayscholar' && (
+                          <span className={`status-badge ${getStatusColor(item.wardenapprovalstatus)}`}>
+                            Warden: {item.wardenapprovalstatus}
+                          </span>
+                        )}
+                      </div>
                     </td>
                   </tr>
-                ) : (
-                  currentData.map((item, index) => (
-                    <tr key={item.id || index}>
-                      <td data-label="#">{startIndex + index + 1}</td>
-                      <td data-label="Name">
-                        {item.studentid?.name || "N/A"}
-                      </td>
-                      <td data-label="Register No">
-                        {item.studentid?.registerNumber || "N/A"}
-                      </td>
-                      <td data-label="Dept / Year">
-                        {item.studentid?.department || "-"} / {item.studentid?.year || "-"}
-                      </td>
-                      <td data-label="Date">
-                        {new Date(item.createdAt || item.outDate).toLocaleDateString()}
-                      </td>
-                      <td data-label="Reason">{item.reason}</td>
-                      <td data-label="Status">
-                        <div className="status-stack">
-                          <span className={`status-badge ${getStatusColor(item.staffapprovalstatus)}`}>
-                            Staff: {item.staffapprovalstatus}
-                          </span>
-                          <span className={`status-badge ${getStatusColor(item.yearinchargeapprovalstatus)}`}>
-                            Incharge: {item.yearinchargeapprovalstatus}
-                          </span>
-                          {(item.studentid?.residencetype || '').toLowerCase().trim().replace(/\s/g, '') !== 'dayscholar' && (
-                            <span className={`status-badge ${getStatusColor(item.wardenapprovalstatus)}`}>
-                              Warden: {item.wardenapprovalstatus}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          )}
+                ))
+              )}
+            </tbody>
+          </table>
+
 
           {!loading && currentData.length > 0 && (
             <div className="mobile-cards-view">

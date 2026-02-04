@@ -4,6 +4,7 @@ import Toast from '../components/Toast';
 import axios from 'axios';
 import { toast, ToastContainer } from "react-toastify";
 
+
 interface LoginProps {
   initialType?: 'student' | 'staff';
 }
@@ -57,6 +58,7 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
   return (
     <div className="login-page">
       <ToastContainer />
+
       {showToast && (
         <Toast
           message="Login successful! Redirecting..."

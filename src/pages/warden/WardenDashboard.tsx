@@ -5,6 +5,7 @@ import { type User } from '../../data/sampleData';
 import axios from 'axios';
 import { useEffect } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const Dashboard: React.FC = () => {
     const [Loading, setLoading] = React.useState(true);
@@ -157,7 +158,7 @@ const Dashboard: React.FC = () => {
         <div className="page-container dashboard-page">
             <ToastContainer position="bottom-right" />
             {Loading ? (
-                <div className="card staff-card" style={{ margin: '2rem auto', textAlign: 'center', padding: '2rem' }}>Loading...</div>
+                <LoadingSpinner />
             ) : (
                 <>
                     <Nav />

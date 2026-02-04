@@ -5,6 +5,8 @@ import { toast, ToastContainer } from 'react-toastify';
 import axios from 'axios';
 import StaffHeader from '../../components/StaffHeader';
 
+import LoadingSpinner from '../../components/LoadingSpinner';
+
 const StaffDashboard: React.FC = () => {
     const [staff, setStaff] = useState<Staff | null>(null);
     const navigate = useNavigate();
@@ -60,8 +62,7 @@ const StaffDashboard: React.FC = () => {
         checkEmergencyRequests();
     }, []);
 
-
-    if (!staff) return <div className="loading-screen">Loading...</div>;
+    if (!staff) return <LoadingSpinner />;
 
     return (
         <div className="staff-dashboard">

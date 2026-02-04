@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import 'react-toastify/dist/ReactToastify.css';
 import './styles.css'
 import Welcome from './pages/Welcome'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
