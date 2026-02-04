@@ -81,7 +81,13 @@ const Profile: React.FC = () => {
                 } else {
                     toast.error("Failed to fetch user profile");
                 }
-            } catch (error) {
+            } catch (error: any) {
+                // Check for authentication errors
+                if (error.response?.status === 401 || error.response?.status === 403) {
+                    toast.error("Session expired or invalid. Please login again.");
+                    handleLogout();
+                    return;
+                }
                 toast.error("Failed to fetch user profile");
             }
         }
@@ -157,7 +163,13 @@ const Profile: React.FC = () => {
                 setShowToast(true);
                 setSelectedFile(null); // Clear selected file after successful upload
             }
-        } catch (error) {
+        } catch (error: any) {
+            // Check for authentication errors
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                toast.error("Session expired or invalid. Please login again.");
+                handleLogout();
+                return;
+            }
             toast.error("Failed to update profile");
             console.error(error);
         }
@@ -419,15 +431,20 @@ const Profile: React.FC = () => {
 
                                 <div className="form-group">
                                     <label>Batch</label>
-                                    <input
-                                        type="text"
+                                    <select
                                         name="batch"
                                         value={user.batch}
                                         onChange={handleChange}
                                         disabled={!isEditing}
                                         className="input"
-                                        placeholder="e.g., 2021-2025"
-                                    />
+                                    >
+                                        <option value="">Select Batch</option>
+                                        <option value="2022-2026">2022-2026</option>
+                                        <option value="2023-2027">2023-2027</option>
+                                        <option value="2024-2028">2024-2028</option>
+                                        <option value="2025-2029">2025-2029</option>
+                                        <option value="2026-2030">2026-2030</option>
+                                    </select>
                                 </div>
 
                                 <div className="form-group">

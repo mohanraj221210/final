@@ -66,7 +66,16 @@ const PassApproval: React.FC = () => {
                 if (response.status === 200) {
                     setCurrentStaffName(response.data.staff.name);
                 }
-            } catch (error) {
+            } catch (error: any) {
+                // Check for authentication errors
+                if (error.response?.status === 401 || error.response?.status === 403) {
+                    toast.error("Session expired or invalid. Please login again.");
+                    localStorage.removeItem('isLoggedIn');
+                    localStorage.removeItem('userType');
+                    localStorage.removeItem('token');
+                    window.location.href = '/login';
+                    return;
+                }
                 console.error("Failed to fetch staff profile", error);
             }
         };
@@ -117,7 +126,16 @@ const PassApproval: React.FC = () => {
                 setSelectedStudent(mappedStudent);
                 setRoommates(roomMatesData);
             }
-        } catch (error) {
+        } catch (error: any) {
+            // Check for authentication errors
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                toast.error("Session expired or invalid. Please login again.");
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('userType');
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+                return;
+            }
             console.error("Failed to fetch outpass details:", error);
             toast.error("Failed to load details");
         } finally {
@@ -163,7 +181,16 @@ const PassApproval: React.FC = () => {
 
                     setStudents(mappedStudents);
                 }
-            } catch (error) {
+            } catch (error: any) {
+                // Check for authentication errors
+                if (error.response?.status === 401 || error.response?.status === 403) {
+                    toast.error("Session expired or invalid. Please login again.");
+                    localStorage.removeItem('isLoggedIn');
+                    localStorage.removeItem('userType');
+                    localStorage.removeItem('token');
+                    window.location.href = '/login';
+                    return;
+                }
                 console.error("Error fetching pass requests:", error);
                 toast.error("Failed to load outpass requests");
             }
@@ -271,6 +298,15 @@ const PassApproval: React.FC = () => {
                 // Removed setSelectedStudent(null) to keep user on the page
             }
         } catch (error: any) {
+            // Check for authentication errors
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                toast.error("Session expired or invalid. Please login again.");
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('userType');
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+                return;
+            }
             console.error('Error updating outpass status:', error);
             toast.error(error.response?.data?.message || 'Failed to update status');
         }

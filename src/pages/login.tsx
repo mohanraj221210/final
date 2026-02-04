@@ -41,10 +41,10 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
           }
         }, 1500);
       }
-    } catch (error:any) { 
-    if(error.response?.status === 401) {
+    } catch (error: any) {
+      if (error.response?.status === 401) {
         toast.error("Invalid credentials. Please try again.", { position: "bottom-right", autoClose: 5000 });
-    } else if (error.response?.status === 404) {
+      } else if (error.response?.status === 404) {
         toast.error("User not found. Please check your email.", { position: "bottom-right", autoClose: 5000 });
       } else {
         toast.error("Something went wrong. Please try again later.", { position: "bottom-right", autoClose: 5000 });
@@ -150,7 +150,7 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
             </div>
 
             <button type="submit" className="btn btn-primary btn-block" disabled={Loading}>
-              {loginType === 'student' ? 'Sign In' : 'Sign In as Staff'}
+              {Loading ? 'Signing in...' : (loginType === 'student' ? 'Sign In' : 'Sign In as Staff')}
             </button>
           </form>
 

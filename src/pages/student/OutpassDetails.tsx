@@ -82,7 +82,13 @@ const OutpassDetails: React.FC = () => {
                     }));
                     setOutpasses(mappedOutpasses);
                 }
-            } catch (error) {
+            } catch (error: any) {
+                // Check for authentication errors
+                if (error.response?.status === 401 || error.response?.status === 403) {
+                    toast.error("Session expired or invalid. Please login again.");
+                    handleLogout();
+                    return;
+                }
                 console.error("Error fetching outpasses:", error);
                 toast.error("Failed to fetch outpass history");
             } finally {

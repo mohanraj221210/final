@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import StaffCard from '../../components/StaffCard';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
 const Staffs: React.FC = () => {
     const [Loading, setLoading] = useState(true);
@@ -25,6 +26,12 @@ const Staffs: React.FC = () => {
                     console.log("staff data", response.data);
                 }
             } catch (error: any) {
+                // Check for authentication errors
+                if (error.response?.status === 401 || error.response?.status === 403) {
+                    toast.error("Session expired or invalid. Please login again.");
+                    handleLogout();
+                    return;
+                }
                 console.error("Error fetching staff data:", error.message);
             } finally {
                 setLoading(false)
@@ -35,10 +42,10 @@ const Staffs: React.FC = () => {
     }, []);
 
     const handleLogout = () => {
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('userType');
-      localStorage.removeItem('token');
-      navigate('/login');
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userType');
+        localStorage.removeItem('token');
+        navigate('/login');
     };
 
     const filteredStaff = staffData.filter(staff => {
@@ -58,8 +65,8 @@ const Staffs: React.FC = () => {
 
     return (
         <div className="page-container staff-page">
-            
-             <header className="dashboard-header-custom">
+
+            <header className="dashboard-header-custom">
                 <div className="header-container-custom">
                     <div className="header-left-custom">
                         <div className="brand-custom">

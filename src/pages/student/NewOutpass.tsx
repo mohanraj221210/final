@@ -52,7 +52,13 @@ const Outpass: React.FC = () => {
                         navigate('/dashboard');
                     }
                 }
-            } catch (error) {
+            } catch (error: any) {
+                // Check for authentication errors
+                if (error.response?.status === 401 || error.response?.status === 403) {
+                    toast.error("Session expired or invalid. Please login again.");
+                    handleLogout();
+                    return;
+                }
                 console.error("Error checking profile:", error);
             }
         };
@@ -78,6 +84,12 @@ const Outpass: React.FC = () => {
                 setTimeout(() => navigate('/dashboard'), 3000);
             }
         } catch (error: any) {
+            // Check for authentication errors
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                toast.error("Session expired or invalid. Please login again.");
+                handleLogout();
+                return;
+            }
             console.error('Error submitting outpass:', error);
             toast.error(error.response?.data?.message || 'Failed to submit application');
         } finally {
@@ -182,10 +194,12 @@ const Outpass: React.FC = () => {
                                 value={formData.outpasstype}
                                 onChange={handleChange}
                                 className="form-input"
-                                disabled={residenceType === 'day scholar'}
                             >
                                 {residenceType === 'day scholar' ? (
-                                    <option value="OD">On Duty (OD)</option>
+                                    <>
+                                        <option value="OD">On Duty (OD)</option>
+                                        <option value="Emergency">Emergency</option>
+                                    </>
                                 ) : (
                                     <>
                                         <option value="Outing">Outing (Town Pass)</option>
@@ -197,7 +211,7 @@ const Outpass: React.FC = () => {
                             </select>
                             {residenceType === 'day scholar' && (
                                 <p className="helper-text" style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '8px' }}>
-                                    Only OD outpass is allowed for Day Scholars.
+                                    Day Scholars can apply for On Duty (OD) or Emergency outpass.
                                 </p>
                             )}
                         </div>

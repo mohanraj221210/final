@@ -64,7 +64,8 @@ const Dashboard: React.FC = () => {
         { id: '13', date: new Date(2026, 0, 15), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
         { id: '14', date: new Date(2026, 0, 16), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
         { id: '15', date: new Date(2026, 0, 17), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
-        { id: '16', date: new Date(2026, 1, 18), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
+        { id: '16', date: new Date(2026, 0, 18), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
+        { id: '16', date: new Date(2026, 1, 27), type: 'college_event', title: 'Sports Day', description: 'Sports Day', time: '8:45 AM - 9:15 AM' },
     ]);
 
     useEffect(() => {
@@ -84,7 +85,13 @@ const Dashboard: React.FC = () => {
                 } else {
                     toast.error("Failed to fetch user profile");
                 }
-            } catch (error) {
+            } catch (error: any) {
+                // Check for authentication errors
+                if (error.response?.status === 401 || error.response?.status === 403) {
+                    toast.error("Session expired or invalid. Please login again.");
+                    handleLogout();
+                    return;
+                }
                 toast.error('Failed to fetch user data');
             } finally {
                 setLoading(false);

@@ -49,7 +49,16 @@ const StaffProfile: React.FC = () => {
                     achievements: response.data.staff.achievements || []
                 });
             }
-        } catch (error) {
+        } catch (error: any) {
+            // Check for authentication errors
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                toast.error("Session expired or invalid. Please login again.");
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('userType');
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+                return;
+            }
             console.error("Error fetching staff profile:", error);
             toast.error("Failed to fetch profile data");
         } finally {
@@ -124,7 +133,16 @@ const StaffProfile: React.FC = () => {
                 toast.update(loadingToast, { render: "Update failed.", type: "error", isLoading: false, autoClose: 3000 });
                 setIsEditing(true); // Re-enable edit on soft fail
             }
-        } catch (error) {
+        } catch (error: any) {
+            // Check for authentication errors
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                toast.update(loadingToast, { render: "Session expired. Please login again.", type: "error", isLoading: false, autoClose: 3000 });
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('userType');
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+                return;
+            }
             console.error("Error updating profile:", error);
             toast.update(loadingToast, { render: "Failed to update profile", type: "error", isLoading: false, autoClose: 3000 });
             setIsEditing(true); // Re-enable edit on error

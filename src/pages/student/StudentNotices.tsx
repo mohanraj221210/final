@@ -73,7 +73,13 @@ const StudentNotices: React.FC = () => {
 
                 initSocket(token, myGroup._id);
             }
-        } catch (error) {
+        } catch (error: any) {
+            // Check for authentication errors
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                alert("Session expired or invalid. Please login again.");
+                handleLogout();
+                return;
+            }
             console.error("Error fetching data:", error);
         } finally {
             setLoading(false);

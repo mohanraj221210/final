@@ -72,7 +72,16 @@ const StaffNotices: React.FC = () => {
 
                 initSocket(token, myGroup._id);
             }
-        } catch (error) {
+        } catch (error: any) {
+            // Check for authentication errors
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                alert("Session expired or invalid. Please login again.");
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('userType');
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+                return;
+            }
             console.error("Error fetching data:", error);
         } finally {
             setLoading(false);
@@ -92,7 +101,7 @@ const StaffNotices: React.FC = () => {
             console.log("New message received:", data);
 
             const incomingMsg: Message = {
-                _id: Date.now().toString(), 
+                _id: Date.now().toString(),
                 text: data.message,
                 from: data.from,
                 to: groupId,
@@ -114,7 +123,7 @@ const StaffNotices: React.FC = () => {
         if (!newMessage.trim() || !group || !socketRef.current) return;
 
         const msgText = newMessage;
-        setNewMessage(''); 
+        setNewMessage('');
 
         socketRef.current.emit('group-message', {
             groupId: group._id,

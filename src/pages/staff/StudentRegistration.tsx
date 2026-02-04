@@ -57,7 +57,16 @@ const StudentRegistration: React.FC = () => {
                     setCurrentStaffID(response.data.staff._id);
                     console.log('Current Staff ID:', response.data.staff._id);
                 }
-            } catch (error) {
+            } catch (error: any) {
+                // Check for authentication errors
+                if (error.response?.status === 401 || error.response?.status === 403) {
+                    toast.error("Session expired or invalid. Please login again.");
+                    localStorage.removeItem('isLoggedIn');
+                    localStorage.removeItem('userType');
+                    localStorage.removeItem('token');
+                    window.location.href = '/login';
+                    return;
+                }
                 console.error("Failed to fetch staff profile:", error);
             }
         };
@@ -105,7 +114,16 @@ const StudentRegistration: React.FC = () => {
                     console.warn("First Student Staff ID:", allStudents[0]?.staffid);
                 }
             }
-        } catch (error) {
+        } catch (error: any) {
+            // Check for authentication errors
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                toast.error("Session expired or invalid. Please login again.");
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('userType');
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+                return;
+            }
             console.error("Failed to fetch students", error);
             // toast.error("Failed to fetch student list"); 
             // Suppress error on initial load or if list is empty/404
@@ -160,13 +178,20 @@ const StudentRegistration: React.FC = () => {
                 if (fileInput) fileInput.value = '';
             }
         } catch (error: any) {
+            // Check for authentication errors first
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                toast.error("Session expired or invalid. Please login again.");
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('userType');
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+                return;
+            }
+            // Handle other errors
             if (error.response) {
                 switch (error.response.status) {
                     case 400:
                         toast.error("Missing required fields in Excel");
-                        break;
-                    case 401:
-                        toast.error("Unauthorized access");
                         break;
                     case 402:
                         toast.error("All users already exist");
@@ -209,13 +234,20 @@ const StudentRegistration: React.FC = () => {
                 setSingleForm({ name: '', email: '', password: '' });
             }
         } catch (error: any) {
+            // Check for authentication errors first
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                toast.error("Session expired or invalid. Please login again.");
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('userType');
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+                return;
+            }
+            // Handle other errors
             if (error.response) {
                 switch (error.response.status) {
                     case 400:
                         toast.error("All fields are required");
-                        break;
-                    case 401:
-                        toast.error("Unauthorized access");
                         break;
                     case 409:
                         toast.error("User already exists");

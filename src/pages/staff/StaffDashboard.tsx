@@ -21,6 +21,15 @@ const StaffDashboard: React.FC = () => {
                     setStaff(response.data.staff);
                 };
             } catch (error: any) {
+                // Check for authentication errors
+                if (error.response?.status === 401 || error.response?.status === 403) {
+                    toast.error("Session expired or invalid. Please login again.");
+                    localStorage.removeItem('isLoggedIn');
+                    localStorage.removeItem('userType');
+                    localStorage.removeItem('token');
+                    window.location.href = '/login';
+                    return;
+                }
                 toast.error("Failed to fetch staff data");
             }
         }

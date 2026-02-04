@@ -57,7 +57,16 @@ const StudentDetails: React.FC = () => {
                 setStudent(response.data.student);
                 setFormData(response.data.student);
             }
-        } catch (error) {
+        } catch (error: any) {
+            // Check for authentication errors
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                toast.error("Session expired or invalid. Please login again.");
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('userType');
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+                return;
+            }
             console.error(error);
             toast.error("Failed to fetch student details");
         } finally {
@@ -81,7 +90,16 @@ const StudentDetails: React.FC = () => {
             toast.success("Student updated successfully");
             setIsEditing(false);
             fetchStudentDetails(); // Refresh
-        } catch (error) {
+        } catch (error: any) {
+            // Check for authentication errors
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                toast.error("Session expired or invalid. Please login again.");
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('userType');
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+                return;
+            }
             toast.error("Failed to update student");
         }
     };
@@ -103,7 +121,16 @@ const StudentDetails: React.FC = () => {
             );
             toast.success(newStatus ? "Student blocked" : "Student unblocked");
             setStudent({ ...student, isblocked: newStatus });
-        } catch (error) {
+        } catch (error: any) {
+            // Check for authentication errors
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                toast.error("Session expired or invalid. Please login again.");
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('userType');
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+                return;
+            }
             toast.error("Failed to change block status");
         }
     };
@@ -120,7 +147,16 @@ const StudentDetails: React.FC = () => {
             });
             toast.success("Student deleted successfully");
             navigate('/staff-registration'); // Back to list
-        } catch (error) {
+        } catch (error: any) {
+            // Check for authentication errors
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                toast.error("Session expired or invalid. Please login again.");
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('userType');
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+                return;
+            }
             toast.error("Failed to delete student");
         }
     };
