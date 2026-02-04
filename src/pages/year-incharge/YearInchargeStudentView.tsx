@@ -138,7 +138,7 @@ const YearInchargeStudentView: React.FC = () => {
                                     <p style={{ textTransform: 'capitalize' }}>{outpass.studentid?.residencetype}</p>
                                 </div>
                             </div>
-                            {outpass.studentid?.residencetype !== 'dayscholar' && (
+                            {outpass.studentid?.residencetype?.toLowerCase().replace(/\s/g, '') !== 'dayscholar' && (
                                 <div className="info-row-modern">
                                     <span className="icon">🏢</span>
                                     <div>
@@ -192,13 +192,21 @@ const YearInchargeStudentView: React.FC = () => {
                                     <p>{outpass.yearinchargeapprovalstatus === 'pending' ? 'Pending Decision' : `Status: ${outpass.yearinchargeapprovalstatus}`}</p>
                                 </div>
                             </div>
-                            <div className={`status-step ${outpass.wardenapprovalstatus === 'approved' ? 'completed' : 'pending'}`}>
-                                <div className="step-dot">{outpass.wardenapprovalstatus === 'approved' ? '✓' : '•'}</div>
-                                <div className="step-content">
-                                    <h4>Warden Approval</h4>
-                                    <p>Status: {outpass.wardenapprovalstatus}</p>
-                                </div>
-                            </div>
+                            {/* Check for day scholar (case insensitive, ignoring spaces) */}
+                            {(() => {
+                                const type = outpass.studentid?.residencetype?.toLowerCase().replace(/\s/g, '');
+                                const isDayScholar = type === 'dayscholar';
+
+                                return !isDayScholar && (
+                                    <div className={`status-step ${outpass.wardenapprovalstatus === 'approved' ? 'completed' : 'pending'}`}>
+                                        <div className="step-dot">{outpass.wardenapprovalstatus === 'approved' ? '✓' : '•'}</div>
+                                        <div className="step-content">
+                                            <h4>Warden Approval</h4>
+                                            <p>Status: {outpass.wardenapprovalstatus}</p>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
                         </div>
 
                         <div className="request-details">
@@ -251,7 +259,7 @@ const YearInchargeStudentView: React.FC = () => {
                         </div>
                     </div>
                 </div>
-            </div>
+            </div >
 
             <style>{`
                 .details-grid {
@@ -550,7 +558,7 @@ const YearInchargeStudentView: React.FC = () => {
                     }
                 }
             `}</style>
-        </div>
+        </div >
     );
 };
 
