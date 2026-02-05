@@ -3,26 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import StaffHeader from '../../components/StaffHeader';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
-import LoadingSpinner from '../../components/LoadingSpinner';
-
-const DEPARTMENTS = [
-    "Computer Science and Engineering",
-    "Information Technology",
-    "Electronics and Communication Engineering",
-    "Mechanical Engineering",
-    "Artificial Intelligence and Data Science",
-    "Master of Business Administration"
-];
-
-const DESIGNATIONS = [
-    "Professor",
-    "Associate Professor",
-    "Assistant Professor",
-    "Head of Department",
-    "Lab Assistant",
-];
-
-
 
 const StaffProfile: React.FC = () => {
     const [loading, setLoading] = useState(true);
@@ -186,7 +166,7 @@ const StaffProfile: React.FC = () => {
     };
 
     if (loading) {
-        return <LoadingSpinner />;
+        return <div className="card staff-card">Loading...</div>;
     }
 
     if (!staff) {
@@ -339,30 +319,22 @@ const StaffProfile: React.FC = () => {
                             <div className="profile-badges">
                                 {isEditing ? (
                                     <>
-                                        <select
+                                        <input
+                                            type="text"
                                             name="designation"
                                             value={formData.designation}
                                             onChange={handleChange}
                                             className="edit-input badge-input"
-                                            style={{ marginTop: '10px', flex: 1, minWidth: '200px', maxWidth: '300px' }}
-                                        >
-                                            <option value="">Select Designation</option>
-                                            {DESIGNATIONS.map((des) => (
-                                                <option key={des} value={des}>{des}</option>
-                                            ))}
-                                        </select>
-                                        <select
+                                            placeholder="Designation"
+                                        />
+                                        <input
+                                            type="text"
                                             name="department"
                                             value={formData.department}
                                             onChange={handleChange}
                                             className="edit-input badge-input"
-                                            style={{ marginTop: '10px', flex: 1, minWidth: '200px', maxWidth: '300px' }}
-                                        >
-                                            <option value="">Select Department</option>
-                                            {DEPARTMENTS.map((dept) => (
-                                                <option key={dept} value={dept}>{dept}</option>
-                                            ))}
-                                        </select>
+                                            placeholder="Department"
+                                        />
                                     </>
                                 ) : (
                                     <>
@@ -1267,8 +1239,8 @@ const StaffProfile: React.FC = () => {
                 /* Responsive Design */
                 @media (max-width: 768px) {
                     .action-btn {
-                        margin-top: 0;
-                        padding: 12px 16px;
+                        margin-top: -25px;
+                        padding: 9px 16px;
                     }
                     .profile-header {
                         flex-direction: column;

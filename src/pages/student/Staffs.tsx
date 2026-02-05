@@ -34,7 +34,12 @@ const Staffs: React.FC = () => {
         staff();
     }, []);
 
-
+    const handleLogout = () => {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userType');
+        localStorage.removeItem('token');
+        navigate('/login');
+    };
 
     const filteredStaff = staffData.filter(staff => {
         const matchesSearch = staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

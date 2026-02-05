@@ -20,12 +20,9 @@ interface StudentOutpass {
     // Parents Details
     parentContact: string;
 
-    // Hostel/Bus Details
-    residenceType: string;
-    hostelname?: string;
-    hostelroomno?: string;
-    busNo?: string;
-    boardingPoint?: string;
+    // Hostel Details
+    hostelname: string;
+    hostelroomno: string;
 
     // Last Outpass
     lastOutpassFrom?: string;
@@ -102,11 +99,8 @@ const PassApproval: React.FC = () => {
                     appliedDate: data.createdAt,
                     photo: studentDetails.photo || 'Student',
                     parentContact: studentDetails.parentnumber || 'N/A',
-                    residenceType: studentDetails.residencetype?.toLowerCase() || 'dayscholar', // Fallback to dayscholar if undefined
                     hostelname: studentDetails.hostelname || 'N/A',
                     hostelroomno: studentDetails.hostelroomno || 'N/A',
-                    busNo: studentDetails.busno || 'N/A',
-                    boardingPoint: studentDetails.boardingpoint || 'N/A',
                     reason: data.reason,
                     fromDate: data.fromDate,
                     toDate: data.toDate,
@@ -452,45 +446,24 @@ const PassApproval: React.FC = () => {
                                 </div>
                             </div>
 
-                            {selectedStudent.residenceType === 'hostel' ? (
-                                <div className="detail-card">
-                                    <div className="card-header">
-                                        <span className="card-icon">🏢</span>
-                                        <h2>Hostel Details</h2>
-                                    </div>
-                                    <div className="card-body">
-                                        <div className="info-grid">
-                                            <div className="info-field">
-                                                <label>HOSTEL NAME</label>
-                                                <div className="field-value">{selectedStudent.hostelname}</div>
-                                            </div>
-                                            <div className="info-field">
-                                                <label>ROOM NUMBER</label>
-                                                <div className="field-value">{selectedStudent.hostelroomno}</div>
-                                            </div>
+                            <div className="detail-card">
+                                <div className="card-header">
+                                    <span className="card-icon">🏢</span>
+                                    <h2>Hostel Details</h2>
+                                </div>
+                                <div className="card-body">
+                                    <div className="info-grid">
+                                        <div className="info-field">
+                                            <label>HOSTEL NAME</label>
+                                            <div className="field-value">{selectedStudent.hostelname}</div>
+                                        </div>
+                                        <div className="info-field">
+                                            <label>ROOM NUMBER</label>
+                                            <div className="field-value">{selectedStudent.hostelroomno}</div>
                                         </div>
                                     </div>
                                 </div>
-                            ) : (
-                                <div className="detail-card">
-                                    <div className="card-header">
-                                        <span className="card-icon">🚌</span>
-                                        <h2>Bus Details</h2>
-                                    </div>
-                                    <div className="card-body">
-                                        <div className="info-grid">
-                                            <div className="info-field">
-                                                <label>BUS NUMBER</label>
-                                                <div className="field-value">{selectedStudent.busNo}</div>
-                                            </div>
-                                            <div className="info-field">
-                                                <label>BOARDING POINT</label>
-                                                <div className="field-value">{selectedStudent.boardingPoint}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
+                            </div>
 
                             {/* Last Outpass Details */}
                             {selectedStudent.lastOutpassFrom && (
@@ -549,7 +522,7 @@ const PassApproval: React.FC = () => {
                             </div>
 
                             {/* Roommate Details */}
-                            {selectedStudent.residenceType === 'hostel' && (
+                            {selectedStudent.hostelname && selectedStudent.hostelname !== 'N/A' && (
                                 <div className="detail-card">
                                     <div className="card-header">
                                         <span className="card-icon">👥</span>
@@ -619,22 +592,18 @@ const PassApproval: React.FC = () => {
                                                 {getStatusBadge(selectedStudent.yearInchargeApproval)}
                                             </div>
                                         </div>
-                                        {selectedStudent.residenceType === 'hostel' && (
-                                            <>
-                                                <div className={`step-connector ${selectedStudent.yearInchargeApproval === 'approved' ? 'active' : ''}`}></div>
+                                        <div className={`step-connector ${selectedStudent.yearInchargeApproval === 'approved' ? 'active' : ''}`}></div>
 
-                                                <div className="approval-step">
-                                                    <div className={`step-circle ${selectedStudent.wardenApproval} ${selectedStudent.yearInchargeApproval !== 'approved' ? 'disabled' : ''}`}>
-                                                        {selectedStudent.wardenApproval === 'approved' ? '✓' :
-                                                            selectedStudent.wardenApproval === 'rejected' ? '✗' : '3'}
-                                                    </div>
-                                                    <div className="step-content">
-                                                        <h3>Warden Approval</h3>
-                                                        {getStatusBadge(selectedStudent.wardenApproval)}
-                                                    </div>
-                                                </div>
-                                            </>
-                                        )}
+                                        <div className="approval-step">
+                                            <div className={`step-circle ${selectedStudent.wardenApproval} ${selectedStudent.yearInchargeApproval !== 'approved' ? 'disabled' : ''}`}>
+                                                {selectedStudent.wardenApproval === 'approved' ? '✓' :
+                                                    selectedStudent.wardenApproval === 'rejected' ? '✗' : '3'}
+                                            </div>
+                                            <div className="step-content">
+                                                <h3>Warden Approval</h3>
+                                                {getStatusBadge(selectedStudent.wardenApproval)}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1443,40 +1412,6 @@ const PassApproval: React.FC = () => {
                     color: #94a3b8;
                     font-style: italic;
                     padding: 20px;
-                }
-
-                /* Mobile Approval Workflow */
-                @media (max-width: 768px) {
-                    .approval-stepper {
-                        padding: 10px 0;
-                    }
-
-                    .approval-step {
-                        padding: 12px 0;
-                        gap: 16px;
-                    }
-
-                    .step-circle {
-                        width: 48px;
-                        height: 48px;
-                        font-size: 1.2rem;
-                        border-width: 3px;
-                    }
-
-                    .step-connector {
-                        margin-left: 22px; /* 0px padding + 24px (half circle) - 2px (half line) */
-                        height: 30px;
-                    }
-
-                    .step-content {
-                        flex-direction: column;
-                        align-items: flex-start;
-                        gap: 4px;
-                    }
-
-                    .step-content h3 {
-                        font-size: 1.1rem;
-                    }
                 }
             `}</style>
         </div>

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { io, Socket } from 'socket.io-client';
-import LoadingSpinner from '../../components/LoadingSpinner';
 
 interface Message {
     _id: string;
@@ -123,7 +122,7 @@ const StaffNotices: React.FC = () => {
         });
     };
 
-    if (loading) return <LoadingSpinner />;
+    if (loading) return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '50px' }}>Loading Community...</div>;
 
     if (!group) return (
         <div className="whatsapp-layout">
