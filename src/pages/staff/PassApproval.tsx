@@ -44,6 +44,7 @@ interface StudentOutpass {
     yearInchargeApproval: ApprovalStatus;
     wardenApproval: ApprovalStatus;
     staffApprovedBy?: string;
+    outpasstype?: string;
 }
 
 const PassApproval: React.FC = () => {
@@ -117,7 +118,8 @@ const PassApproval: React.FC = () => {
                     lastOutpassTo: data.lastOutpassTo,
                     lastOutpassReason: data.lastOutpassReason,
                     lastOutpassApprovedBy: data.lastOutpassApprovedBy,
-                    lastOutpassStatus: data.lastOutpassStatus
+                    lastOutpassStatus: data.lastOutpassStatus,
+                    outpasstype: data.outpasstype || 'General'
                 };
 
                 setSelectedStudent(mappedStudent);
@@ -163,9 +165,17 @@ const PassApproval: React.FC = () => {
                                 toDate: item.toDate,
                                 staffApproval: item.staffapprovalstatus || 'pending',
                                 yearInchargeApproval: item.yearinchargeapprovalstatus || 'pending',
-                                wardenApproval: item.wardenapprovalstatus || 'pending'
+                                wardenApproval: item.wardenapprovalstatus || 'pending',
+                                outpasstype: item.outpasstype || 'General'
                             };
                         });
+
+                    // Sort: Emergency first
+                    mappedStudents.sort((a: any, b: any) => {
+                        if (a.outpasstype === 'Emergency' && b.outpasstype !== 'Emergency') return -1;
+                        if (a.outpasstype !== 'Emergency' && b.outpasstype === 'Emergency') return 1;
+                        return 0;
+                    });
 
                     setStudents(mappedStudents);
                 }
@@ -355,9 +365,12 @@ const PassApproval: React.FC = () => {
                                                 {student.studentId}
                                             </div>
                                             <div className="student-info">
-                                                <div className="student-name">{student.studentname}</div>
+                                                <div className="student-name">
+                                                    {student.studentname}
+                                                    {student.outpasstype === 'Emergency' && <span className="emergency-badge">EMERGENCY</span>}
+                                                </div>
                                                 <div className="student-meta">
-                                                    Year {student.year} • Applied on {formatDateTime(student.appliedDate)}
+                                                    Year {student.year} • {student.outpasstype || 'General'} • Applied on {formatDateTime(student.appliedDate)}
                                                 </div>
                                             </div>
                                         </div>
@@ -802,6 +815,17 @@ const PassApproval: React.FC = () => {
                     gap: 16px;
                 }
 
+                .emergency-badge {
+                    background-color: #ef4444;
+                    color: white;
+                    font-size: 0.7rem;
+                    padding: 2px 6px;
+                    border-radius: 4px;
+                    margin-left: 8px;
+                    font-weight: 700;
+                    vertical-align: middle;
+                }
+
                 .student-card {
                     background: white;
                     border-radius: 16px;
@@ -825,7 +849,6 @@ const PassApproval: React.FC = () => {
                     display: flex;
                     align-items: center;
                     gap: 20px;
-                    flex: 1;
                 }
 
                 .student-id-highlight {
@@ -859,7 +882,8 @@ const PassApproval: React.FC = () => {
                 .student-card-action {
                     display: flex;
                     align-items: center;
-                    gap: 16px;
+                    gap: 24px;
+                    margin-left: auto; /* Push to the right */
                 }
 
                 .view-arrow {

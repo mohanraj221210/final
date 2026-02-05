@@ -20,6 +20,7 @@ interface Student {
     registerNumber?: string;
     year?: string;
   };
+  outpasstype?: string;
 }
 
 const PendingOutpass: React.FC = () => {
@@ -48,6 +49,14 @@ const PendingOutpass: React.FC = () => {
         const ws = item.wardenapprovalstatus?.toLowerCase() || "";
         return ws !== 'Approved' && ws !== 'Rejected' && ws !== 'Declined';
       });
+
+      // Sort Emergency first
+      pendingData.sort((a: any, b: any) => {
+        if (a.outpasstype === 'Emergency' && b.outpasstype !== 'Emergency') return -1;
+        if (a.outpasstype !== 'Emergency' && b.outpasstype === 'Emergency') return 1;
+        return 0;
+      });
+
       setStudents(pendingData);
     } catch (error) {
       console.error("Failed to fetch data", error);
@@ -65,52 +74,43 @@ const PendingOutpass: React.FC = () => {
         </button>
         <h1>Pending Outpass Students</h1>
 
-        <div className="outpass-card">
+        <div className="student-list">
           {loading ? (
             <LoadingSpinner />
+          ) : students.length === 0 ? (
+            <div className="no-data-message" style={{ textAlign: "center", padding: "40px", color: "#64748b" }}>
+              No pending outpasses
+            </div>
           ) : (
-            <table className="outpass-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Register No</th>
-                  <th>Date</th>
-                  <th>Reason</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {students.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} style={{ textAlign: "center", padding: "20px" }}>
-                      No pending outpasses
-                    </td>
-                  </tr>
-                ) : (
-                  students.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((s) => (
-                    <tr key={s._id || s.id}>
-                      <td data-label="Name">{s.studentid?.name || s.studentName || s.name}</td>
-                      <td data-label="Register No">{s.studentid?.registerNumber || s.register_number || 'N/A'}</td>
-                      <td data-label="Date">
-                        {new Date(s.createdAt || s.outDate || Date.now()).toLocaleDateString()}
-                      </td>
-                      <td data-label="Reason">{s.reason}</td>
-                      <td data-label="Status">
-                        <span className="status-pill status-pending">
-                          Pending
-                        </span>
-                      </td>
-                      <td data-label="Action">
-                        <button className="view-btn" onClick={() => navigate(`/warden/student/${s._id || s.id}`)}>
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+            students.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((s) => (
+              <div
+                key={s._id || s.id}
+                className="student-card"
+                onClick={() => navigate(`/warden/student/${s._id || s.id}`)}
+              >
+                <div className="student-card-main">
+                  <div className="student-id-highlight">
+                    {s.studentid?.registerNumber || s.register_number || 'N/A'}
+                  </div>
+                  <div className="student-info">
+                    <div className="student-name">
+                      {s.studentid?.name || s.studentName || s.name}
+                      {s.outpasstype === 'Emergency' && <span className="emergency-badge">EMERGENCY</span>}
+                    </div>
+                    <div className="student-meta">
+                      {s.studentid?.year ? `Year ${s.studentid.year} • ` : ''} {s.outpasstype || 'General'} • Applied on {new Date(s.createdAt || s.outDate || Date.now()).toLocaleDateString()}
+                    </div>
+                  </div>
+                </div>
+                <div className="student-card-action">
+                  <span className="status-badge" style={{ color: '#f59e0b', backgroundColor: '#fef3c7', border: '2px solid #f59e0b' }}>
+                    <span className="status-dot">●</span>
+                    Pending
+                  </span>
+                  <span className="view-arrow">View →</span>
+                </div>
+              </div>
+            ))
           )}
         </div>
 
@@ -121,9 +121,13 @@ const PendingOutpass: React.FC = () => {
                 <div className="card-badge">
                   {s.studentid?.registerNumber || s.register_number || s.department || "N/A"}
                 </div>
-                <h3 className="card-name">{s.studentid?.name || s.studentName || s.name}</h3>
+                <h3 className="card-name">
+                  {s.studentid?.name || s.studentName || s.name}
+                  {s.outpasstype === 'Emergency' && <span className="mobile-emergency-label"> (EMERGENCY)</span>}
+                </h3>
                 <p className="card-details">
                   {s.studentid?.year ? `Year ${s.studentid.year} • ` : ''}
+                  {s.outpasstype || 'General'} •
                   Applied on {new Date(s.createdAt || s.outDate || Date.now()).toLocaleDateString()}
                 </p>
 
@@ -213,246 +217,126 @@ const PendingOutpass: React.FC = () => {
   font-weight: 700;
 }
 
-/* Table Card */
-.outpass-card {
-  background: white;
-  border-radius: 24px;
-  padding: 24px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
-  border: 1px solid rgba(0,0,0,0.05);
-  overflow: hidden;
-}
-
-/* Table */
-.outpass-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.outpass-table thead {
-  background: linear-gradient(135deg, #1e3a8a, #0f172a);
-  color: white;
-}
-
-.outpass-table th {
-  padding: 14px;
-  text-align: left;
-  font-weight: 600;
-}
-
-.outpass-table td {
-  padding: 14px;
-  border-bottom: 1px solid #f1f5f9;
-  color: #334155;
-}
-
-.outpass-table tbody tr {
-  transition: all 0.3s ease;
-}
-
-.outpass-table tbody tr:hover {
-  background: #eff6ff;
-  transform: translateX(4px);
-}
-
-/* View Button */
-.view-btn {
-  padding: 6px 14px;
-  border-radius: 10px;
-  border: none;
-  background: linear-gradient(135deg, #2563eb, #1e3a8a);
-  color: white;
-  font-weight: 500;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-.view-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(37,99,235,0.4);
-}
-
-/* Pagination */
-.pagination {
-  margin-top: 24px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 20px;
-}
-
-.pagination button {
-  padding: 8px 18px;
-  border-radius: 10px;
-  border: none;
-  background: #1e3a8a;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-.pagination button:hover {
-  background: #2563eb;
-}
-
-.pagination button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-/* Animations */
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Mobile adjustment */
-@media (max-width: 768px) {
-  .list-container {
-    padding: 16px;
-    margin-top: 5px; /* Significantly reduced for upward movement */
-  }
-
-  .list-container h1 {
-    font-size: 18px; /* Further reduced for mobile */
-    margin-bottom: 12px;
-  }
-
-  .outpass-card {
-    padding: 0;
-    background: transparent;
-    box-shadow: none;
-    border: none;
-  }
-
-  /* Mobile specific card view */
-  .mobile-cards-view {
+/* Reuse standard student-card styles */
+.student-list {
     display: flex;
     flex-direction: column;
     gap: 16px;
-  }
+}
 
-  .mobile-card {
+.student-card {
     background: white;
     border-radius: 16px;
-    padding: 20px;
-    position: relative;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-    border: 1px solid rgba(0,0,0,0.02);
-    margin-bottom: 16px;
-  }
-
-  .card-badge {
-    background: linear-gradient(135deg, #2563eb, #1e40af);
-    color: white;
-    display: inline-block;
-    padding: 8px 0;
-    width: 100%;
-    text-align: center;
-    border-radius: 8px;
-    font-weight: 700;
-    font-size: 14px;
-    margin-bottom: 16px;
-    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
-  }
-
-  .card-name {
-    font-size: 18px;
-    font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 4px;
-  }
-
-  .card-details {
-    font-size: 13px;
-    color: #64748b;
-    margin-bottom: 20px;
-  }
-
-  .card-footer {
+    padding: 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-top: 1px solid #f1f5f9;
-    padding-top: 16px;
-  }
-
-  .status-pill {
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    text-transform: capitalize;
-  }
-
-  .status-pill.status-approved {
-    background: #dcfce7;
-    color: #166534;
-    border: 1px solid #86efac;
-  }
-
-  .status-pill.status-pending {
-    background: #fef3c7;
-    color: #92400e;
-    border: 1px solid #fcd34d;
-  }
-
-  .card-view-link {
-    background: none;
-    border: none;
-    color: #1e3a8a;
-    font-weight: 600;
-    font-size: 14px;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .outpass-table {
-    display: none; /* Hide standard table on mobile */
-  }
-
-  .mobile-cards-view {
-    display: block;
-  }
-
-  .mobile-empty-state {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: white;
-    padding: 40px;
-    border-radius: 16px;
-    color: #64748b;
-    text-align: center;
-    border: 1px solid rgba(0,0,0,0.05);
-    margin-top: 10px;
-  }
-  
-  .empty-icon {
-    font-size: 32px;
-    display: block;
-    margin-bottom: 8px;
-  }
-  
-  .empty-content p {
-    font-weight: 600;
-  }
+    transition: all 0.3s;
+    border: 2px solid transparent;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
-/* Desktop: Hide mobile view */
-@media (min-width: 769px) {
-  .mobile-cards-view {
-    display: none;
-  }
-  .mobile-empty-state {
-    display: none;
-  }
+.student-card:hover {
+    border-color: #0047AB;
+    transform: translateX(8px);
+    box-shadow: 0 8px 24px rgba(0, 71, 171, 0.15);
+}
+
+.student-card-main {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.student-id-highlight {
+    background: linear-gradient(135deg, #0047AB, #2563eb);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    min-width: 140px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 71, 171, 0.3);
+}
+
+.student-info {
+    flex: 1;
+}
+
+.student-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 4px;
+}
+
+.student-meta {
+    color: #64748b;
+    font-size: 0.95rem;
+}
+
+.student-card-action {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-left: auto;
+}
+
+.view-arrow {
+    color: #0047AB;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.status-dot {
+    font-size: 0.8rem;
+}
+
+.emergency-badge {
+    background-color: #ef4444;
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 8px;
+    font-weight: 700;
+    vertical-align: middle;
+}
+
+@media (max-width: 768px) {
+    .student-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .student-card-main {
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+    }
+
+    .student-id-highlight {
+        width: 100%;
+    }
+
+    .student-card-action {
+        width: 100%;
+        justify-content: space-between;
+        margin-left: 0;
+    }
 }
       `}</style>
       </div>

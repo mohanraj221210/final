@@ -182,10 +182,12 @@ const Outpass: React.FC = () => {
                                 value={formData.outpasstype}
                                 onChange={handleChange}
                                 className="form-input"
-                                disabled={residenceType === 'day scholar'}
                             >
                                 {residenceType === 'day scholar' ? (
-                                    <option value="OD">On Duty (OD)</option>
+                                    <>
+                                        <option value="OD">On Duty (OD)</option>
+                                        <option value="Emergency">Emergency</option>
+                                    </>
                                 ) : (
                                     <>
                                         <option value="Outing">Outing (Town Pass)</option>
@@ -197,7 +199,7 @@ const Outpass: React.FC = () => {
                             </select>
                             {residenceType === 'day scholar' && (
                                 <p className="helper-text" style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '8px' }}>
-                                    Only OD outpass is allowed for Day Scholars.
+                                    Only OD and Emergency outpasses are allowed for Day Scholars.
                                 </p>
                             )}
                         </div>

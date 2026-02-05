@@ -6,6 +6,7 @@ import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import StudentHeader from '../../components/StudentHeader';
 
 const Profile: React.FC = () => {
     const [user, setUser] = useState<User>({
@@ -32,14 +33,13 @@ const Profile: React.FC = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [showToast, setShowToast] = useState(false);
     const navigate = useNavigate();
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
     const [completionPercentage, setCompletionPercentage] = useState(0);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
     const calculateCompletion = (userData: User) => {
         const commonFields = [
             'name', 'email', 'phone', 'parentnumber', 'registerNumber',
-            'department', 'year', 'semester', 'batch', 'cgpa', 'gender',
+            'department', 'year', 'semester', 'batch', 'gender',
             'photo', 'residencetype'
         ];
 
@@ -120,12 +120,7 @@ const Profile: React.FC = () => {
         toast.info("Image selected. Click 'Save Changes' to upload.");
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('userType');
-        localStorage.removeItem('token');
-        navigate('/login');
-    };
+
 
     const handleSave = async () => {
         console.log(user);
@@ -175,66 +170,7 @@ const Profile: React.FC = () => {
     return (
         <div className="page-container profile-page">
             < ToastContainer />
-            <header className="dashboard-header-custom">
-                <div className="header-container-custom">
-                    <div className="header-left-custom">
-                        <div className="brand-custom">
-                            <span className="brand-icon-custom">🎓</span>
-                            <span className="brand-text-custom">JIT Student Portal</span>
-                        </div>
-                    </div>
-
-                    <button
-                        className="mobile-menu-btn"
-                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        aria-label="Toggle menu"
-                    >
-                        {isMobileMenuOpen ? '✕' : '☰'}
-                    </button>
-
-                    <nav className={`header-nav-custom ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/dashboard')}
-                        >
-                            Dashboard
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/staffs')}
-                        >
-                            Staffs
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/student-notice')}
-                        >
-                            Notices
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/outpass')}
-                        >
-                            Outpass
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/subjects')}
-                        >
-                            Subjects
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/profile')}
-                        >
-                            Profile
-                        </button>
-                        <button className="logout-btn-custom" onClick={handleLogout}>
-                            Logout
-                        </button>
-                    </nav>
-                </div>
-            </header>
+            <StudentHeader user={user} />
 
             {showToast && (
                 <Toast
@@ -502,8 +438,8 @@ const Profile: React.FC = () => {
                                         type="number"
                                         name="cgpa"
                                         value={user.cgpa || ''}
-                                        onChange={handleChange}
-                                        disabled={!isEditing}
+                                        readOnly
+                                        disabled={true}
                                         className="input"
                                         step="0.01"
                                         min="0"
@@ -517,8 +453,8 @@ const Profile: React.FC = () => {
                                         type="number"
                                         name="arrears"
                                         value={user.arrears}
-                                        onChange={handleChange}
-                                        disabled={!isEditing}
+                                        readOnly
+                                        disabled={true}
                                         className="input"
                                         min="0"
                                     />
