@@ -15,7 +15,7 @@ interface StudentDetails {
 interface Outpass {
     _id: string;
     studentid: StudentDetails;
-    outpassType: string;
+    outpasstype: string;
     fromDate: string;
     toDate: string;
     staffapprovalstatus: string;
@@ -116,8 +116,8 @@ const YearInchargePendingOutpass: React.FC = () => {
                                         <td data-label="Department">{item.studentid?.department}</td>
                                         <td data-label="Year">{item.studentid?.year}</td>
                                         <td data-label="Outpass Type">
-                                            {item.outpassType}
-                                            {item.outpassType?.toLowerCase() === 'emergency' && (
+                                            {item.outpasstype}
+                                            {item.outpasstype?.toLowerCase() === 'emergency' && (
                                                 <span className="emergency-badge">🚨 CRITICAL</span>
                                             )}
                                         </td>
@@ -144,8 +144,8 @@ const YearInchargePendingOutpass: React.FC = () => {
                                         <p className="card-reg">{item.studentid?.registerNumber}</p>
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                                        <span className="pass-type-mobile">{item.outpassType}</span>
-                                        {item.outpassType?.toLowerCase() === 'emergency' && (
+                                        <span className="pass-type-mobile">{item.outpasstype}</span>
+                                        {item.outpasstype?.toLowerCase() === 'emergency' && (
                                             <span className="emergency-badge mobile">🚨 CRITICAL</span>
                                         )}
                                     </div>

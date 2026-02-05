@@ -35,10 +35,10 @@ const Staffs: React.FC = () => {
     }, []);
 
     const handleLogout = () => {
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('userType');
-      localStorage.removeItem('token');
-      navigate('/login');
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userType');
+        localStorage.removeItem('token');
+        navigate('/login');
     };
 
     const filteredStaff = staffData.filter(staff => {
@@ -58,8 +58,8 @@ const Staffs: React.FC = () => {
 
     return (
         <div className="page-container staff-page">
-            
-             <header className="dashboard-header-custom">
+
+            <header className="dashboard-header-custom">
                 <div className="header-container-custom">
                     <div className="header-left-custom">
                         <div className="brand-custom">

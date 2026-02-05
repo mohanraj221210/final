@@ -20,12 +20,9 @@ interface StudentOutpass {
     // Parents Details
     parentContact: string;
 
-    // Hostel/Bus Details
-    residenceType: string;
-    hostelname?: string;
-    hostelroomno?: string;
-    busNo?: string;
-    boardingPoint?: string;
+    // Hostel Details
+    hostelname: string;
+    hostelroomno: string;
 
     // Last Outpass
     lastOutpassFrom?: string;
@@ -45,6 +42,7 @@ interface StudentOutpass {
     wardenApproval: ApprovalStatus;
     staffApprovedBy?: string;
     outpassType: string;
+    residenceType?: string;
 }
 
 const PassApproval: React.FC = () => {
@@ -102,11 +100,8 @@ const PassApproval: React.FC = () => {
                     appliedDate: data.createdAt,
                     photo: studentDetails.photo || 'Student',
                     parentContact: studentDetails.parentnumber || 'N/A',
-                    residenceType: studentDetails.residencetype?.toLowerCase() || 'dayscholar', // Fallback to dayscholar if undefined
                     hostelname: studentDetails.hostelname || 'N/A',
                     hostelroomno: studentDetails.hostelroomno || 'N/A',
-                    busNo: studentDetails.busno || 'N/A',
-                    boardingPoint: studentDetails.boardingpoint || 'N/A',
                     reason: data.reason,
                     fromDate: data.fromDate,
                     toDate: data.toDate,
@@ -119,7 +114,8 @@ const PassApproval: React.FC = () => {
                     lastOutpassReason: data.lastOutpassReason,
                     lastOutpassApprovedBy: data.lastOutpassApprovedBy,
                     lastOutpassStatus: data.lastOutpassStatus,
-                    outpassType: data.outpassType
+                    outpassType: data.outpassType,
+                    residenceType: studentDetails.residenceType || 'dayScholar'
                 };
 
                 setSelectedStudent(mappedStudent);
@@ -166,7 +162,8 @@ const PassApproval: React.FC = () => {
                                 staffApproval: item.staffapprovalstatus || 'pending',
                                 yearInchargeApproval: item.yearinchargeapprovalstatus || 'pending',
                                 wardenApproval: item.wardenapprovalstatus || 'pending',
-                                outpassType: item.outpassType
+                                outpassType: item.outpassType,
+                                residenceType: studentDetails.residenceType || 'dayScholar'
                             };
                         });
 
@@ -459,45 +456,24 @@ const PassApproval: React.FC = () => {
                                 </div>
                             </div>
 
-                            {selectedStudent.residenceType === 'hostel' ? (
-                                <div className="detail-card">
-                                    <div className="card-header">
-                                        <span className="card-icon">🏢</span>
-                                        <h2>Hostel Details</h2>
-                                    </div>
-                                    <div className="card-body">
-                                        <div className="info-grid">
-                                            <div className="info-field">
-                                                <label>HOSTEL NAME</label>
-                                                <div className="field-value">{selectedStudent.hostelname}</div>
-                                            </div>
-                                            <div className="info-field">
-                                                <label>ROOM NUMBER</label>
-                                                <div className="field-value">{selectedStudent.hostelroomno}</div>
-                                            </div>
+                            <div className="detail-card">
+                                <div className="card-header">
+                                    <span className="card-icon">🏢</span>
+                                    <h2>Hostel Details</h2>
+                                </div>
+                                <div className="card-body">
+                                    <div className="info-grid">
+                                        <div className="info-field">
+                                            <label>HOSTEL NAME</label>
+                                            <div className="field-value">{selectedStudent.hostelname}</div>
+                                        </div>
+                                        <div className="info-field">
+                                            <label>ROOM NUMBER</label>
+                                            <div className="field-value">{selectedStudent.hostelroomno}</div>
                                         </div>
                                     </div>
                                 </div>
-                            ) : (
-                                <div className="detail-card">
-                                    <div className="card-header">
-                                        <span className="card-icon">🚌</span>
-                                        <h2>Bus Details</h2>
-                                    </div>
-                                    <div className="card-body">
-                                        <div className="info-grid">
-                                            <div className="info-field">
-                                                <label>BUS NUMBER</label>
-                                                <div className="field-value">{selectedStudent.busNo}</div>
-                                            </div>
-                                            <div className="info-field">
-                                                <label>BOARDING POINT</label>
-                                                <div className="field-value">{selectedStudent.boardingPoint}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
+                            </div>
 
                             {/* Last Outpass Details */}
                             {selectedStudent.lastOutpassFrom && (
@@ -556,7 +532,7 @@ const PassApproval: React.FC = () => {
                             </div>
 
                             {/* Roommate Details */}
-                            {selectedStudent.residenceType === 'hostel' && (
+                            {selectedStudent.hostelname && selectedStudent.hostelname !== 'N/A' && (
                                 <div className="detail-card">
                                     <div className="card-header">
                                         <span className="card-icon">👥</span>

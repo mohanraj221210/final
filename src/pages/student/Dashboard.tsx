@@ -4,7 +4,6 @@ import { RECENT_DOWNLOADS, type User } from '../../data/sampleData';
 import axios from 'axios';
 import { useEffect } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
-import LoadingSpinner from '../../components/LoadingSpinner';
 
 // Event types for calendar
 type EventType = 'working' | 'leave' | 'college_event' | 'cia_exam';
@@ -65,7 +64,8 @@ const Dashboard: React.FC = () => {
         { id: '13', date: new Date(2026, 0, 15), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
         { id: '14', date: new Date(2026, 0, 16), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
         { id: '15', date: new Date(2026, 0, 17), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
-        { id: '16', date: new Date(2026, 1, 18), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
+        { id: '16', date: new Date(2026, 0, 18), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
+        { id: '16', date: new Date(2026, 1, 27), type: 'college_event', title: 'Sports Day', description: 'Sports Day', time: '8:45 AM - 9:15 AM' },
     ]);
 
     useEffect(() => {
@@ -213,7 +213,7 @@ const Dashboard: React.FC = () => {
         "July", "August", "September", "October", "November", "December"];
 
     if (Loading) {
-        return <LoadingSpinner />;
+        return <div className="card staff-card">Loading...</div>;
     }
 
     const handleLogout = () => {

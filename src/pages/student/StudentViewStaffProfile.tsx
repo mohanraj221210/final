@@ -10,10 +10,10 @@ const StudentViewStaffProfile: React.FC = () => {
     const navigate = useNavigate();
 
     const handleLogout = () => {
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('userType');
-      localStorage.removeItem('token');
-      navigate('/login');
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userType');
+        localStorage.removeItem('token');
+        navigate('/login');
     };
 
     useEffect(() => {
@@ -66,67 +66,67 @@ const StudentViewStaffProfile: React.FC = () => {
     if (!staff) {
         return (
             <>
-                
-                 <header className="dashboard-header-custom">
-                <div className="header-container-custom">
-                    <div className="header-left-custom">
-                        <div className="brand-custom">
-                            <span className="brand-icon-custom">🎓</span>
-                            <span className="brand-text-custom">JIT Student Portal</span>
+
+                <header className="dashboard-header-custom">
+                    <div className="header-container-custom">
+                        <div className="header-left-custom">
+                            <div className="brand-custom">
+                                <span className="brand-icon-custom">🎓</span>
+                                <span className="brand-text-custom">JIT Student Portal</span>
+                            </div>
                         </div>
+
+                        <button
+                            className="mobile-menu-btn"
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            aria-label="Toggle menu"
+                        >
+                            {isMobileMenuOpen ? '✕' : '☰'}
+                        </button>
+
+                        <nav className={`header-nav-custom ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
+                            <button
+                                className="nav-item-custom"
+                                onClick={() => navigate('/dashboard')}
+                            >
+                                Dashboard
+                            </button>
+                            <button
+                                className="nav-item-custom"
+                                onClick={() => navigate('/staffs')}
+                            >
+                                Staffs
+                            </button>
+                            <button
+                                className="nav-item-custom"
+                                onClick={() => navigate('/student-notice')}
+                            >
+                                Notices
+                            </button>
+                            <button
+                                className="nav-item-custom"
+                                onClick={() => navigate('/outpass')}
+                            >
+                                Outpass
+                            </button>
+                            <button
+                                className="nav-item-custom"
+                                onClick={() => navigate('/subjects')}
+                            >
+                                Subjects
+                            </button>
+                            <button
+                                className="nav-item-custom"
+                                onClick={() => navigate('/profile')}
+                            >
+                                Profile
+                            </button>
+                            <button className="logout-btn-custom" onClick={handleLogout}>
+                                Logout
+                            </button>
+                        </nav>
                     </div>
-
-                    <button
-                        className="mobile-menu-btn"
-                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        aria-label="Toggle menu"
-                    >
-                        {isMobileMenuOpen ? '✕' : '☰'}
-                    </button>
-
-                    <nav className={`header-nav-custom ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/dashboard')}
-                        >
-                            Dashboard
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/staffs')}
-                        >
-                            Staffs
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/student-notice')}
-                        >
-                            Notices
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/outpass')}
-                        >
-                            Outpass
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/subjects')}
-                        >
-                            Subjects
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/profile')}
-                        >
-                            Profile
-                        </button>
-                        <button className="logout-btn-custom" onClick={handleLogout}>
-                            Logout
-                        </button>
-                    </nav>
-                </div>
-            </header>
+                </header>
 
                 <div className="page-container" style={{ background: 'white', minHeight: '100vh', padding: '20px' }}>
                     <div className="error-message">
