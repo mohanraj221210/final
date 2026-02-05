@@ -20,6 +20,7 @@ interface Student {
     registerNumber?: string;
     year?: string;
   };
+  outpassType?: string;
 }
 
 const PendingOutpass: React.FC = () => {
@@ -47,6 +48,15 @@ const PendingOutpass: React.FC = () => {
       const pendingData = allData.filter((item: any) => {
         const ws = item.wardenapprovalstatus?.toLowerCase() || "";
         return ws !== 'Approved' && ws !== 'Rejected' && ws !== 'Declined';
+      }).sort((a: any, b: any) => {
+        // Priority 1: Emergency first
+        const isAEmergency = a.outpassType?.toLowerCase() === 'emergency';
+        const isBEmergency = b.outpassType?.toLowerCase() === 'emergency';
+        if (isAEmergency && !isBEmergency) return -1;
+        if (!isAEmergency && isBEmergency) return 1;
+
+        // Priority 2: Date (Newest first)
+        return new Date(b.createdAt || b.outDate || Date.now()).getTime() - new Date(a.createdAt || a.outDate || Date.now()).getTime();
       });
       setStudents(pendingData);
     } catch (error) {
@@ -95,7 +105,12 @@ const PendingOutpass: React.FC = () => {
                       <td data-label="Date">
                         {new Date(s.createdAt || s.outDate || Date.now()).toLocaleDateString()}
                       </td>
-                      <td data-label="Reason">{s.reason}</td>
+                      <td data-label="Reason">
+                        {s.reason}
+                        {s.outpassType?.toLowerCase() === 'emergency' && (
+                          <span className="emergency-badge">🚨 EMERGENCY</span>
+                        )}
+                      </td>
                       <td data-label="Status">
                         <span className="status-pill status-pending">
                           Pending
@@ -125,6 +140,9 @@ const PendingOutpass: React.FC = () => {
                 <p className="card-details">
                   {s.studentid?.year ? `Year ${s.studentid.year} • ` : ''}
                   Applied on {new Date(s.createdAt || s.outDate || Date.now()).toLocaleDateString()}
+                  {s.outpassType?.toLowerCase() === 'emergency' && (
+                    <div className="emergency-badge mobile">🚨 EMERGENCY</div>
+                  )}
                 </p>
 
                 <div className="card-footer">
@@ -453,6 +471,25 @@ const PendingOutpass: React.FC = () => {
   .mobile-empty-state {
     display: none;
   }
+}
+
+.emergency-badge {
+    display: inline-block;
+    background-color: #fee2e2;
+    color: #ef4444;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-left: 8px;
+    border: 1px solid #ef4444;
+    vertical-align: middle;
+}
+
+.emergency-badge.mobile {
+    margin-left: 0;
+    margin-top: 4px;
+    display: table;
 }
       `}</style>
       </div>

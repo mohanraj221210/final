@@ -31,8 +31,18 @@ const OutpassList: React.FC = () => {
       });
 
       const outpassData = res.data.outpasses || res.data.data || res.data || [];
-      // Initially set all data, filtering happens on render/derived state
-      setOutpasses(Array.isArray(outpassData) ? outpassData : []);
+      const list = Array.isArray(outpassData) ? outpassData : [];
+      const sortedList = list.sort((a: any, b: any) => {
+        // Priority 1: Emergency first
+        const isAEmergency = a.outpassType?.toLowerCase() === 'emergency';
+        const isBEmergency = b.outpassType?.toLowerCase() === 'emergency';
+        if (isAEmergency && !isBEmergency) return -1;
+        if (!isAEmergency && isBEmergency) return 1;
+
+        // Priority 2: Date (Newest first)
+        return new Date(b.createdAt || b.outDate || Date.now()).getTime() - new Date(a.createdAt || a.outDate || Date.now()).getTime();
+      });
+      setOutpasses(sortedList);
     } catch (err: any) {
       console.error("Failed to fetch outpasses", err);
       // Error handling...
@@ -125,7 +135,12 @@ const OutpassList: React.FC = () => {
                       <td data-label="Date">
                         {new Date(item.createdAt || item.outDate).toLocaleDateString()}
                       </td>
-                      <td data-label="Reason">{item.reason}</td>
+                      <td data-label="Reason">
+                        {item.reason}
+                        {item.outpassType?.toLowerCase() === 'emergency' && (
+                          <span className="emergency-badge">🚨 EMERGENCY</span>
+                        )}
+                      </td>
                       <td data-label="Status">
                         <span className={`status ${item.status?.toLowerCase() === 'rejected' ? 'rejected' : 'approved'}`}>
                           {capitalize(item.status)}
@@ -160,6 +175,9 @@ const OutpassList: React.FC = () => {
                   <p className="card-details">
                     {item.studentid.year ? `Year ${item.studentid.year} • ` : ''}
                     Applied on {new Date(item.createdAt || item.outDate).toLocaleDateString()}
+                    {item.outpassType?.toLowerCase() === 'emergency' && (
+                      <div className="emergency-badge mobile">🚨 EMERGENCY</div>
+                    )}
                   </p>
 
                   <div className="card-footer">
@@ -575,6 +593,25 @@ const OutpassList: React.FC = () => {
   .mobile-cards-view {
     display: none;
   }
+}
+
+.emergency-badge {
+    display: inline-block;
+    background-color: #fee2e2;
+    color: #ef4444;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-left: 8px;
+    border: 1px solid #ef4444;
+    vertical-align: middle;
+}
+
+.emergency-badge.mobile {
+    margin-left: 0;
+    margin-top: 4px;
+    display: table;
 }
       `}</style>
       </div>
