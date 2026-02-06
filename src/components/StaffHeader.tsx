@@ -48,12 +48,12 @@ const StaffHeader: React.FC<StaffHeaderProps> = ({ activeMenu }) => {
                     >
                         Dashboard
                     </button>
-                    <button
+                    {/* <button
                         className={`nav-item ${activeMenu === 'notice' ? 'active' : ''}`}
                         onClick={() => handleNavigation('/staff-notice')}
                     >
                         Notice
-                    </button>
+                    </button> */}
                     <button
                         className={`nav-item ${activeMenu === 'registration' ? 'active' : ''}`}
                         onClick={() => handleNavigation('/staff-registration')}

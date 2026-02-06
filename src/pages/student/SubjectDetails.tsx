@@ -56,12 +56,12 @@ const SubjectDetails: React.FC = () => {
                         >
                             Staffs
                         </button>
-                        <button
+                        {/* <button
                             className="nav-item-custom"
                             onClick={() => navigate('/student-notice')}
                         >
                             Notices
-                        </button>
+                        </button> */}
                         <button
                             className="nav-item-custom"
                             onClick={() => navigate('/outpass')}

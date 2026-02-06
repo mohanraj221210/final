@@ -163,7 +163,7 @@ const StudentNotices: React.FC = () => {
                     <nav className={`header-nav-custom ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
                         <button className="nav-item-custom" onClick={() => navigate('/dashboard')}>Dashboard</button>
                         <button className="nav-item-custom" onClick={() => navigate('/staffs')}>Staffs</button>
-                        <button className="nav-item-custom" onClick={() => navigate('/student-notice')}>Notices</button>
+                        {/* <button className="nav-item-custom" onClick={() => navigate('/student-notice')}>Notices</button> */}
                         <button className="nav-item-custom" onClick={() => navigate('/outpass')}>Outpass</button>
                         <button className="nav-item-custom" onClick={() => navigate('/subjects')}>Subjects</button>
                         <button className="nav-item-custom" onClick={() => navigate('/profile')}>Profile</button>
