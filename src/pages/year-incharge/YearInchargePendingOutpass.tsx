@@ -53,7 +53,16 @@ const YearInchargePendingOutpass: React.FC = () => {
                 const filtered = list.filter((o: any) =>
                     o.staffapprovalstatus === 'approved' &&
                     o.yearinchargeapprovalstatus === 'pending'
-                );
+                ).sort((a: any, b: any) => {
+                    // Priority 1: Emergency first
+                    const isAEmergency = a.outpassType?.toLowerCase() === 'emergency';
+                    const isBEmergency = b.outpassType?.toLowerCase() === 'emergency';
+                    if (isAEmergency && !isBEmergency) return -1;
+                    if (!isAEmergency && isBEmergency) return 1;
+
+                    // Priority 2: Date (Newest first)
+                    return new Date(b.fromDate).getTime() - new Date(a.fromDate).getTime();
+                });
                 setPendingOutpasses(filtered);
             }
         } catch (error) {
@@ -106,7 +115,12 @@ const YearInchargePendingOutpass: React.FC = () => {
                                         </td>
                                         <td data-label="Department">{item.studentid?.department}</td>
                                         <td data-label="Year">{item.studentid?.year}</td>
-                                        <td data-label="Outpass Type">{item.outpasstype}</td>
+                                        <td data-label="Outpass Type">
+                                            {item.outpasstype}
+                                            {item.outpasstype?.toLowerCase() === 'emergency' && (
+                                                <span className="emergency-badge">🚨 CRITICAL</span>
+                                            )}
+                                        </td>
                                         <td data-label="Date">{new Date(item.fromDate).toLocaleDateString()}</td>
                                         <td data-label="Action">
                                             <button className="view-btn" onClick={() => navigate(`/year-incharge/student/${item._id}`)}>
@@ -129,7 +143,12 @@ const YearInchargePendingOutpass: React.FC = () => {
                                         <h3 className="card-name">{item.studentid?.name}</h3>
                                         <p className="card-reg">{item.studentid?.registerNumber}</p>
                                     </div>
-                                    <span className="pass-type-mobile">{item.outpasstype}</span>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                                        <span className="pass-type-mobile">{item.outpasstype}</span>
+                                        {item.outpasstype?.toLowerCase() === 'emergency' && (
+                                            <span className="emergency-badge mobile">🚨 CRITICAL</span>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <div className="card-body-mobile">
@@ -308,6 +327,24 @@ const YearInchargePendingOutpass: React.FC = () => {
             margin-bottom: 0;
         }
 
+        .emergency-badge {
+            display: inline-block;
+            background-color: #fee2e2;
+            color: #ef4444;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-left: 8px;
+            border: 1px solid #ef4444;
+            vertical-align: middle;
+        }
+
+        .emergency-badge.mobile {
+            margin-left: 0;
+            font-size: 0.65rem;
+        }
+
         .view-btn-mobile {
             width: 100%;
             padding: 10px;
@@ -338,7 +375,7 @@ const YearInchargePendingOutpass: React.FC = () => {
         }
       `}</style>
             </div>
-        </div>
+        </div >
     );
 };
 
