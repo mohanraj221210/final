@@ -396,7 +396,7 @@ const YearInchargeProfile: React.FC = () => {
                                                 className="input"
                                             >
                                                 <option value="" disabled>+ Add Year</option>
-                                                {['1', '2', '3', '4']
+                                                {['1st Year', '2nd Year', '3rd Year', '4th Year']
                                                     .filter(opt => !profile.handlingyears.includes(opt))
                                                     .map(opt => (
                                                         <option key={opt} value={opt}>{opt}</option>
@@ -432,7 +432,7 @@ const YearInchargeProfile: React.FC = () => {
                                                 className="input"
                                             >
                                                 <option value="" disabled>+ Add Batch</option>
-                                                {['2022–2026', '2023–2027', '2024–2028', '2025–2029', '2026–2030']
+                                                {['2022-2026', '2023-2027', '2024-2028', '2025-2029', '2026-2030']
                                                     .filter(opt => !profile.handlingbatches.includes(opt))
                                                     .map(opt => (
                                                         <option key={opt} value={opt}>{opt}</option>
@@ -469,12 +469,7 @@ const YearInchargeProfile: React.FC = () => {
                                             >
                                                 <option value="" disabled>+ Add Department</option>
                                                 {[
-                                                    'Information Technology',
-                                                    'Computer Science and Engineering',
-                                                    'Mechanical Engineering',
-                                                    'Artificial Intelligence and Data Science',
-                                                    'Master of Business Administration',
-                                                    'Electronics and Communication Engineering'
+                                                    'Computer Science and Engineering', 'Electrical and Electronics Engineering', 'Mechanical Engineering', 'Information Technology', 'Artificial Intelligence and Data Science', 'Master of Business Administration'
                                                 ]
                                                     .filter(opt => !profile.handlingdepartments.includes(opt))
                                                     .map(opt => (

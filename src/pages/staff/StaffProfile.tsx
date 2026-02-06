@@ -319,22 +319,35 @@ const StaffProfile: React.FC = () => {
                             <div className="profile-badges">
                                 {isEditing ? (
                                     <>
-                                        <input
-                                            type="text"
+                                        <select
                                             name="designation"
                                             value={formData.designation}
                                             onChange={handleChange}
-                                            className="edit-input badge-input"
-                                            placeholder="Designation"
-                                        />
-                                        <input
-                                            type="text"
+                                            className="edit-input"
+                                            style={{ width: 'auto', maxWidth: '300px' }}
+                                        >
+                                            <option value="">Select Designation</option>
+                                            <option value="Professor">Professor</option>
+                                            <option value="Associate Professor">Associate Professor</option>
+                                            <option value="Assistant Professor">Assistant Professor</option>
+                                            <option value="Head of Department">Head of Department</option>
+                                            <option value="Lab Assistant">Lab Assistant</option>
+                                        </select>
+                                        <select
                                             name="department"
                                             value={formData.department}
                                             onChange={handleChange}
-                                            className="edit-input badge-input"
-                                            placeholder="Department"
-                                        />
+                                            className="edit-input"
+                                            style={{ width: 'auto', maxWidth: '300px' }}
+                                        >
+                                            <option value="">Select Department</option>
+                                            <option value="Computer Science and Engineering">Computer Science and Engineering</option>
+                                            <option value="Information Technology">Information Technology</option>
+                                            <option value="Electronics and Communication Engineering">Electronics and Communication Engineering</option>
+                                            <option value="Mechanical Engineering">Mechanical Engineering</option>
+                                            <option value="Artificial Intelligence and Data Science">Artificial Intelligence and Data Science</option>
+                                            <option value="Master of Business Administration">Master of Business Administration</option>
+                                        </select>
                                     </>
                                 ) : (
                                     <>
