@@ -219,7 +219,11 @@ const StudentViewStaffProfile: React.FC = () => {
                         <div className="header-content-inner">
                             <div className="profile-image-wrapper">
                                 <img
-                                    src={photoUrl}
+                                    src={photoUrl
+                                        ? photoUrl.startsWith('http')
+                                            ? photoUrl
+                                            : `${import.meta.env.VITE_CDN_URL}${photoUrl}`
+                                        : `https://ui-avatars.com/api/?name=${staff.name}&background=0047AB&color=fff&size=200`}
                                     alt={staff.name}
                                     onError={(e) => {
                                         e.currentTarget.src = `https://ui-avatars.com/api/?name=${staff.name}&background=0047AB&color=fff&size=200`;

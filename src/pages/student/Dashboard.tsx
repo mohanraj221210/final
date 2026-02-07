@@ -342,13 +342,13 @@ const Dashboard: React.FC = () => {
                                     <span className="action-icon">👥</span>
                                     <span className="action-text">Find Staff</span>
                                 </div>
-                                <div
+                                {/* <div
                                     className={`action-card ${zoomingPath === '/student-notice' ? 'zooming' : ''}`}
                                     onClick={() => handleQuickAction('/student-notice')}
                                 >
                                     <span className="action-icon">📢</span>
                                     <span className="action-text">Notices</span>
-                                </div>
+                                </div> */}
                                 <div
                                     className={`action-card ${zoomingPath === '/subjects' ? 'zooming' : ''}`}
                                     onClick={() => handleQuickAction('/subjects')}

@@ -50,7 +50,13 @@ const StaffCard: React.FC<StaffCardProps> = ({ staff }) => {
             <div className="staff-header">
                 <div className="staff-img-wrapper">
                     <img
-                        src={staffData?.photo}
+                        src={
+                            (staffData?.photo || staff.photo)
+                                ? (staffData?.photo || staff.photo)?.startsWith('http')
+                                    ? (staffData?.photo || staff.photo)
+                                    : `${import.meta.env.VITE_CDN_URL}${staffData?.photo || staff.photo}`
+                                : `https://ui-avatars.com/api/?name=${staffData?.name || staff.name}&background=0047AB&color=fff&size=200`
+                        }
                         alt={staffData?.name}
                         onError={(e) => { e.currentTarget.src = 'https://ui-avatars.com/api/?name=' + staff.name + '&background=random'; }}
                         className="staff-img"

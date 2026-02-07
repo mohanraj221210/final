@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Toast from '../../components/Toast';
 import { type User, RECENT_DOWNLOADS } from '../../data/sampleData';
-import jitProfile from '../../assets/jit.webp';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
@@ -271,7 +270,11 @@ const Profile: React.FC = () => {
                             <div className="profile-header">
                                 <div className="avatar-container">
                                     <img
-                                        src={user.photo || jitProfile}
+                                        src={user.photo
+                                            ? user.photo.startsWith("blob:") || user.photo.startsWith("data:") || user.photo.startsWith("http")
+                                                ? user.photo
+                                                : `${import.meta.env.VITE_CDN_URL}${user.photo}`
+                                            : `https://ui-avatars.com/api/?name=${user.name}&background=0047AB&color=fff&size=200`}
                                         alt="Profile"
                                         className="profile-avatar"
                                     />
