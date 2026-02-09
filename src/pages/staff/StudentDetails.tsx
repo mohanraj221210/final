@@ -165,8 +165,56 @@ const StudentDetails: React.FC = () => {
                                     student.name.charAt(0).toUpperCase()
                                 )}
                             </div>
-                            <h3>{student.name}</h3>
-                            <span className="badge-reg">{student.registerNumber}</span>
+                            {isEditing ? (
+                                <>
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        value={formData.name || ''}
+                                        onChange={handleInputChange}
+                                        style={{
+                                            fontSize: '1.4rem',
+                                            fontWeight: 700,
+                                            marginBottom: '8px',
+                                            color: 'white',
+                                            background: 'transparent',
+                                            border: 'none',
+                                            borderBottom: '1px solid rgba(255,255,255,0.3)',
+                                            textAlign: 'center',
+                                            width: '80%',
+                                            outline: 'none'
+                                        }}
+                                        placeholder="Student Name"
+                                    />
+                                    <br />
+                                    <input
+                                        type="text"
+                                        name="registerNumber"
+                                        value={formData.registerNumber || ''}
+                                        onChange={handleInputChange}
+                                        style={{
+                                            background: 'rgba(255,255,255,0.15)',
+                                            padding: '4px 12px',
+                                            borderRadius: '20px',
+                                            fontSize: '0.9rem',
+                                            fontWeight: 500,
+                                            letterSpacing: '0.5px',
+                                            color: 'white',
+                                            border: 'none',
+                                            textAlign: 'center',
+                                            width: '140px',
+                                            marginTop: '4px',
+                                            outline: 'none'
+                                        }}
+                                        placeholder="Reg No"
+                                    />
+                                </>
+                            ) : (
+                                <>
+                                    <h3>{student.name}</h3>
+                                    <span className="badge-reg">{student.registerNumber}</span>
+                                </>
+                            )}
                             {student.isblocked && <div className="blocked-status">BLOCKED</div>}
                         </div>
                         <div className="card-body-modern">
