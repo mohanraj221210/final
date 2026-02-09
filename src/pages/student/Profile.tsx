@@ -9,6 +9,10 @@ const Profile: React.FC = () => {
     const [user, setUser] = useState<User>({
         name: '',
         registerNumber: '',
+        staffid: {
+            id: '',
+            name: '',
+        },
         department: '',
         semester: 0,
         year: '',
