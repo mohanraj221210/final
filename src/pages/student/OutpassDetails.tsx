@@ -16,18 +16,21 @@ interface OutpassData {
     overallStatus: ApprovalStatus;
     staffApproval: {
         status: ApprovalStatus;
+        approverName?: string;
         remarks?: string;
         approvedAt?: string;
         rejectedAt?: string;
     };
     yearInchargeApproval: {
         status: ApprovalStatus;
+        approverName?: string;
         remarks?: string;
         approvedAt?: string;
         rejectedAt?: string;
     };
     wardenApproval: {
         status: ApprovalStatus;
+        approverName?: string;
         remarks?: string;
         approvedAt?: string;
         rejectedAt?: string;
@@ -42,20 +45,42 @@ const OutpassDetails: React.FC = () => {
     const [outpasses, setOutpasses] = useState<OutpassData[]>([]);
     const [loading, setLoading] = useState(true);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+    const [residenceType, setResidenceType] = useState<string>('');
+    const [user, setUser] = useState<any>(null);
 
     useEffect(() => {
-        const fetchOutpasses = async () => {
+        const fetchData = async () => {
             try {
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/outpass`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
+                const token = localStorage.getItem('token');
+
+                // Fetch Profile for Residence Type
+                const profilePromise = axios.get(`${import.meta.env.VITE_API_URL}/api/profile`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
-                if (response.status === 200) {
-                    const mappedOutpasses = (response.data.outpasses || []).map((item: any) => ({
+
+                // Fetch Outpasses
+                const outpassesPromise = axios.get(`${import.meta.env.VITE_API_URL}/api/outpass`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const [profileResponse, outpassResponse] = await Promise.all([profilePromise, outpassesPromise]);
+
+                if (profileResponse.status === 200) {
+                    const userData = profileResponse.data.user;
+                    setResidenceType(userData.residencetype?.toLowerCase() || '');
+                    setUser(userData);
+                }
+
+                if (outpassResponse.status === 200) {
+                    const mappedOutpasses = (outpassResponse.data.outpasses || []).map((item: any) => ({
                         id: item._id,
-                        studentId: item.studentid, // API uses lowercase 'studentid'
-                        studentName: 'Student', // Name not in API response, using placeholder
+                        // Fix: valid renderable string is extracted from studentid object
+                        studentId: (typeof item.studentid === 'object' && item.studentid !== null)
+                            ? (item.studentid.registerNumber || item.studentid.name || 'Unknown')
+                            : String(item.studentid || ''),
+                        studentName: (typeof item.studentid === 'object' && item.studentid !== null)
+                            ? (item.studentid.name || 'Student')
+                            : 'Student',
                         fromDate: item.fromDate,
                         toDate: item.toDate,
                         reason: item.reason,
@@ -63,18 +88,21 @@ const OutpassDetails: React.FC = () => {
                         createdAt: item.createdAt,
                         staffApproval: {
                             status: item.staffapprovalstatus || 'pending',
+                            approverName: item.staffid?.name,
                             remarks: item.staffremarks,
                             approvedAt: item.staffapprovedAt,
-                            rejectedAt: item.staffapprovalstatus === 'rejected' ? item.updatedAt : undefined // Approximation if not explicit
+                            rejectedAt: item.staffapprovalstatus === 'rejected' ? item.updatedAt : undefined
                         },
                         yearInchargeApproval: {
                             status: item.yearinchargeapprovalstatus || 'pending',
+                            approverName: item.inchargeid?.name,
                             remarks: item.yearinchargeremarks,
                             approvedAt: item.yearinchargeapprovedAt,
                             rejectedAt: item.yearinchargeapprovalstatus === 'rejected' ? item.updatedAt : undefined
                         },
                         wardenApproval: {
                             status: item.wardenapprovalstatus || 'pending',
+                            approverName: item.wardenid?.name,
                             remarks: item.wardenremarks,
                             approvedAt: item.wardenapprovedAt,
                             rejectedAt: item.wardenapprovalstatus === 'rejected' ? item.updatedAt : undefined
@@ -83,14 +111,14 @@ const OutpassDetails: React.FC = () => {
                     setOutpasses(mappedOutpasses);
                 }
             } catch (error) {
-                console.error("Error fetching outpasses:", error);
-                toast.error("Failed to fetch outpass history");
+                console.error("Error fetching data:", error);
+                toast.error("Failed to fetch data");
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchOutpasses();
+        fetchData();
     }, []);
 
     const getStatusBadge = (status: string) => {
@@ -266,6 +294,30 @@ const OutpassDetails: React.FC = () => {
                             ← Back to All Outpasses
                         </button>
 
+                        {/* Student Details Section */}
+                        {user && (
+                            <div className="detail-section student-info">
+                                <div className="info-grid">
+                                    <div className="info-field">
+                                        <label>NAME</label>
+                                        <div className="info-value">{user.name}</div>
+                                    </div>
+                                    <div className="info-field">
+                                        <label>REGISTER NUMBER</label>
+                                        <div className="info-value">{user.registerNumber}</div>
+                                    </div>
+                                    <div className="info-field">
+                                        <label>DEPARTMENT</label>
+                                        <div className="info-value uppercase">{user.department}</div>
+                                    </div>
+                                    <div className="info-field">
+                                        <label>YEAR</label>
+                                        <div className="info-value">{user.year}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Basic Information Section */}
                         <div className="detail-section basic-info">
                             <div className="info-field">
@@ -313,6 +365,14 @@ const OutpassDetails: React.FC = () => {
                                         <label>STATUS</label>
                                         {getStatusBadge(selectedOutpass.staffApproval.status)}
                                     </div>
+                                    {selectedOutpass.staffApproval.approverName && (
+                                        <div className="approval-field">
+                                            <label>APPROVED BY</label>
+                                            <div className="approval-value">
+                                                {selectedOutpass.staffApproval.approverName}
+                                            </div>
+                                        </div>
+                                    )}
                                     {selectedOutpass.staffApproval.approvedAt && (
                                         <div className="approval-field">
                                             <label>APPROVED AT</label>
@@ -329,6 +389,7 @@ const OutpassDetails: React.FC = () => {
                                             </div>
                                         </div>
                                     )}
+                                    
                                     {selectedOutpass.staffApproval.remarks && (
                                         <div className="approval-field">
                                             <label>STAFF REMARKS</label>
@@ -351,6 +412,14 @@ const OutpassDetails: React.FC = () => {
                                         <label>STATUS</label>
                                         {getStatusBadge(selectedOutpass.yearInchargeApproval.status)}
                                     </div>
+                                    {selectedOutpass.yearInchargeApproval.approverName && (
+                                        <div className="approval-field">
+                                            <label>APPROVED BY</label>
+                                            <div className="approval-value">
+                                                {selectedOutpass.yearInchargeApproval.approverName}
+                                            </div>
+                                        </div>
+                                    )}
                                     {selectedOutpass.yearInchargeApproval.approvedAt && (
                                         <div className="approval-field">
                                             <label>APPROVED AT</label>
@@ -367,6 +436,7 @@ const OutpassDetails: React.FC = () => {
                                             </div>
                                         </div>
                                     )}
+                                    
                                     {selectedOutpass.yearInchargeApproval.remarks && (
                                         <div className="approval-field">
                                             <label>REMARKS</label>
@@ -378,43 +448,54 @@ const OutpassDetails: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Warden Approval Card */}
-                            <div className="approval-card">
-                                <div className="approval-card-header">
-                                    <span className="approval-icon">👔</span>
-                                    <h3>Warden Approval</h3>
-                                </div>
-                                <div className="approval-card-body">
-                                    <div className="approval-field">
-                                        <label>STATUS</label>
-                                        {getStatusBadge(selectedOutpass.wardenApproval.status)}
+                            {/* Warden Approval Card - Only for Hostel Students */}
+                            {residenceType === 'hostel' && (
+                                <div className="approval-card">
+                                    <div className="approval-card-header">
+                                        <span className="approval-icon">👔</span>
+                                        <h3>Warden Approval</h3>
                                     </div>
-                                    {selectedOutpass.wardenApproval.approvedAt && (
+                                    <div className="approval-card-body">
                                         <div className="approval-field">
-                                            <label>APPROVED AT</label>
-                                            <div className="approval-value">
-                                                {formatDateTime(selectedOutpass.wardenApproval.approvedAt)}
-                                            </div>
+                                            <label>STATUS</label>
+                                            {getStatusBadge(selectedOutpass.wardenApproval.status)}
                                         </div>
-                                    )}
-                                    {selectedOutpass.wardenApproval.rejectedAt && (
-                                        <div className="approval-field">
-                                            <label>REJECTED AT</label>
-                                            <div className="approval-value">
-                                                {formatDateTime(selectedOutpass.wardenApproval.rejectedAt)}
+                                        {selectedOutpass.wardenApproval.approverName && (
+                                            <div className="approval-field">
+                                                <label>APPROVED BY</label>
+                                                <div className="approval-value">
+                                                    {selectedOutpass.wardenApproval.approverName}
+                                                </div>
                                             </div>
-                                        </div>
-                                    )}
-                                    {selectedOutpass.wardenApproval.remarks && (
-                                        <div className="approval-field">
-                                            <label>WARDEN REMARKS</label>
-                                            <div className="approval-value">
-                                                {selectedOutpass.wardenApproval.remarks}
+                                        )}
+                                        {selectedOutpass.wardenApproval.approvedAt && (
+                                            <div className="approval-field">
+                                                <label>APPROVED AT</label>
+                                                <div className="approval-value">
+                                                    {formatDateTime(selectedOutpass.wardenApproval.approvedAt)}
+                                                </div>
                                             </div>
-                                        </div>
-                                    )}
+                                        )}
+                                        {selectedOutpass.wardenApproval.rejectedAt && (
+                                            <div className="approval-field">
+                                                <label>REJECTED AT</label>
+                                                <div className="approval-value">
+                                                    {formatDateTime(selectedOutpass.wardenApproval.rejectedAt)}
+                                                </div>
+                                            </div>
+                                        )}
+                                        
+                                        {selectedOutpass.wardenApproval.remarks && (
+                                            <div className="approval-field">
+                                                <label>WARDEN REMARKS</label>
+                                                <div className="approval-value">
+                                                    {selectedOutpass.wardenApproval.remarks}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -773,6 +854,25 @@ const OutpassDetails: React.FC = () => {
                 }
 
                 /* Basic Information Section */
+                .detail-section.student-info {
+                    background: white;
+                    border-radius: 16px;
+                    padding: 28px;
+                    margin-bottom: 24px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+                    border-left: 5px solid #0047AB;
+                }
+
+                .info-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                    gap: 20px;
+                }
+
+                .uppercase {
+                    text-transform: uppercase;
+                }
+
                 .detail-section.basic-info {
                     background: white;
                     border-radius: 16px;
