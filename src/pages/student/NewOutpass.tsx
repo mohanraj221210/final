@@ -199,7 +199,7 @@ const Outpass: React.FC = () => {
                             </select>
                             {residenceType === 'day scholar' && (
                                 <p className="helper-text" style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '8px' }}>
-                                    Day Scholars can apply for On Duty (OD) or Emergency outpass.
+                                    Only OD and Emergency outpasses are allowed for Day Scholars.
                                 </p>
                             )}
                         </div>

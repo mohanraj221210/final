@@ -4,6 +4,8 @@ import { RECENT_DOWNLOADS, type User } from '../../data/sampleData';
 import axios from 'axios';
 import { useEffect } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
+import StudentHeader from '../../components/StudentHeader';
+import { isProfileComplete } from '../../utils/profileHelper';
 
 // Event types for calendar
 type EventType = 'working' | 'leave' | 'college_event' | 'cia_exam';
@@ -23,6 +25,10 @@ const Dashboard: React.FC = () => {
     const [user, setUser] = React.useState<User>({
         name: "",
         registerNumber: "",
+        staffid: {
+            id: "",
+            name: "",
+        },
         department: "",
         year: "",
         semester: 0,
@@ -40,8 +46,6 @@ const Dashboard: React.FC = () => {
     });
     const navigate = useNavigate();
     const [zoomingPath, setZoomingPath] = React.useState<string | null>(null);
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
-
     // Calendar state
     const [currentDate, setCurrentDate] = React.useState(new Date());
     const [selectedEvent, setSelectedEvent] = React.useState<CalendarEvent | null>(null);
@@ -96,6 +100,16 @@ const Dashboard: React.FC = () => {
     }, []);
 
     const handleQuickAction = (path: string) => {
+        const restrictedPaths = ['/staffs', '/student-notice', '/subjects', '/outpass', '/new-outpass'];
+
+        if (restrictedPaths.includes(path) && !isProfileComplete(user)) {
+            toast.warn("Complete your profile to enable " + path.replace('/', ''), {
+                position: "top-center",
+                autoClose: 3000,
+            });
+            return;
+        }
+
         setZoomingPath(path);
         setTimeout(() => {
             navigate(path);
@@ -216,77 +230,13 @@ const Dashboard: React.FC = () => {
         return <div className="card staff-card">Loading...</div>;
     }
 
-    const handleLogout = () => {
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('userType');
-        localStorage.removeItem('token');
-        navigate('/login');
-    };
+
 
     return (
         <div className="page-container dashboard-page">
             <ToastContainer position="bottom-right" />
             {/* Custom Dashboard Header */}
-            <header className="dashboard-header-custom">
-                <div className="header-container-custom">
-                    <div className="header-left-custom">
-                        <div className="brand-custom">
-                            <span className="brand-icon-custom">🎓</span>
-                            <span className="brand-text-custom">JIT Student Portal</span>
-                        </div>
-                    </div>
-
-                    <button
-                        className="mobile-menu-btn"
-                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        aria-label="Toggle menu"
-                    >
-                        {isMobileMenuOpen ? '✕' : '☰'}
-                    </button>
-
-                    <nav className={`header-nav-custom ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/dashboard')}
-                        >
-                            Dashboard
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/staffs')}
-                        >
-                            Staffs
-                        </button>
-                        {/* <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/student-notice')}
-                        >
-                            Notices
-                        </button> */}
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/outpass')}
-                        >
-                            Outpass
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/subjects')}
-                        >
-                            Subjects
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/profile')}
-                        >
-                            Profile
-                        </button>
-                        <button className="logout-btn-custom" onClick={handleLogout}>
-                            Logout
-                        </button>
-                    </nav>
-                </div>
-            </header>
+            <StudentHeader user={user} />
 
             <div className="content-wrapper-custom">
                 {/* Hero Section */}
@@ -367,37 +317,11 @@ const Dashboard: React.FC = () => {
                                     className={`action-card ${zoomingPath === '/outpass' ? 'zooming' : ''}`}
                                     onClick={(e) => {
                                         e.preventDefault();
-
-                                        const isProfileComplete = () => {
-                                            if (!user.name || !user.registerNumber || !user.department || !user.year ||
-                                                !user.phone || !user.email || !user.parentnumber || !user.residencetype || !user.photo) {
-                                                console.log("Basic fields missing", user);
-                                                return false;
-                                            }
-
-                                            if (user.residencetype === 'hostel') {
-                                                if (!user.hostelname || !user.hostelroomno) return false;
-                                            } else if (user.residencetype === 'day scholar') {
-                                                if (!user.busno || !user.boardingpoint) return false;
-                                            }
-
-                                            return true;
-                                        };
-
-                                        if (isProfileComplete()) {
-                                            handleQuickAction('/outpass');
-                                        } else {
-                                            toast.warn("Complete your profile to enable Outpass", {
-                                                position: "top-center",
-                                                autoClose: 3000,
-                                            });
-                                        }
+                                        handleQuickAction('/outpass');
                                     }}
                                     style={{
-                                        opacity: (!user.name || !user.registerNumber || !user.department || !user.year ||
-                                            !user.phone || !user.email || !user.parentnumber || !user.residencetype || !user.photo) ? 0.7 : 1,
-                                        cursor: (!user.name || !user.registerNumber || !user.department || !user.year ||
-                                            !user.phone || !user.email || !user.parentnumber || !user.residencetype || !user.photo) ? 'not-allowed' : 'pointer'
+                                        opacity: !isProfileComplete(user) ? 0.7 : 1,
+                                        cursor: !isProfileComplete(user) ? 'not-allowed' : 'pointer'
                                     }}
                                 >
                                     <span className="action-icon">📝</span>
@@ -429,7 +353,7 @@ const Dashboard: React.FC = () => {
                                         <div className="info-icon">👩‍🏫</div>
                                         <div className="info-content">
                                             <label>Class Advisor</label>
-                                            <p>Mrs. Ruth Shobitha</p>
+                                            <p>{user.staffid.name}</p>
                                         </div>
                                     </div>
                                     <div className="info-item">

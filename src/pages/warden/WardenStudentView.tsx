@@ -138,7 +138,7 @@ const WardenStudentView: React.FC = () => {
           <div className="section-body info-grid-with-avatar">
             <div className="avatar-box">
               {s.name ? (
-                <div> <img src={s.photo} alt="Student" className="initials-avatar" /></div>
+                <div> <img src={`${import.meta.env.VITE_CDN_URL}${s.photo}`} alt="Student" className="initials-avatar" /></div>
               ) : (
                 <div className="initials-avatar">NA</div>
               )}

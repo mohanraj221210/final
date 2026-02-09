@@ -53,16 +53,15 @@ const YearInchargePendingOutpass: React.FC = () => {
                 const filtered = list.filter((o: any) =>
                     o.staffapprovalstatus === 'approved' &&
                     o.yearinchargeapprovalstatus === 'pending'
-                ).sort((a: any, b: any) => {
-                    // Priority 1: Emergency first
-                    const isAEmergency = a.outpassType?.toLowerCase() === 'emergency';
-                    const isBEmergency = b.outpassType?.toLowerCase() === 'emergency';
-                    if (isAEmergency && !isBEmergency) return -1;
-                    if (!isAEmergency && isBEmergency) return 1;
+                );
 
-                    // Priority 2: Date (Newest first)
-                    return new Date(b.fromDate).getTime() - new Date(a.fromDate).getTime();
+                // Sort Emergency first
+                filtered.sort((a: any, b: any) => {
+                    if (a.outpasstype === 'Emergency' && b.outpasstype !== 'Emergency') return -1;
+                    if (a.outpasstype !== 'Emergency' && b.outpasstype === 'Emergency') return 1;
+                    return 0;
                 });
+
                 setPendingOutpasses(filtered);
             }
         } catch (error) {
@@ -85,92 +84,43 @@ const YearInchargePendingOutpass: React.FC = () => {
                 </button>
                 <h1>Pending Approvals</h1>
 
-                <div className="outpass-card">
-                    <table className="outpass-table">
-                        <thead>
-                            <tr>
-                                <th>Student Name</th>
-                                <th>Department</th>
-                                <th>Year</th>
-                                <th>Outpass Type</th>
-                                <th>Date</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {pendingOutpasses.length === 0 ? (
-                                <tr>
-                                    <td colSpan={6} style={{ textAlign: "center", padding: "20px" }}>
-                                        No pending approvals found
-                                    </td>
-                                </tr>
-                            ) : (
-                                pendingOutpasses.map((item) => (
-                                    <tr key={item._id}>
-                                        <td data-label="Student Name">
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                <span style={{ fontWeight: '600', color: '#0f172a' }}>{item.studentid?.name}</span>
-                                                <span style={{ fontSize: '0.85rem', color: '#64748b' }}>{item.studentid?.registerNumber}</span>
-                                            </div>
-                                        </td>
-                                        <td data-label="Department">{item.studentid?.department}</td>
-                                        <td data-label="Year">{item.studentid?.year}</td>
-                                        <td data-label="Outpass Type">
-                                            {item.outpasstype}
-                                            {item.outpasstype?.toLowerCase() === 'emergency' && (
-                                                <span className="emergency-badge">🚨 CRITICAL</span>
-                                            )}
-                                        </td>
-                                        <td data-label="Date">{new Date(item.fromDate).toLocaleDateString()}</td>
-                                        <td data-label="Action">
-                                            <button className="view-btn" onClick={() => navigate(`/year-incharge/student/${item._id}`)}>
-                                                Review
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-
-                {!loading && pendingOutpasses.length > 0 && (
-                    <div className="mobile-cards-view">
-                        {pendingOutpasses.map((item) => (
-                            <div className="mobile-card" key={item._id}>
-                                <div className="card-header-mobile">
-                                    <div>
-                                        <h3 className="card-name">{item.studentid?.name}</h3>
-                                        <p className="card-reg">{item.studentid?.registerNumber}</p>
+                <div className="student-list">
+                    {pendingOutpasses.length === 0 ? (
+                        <div className="no-data-message" style={{ textAlign: "center", padding: "40px", color: "#64748b" }}>
+                            No pending approvals found
+                        </div>
+                    ) : (
+                        pendingOutpasses.map((item) => (
+                            <div
+                                key={item._id}
+                                className="student-card"
+                                onClick={() => navigate(`/year-incharge/student/${item._id}`)}
+                            >
+                                <div className="student-card-main">
+                                    <div className="student-id-highlight">
+                                        {item.studentid?.registerNumber}
                                     </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                                        <span className="pass-type-mobile">{item.outpasstype}</span>
-                                        {item.outpasstype?.toLowerCase() === 'emergency' && (
-                                            <span className="emergency-badge mobile">🚨 CRITICAL</span>
-                                        )}
+                                    <div className="student-info">
+                                        <div className="student-name">
+                                            {item.studentid?.name}
+                                            {item.outpasstype === 'Emergency' && <span className="emergency-badge">EMERGENCY</span>}
+                                        </div>
+                                        <div className="student-meta">
+                                            Year {item.studentid?.year} • {item.outpasstype || 'General'} • Applied on {new Date(item.fromDate).toLocaleDateString()}
+                                        </div>
                                     </div>
                                 </div>
-
-                                <div className="card-body-mobile">
-                                    <div className="info-row">
-                                        <span className="label">Dept/Year:</span>
-                                        <span className="value">{item.studentid?.department} - {item.studentid?.year}</span>
-                                    </div>
-                                    <div className="info-row">
-                                        <span className="label">Date:</span>
-                                        <span className="value">{new Date(item.fromDate).toLocaleDateString()}</span>
-                                    </div>
-                                </div>
-
-                                <div className="card-footer-mobile">
-                                    <button className="view-btn-mobile" onClick={() => navigate(`/year-incharge/student/${item._id}`)}>
-                                        Review Application
-                                    </button>
+                                <div className="student-card-action">
+                                    <span className="status-badge" style={{ color: '#f59e0b', backgroundColor: '#fef3c7', border: '2px solid #f59e0b' }}>
+                                        <span className="status-dot">●</span>
+                                        Pending
+                                    </span>
+                                    <span className="view-arrow">View →</span>
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                )}
+                        ))
+                    )}
+                </div>
 
 
                 <style>{`
@@ -217,160 +167,125 @@ const YearInchargePendingOutpass: React.FC = () => {
         }
 
         /* Table */
-        .outpass-table {
-          width: 100%;
-          border-collapse: collapse;
-        }
-
-        .outpass-table thead {
-          background: linear-gradient(135deg, #1e3a8a, #0f172a);
-          color: white;
-        }
-
-        .outpass-table th {
-          padding: 14px;
-          text-align: left;
-          font-weight: 600;
-        }
-
-        .outpass-table td {
-          padding: 14px;
-          border-bottom: 1px solid #f1f5f9;
-          color: #334155;
-        }
-
-        .outpass-table tbody tr {
-          transition: all 0.3s ease;
-        }
-
-        .outpass-table tbody tr:hover {
-          background: #eff6ff;
-          transform: translateX(4px);
-        }
-
-        /* View Button */
-        .view-btn {
-          padding: 6px 14px;
-          border-radius: 10px;
-          border: none;
-          background: linear-gradient(135deg, #2563eb, #1e3a8a);
-          color: white;
-          font-weight: 500;
-          cursor: pointer;
-          transition: 0.3s;
-        }
-
-        .view-btn:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 6px 16px rgba(37,99,235,0.4);
-        }
-
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Mobile Card Styles */
-        .mobile-cards-view {
-            display: none;
+        /* Reuse standard student-card styles */
+        .student-list {
+            display: flex;
             flex-direction: column;
             gap: 16px;
         }
 
-        .mobile-card {
+        .student-card {
             background: white;
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            border: 1px solid #f1f5f9;
-        }
-
-        .card-header-mobile {
+            border-radius: 16px;
+            padding: 24px;
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 12px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #f1f5f9;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
         }
 
-        .card-name {
-            font-size: 1rem;
+        .student-card:hover {
+            border-color: #0047AB;
+            transform: translateX(8px);
+            box-shadow: 0 8px 24px rgba(0, 71, 171, 0.15);
+        }
+
+        .student-card-main {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .student-id-highlight {
+            background: linear-gradient(135deg, #0047AB, #2563eb);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            min-width: 140px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 71, 171, 0.3);
+        }
+
+        .student-info {
+            flex: 1;
+        }
+
+        .student-name {
+            font-size: 1.2rem;
             font-weight: 700;
             color: #1e293b;
-            margin: 0;
+            margin-bottom: 4px;
         }
 
-        .card-reg {
-            font-size: 0.8rem;
+        .student-meta {
             color: #64748b;
-            margin: 0;
+            font-size: 0.95rem;
         }
 
-        .pass-type-mobile {
-            padding: 4px 8px;
-            font-size: 0.75rem;
-        }
-
-        .card-body-mobile {
-            margin-bottom: 12px;
-        }
-
-        .info-row {
+        .student-card-action {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 6px;
-            font-size: 0.85rem;
+            align-items: center;
+            gap: 24px;
+            margin-left: auto;
         }
 
-        .info-row:last-child {
-            margin-bottom: 0;
+        .view-arrow {
+            color: #0047AB;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .status-dot {
+            font-size: 0.8rem;
         }
 
         .emergency-badge {
-            display: inline-block;
-            background-color: #fee2e2;
-            color: #ef4444;
+            background-color: #ef4444;
+            color: white;
+            font-size: 0.7rem;
             padding: 2px 6px;
             border-radius: 4px;
-            font-size: 0.7rem;
-            font-weight: 700;
             margin-left: 8px;
-            border: 1px solid #ef4444;
+            font-weight: 700;
             vertical-align: middle;
         }
 
-        .emergency-badge.mobile {
-            margin-left: 0;
-            font-size: 0.65rem;
-        }
-
-        .view-btn-mobile {
-            width: 100%;
-            padding: 10px;
-            background: #1e3a8a;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
         @media (max-width: 768px) {
-            .outpass-card {
-                display: none; /* Hide table card */
+            .student-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
             }
-            .mobile-cards-view {
-                display: flex;
+
+            .student-card-main {
+                flex-direction: column;
+                align-items: flex-start;
+                width: 100%;
             }
-            .list-container {
-                padding: 16px;
-                margin-top: 20px;
+
+            .student-id-highlight {
+                width: 100%;
             }
-            .list-container h1 {
-                font-size: 24px;
+
+            .student-card-action {
+                width: 100%;
+                justify-content: space-between;
+                margin-left: 0;
             }
         }
       `}</style>

@@ -1,6 +1,10 @@
 export interface User {
     name: string;
     registerNumber: string;
+    staffid: {
+        id: string,
+        name: string,
+    }
     department: string;
     semester: number;
     year: string;

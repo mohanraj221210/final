@@ -41,8 +41,8 @@ interface StudentOutpass {
     yearInchargeApproval: ApprovalStatus;
     wardenApproval: ApprovalStatus;
     staffApprovedBy?: string;
-    outpassType: string;
-    residenceType?: string;
+    outpasstype: string;
+    residencetype?: string;
 }
 
 const PassApproval: React.FC = () => {
@@ -114,8 +114,8 @@ const PassApproval: React.FC = () => {
                     lastOutpassReason: data.lastOutpassReason,
                     lastOutpassApprovedBy: data.lastOutpassApprovedBy,
                     lastOutpassStatus: data.lastOutpassStatus,
-                    outpassType: data.outpassType,
-                    residenceType: studentDetails.residenceType || 'dayScholar'
+                    outpasstype: data.outpassType,
+                    residencetype: studentDetails.residenceType || 'dayScholar'
                 };
 
                 setSelectedStudent(mappedStudent);
@@ -162,10 +162,17 @@ const PassApproval: React.FC = () => {
                                 staffApproval: item.staffapprovalstatus || 'pending',
                                 yearInchargeApproval: item.yearinchargeapprovalstatus || 'pending',
                                 wardenApproval: item.wardenapprovalstatus || 'pending',
-                                outpassType: item.outpassType,
-                                residenceType: studentDetails.residenceType || 'dayScholar'
+                                outpasstype: item.outpasstype,
+                                residencetype: studentDetails.residencetype || 'dayScholar'
                             };
                         });
+
+                    // Sort: Emergency first
+                    mappedStudents.sort((a: any, b: any) => {
+                        if (a.outpasstype === 'Emergency' && b.outpasstype !== 'Emergency') return -1;
+                        if (a.outpasstype !== 'Emergency' && b.outpasstype === 'Emergency') return 1;
+                        return 0;
+                    });
 
                     setStudents(mappedStudents);
                 }
@@ -193,8 +200,8 @@ const PassApproval: React.FC = () => {
         return matchesSearch && matchesFilter;
     }).sort((a, b) => {
         // Priority 1: Emergency First
-        const isAEmergency = a.outpassType?.toLowerCase() === 'emergency';
-        const isBEmergency = b.outpassType?.toLowerCase() === 'emergency';
+        const isAEmergency = a.outpasstype?.toLowerCase() === 'emergency';
+        const isBEmergency = b.outpasstype?.toLowerCase() === 'emergency';
 
         if (isAEmergency && !isBEmergency) return -1;
         if (!isAEmergency && isBEmergency) return 1;
@@ -369,11 +376,14 @@ const PassApproval: React.FC = () => {
                                                 {student.studentId}
                                             </div>
                                             <div className="student-info">
-                                                <div className="student-name">{student.studentname}</div>
-                                                <div className="student-meta">
-                                                    Year {student.year} • Applied on {formatDateTime(student.appliedDate)}
+                                                <div className="student-name">
+                                                    {student.studentname}
+                                                    {student.outpasstype === 'Emergency' && <span className="emergency-badge">EMERGENCY</span>}
                                                 </div>
-                                                {student.outpassType?.toLowerCase() === 'emergency' && (
+                                                <div className="student-meta">
+                                                    Year {student.year} • {student.outpasstype || 'General'} • Applied on {formatDateTime(student.appliedDate)}
+                                                </div>
+                                                {student.outpasstype?.toLowerCase() === 'emergency' && (
                                                     <div className="emergency-badge">🚨 EMERGENCY</div>
                                                 )}
                                             </div>
@@ -407,7 +417,7 @@ const PassApproval: React.FC = () => {
                                 </div>
                                 <div className="card-body">
                                     <div className="student-profile">
-                                        <img src={selectedStudent.photo} alt="Student" className="student-avatar" />
+                                        <img src={`${import.meta.env.VITE_CDN_URL}${selectedStudent.photo}`} alt="Student" className="student-avatar" />
                                         <div className="profile-grid">
                                             <div className="profile-field">
                                                 <label>STUDENT ID</label>
@@ -612,7 +622,7 @@ const PassApproval: React.FC = () => {
                                             </div>
                                         </div>
 
-                                        {selectedStudent.residenceType === 'hostel' && (
+                                        {selectedStudent.residencetype === 'hostel' && (
                                             <div className={`status-step ${selectedStudent.wardenApproval === 'approved' ? 'completed' : selectedStudent.wardenApproval === 'rejected' ? 'rejected' : (selectedStudent.yearInchargeApproval === 'approved' ? 'active' : 'pending')}`}>
                                                 <div className="step-dot">
                                                     {selectedStudent.wardenApproval === 'approved' ? '✓' :
@@ -804,6 +814,17 @@ const PassApproval: React.FC = () => {
                     gap: 16px;
                 }
 
+                .emergency-badge {
+                    background-color: #ef4444;
+                    color: white;
+                    font-size: 0.7rem;
+                    padding: 2px 6px;
+                    border-radius: 4px;
+                    margin-left: 8px;
+                    font-weight: 700;
+                    vertical-align: middle;
+                }
+
                 .student-card {
                     background: white;
                     border-radius: 16px;
@@ -827,7 +848,6 @@ const PassApproval: React.FC = () => {
                     display: flex;
                     align-items: center;
                     gap: 20px;
-                    flex: 1;
                 }
 
                 .student-id-highlight {
@@ -861,7 +881,8 @@ const PassApproval: React.FC = () => {
                 .student-card-action {
                     display: flex;
                     align-items: center;
-                    gap: 16px;
+                    gap: 24px;
+                    margin-left: auto; /* Push to the right */
                 }
 
                 .view-arrow {

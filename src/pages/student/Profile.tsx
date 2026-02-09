@@ -28,15 +28,15 @@ const Profile: React.FC = () => {
     });
     const [isEditing, setIsEditing] = useState(false);
     const [showToast, setShowToast] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const navigate = useNavigate();
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
     const [completionPercentage, setCompletionPercentage] = useState(0);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
     const calculateCompletion = (userData: User) => {
         const commonFields = [
             'name', 'email', 'phone', 'parentnumber', 'registerNumber',
-            'department', 'year', 'semester', 'batch', 'cgpa', 'gender',
+            'department', 'year', 'semester', 'batch', 'gender',
             'photo', 'residencetype'
         ];
 
@@ -61,6 +61,13 @@ const Profile: React.FC = () => {
     useEffect(() => {
         setCompletionPercentage(calculateCompletion(user));
     }, [user]);
+
+    const handleLogout = () => {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userType');
+        localStorage.removeItem('token');
+        navigate('/login');
+    };
 
     useEffect(() => {
         const fetchUserProfile = async () => {
@@ -115,12 +122,7 @@ const Profile: React.FC = () => {
         toast.info("Image selected. Click 'Save Changes' to upload.");
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('userType');
-        localStorage.removeItem('token');
-        navigate('/login');
-    };
+
 
     const handleSave = async () => {
         console.log(user);
@@ -504,8 +506,8 @@ const Profile: React.FC = () => {
                                         type="number"
                                         name="cgpa"
                                         value={user.cgpa || ''}
-                                        onChange={handleChange}
-                                        disabled={!isEditing}
+                                        readOnly
+                                        disabled={true}
                                         className="input"
                                         step="0.01"
                                         min="0"
@@ -519,8 +521,8 @@ const Profile: React.FC = () => {
                                         type="number"
                                         name="arrears"
                                         value={user.arrears}
-                                        onChange={handleChange}
-                                        disabled={!isEditing}
+                                        readOnly
+                                        disabled={true}
                                         className="input"
                                         min="0"
                                     />
