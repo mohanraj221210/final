@@ -12,6 +12,10 @@ const Dashboard: React.FC = () => {
     const [user, setUser] = React.useState<User>({
         name: "",
         registerNumber: "",
+        staffid: {
+            id: '',
+            name: '',
+        },
         department: "",
         year: "",
         semester: 0,
@@ -85,6 +89,10 @@ const Dashboard: React.FC = () => {
                 const demoUser: User = {
                     name: "Sanjay.S",
                     registerNumber: "WARDEN001",
+                    staffid: {
+                        id: 'WARDEN001',
+                        name: 'Sanjay.S',
+                    },
                     department: "Hostel Management",
                     year: "2025",
                     semester: 0,

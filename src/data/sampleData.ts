@@ -4,7 +4,7 @@ export interface User {
     staffid: {
         id: string,
         name: string,
-    }
+    };
     department: string;
     semester: number;
     year: string;
