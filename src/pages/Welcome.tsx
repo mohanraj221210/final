@@ -64,6 +64,15 @@ const Welcome: React.FC = () => {
                 <span className="arrow-icon">→</span>
               </button>
 
+              <button className="btn-role super-admin-btn" onClick={() => navigate('/admin-login')}>
+                <span className="role-icon">⚙️</span>
+                <div className="role-text">
+                  <span className="role-title">Admin Login</span>
+                  <span className="role-desc">System administration</span>
+                </div>
+                <span className="arrow-icon">→</span>
+              </button>
+
               <button className="btn-role admin-btn" onClick={() => navigate('/watchmanlogin')}>
                 <span className="role-icon">👮🏻</span>
                 <div className="role-text">
@@ -304,6 +313,7 @@ const Welcome: React.FC = () => {
         .staff-btn:hover { border-color: #c084fc; box-shadow: 0 0 20px rgba(192, 132, 252, 0.2); }
         .warden-btn:hover { border-color: #34d399; box-shadow: 0 0 20px rgba(52, 211, 153, 0.2); }
         .admin-btn:hover { border-color: #fbbf24; box-shadow: 0 0 20px rgba(251, 191, 36, 0.2); }
+        .super-admin-btn:hover { border-color: #f43f5e; box-shadow: 0 0 20px rgba(244, 63, 94, 0.2); }
 
         .btn-role .arrow-icon {
           opacity: 0;

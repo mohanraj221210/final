@@ -4,7 +4,7 @@ import { RECENT_DOWNLOADS, type User } from '../../data/sampleData';
 import axios from 'axios';
 import { useEffect } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
-import LoadingSpinner from '../../components/LoadingSpinner';
+
 import StudentHeader from '../../components/StudentHeader';
 import { isProfileComplete } from '../../utils/profileHelper';
 
@@ -26,6 +26,9 @@ const Dashboard: React.FC = () => {
     const [user, setUser] = React.useState<User>({
         name: "",
         registerNumber: "",
+        staffid: {
+            name: "",
+        },
         department: "",
         year: "",
         semester: 0,
@@ -46,7 +49,6 @@ const Dashboard: React.FC = () => {
     // Calendar state
     const [currentDate, setCurrentDate] = React.useState(new Date());
     const [selectedEvent, setSelectedEvent] = React.useState<CalendarEvent | null>(null);
-    const [hoveredDate, setHoveredDate] = React.useState<number | null>(null);
 
     // Sample events data
     const [events] = React.useState<CalendarEvent[]>([
@@ -188,8 +190,6 @@ const Dashboard: React.FC = () => {
                 <div
                     key={`day-${day}`}
                     className={`calendar-day ${today ? 'today' : ''} ${dayEvents.length > 0 ? 'has-events' : ''}`}
-                    onMouseEnter={() => setHoveredDate(day)}
-                    onMouseLeave={() => setHoveredDate(null)}
                     onClick={() => {
                         if (dayEvents.length > 0) {
                             setSelectedEvent(dayEvents[0]);
@@ -204,15 +204,6 @@ const Dashboard: React.FC = () => {
                             </React.Fragment>
                         ))}
                     </div>
-                    {hoveredDate === day && dayEvents.length > 0 && (
-                        <div className="event-tooltip">
-                            {dayEvents.map(event => (
-                                <div key={event.id} className="tooltip-event">
-                                    <strong>{event.title}</strong>
-                                </div>
-                            ))}
-                        </div>
-                    )}
                 </div>
             );
         }
@@ -289,13 +280,13 @@ const Dashboard: React.FC = () => {
                                     <span className="action-icon">👥</span>
                                     <span className="action-text">Find Staff</span>
                                 </div>
-                                <div
+                                {/* <div
                                     className={`action-card ${zoomingPath === '/student-notice' ? 'zooming' : ''}`}
                                     onClick={() => handleQuickAction('/student-notice')}
                                 >
                                     <span className="action-icon">📢</span>
                                     <span className="action-text">Notices</span>
-                                </div>
+                                </div> */}
                                 <div
                                     className={`action-card ${zoomingPath === '/subjects' ? 'zooming' : ''}`}
                                     onClick={() => handleQuickAction('/subjects')}
@@ -350,7 +341,7 @@ const Dashboard: React.FC = () => {
                                         <div className="info-icon">👩‍🏫</div>
                                         <div className="info-content">
                                             <label>Class Advisor</label>
-                                            <p>Mrs. Ruth Shobitha</p>
+                                            <p>{user.staffid.name}</p>
                                         </div>
                                     </div>
                                     <div className="info-item">

@@ -97,9 +97,9 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
                     <button className="nav-item-custom" onClick={() => handleNavigation('/staffs')}>
                         Staffs
                     </button>
-                    <button className="nav-item-custom" onClick={() => handleNavigation('/student-notice')}>
+                    {/* <button className="nav-item-custom" onClick={() => handleNavigation('/student-notice')}>
                         Notices
-                    </button>
+                    </button> */}
                     <button className="nav-item-custom" onClick={() => handleNavigation('/outpass')}>
                         Outpass
                     </button>

@@ -4,6 +4,7 @@ import StaffHeader from '../../components/StaffHeader';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 
+
 const StaffProfile: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [staff, setStaff] = useState<any>(null);
@@ -250,11 +251,65 @@ const StaffProfile: React.FC = () => {
                     {/* Profile Header */}
                     <div className="profile-header">
                         <div className="profile-image-wrapper">
-                            <img
-                                src={formData.photo || staff.photo || `https://ui-avatars.com/api/?name=${formData.name}&background=0047AB&color=fff&size=200`}
-                                alt={formData.name}
-                                className="profile-image"
-                            />
+                            {((formData.photo && formData.photo.trim() !== '') || (staff.photo && staff.photo.trim() !== '')) ? (
+                                <img
+                                    src={formData.photo
+                                        ? formData.photo.startsWith("data:") ||
+                                            formData.photo.startsWith("blob:") ||
+                                            formData.photo.startsWith("http")
+                                            ? formData.photo
+                                            : `${import.meta.env.VITE_CDN_URL}${formData.photo}`
+                                        : `${import.meta.env.VITE_CDN_URL}${staff.photo}`}
+                                    alt={formData.name}
+                                    onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                    }}
+                                    className="profile-image"
+                                />
+                            ) : (
+                                <div className="profile-initials-avatar">
+                                    {(() => {
+                                        const name = formData.name || staff.name;
+                                        if (!name || name.trim() === '') {
+                                            return (
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="60%" height="60%">
+                                                    <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clipRule="evenodd" />
+                                                </svg>
+                                            );
+                                        }
+                                        const initials = name
+                                            .trim()
+                                            .split(' ')
+                                            .map((n: string) => n[0])
+                                            .join('')
+                                            .substring(0, 2)
+                                            .toUpperCase();
+                                        return initials;
+                                    })()}
+                                </div>
+                            )}
+                            {/* Fallback for onError */}
+                            <div className="profile-initials-avatar hidden">
+                                {(() => {
+                                    const name = formData.name || staff.name;
+                                    if (!name || name.trim() === '') {
+                                        return (
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="60%" height="60%">
+                                                <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clipRule="evenodd" />
+                                            </svg>
+                                        );
+                                    }
+                                    const initials = name
+                                        .trim()
+                                        .split(' ')
+                                        .map((n: string) => n[0])
+                                        .join('')
+                                        .substring(0, 2)
+                                        .toUpperCase();
+                                    return initials;
+                                })()}
+                            </div>
                             {isEditing && (
                                 <>
                                     <input
@@ -319,22 +374,35 @@ const StaffProfile: React.FC = () => {
                             <div className="profile-badges">
                                 {isEditing ? (
                                     <>
-                                        <input
-                                            type="text"
+                                        <select
                                             name="designation"
                                             value={formData.designation}
                                             onChange={handleChange}
-                                            className="edit-input badge-input"
-                                            placeholder="Designation"
-                                        />
-                                        <input
-                                            type="text"
+                                            className="edit-input"
+                                            style={{ width: 'auto', maxWidth: '300px' }}
+                                        >
+                                            <option value="">Select Designation</option>
+                                            <option value="Professor">Professor</option>
+                                            <option value="Associate Professor">Associate Professor</option>
+                                            <option value="Assistant Professor">Assistant Professor</option>
+                                            <option value="Head of Department">Head of Department</option>
+                                            <option value="Lab Assistant">Lab Assistant</option>
+                                        </select>
+                                        <select
                                             name="department"
                                             value={formData.department}
                                             onChange={handleChange}
-                                            className="edit-input badge-input"
-                                            placeholder="Department"
-                                        />
+                                            className="edit-input"
+                                            style={{ width: 'auto', maxWidth: '300px' }}
+                                        >
+                                            <option value="">Select Department</option>
+                                            <option value="Computer Science and Engineering">Computer Science and Engineering</option>
+                                            <option value="Information Technology">Information Technology</option>
+                                            <option value="Electronics and Communication Engineering">Electronics and Communication Engineering</option>
+                                            <option value="Mechanical Engineering">Mechanical Engineering</option>
+                                            <option value="Artificial Intelligence and Data Science">Artificial Intelligence and Data Science</option>
+                                            <option value="Master of Business Administration">Master of Business Administration</option>
+                                        </select>
                                     </>
                                 ) : (
                                     <>
@@ -885,6 +953,21 @@ const StaffProfile: React.FC = () => {
                         grid-template-columns: 1fr;
                     }
                 }
+                .photo-edit-btn {
+                    position: absolute;
+                    bottom: 10px;
+                    right: 10px;
+                    background: var(--primary);
+                    color: white;
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    border: 3px solid white;
+                    z-index: 20; /* Ensure above avatar */
                     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
                     transition: transform 0.2s;
                     font-size: 18px;
@@ -895,13 +978,28 @@ const StaffProfile: React.FC = () => {
                     background: var(--primary-dark);
                 }
 
-                .profile-image {
+                .profile-image, .profile-initials-avatar {
                     width: 100%;
                     height: 100%;
                     border-radius: 50%;
                     object-fit: cover;
                     border: 4px solid white;
                     background: white;
+                }
+
+                .profile-initials-avatar {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: linear-gradient(135deg, #0047AB, #2563eb);
+                    color: white;
+                    font-size: 64px;
+                    font-weight: 700;
+                    letter-spacing: 2px;
+                }
+
+                .hidden {
+                    display: none !important;
                 }
 
                 .profile-header-info {

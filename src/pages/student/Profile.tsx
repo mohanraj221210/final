@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import Toast from '../../components/Toast';
 import { type User, RECENT_DOWNLOADS } from '../../data/sampleData';
-import jitProfile from '../../assets/jit.webp';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
-import LoadingSpinner from '../../components/LoadingSpinner';
 import StudentHeader from '../../components/StudentHeader';
 
 const Profile: React.FC = () => {
     const [user, setUser] = useState<User>({
         name: '',
         registerNumber: '',
+        staffid: {
+            name: '',
+        },
         department: '',
         semester: 0,
         year: '',
@@ -208,7 +209,11 @@ const Profile: React.FC = () => {
                             <div className="profile-header">
                                 <div className="avatar-container">
                                     <img
-                                        src={user.photo || jitProfile}
+                                        src={user.photo
+                                            ? user.photo.startsWith("blob:") || user.photo.startsWith("data:") || user.photo.startsWith("http")
+                                                ? user.photo
+                                                : `${import.meta.env.VITE_CDN_URL}${user.photo}`
+                                            : `https://ui-avatars.com/api/?name=${user.name}&background=0047AB&color=fff&size=200`}
                                         alt="Profile"
                                         className="profile-avatar"
                                     />
@@ -316,7 +321,7 @@ const Profile: React.FC = () => {
                                         <option value="">Select Department</option>
                                         <option value="Computer Science and Engineering">Computer Science and Engineering</option>
                                         <option value="Information Technology">Information Technology</option>
-                                        <option value="Electronics and Communication Engineering">Electronics and Communication Engineering</option>
+                                        <option value="Electrical and Electronics Engineering">Electronics and Communication Engineering</option>
                                         <option value="Mechanical Engineering">Mechanical Engineering</option>
                                         <option value="Artificial Intelligence and Data Science">Artificial Intelligence and Data Science</option>
                                         <option value="Master of Business Administration">Master of Business Administration</option>
@@ -333,10 +338,10 @@ const Profile: React.FC = () => {
                                         className="input"
                                     >
                                         <option value="">Select Year</option>
-                                        <option value="1">1st Year</option>
-                                        <option value="2">2nd Year</option>
-                                        <option value="3">3rd Year</option>
-                                        <option value="4">4th Year</option>
+                                        <option value="1st Year">1st Year</option>
+                                        <option value="2nd Year">2nd Year</option>
+                                        <option value="3rd Year">3rd Year</option>
+                                        <option value="4th Year">4th Year</option>
                                     </select>
                                 </div>
 

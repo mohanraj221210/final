@@ -25,8 +25,42 @@ const StaffDashboard: React.FC = () => {
             }
         }
 
+        const checkEmergencyRequests = async () => {
+            try {
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}/staff/outpass/list`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (response.status === 200) {
+                    const outpasses = response.data.outpasses || [];
+                    const emergencyRequests = outpasses.filter((o: any) => {
+                        const type = (o.outpasstype || o.outpassType || '').toLowerCase();
+                        const status = (o.staffapprovalstatus || '').toLowerCase();
+                        return type === 'emergency' && status === 'pending';
+                    });
+
+                    if (emergencyRequests.length > 0) {
+                        toast.error(`⚠️ ${emergencyRequests.length} Emergency Request(s) Pending!`, {
+                            position: "top-center",
+                            autoClose: false,
+                            hideProgressBar: false,
+                            closeOnClick: false,
+                            pauseOnHover: true,
+                            draggable: true,
+                            theme: "colored",
+                            style: { fontWeight: 'bold', fontSize: '16px' }
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to check emergency requests", error);
+            }
+        };
 
         fetchStaffData();
+        checkEmergencyRequests();
     }, []);
 
 

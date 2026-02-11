@@ -29,7 +29,7 @@ const YearInchargeStudentView: React.FC = () => {
                 });
 
                 if (response.status === 200) {
-                    const list = response.data.outpasslist || [];
+                    const list = response.data.outpasses || response.data.outpasslist || [];
                     const found = list.find((o: any) => o._id === id);
                     if (found) {
                         setOutpass(found);
@@ -118,35 +118,39 @@ const YearInchargeStudentView: React.FC = () => {
                     <div className="student-card-modern">
                         <div className="card-header-gradient">
                             <div className="avatar-large">
-                                {outpass.studentid?.name?.charAt(0) || 'S'}
+                                {typeof outpass.studentid?.name === 'string' ? outpass.studentid.name.charAt(0) : 'S'}
                             </div>
-                            <h3>{outpass.studentid?.name}</h3>
-                            <span className="badge-reg">{outpass.studentid?.registerNumber}</span>
+                            <h3>{typeof outpass.studentid?.name === 'string' ? outpass.studentid.name : 'Unknown Name'}</h3>
+                            <span className="badge-reg">{typeof outpass.studentid?.registerNumber === 'string' ? outpass.studentid.registerNumber : 'N/A'}</span>
                         </div>
                         <div className="card-body-modern">
                             <div className="info-row-modern">
                                 <span className="icon">🎓</span>
                                 <div>
                                     <label>Department & Year</label>
-                                    <p>{outpass.studentid?.department} - Year {outpass.studentid?.year}</p>
+                                    <p>
+                                        {typeof outpass.studentid?.department === 'string' ? outpass.studentid.department : ''} - Year {typeof outpass.studentid?.year === 'string' ? outpass.studentid.year : ''}
+                                    </p>
                                 </div>
                             </div>
                             <div className="info-row-modern">
                                 <span className="icon">🏠</span>
                                 <div>
                                     <label>Residence Type</label>
-                                    <p style={{ textTransform: 'capitalize' }}>{outpass.studentid?.residencetype}</p>
+                                    <p style={{ textTransform: 'capitalize' }}>
+                                        {typeof outpass.studentid?.residencetype === 'string' ? outpass.studentid.residencetype : 'N/A'}
+                                    </p>
                                 </div>
                             </div>
-                            {outpass.studentid?.residencetype?.toLowerCase().replace(/\s/g, '') !== 'dayscholar' && (
+                            {typeof outpass.studentid?.residencetype === 'string' && outpass.studentid.residencetype.toLowerCase().replace(/\s/g, '') !== 'dayscholar' && (
                                 <div className="info-row-modern">
                                     <span className="icon">🏢</span>
                                     <div>
                                         <label>Accommodation</label>
                                         <p>
-                                            {outpass.studentid?.hostelname || 'Hostel'} - {outpass.studentid?.hostelroomno || 'N/A'}
+                                            {typeof outpass.studentid?.hostelname === 'string' ? outpass.studentid.hostelname : 'Hostel'} - {typeof outpass.studentid?.hostelroomno === 'string' ? outpass.studentid.hostelroomno : 'N/A'}
                                             {(outpass.studentid?.busno || outpass.studentid?.boardingpoint) &&
-                                                ` (Bus: ${outpass.studentid?.busno || '-'}, Pt: ${outpass.studentid?.boardingpoint || '-'})`}
+                                                ` (Bus: ${typeof outpass.studentid?.busno === 'string' ? outpass.studentid.busno : '-'}, Pt: ${typeof outpass.studentid?.boardingpoint === 'string' ? outpass.studentid.boardingpoint : '-'})`}
                                         </p>
                                     </div>
                                 </div>
@@ -155,7 +159,7 @@ const YearInchargeStudentView: React.FC = () => {
                                 <span className="icon">📞</span>
                                 <div>
                                     <label>Contact Number</label>
-                                    <p>{outpass.studentid?.phone || 'N/A'}</p>
+                                    <p>{typeof outpass.studentid?.phone === 'string' ? outpass.studentid.phone : 'N/A'}</p>
                                 </div>
                             </div>
                         </div>
@@ -212,7 +216,7 @@ const YearInchargeStudentView: React.FC = () => {
                         <div className="request-details">
                             <div className="detail-group">
                                 <label>Outpass Type</label>
-                                <p className="highlight">{outpass.outpassType}</p>
+                                <p className="highlight">{typeof outpass.outpasstype === 'string' ? outpass.outpasstype : 'General'}</p>
                             </div>
                             <div className="detail-row">
                                 <div className="detail-group">
@@ -226,7 +230,7 @@ const YearInchargeStudentView: React.FC = () => {
                             </div>
                             <div className="detail-group">
                                 <label>Reason</label>
-                                <p className="reason-text">{outpass.reason}</p>
+                                <p className="reason-text">{typeof outpass.reason === 'string' ? outpass.reason : 'No reason provided'}</p>
                             </div>
                         </div>
 

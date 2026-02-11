@@ -53,7 +53,19 @@ const YearInchargeOutpassList: React.FC = () => {
                 });
 
                 if (response.status === 200) {
-                    setOutpasses(response.data.outpasslist || []);
+                    const list = response.data.outpasses || response.data.outpasslist || [];
+                    const sortedList = list.sort((a: any, b: any) => {
+                        // Priority 1: Emergency first
+                        const isAEmergency = String(a.outpasstype || '').toLowerCase() === 'emergency';
+                        const isBEmergency = String(b.outpasstype || '').toLowerCase() === 'emergency';
+
+                        if (isAEmergency && !isBEmergency) return -1;
+                        if (!isAEmergency && isBEmergency) return 1;
+
+                        // Priority 2: Date (Newest first)
+                        return new Date(b.fromDate).getTime() - new Date(a.fromDate).getTime();
+                    });
+                    setOutpasses(sortedList);
                 }
             } catch (error) {
                 console.error("Error fetching outpasses:", error);
@@ -122,14 +134,19 @@ const YearInchargeOutpassList: React.FC = () => {
                                     <tr key={outpass._id}>
                                         <td data-label="Student Details">
                                             <div className="student-info">
-                                                <span className="font-bold">{outpass.studentid?.name}</span>
-                                                <span className="text-sm text-gray-500">{outpass.studentid?.registerNumber}</span>
-                                                <span className="text-xs text-gray-400">{outpass.studentid?.year} - {outpass.studentid?.department}</span>
+                                                <span className="font-bold">{typeof outpass.studentid?.name === 'string' ? outpass.studentid.name : 'Unknown'}</span>
+                                                <span className="text-sm text-gray-500">{typeof outpass.studentid?.registerNumber === 'string' ? outpass.studentid.registerNumber : 'N/A'}</span>
+                                                <span className="text-xs text-gray-400">
+                                                    {typeof outpass.studentid?.year === 'string' ? outpass.studentid.year : ''} - {typeof outpass.studentid?.department === 'string' ? outpass.studentid.department : ''}
+                                                </span>
                                             </div>
                                         </td>
                                         <td data-label="Pass Information">
                                             <div className="pass-info">
                                                 <span className="pass-type">{outpass.outpasstype}</span>
+                                                {outpass.outpasstype?.toLowerCase() === 'emergency' && (
+                                                    <span className="emergency-badge">🚨 CRITICAL</span>
+                                                )}
                                             </div>
                                         </td>
                                         <td data-label="Duration">
@@ -183,16 +200,23 @@ const YearInchargeOutpassList: React.FC = () => {
                             <div className="mobile-card" key={outpass._id}>
                                 <div className="card-header-mobile">
                                     <div>
-                                        <h3 className="card-name">{outpass.studentid?.name}</h3>
-                                        <p className="card-reg">{outpass.studentid?.registerNumber}</p>
+                                        <h3 className="card-name">{typeof outpass.studentid?.name === 'string' ? outpass.studentid.name : 'Unknown'}</h3>
+                                        <p className="card-reg">{typeof outpass.studentid?.registerNumber === 'string' ? outpass.studentid.registerNumber : 'N/A'}</p>
                                     </div>
-                                    <span className="pass-type-mobile">{outpass.outpasstype}</span>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                                        <span className="pass-type-mobile">{outpass.outpasstype}</span>
+                                        {outpass.outpasstype?.toLowerCase() === 'emergency' && (
+                                            <span className="emergency-badge mobile">🚨 CRITICAL</span>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <div className="card-body-mobile">
                                     <div className="info-row">
                                         <span className="label">Dept/Year:</span>
-                                        <span className="value">{outpass.studentid?.department} - {outpass.studentid?.year}</span>
+                                        <span className="value">
+                                            {typeof outpass.studentid?.department === 'string' ? outpass.studentid.department : ''} - {typeof outpass.studentid?.year === 'string' ? outpass.studentid.year : ''}
+                                        </span>
                                     </div>
                                     <div className="info-row">
                                         <span className="label">From:</span>
@@ -364,6 +388,24 @@ const YearInchargeOutpassList: React.FC = () => {
                 .residence-type { text-transform: capitalize; font-weight: 500; }
 
                 .residence-type { text-transform: capitalize; font-weight: 500; }
+                
+                 .emergency-badge {
+                    display: inline-block;
+                    background-color: #fee2e2;
+                    color: #ef4444;
+                    padding: 2px 6px;
+                    border-radius: 4px;
+                    font-size: 0.7rem;
+                    font-weight: 700;
+                    margin-left: 8px;
+                    border: 1px solid #ef4444;
+                    vertical-align: middle;
+                }
+
+                .emergency-badge.mobile {
+                    margin-left: 0;
+                    font-size: 0.65rem;
+                }
 
                 /* Mobile Card Styles */
                 .mobile-cards-view {
@@ -485,7 +527,7 @@ const YearInchargeOutpassList: React.FC = () => {
                     }
                 }
             `}</style>
-        </div>
+        </div >
     );
 };
 

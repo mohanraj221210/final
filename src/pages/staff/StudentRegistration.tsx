@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import StaffHeader from '../../components/StaffHeader';
 import { toast, ToastContainer } from 'react-toastify';
 import axios from 'axios';
@@ -38,6 +38,7 @@ const StudentRegistration: React.FC = () => {
         email: '',
         password: ''
     });
+    const nameInputRef = useRef<HTMLInputElement>(null);
 
     // Added Students State
     const [studentsList, setStudentsList] = useState<Student[]>([]);
@@ -204,9 +205,13 @@ const StudentRegistration: React.FC = () => {
                 }
             });
 
-            if (response.status === 200) {
-                toast.success("User registered successfully");
+            if (response.status === 200 || response.status === 201) {
+                toast.success("Student registered successfully");
                 setSingleForm({ name: '', email: '', password: '' });
+                // Focus back on name input for next entry
+                setTimeout(() => {
+                    nameInputRef.current?.focus();
+                }, 100);
             }
         } catch (error: any) {
             if (error.response) {
@@ -304,6 +309,7 @@ const StudentRegistration: React.FC = () => {
                                         value={singleForm.name}
                                         onChange={(e) => setSingleForm({ ...singleForm, name: e.target.value })}
                                         disabled={loading}
+                                        ref={nameInputRef}
                                     />
                                 </div>
                                 <div className="form-group">
@@ -335,10 +341,21 @@ const StudentRegistration: React.FC = () => {
 
                         {activeTab === 'added-students' && (
                             <div className="added-students-view animate-fade">
+                                {/* Total Count Header */}
+                                {studentsList.length > 0 && (
+                                    <div className="students-count-header">
+                                        <h3>Total Students Added: <span className="count-badge">{studentsList.length}</span></h3>
+                                    </div>
+                                )}
+
                                 {loading && studentsList.length === 0 ? (
                                     <div className="loading-state">Loading students...</div>
                                 ) : studentsList.length === 0 ? (
-                                    <div className="empty-state">No students added yet.</div>
+                                    <div className="empty-state">
+                                        Total Students Added: 0
+                                        <br />
+                                        No students added yet.
+                                    </div>
                                 ) : (
                                     <div className="students-list">
                                         {studentsList.map(student => (
@@ -570,6 +587,31 @@ const StudentRegistration: React.FC = () => {
                 }
 
                 /* Added Students List Styles */
+                .students-count-header {
+                    margin-bottom: 20px;
+                    padding-bottom: 16px;
+                    border-bottom: 1px solid #e2e8f0;
+                }
+
+                .students-count-header h3 {
+                    margin: 0;
+                    font-size: 1.1rem;
+                    color: #334155;
+                    font-weight: 600;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                }
+
+                .count-badge {
+                    background: #e0f2fe;
+                    color: #0284c7;
+                    padding: 4px 12px;
+                    border-radius: 12px;
+                    font-size: 1rem;
+                    font-weight: 700;
+                }
+
                 .students-list {
                     display: flex;
                     flex-direction: column;

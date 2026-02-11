@@ -12,6 +12,7 @@ const Dashboard: React.FC = () => {
     const [user, setUser] = React.useState<User>({
         name: "",
         registerNumber: "",
+        staffid: { name: "" },
         department: "",
         year: "",
         semester: 0,
@@ -85,6 +86,7 @@ const Dashboard: React.FC = () => {
                 const demoUser: User = {
                     name: "Sanjay.S",
                     registerNumber: "WARDEN001",
+                    staffid: { name: "N/A" },
                     department: "Hostel Management",
                     year: "2025",
                     semester: 0,
@@ -121,7 +123,7 @@ const Dashboard: React.FC = () => {
                 const outpasses = response.data.outpasses || response.data.data || response.data.students || [];
 
                 const emergencyRequests = outpasses.filter((o: any) => {
-                    const type = (o.outpasstype || o.type || '').toLowerCase();
+                    const type = (o.outpasstype || o.outpassType || o.type || '').toLowerCase();
                     const status = (o.wardenapprovalstatus || '').toLowerCase();
                     return type === 'emergency' && status === 'pending';
                 });

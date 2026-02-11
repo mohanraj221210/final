@@ -41,7 +41,8 @@ interface StudentOutpass {
     yearInchargeApproval: ApprovalStatus;
     wardenApproval: ApprovalStatus;
     staffApprovedBy?: string;
-    outpasstype?: string;
+    outpasstype: string;
+    residenceType?: string;
 }
 
 const PassApproval: React.FC = () => {
@@ -113,7 +114,8 @@ const PassApproval: React.FC = () => {
                     lastOutpassReason: data.lastOutpassReason,
                     lastOutpassApprovedBy: data.lastOutpassApprovedBy,
                     lastOutpassStatus: data.lastOutpassStatus,
-                    outpasstype: data.outpasstype || 'General'
+                    outpasstype: data.outpasstype || data.outpassType,
+                    residenceType: studentDetails.residenceType || 'dayScholar'
                 };
 
                 setSelectedStudent(mappedStudent);
@@ -160,7 +162,8 @@ const PassApproval: React.FC = () => {
                                 staffApproval: item.staffapprovalstatus || 'pending',
                                 yearInchargeApproval: item.yearinchargeapprovalstatus || 'pending',
                                 wardenApproval: item.wardenapprovalstatus || 'pending',
-                                outpasstype: item.outpasstype || 'General'
+                                outpasstype: item.outpasstype || item.outpassType,
+                                residenceType: studentDetails.residenceType || 'dayScholar'
                             };
                         });
 
@@ -195,6 +198,20 @@ const PassApproval: React.FC = () => {
         const matchesFilter = filterStatus === 'all' || overallStatus === filterStatus;
 
         return matchesSearch && matchesFilter;
+    }).sort((a, b) => {
+        // Priority 1: Emergency First
+        const isAEmergency = a.outpasstype?.toLowerCase() === 'emergency';
+        const isBEmergency = b.outpasstype?.toLowerCase() === 'emergency';
+
+        if (isAEmergency && !isBEmergency) return -1;
+        if (!isAEmergency && isBEmergency) return 1;
+
+        // Priority 2: Pending First
+        if (a.staffApproval === 'pending' && b.staffApproval !== 'pending') return -1;
+        if (a.staffApproval !== 'pending' && b.staffApproval === 'pending') return 1;
+
+        // Priority 3: Date (Newest first)
+        return new Date(b.appliedDate).getTime() - new Date(a.appliedDate).getTime();
     });
 
     const formatDateTime = (dateString: string) => {
@@ -361,7 +378,9 @@ const PassApproval: React.FC = () => {
                                             <div className="student-info">
                                                 <div className="student-name">
                                                     {student.studentname}
-                                                    {student.outpasstype === 'Emergency' && <span className="emergency-badge">EMERGENCY</span>}
+                                                    {student.outpasstype?.toLowerCase() === 'emergency' && (
+                                                        <span className="emergency-badge">EMERGENCY</span>
+                                                    )}
                                                 </div>
                                                 <div className="student-meta">
                                                     Year {student.year} • {student.outpasstype || 'General'} • Applied on {formatDateTime(student.appliedDate)}
@@ -506,6 +525,15 @@ const PassApproval: React.FC = () => {
                                 <div className="card-body">
                                     <div className="info-grid">
                                         <div className="info-field full-width">
+                                            <label>OUTPASS TYPE</label>
+                                            <div className="field-value">
+                                                {selectedStudent.outpasstype || 'General'}
+                                                {selectedStudent.outpasstype?.toLowerCase() === 'emergency' && (
+                                                    <span className="emergency-badge" style={{ marginLeft: '10px' }}>🚨 EMERGENCY</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="info-field full-width">
                                             <label>REASON FOR OUTPASS</label>
                                             <div className="field-value">{selectedStudent.reason}</div>
                                         </div>
@@ -566,44 +594,54 @@ const PassApproval: React.FC = () => {
                                     <h2>Approval Workflow</h2>
                                 </div>
                                 <div className="card-body">
-                                    <div className="approval-stepper">
-                                        <div className="approval-step">
-                                            <div className={`step-circle ${selectedStudent.staffApproval}`}>
+                                    <div className="status-timeline">
+                                        <div className="status-step completed">
+                                            <div className="step-dot">✓</div>
+                                            <div className="step-content">
+                                                <h4>Request Submitted</h4>
+                                                <p>{formatDateTime(selectedStudent.appliedDate)}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className={`status-step ${selectedStudent.staffApproval === 'approved' ? 'completed' : selectedStudent.staffApproval === 'rejected' ? 'rejected' : 'active'}`}>
+                                            <div className="step-dot">
                                                 {selectedStudent.staffApproval === 'approved' ? '✓' :
-                                                    selectedStudent.staffApproval === 'rejected' ? '✗' : '1'}
+                                                    selectedStudent.staffApproval === 'rejected' ? '✕' : '●'}
                                             </div>
                                             <div className="step-content">
-                                                <h3>Staff Approval</h3>
-                                                {getStatusBadge(selectedStudent.staffApproval)}
-                                                {selectedStudent.staffApproval === 'approved' && (
-                                                    <span className="approver-name">by {selectedStudent.staffApprovedBy || 'Staff'}</span>
-                                                )}
+                                                <h4>Staff Approval</h4>
+                                                <p>
+                                                    Status: {selectedStudent.staffApproval}
+                                                    {selectedStudent.staffApproval === 'approved' && selectedStudent.staffApprovedBy && (
+                                                        <span className="approver-name"> by {selectedStudent.staffApprovedBy}</span>
+                                                    )}
+                                                </p>
                                             </div>
                                         </div>
-                                        <div className={`step-connector ${selectedStudent.staffApproval === 'approved' ? 'active' : ''}`}></div>
 
-                                        <div className="approval-step">
-                                            <div className={`step-circle ${selectedStudent.yearInchargeApproval} ${selectedStudent.staffApproval !== 'approved' ? 'disabled' : ''}`}>
+                                        <div className={`status-step ${selectedStudent.yearInchargeApproval === 'approved' ? 'completed' : selectedStudent.yearInchargeApproval === 'rejected' ? 'rejected' : (selectedStudent.staffApproval === 'approved' ? 'active' : 'pending')}`}>
+                                            <div className="step-dot">
                                                 {selectedStudent.yearInchargeApproval === 'approved' ? '✓' :
-                                                    selectedStudent.yearInchargeApproval === 'rejected' ? '✗' : '2'}
+                                                    selectedStudent.yearInchargeApproval === 'rejected' ? '✕' : '●'}
                                             </div>
                                             <div className="step-content">
-                                                <h3>Year Incharge</h3>
-                                                {getStatusBadge(selectedStudent.yearInchargeApproval)}
+                                                <h4>Year Incharge</h4>
+                                                <p>{selectedStudent.yearInchargeApproval === 'pending' ? 'Pending Decision' : `Status: ${selectedStudent.yearInchargeApproval}`}</p>
                                             </div>
                                         </div>
-                                        <div className={`step-connector ${selectedStudent.yearInchargeApproval === 'approved' ? 'active' : ''}`}></div>
 
-                                        <div className="approval-step">
-                                            <div className={`step-circle ${selectedStudent.wardenApproval} ${selectedStudent.yearInchargeApproval !== 'approved' ? 'disabled' : ''}`}>
-                                                {selectedStudent.wardenApproval === 'approved' ? '✓' :
-                                                    selectedStudent.wardenApproval === 'rejected' ? '✗' : '3'}
+                                        {selectedStudent.residenceType === 'hostel' && (
+                                            <div className={`status-step ${selectedStudent.wardenApproval === 'approved' ? 'completed' : selectedStudent.wardenApproval === 'rejected' ? 'rejected' : (selectedStudent.yearInchargeApproval === 'approved' ? 'active' : 'pending')}`}>
+                                                <div className="step-dot">
+                                                    {selectedStudent.wardenApproval === 'approved' ? '✓' :
+                                                        selectedStudent.wardenApproval === 'rejected' ? '✕' : '●'}
+                                                </div>
+                                                <div className="step-content">
+                                                    <h4>Warden Approval</h4>
+                                                    <p>{selectedStudent.wardenApproval === 'pending' ? 'Pending Decision' : `Status: ${selectedStudent.wardenApproval}`}</p>
+                                                </div>
                                             </div>
-                                            <div className="step-content">
-                                                <h3>Warden Approval</h3>
-                                                {getStatusBadge(selectedStudent.wardenApproval)}
-                                            </div>
-                                        </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -999,81 +1037,108 @@ const PassApproval: React.FC = () => {
                     border-left: 4px solid #0047AB;
                 }
 
+                .emergency-badge {
+                    display: inline-block;
+                    background-color: #fee2e2;
+                    color: #ef4444;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    font-size: 0.75rem;
+                    font-weight: 700;
+                    margin-left: 10px;
+                    border: 1px solid #ef4444;
+                    vertical-align: middle;
+                }
+
                 /* Approval Stepper */
-                .approval-stepper {
+                .status-timeline {
+                    margin: 0;
+                    padding: 10px 0;
+                    display: flex;
+                    justify-content: space-between;
+                }
+
+                .status-step {
                     display: flex;
                     flex-direction: column;
-                    gap: 0;
-                    padding: 20px 0;
-                }
-
-                .approval-step {
-                    display: flex;
                     align-items: center;
-                    gap: 20px;
-                    padding: 20px;
+                    text-align: center;
+                    position: relative;
+                    flex: 1;
                 }
 
-                .step-circle {
-                    width: 60px;
-                    height: 60px;
+                .status-step:not(:last-child)::after {
+                    content: '';
+                    position: absolute;
+                    top: 14px;
+                    left: 50%;
+                    width: 100%;
+                    height: 2px;
+                    background: #e2e8f0;
+                    z-index: 0;
+                }
+
+                .status-step.completed:not(:last-child)::after {
+                    background: #10b981;
+                }
+
+                .step-dot {
+                    width: 30px;
+                    height: 30px;
+                    background: white;
+                    border: 2px solid #e2e8f0;
                     border-radius: 50%;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    font-weight: 700;
-                    font-size: 1.5rem;
-                    flex-shrink: 0;
-                    border: 4px solid;
+                    font-weight: bold;
+                    z-index: 1;
+                    margin-bottom: 8px;
+                    color: #64748b;
+                    font-size: 0.8rem;
                 }
 
-                .step-circle.pending {
-                    background: #fef3c7;
-                    color: #92400e;
-                    border-color: #fbbf24;
-                }
-
-                .step-circle.approved {
-                    background: #d1fae5;
-                    color: #065f46;
+                .status-step.completed .step-dot {
+                    background: #10b981;
                     border-color: #10b981;
+                    color: white;
                 }
 
-                .step-circle.rejected {
-                    background: #fee2e2;
-                    color: #991b1b;
+                .status-step.active .step-dot {
+                    border-color: #3b82f6;
+                    color: #3b82f6;
+                    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+                }
+
+                 .status-step.rejected .step-dot {
+                    background: #ef4444;
                     border-color: #ef4444;
-                }
-
-                .step-circle.disabled {
-                    background: #f1f5f9;
-                    color: #94a3b8;
-                    border-color: #cbd5e1;
+                    color: white;
                 }
 
                 .step-content {
-                    flex: 1;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
+                    width: 100%;
                 }
 
-                .step-content h3 {
-                    margin: 0;
-                    font-size: 1.3rem;
+                .step-content h4 {
+                    margin: 0 0 4px;
+                    font-size: 0.9rem;
                     color: #1e293b;
-                    font-weight: 700;
+                    font-weight: 600;
                 }
 
-                .step-connector {
-                    width: 4px;
-                    height: 40px;
-                    background: #cbd5e1;
-                    margin-left: 48px;
+                .step-content p {
+                    margin: 0;
+                    font-size: 0.8rem;
+                    color: #64748b;
                 }
 
-                .step-connector.active {
-                    background: #10b981;
+                .approver-name {
+                    display: block;
+                    font-size: 0.75rem;
+                    color: #64748b;
+                    font-style: italic;
+                    margin-top: 2px;
                 }
 
                 /* Sticky Actions */
@@ -1412,6 +1477,36 @@ const PassApproval: React.FC = () => {
                     color: #94a3b8;
                     font-style: italic;
                     padding: 20px;
+                }
+
+                /* Mobile Approval Workflow */
+                /* Mobile Approval Workflow */
+                @media (max-width: 768px) {
+                    .status-timeline {
+                        flex-direction: column;
+                        gap: 16px;
+                        align-items: flex-start;
+                    }
+                    .status-step {
+                        flex-direction: row;
+                        align-items: center;
+                        gap: 16px;
+                        width: 100%;
+                        text-align: left;
+                    }
+                    .status-step:not(:last-child)::after {
+                        width: 2px;
+                        height: 100%;
+                        top: 14px;
+                        left: 15px;
+                    }
+                     .step-content {
+                        width: auto;
+                        flex: 1;
+                    }
+                    .step-content h4 {
+                        font-size: 1rem;
+                    }
                 }
             `}</style>
         </div>

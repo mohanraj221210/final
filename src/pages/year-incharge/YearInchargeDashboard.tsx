@@ -80,7 +80,7 @@ const YearInchargeDashboard: React.FC = () => {
                 if (outpassResult.status === 'fulfilled') {
                     const outpassResponse = outpassResult.value;
                     if (outpassResponse.status === 200) {
-                        const outpasses = outpassResponse.data.outpasslist || [];
+                        const outpasses = outpassResponse.data.outpasses || outpassResponse.data.outpasslist || [];
                         const pending = outpasses.filter((o: any) =>
                             o.staffapprovalstatus === 'approved' &&
                             o.yearinchargeapprovalstatus === 'pending'
@@ -98,7 +98,7 @@ const YearInchargeDashboard: React.FC = () => {
 
                         // Check for Emergency Requests
                         const emergencyRequests = outpasses.filter((o: any) =>
-                            (o.outpasstype || '').toLowerCase() === 'emergency' &&
+                            (o.outpasstype || o.outpassType || '').toLowerCase() === 'emergency' &&
                             o.yearinchargeapprovalstatus === 'pending'
                         );
 

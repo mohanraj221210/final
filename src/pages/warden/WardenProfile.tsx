@@ -277,14 +277,17 @@ const WardenProfile: React.FC = () => {
 
                 <div className="form-group">
                   <label>Hostel Name</label>
-                  <input
-                    type="text"
+                  <select
                     name="hostelname"
                     value={warden.hostelname}
                     onChange={handleChange}
                     disabled={!isEditing}
                     className="input"
-                  />
+                  >
+                    <option value="" disabled>Select Hostel</option>
+                    <option value="Boys Hostel">Boys Hostel</option>
+                    <option value="Girls Hostel">Girls Hostel</option>
+                  </select>
                 </div>
 
                 {/* <div className="form-group">

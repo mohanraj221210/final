@@ -40,6 +40,16 @@ import YearInchargeOutpassList from './pages/year-incharge/YearInchargeOutpassLi
 import YearInchargeStudentView from './pages/year-incharge/YearInchargeStudentView'
 import YearInchargeProfile from './pages/year-incharge/YearInchargeProfile'
 import AdminLogin from './pages/admin/AdminLogin'
+import AdminDashboard from './pages/admin/AdminDashboard'
+import ManageStaff from './pages/admin/ManageStaff'
+import ManageYearIncharge from './pages/admin/ManageYearIncharge'
+import ManageWarden from './pages/admin/ManageWarden'
+import ManageSecurity from './pages/admin/ManageSecurity'
+import ManageBus from './pages/admin/ManageBus'
+import AdminProfile from './pages/admin/AdminProfile'
+import StaffDetailsAdmin from './pages/admin/StaffDetailsAdmin'
+import StaffStudentList from './pages/admin/StaffStudentList'
+import StudentDetailsAdmin from './pages/admin/StudentDetailsAdmin'
 
 
 
@@ -50,6 +60,58 @@ createRoot(document.getElementById('root')!).render(
     <AxiosInterceptor />
     <Routes>
       <Route path="/admin-login" element={<AdminLogin />} />
+      {/* Admin Protected Routes */}
+      <Route path="/admin/dashboard" element={
+        <ProtectedRoute>
+          <AdminDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/manage-staff" element={
+        <ProtectedRoute>
+          <ManageStaff />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/manage-year-incharge" element={
+        <ProtectedRoute>
+          <ManageYearIncharge />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/manage-warden" element={
+        <ProtectedRoute>
+          <ManageWarden />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/manage-security" element={
+        <ProtectedRoute>
+          <ManageSecurity />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/manage-bus" element={
+        <ProtectedRoute>
+          <ManageBus />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/profile" element={
+        <ProtectedRoute>
+          <AdminProfile />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/staff-details/:id" element={
+        <ProtectedRoute>
+          <StaffDetailsAdmin />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/staff/:id/students" element={
+        <ProtectedRoute>
+          <StaffStudentList />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/student-details/:id" element={
+        <ProtectedRoute>
+          <StudentDetailsAdmin />
+        </ProtectedRoute>
+      } />
+
       <Route path="/" element={<Welcome />} />
       <Route path="/login" element={<Login />} />
       <Route path="/wardenlogin" element={<Wardenlogin />} />
