@@ -22,6 +22,7 @@ interface Student {
     // API returns 'staffid' which can be a string or an object (populated)
     staffid?: string | { _id: string; name: string; email: string };
     createdByStaffID?: string; // Keeping for compatibility if needed
+    photo?: string;
 }
 
 const StudentRegistration: React.FC = () => {
@@ -365,7 +366,17 @@ const StudentRegistration: React.FC = () => {
                                                 onClick={() => navigate(`/staff/student-details/${student._id}`)}
                                             >
                                                 <div className="student-avatar">
-                                                    {student.name.charAt(0).toUpperCase()}
+                                                    {student.photo ? (
+                                                        <img
+                                                            src={student.photo.startsWith('http') || student.photo.startsWith('data:') || student.photo.startsWith('blob:')
+                                                                ? student.photo
+                                                                : `${import.meta.env.VITE_CDN_URL}${student.photo}`}
+                                                            alt={student.name}
+                                                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                                                        />
+                                                    ) : (
+                                                        student.name.charAt(0).toUpperCase()
+                                                    )}
                                                 </div>
                                                 <div className="student-info">
                                                     <h4>{student.name} {student.isBlocked && <span className="tag-blocked">Blocked</span>}</h4>
