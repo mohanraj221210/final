@@ -18,6 +18,18 @@ const AxiosInterceptor = () => {
 
                 // Check for Unauthorized (401) or Forbidden (403)
                 if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+                    // Don't redirect if we are already on a login page
+                    const isLoginPage = location.pathname === '/login' ||
+                        location.pathname === '/staff-login' ||
+                        location.pathname === '/year-incharge-login' ||
+                        location.pathname === '/warden-login' ||
+                        location.pathname === '/watchmanlogin' ||
+                        location.pathname === '/admin-login';
+
+                    if (isLoginPage) {
+                        return Promise.reject(error);
+                    }
+
                     // Determine login path based on userType
                     let loginPath = '/login'; // Default (Student)
                     if (userType === 'staff') loginPath = '/staff-login';
