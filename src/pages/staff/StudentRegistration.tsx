@@ -281,9 +281,9 @@ const StudentRegistration: React.FC = () => {
         setPasswordLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.post(`${API_URL}/staff/student/update/${selectedStudentForPassword}`,
+            const response = await axios.put(`${API_URL}/staff/student/forgot/password`,
                 {
-                    password: newPassword,
+                    newPassword: newPassword,
                     email: studentEmail
                 },
                 { headers: { 'Authorization': `Bearer ${token}` } }
@@ -513,7 +513,7 @@ const StudentRegistration: React.FC = () => {
                             <div className="form-group">
                                 <label>New Password</label>
                                 <input
-                                    type="password"
+                                    type="newPassword"
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
                                     placeholder="Enter new password"
