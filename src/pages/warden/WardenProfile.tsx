@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Nav from "../../components/WardenNav";
 import Toast from "../../components/Toast";
-import wardenProfile from "../../assets/jit.webp";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 
@@ -191,11 +190,70 @@ const WardenProfile: React.FC = () => {
             <div className="card profile-card">
               <div className="profile-header">
                 <div className="avatar-container">
-                  <img
-                    src={previewUrl || warden.photo || wardenProfile}
-                    alt="Profile"
-                    className="profile-avatar"
-                  />
+                  {previewUrl || (warden.photo && warden.photo.trim() !== '') ? (
+                    <img
+                      src={
+                        previewUrl ||
+                        (warden.photo
+                          ? warden.photo.startsWith("data:") ||
+                            warden.photo.startsWith("blob:") ||
+                            warden.photo.startsWith("http")
+                            ? warden.photo
+                            : `${import.meta.env.VITE_CDN_URL}${warden.photo}`
+                          : "")
+                      }
+                      alt="Profile"
+                      className="profile-avatar"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                  ) : (
+                    <div className="profile-initials-avatar">
+                      {(() => {
+                        const name = warden.name;
+                        if (!name || name.trim() === '') {
+                          return (
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="60%" height="60%">
+                              <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clipRule="evenodd" />
+                            </svg>
+                          );
+                        }
+                        const initials = name
+                          .trim()
+                          .split(' ')
+                          .map((n: string) => n[0])
+                          .join('')
+                          .substring(0, 2)
+                          .toUpperCase();
+                        return initials;
+                      })()}
+                    </div>
+                  )}
+
+                  {/* Fallback for onError */}
+                  <div className="profile-initials-avatar hidden">
+                    {(() => {
+                      const name = warden.name;
+                      if (!name || name.trim() === '') {
+                        return (
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="60%" height="60%">
+                            <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clipRule="evenodd" />
+                          </svg>
+                        );
+                      }
+                      const initials = name
+                        .trim()
+                        .split(' ')
+                        .map((n: string) => n[0])
+                        .join('')
+                        .substring(0, 2)
+                        .toUpperCase();
+                      return initials;
+                    })()}
+                  </div>
+
                   {isEditing && (
                     <label className="avatar-upload">
                       <span>📷</span>
@@ -230,7 +288,12 @@ const WardenProfile: React.FC = () => {
                     Save Changes
                   </button>
                   <button
-                    onClick={() => setIsEditing(false)}
+                    onClick={() => {
+                      setIsEditing(false);
+                      setPreviewUrl(null);
+                      setSelectedPhoto(null);
+                      fetchProfile(); // Reset form data
+                    }}
                     className="btn btn-ghost"
                   >
                     Cancel
@@ -376,7 +439,28 @@ const WardenProfile: React.FC = () => {
         .avatar-container { position: relative; width: 120px; height: 120px; margin: 0 auto 16px; }
         .profile-header { display: flex; flex-direction: column; align-items: center; }
         .profile-badges { margin-top: 10px; }
-        .profile-avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 0 0 4px var(--primary-light); }
+        .profile-avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 0 0 4px var(--primary-light); background: white; }
+        
+        .profile-initials-avatar {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          border: 4px solid white;
+          box-shadow: 0 0 0 4px var(--primary-light);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: linear-gradient(135deg, #0047AB, #2563eb);
+          color: white;
+          font-size: 48px;
+          font-weight: 700;
+          letter-spacing: 2px;
+        }
+
+        .hidden {
+          display: none !important;
+        }
+
         .avatar-upload { position: absolute; bottom: 0; right: 0; background: var(--primary); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid white; transition: var(--transition); }
         .avatar-upload:hover { transform: scale(1.1); }
         .hidden-input { display: none; }

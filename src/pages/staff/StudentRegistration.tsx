@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import StaffHeader from '../../components/StaffHeader';
 import { toast, ToastContainer } from 'react-toastify';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import 'react-toastify/dist/ReactToastify.css';
 
 interface Student {
@@ -22,6 +22,7 @@ interface Student {
     // API returns 'staffid' which can be a string or an object (populated)
     staffid?: string | { _id: string; name: string; email: string };
     createdByStaffID?: string; // Keeping for compatibility if needed
+    photo?: string;
 }
 
 const StudentRegistration: React.FC = () => {
@@ -40,9 +41,27 @@ const StudentRegistration: React.FC = () => {
     });
     const nameInputRef = useRef<HTMLInputElement>(null);
 
-    // Added Students State
     const [studentsList, setStudentsList] = useState<Student[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Check for navigation state to set active tab
+    useEffect(() => {
+        if (location.state && location.state.activeTab) {
+            setActiveTab(location.state.activeTab);
+            // Clear state to prevent stuck navigation if needed, though usually harmless in this context
+            window.history.replaceState({}, document.title);
+        }
+    }, [location]);
+
+    // Password Modal State
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+    const [selectedStudentForPassword, setSelectedStudentForPassword] = useState<string | null>(null);
+    const [studentEmail, setStudentEmail] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [passwordLoading, setPasswordLoading] = useState(false);
 
     const API_URL = import.meta.env.VITE_API_URL;
 
@@ -114,6 +133,13 @@ const StudentRegistration: React.FC = () => {
             setLoading(false);
         }
     };
+
+    // Filtered Students
+    const filteredStudents = studentsList.filter(student =>
+        student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        student.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (student.registerNo && student.registerNo.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
 
     // Handle File Change
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -239,6 +265,55 @@ const StudentRegistration: React.FC = () => {
     // Student Management Actions
     // Student Management Actions (Moved to StudentDetails page)
 
+    // Handle Password Update
+    const handlePasswordUpdate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedStudentForPassword || !newPassword || !confirmPassword) {
+            toast.error("Please fill all fields");
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            toast.error("Passwords do not match");
+            return;
+        }
+
+        setPasswordLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.put(`${API_URL}/staff/student/forgot/password`,
+                {
+                    newPassword: newPassword,
+                    email: studentEmail
+                },
+                { headers: { 'Authorization': `Bearer ${token}` } }
+            );
+
+            if (response.status === 200) {
+                toast.success("Password updated successfully");
+                setIsPasswordModalOpen(false);
+                setNewPassword('');
+                setConfirmPassword('');
+                setStudentEmail('');
+                setSelectedStudentForPassword(null);
+            }
+        } catch (error) {
+            console.error("Failed to update password:", error);
+            toast.error("Failed to update password");
+        } finally {
+            setPasswordLoading(false);
+        }
+    };
+
+    const openPasswordModal = (studentId: string, email: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setSelectedStudentForPassword(studentId);
+        setStudentEmail(email);
+        setNewPassword('');
+        setConfirmPassword('');
+        setIsPasswordModalOpen(true);
+    };
+
 
     return (
         <div className="registration-page">
@@ -344,7 +419,16 @@ const StudentRegistration: React.FC = () => {
                                 {/* Total Count Header */}
                                 {studentsList.length > 0 && (
                                     <div className="students-count-header">
-                                        <h3>Total Students Added: <span className="count-badge">{studentsList.length}</span></h3>
+                                        <h3>Total Students Added: <span className="count-badge">{filteredStudents.length} / {studentsList.length}</span></h3>
+                                        <div className="search-bar">
+                                            <span className="search-icon">🔍</span>
+                                            <input
+                                                type="text"
+                                                placeholder="Search by name..."
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                            />
+                                        </div>
                                     </div>
                                 )}
 
@@ -356,16 +440,30 @@ const StudentRegistration: React.FC = () => {
                                         <br />
                                         No students added yet.
                                     </div>
+                                ) : filteredStudents.length === 0 ? (
+                                    <div className="empty-state">
+                                        No students found matching "{searchQuery}"
+                                    </div>
                                 ) : (
                                     <div className="students-list">
-                                        {studentsList.map(student => (
+                                        {filteredStudents.map(student => (
                                             <div
                                                 key={student._id}
                                                 className="student-item"
                                                 onClick={() => navigate(`/staff/student-details/${student._id}`)}
                                             >
                                                 <div className="student-avatar">
-                                                    {student.name.charAt(0).toUpperCase()}
+                                                    {student.photo ? (
+                                                        <img
+                                                            src={student.photo.startsWith('http') || student.photo.startsWith('data:') || student.photo.startsWith('blob:')
+                                                                ? student.photo
+                                                                : `${import.meta.env.VITE_CDN_URL}${student.photo}`}
+                                                            alt={student.name}
+                                                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                                                        />
+                                                    ) : (
+                                                        student.name.charAt(0).toUpperCase()
+                                                    )}
                                                 </div>
                                                 <div className="student-info">
                                                     <h4>{student.name} {student.isBlocked && <span className="tag-blocked">Blocked</span>}</h4>
@@ -382,6 +480,9 @@ const StudentRegistration: React.FC = () => {
                                                 }}>
                                                     View Details
                                                 </button>
+                                                <button className="btn-password-change" onClick={(e) => openPasswordModal(student._id, student.email, e)}>
+                                                    Change Password
+                                                </button>
                                             </div>
                                         ))}
                                     </div>
@@ -391,6 +492,53 @@ const StudentRegistration: React.FC = () => {
                     </div>
                 </div>
             </main>
+
+            {isPasswordModalOpen && (
+                <div className="modal-overlay" onClick={() => setIsPasswordModalOpen(false)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>Change Password</h2>
+                            <button className="close-btn" onClick={() => setIsPasswordModalOpen(false)}>×</button>
+                        </div>
+                        <form onSubmit={handlePasswordUpdate}>
+                            <div className="form-group">
+                                <label>Student Email</label>
+                                <input
+                                    type="email"
+                                    value={studentEmail}
+                                    disabled
+                                    className="input-disabled"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>New Password</label>
+                                <input
+                                    type="newPassword"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    placeholder="Enter new password"
+                                    autoFocus
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Confirm Password</label>
+                                <input
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    placeholder="Confirm new password"
+                                />
+                            </div>
+                            <div className="modal-actions">
+                                <button type="button" className="btn-cancel-modal" onClick={() => setIsPasswordModalOpen(false)}>Cancel</button>
+                                <button type="submit" className="btn-confirm-password" disabled={passwordLoading}>
+                                    {passwordLoading ? 'Updating...' : 'Update Password'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
 
 
@@ -612,6 +760,42 @@ const StudentRegistration: React.FC = () => {
                     font-weight: 700;
                 }
 
+                .students-count-header {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                }
+
+                .search-bar {
+                    position: relative;
+                    width: 100%;
+                }
+
+                .search-bar input {
+                    width: 100%;
+                    padding: 12px 16px 12px 48px;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 12px;
+                    font-size: 0.95rem;
+                    background: white;
+                    transition: all 0.2s;
+                }
+
+                .search-bar input:focus {
+                    outline: none;
+                    border-color: #0047AB;
+                    box-shadow: 0 0 0 4px rgba(0, 71, 171, 0.1);
+                }
+
+                .search-icon {
+                    position: absolute;
+                    left: 16px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    color: #94a3b8;
+                    font-size: 1.2rem;
+                }
+
                 .students-list {
                     display: flex;
                     flex-direction: column;
@@ -705,6 +889,29 @@ const StudentRegistration: React.FC = () => {
                 .btn-view:hover {
                     background: #e2e8f0;
                     color: #1e293b;
+                }
+
+                .btn-password-change {
+                    padding: 8px 16px;
+                    background: #fff;
+                    color: #0047AB;
+                    border: 1px solid #0047AB;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    margin-left: 8px;
+                }
+
+                .btn-password-change:hover {
+                    background: #0047AB;
+                    color: white;
+                }
+                
+                .input-disabled {
+                    background-color: #f1f5f9;
+                    cursor: not-allowed;
+                    color: #64748b;
                 }
                     color: #cbd5e1;
                     font-size: 1.5rem;
@@ -916,6 +1123,33 @@ const StudentRegistration: React.FC = () => {
                     border-radius: 8px;
                     font-weight: 600;
                     cursor: pointer;
+                }
+
+                .btn-cancel-modal {
+                    flex: 1;
+                    padding: 12px;
+                    background: white;
+                    color: #64748b;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    cursor: pointer;
+                }
+
+                .btn-confirm-password {
+                    flex: 2;
+                    padding: 12px;
+                    background: #0047AB;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    cursor: pointer;
+                }
+                
+                .btn-confirm-password:disabled {
+                    opacity: 0.7;
+                    cursor: not-allowed;
                 }
 
                 .btn-update:disabled, .btn-delete:disabled, .btn-block-toggle:disabled {

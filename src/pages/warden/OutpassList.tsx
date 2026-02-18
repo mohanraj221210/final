@@ -130,8 +130,8 @@ const OutpassList: React.FC = () => {
                   currentData.map((item, index) => (
                     <tr key={item.id || index}>
                       <td data-label="#">{startIndex + index + 1}</td>
-                      <td data-label="Name">{item.studentid.name || item.studentName}</td>
-                      <td data-label="Register No">{item.studentid.registerNumber || item.register_number}</td>
+                      <td data-label="Name">{item.studentid?.name || item.studentName || 'Unknown'}</td>
+                      <td data-label="Register No">{item.studentid?.registerNumber || item.register_number || 'N/A'}</td>
                       <td data-label="Date">
                         {new Date(item.createdAt || item.outDate).toLocaleDateString()}
                       </td>
@@ -169,11 +169,11 @@ const OutpassList: React.FC = () => {
               {currentData.map((item, index) => (
                 <div className="mobile-card" key={item.id || index}>
                   <div className="card-badge">
-                    {item.studentid.registerNumber || item.register_number}
+                    {item.studentid?.registerNumber || item.register_number || 'N/A'}
                   </div>
-                  <h3 className="card-name">{item.studentid.name || item.studentName}</h3>
+                  <h3 className="card-name">{item.studentid?.name || item.studentName || 'Unknown'}</h3>
                   <p className="card-details">
-                    {item.studentid.year ? `Year ${item.studentid.year} • ` : ''}
+                    {item.studentid?.year ? `Year ${item.studentid.year} • ` : ''}
                     Applied on {new Date(item.createdAt || item.outDate).toLocaleDateString()}
                     {item.outpassType?.toLowerCase() === 'emergency' && (
                       <div className="emergency-badge mobile">🚨 EMERGENCY</div>

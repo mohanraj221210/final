@@ -15,17 +15,25 @@ const Outpass: React.FC = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
     const [residenceType, setResidenceType] = useState<string>('');
+    const [hasPendingOutpass, setHasPendingOutpass] = useState(false);
 
     React.useEffect(() => {
         const checkProfile = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/profile`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
 
-                if (response.status === 200) {
-                    const user = response.data.user;
+                // Fetch Profile and Outpasses in parallel
+                const [profileResponse, outpassResponse] = await Promise.all([
+                    axios.get(`${import.meta.env.VITE_API_URL}/api/profile`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }),
+                    axios.get(`${import.meta.env.VITE_API_URL}/api/outpass`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    })
+                ]);
+
+                if (profileResponse.status === 200) {
+                    const user = profileResponse.data.user;
                     setResidenceType(user.residencetype?.toLowerCase() || '');
 
                     // Pre-select OD for day scholars
@@ -50,8 +58,20 @@ const Outpass: React.FC = () => {
                     if (!isProfileComplete()) {
                         toast.error("Please complete your profile first");
                         navigate('/dashboard');
+                        return;
                     }
                 }
+
+                if (outpassResponse.status === 200) {
+                    const outpasses = outpassResponse.data.outpasses || [];
+                    const pendingOutpass = outpasses.find((op: any) => op.status === 'pending');
+
+                    if (pendingOutpass) {
+                        setHasPendingOutpass(true);
+                        toast.warning("You have a pending outpass application.");
+                    }
+                }
+
             } catch (error) {
                 console.error("Error checking profile:", error);
             }
@@ -257,9 +277,22 @@ const Outpass: React.FC = () => {
                             />
                         </div> */}
 
+                        {hasPendingOutpass && (
+                            <div style={{
+                                padding: '12px',
+                                backgroundColor: '#fff3cd',
+                                color: '#856404',
+                                border: '1px solid #ffeeba',
+                                borderRadius: '8px',
+                                marginBottom: '20px',
+                                fontSize: '0.9rem'
+                            }}>
+                                ⚠️ You already have a pending outpass application. You must wait for it to be approved or rejected before applying for a new one.
+                            </div>
+                        )}
                         <div className="form-actions">
-                            <button type="submit" className="btn btn-primary submit-btn" disabled={isSubmitting}>
-                                {isSubmitting ? 'Submitting...' : 'Submit Application'}
+                            <button type="submit" className="btn btn-primary submit-btn" disabled={isSubmitting || hasPendingOutpass}>
+                                {isSubmitting ? 'Submitting...' : (hasPendingOutpass ? 'Pending Application Exists' : 'Submit Application')}
                             </button>
                             {/* <button
                                 type="button"

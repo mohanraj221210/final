@@ -92,7 +92,7 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
             <div className={`logo-circle ${loginType === 'staff' ? 'staff-logo' : ''}`}>
               {loginType === 'student' ? '🎓' : '👨‍🏫'}
             </div>
-            <h1>{loginType === 'student' ? 'Welcome Back' : 'Staff Portal'}</h1>
+            <h1>{loginType === 'student' ? 'Student Login' : 'Staff Login'}</h1>
             <p className="text-muted">
               {loginType === 'student'
                 ? 'Enter your credentials to access the portal'
@@ -113,7 +113,7 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
                   onChange={(e) => setEmail(e.target.value)}
                 />
                 <label htmlFor="username">
-                  {loginType === 'student' ? 'Username / Register No' : 'Staff Email / ID'}
+                  {loginType === 'student' ? 'Email / ID' : 'Staff Email / ID'}
                 </label>
                 <span className="input-icon">👤</span>
               </div>

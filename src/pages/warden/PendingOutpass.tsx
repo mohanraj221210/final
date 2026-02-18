@@ -369,6 +369,167 @@ const PendingOutpass: React.FC = () => {
     margin-top: 4px;
     display: table;
 }
+      /* Mobile Cards View */
+.mobile-cards-view {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mobile-card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  position: relative;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  border: 1px solid rgba(0,0,0,0.02);
+  margin-bottom: 16px;
+}
+
+.card-badge {
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  color: white;
+  display: inline-block;
+  padding: 8px 0;
+  width: 100%;
+  text-align: center;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+}
+
+.card-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 4px;
+}
+
+.card-details {
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 20px;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 16px;
+}
+
+.status-pill {
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: capitalize;
+}
+
+.status-pending {
+  background: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fcd34d;
+}
+
+.card-view-link {
+  background: none;
+  border: none;
+  color: #1e3a8a;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Pagination */
+.pagination {
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+
+.pagination button {
+  padding: 8px 18px;
+  border-radius: 10px;
+  border: none;
+  background: #1e3a8a;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.pagination button:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Empty State */
+.mobile-empty-state, .no-data-message {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+}
+
+.empty-content {
+  text-align: center;
+  color: #64748b;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.empty-icon {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 16px;
+}
+
+/* Responsive Media Queries */
+@media (max-width: 768px) {
+  .list-container {
+    padding: 16px;
+  }
+  
+  .student-list {
+    display: none;
+  }
+
+  .mobile-cards-view {
+    display: flex;
+  }
+
+  .pagination {
+    gap: 10px;
+  }
+
+  .pagination button {
+    padding: 8px 14px;
+    font-size: 14px;
+  }
+}
       `}</style>
       </div>
     </div>

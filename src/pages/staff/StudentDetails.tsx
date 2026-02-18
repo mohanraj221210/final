@@ -137,7 +137,7 @@ const StudentDetails: React.FC = () => {
             <div className="page-wrapper">
                 {/* Header Actions */}
                 <div className="header-actions">
-                    <button className="back-btn" onClick={() => navigate('/staff-registration')}>
+                    <button className="back-btn" onClick={() => navigate('/staff-registration', { state: { activeTab: 'added-students' } })}>
                         ← Back to List
                     </button>
 
@@ -161,7 +161,12 @@ const StudentDetails: React.FC = () => {
                         <div className="card-header-gradient">
                             <div className="avatar-large">
                                 {student.photo ? (
-                                    <img src={student.photo} alt={student.name} />
+                                    <img
+                                        src={student.photo.startsWith('http') || student.photo.startsWith('data:') || student.photo.startsWith('blob:')
+                                            ? student.photo
+                                            : `${import.meta.env.VITE_CDN_URL}${student.photo}`}
+                                        alt={student.name}
+                                    />
                                 ) : (
                                     student.name.charAt(0).toUpperCase()
                                 )}
