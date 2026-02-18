@@ -42,7 +42,7 @@ interface StudentOutpass {
     wardenApproval: ApprovalStatus;
     staffApprovedBy?: string;
     outpasstype: string;
-    residenceType?: string;
+    residencetype?: string;
 }
 
 const PassApproval: React.FC = () => {
@@ -114,8 +114,8 @@ const PassApproval: React.FC = () => {
                     lastOutpassReason: data.lastOutpassReason,
                     lastOutpassApprovedBy: data.lastOutpassApprovedBy,
                     lastOutpassStatus: data.lastOutpassStatus,
-                    outpasstype: data.outpasstype || data.outpassType,
-                    residenceType: studentDetails.residenceType || 'dayScholar'
+                    outpasstype: data.outpassType,
+                    residencetype: studentDetails.residenceType || 'dayScholar'
                 };
 
                 setSelectedStudent(mappedStudent);
@@ -162,8 +162,8 @@ const PassApproval: React.FC = () => {
                                 staffApproval: item.staffapprovalstatus || 'pending',
                                 yearInchargeApproval: item.yearinchargeapprovalstatus || 'pending',
                                 wardenApproval: item.wardenapprovalstatus || 'pending',
-                                outpasstype: item.outpasstype || item.outpassType,
-                                residenceType: studentDetails.residenceType || 'dayScholar'
+                                outpasstype: item.outpasstype,
+                                residencetype: studentDetails.residencetype || 'dayScholar'
                             };
                         });
 
@@ -385,6 +385,9 @@ const PassApproval: React.FC = () => {
                                                 <div className="student-meta">
                                                     Year {student.year} • {student.outpasstype || 'General'} • Applied on {formatDateTime(student.appliedDate)}
                                                 </div>
+                                                {student.outpasstype?.toLowerCase() === 'emergency' && (
+                                                    <div className="emergency-badge">🚨 EMERGENCY</div>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="student-card-action">
@@ -416,7 +419,7 @@ const PassApproval: React.FC = () => {
                                 </div>
                                 <div className="card-body">
                                     <div className="student-profile">
-                                        <img src={selectedStudent.photo} alt="Student" className="student-avatar" />
+                                        <img src={`${import.meta.env.VITE_CDN_URL}${selectedStudent.photo}`} alt="Student" className="student-avatar" />
                                         <div className="profile-grid">
                                             <div className="profile-field">
                                                 <label>STUDENT ID</label>
@@ -630,7 +633,7 @@ const PassApproval: React.FC = () => {
                                             </div>
                                         </div>
 
-                                        {selectedStudent.residenceType === 'hostel' && (
+                                        {selectedStudent.residencetype === 'hostel' && (
                                             <div className={`status-step ${selectedStudent.wardenApproval === 'approved' ? 'completed' : selectedStudent.wardenApproval === 'rejected' ? 'rejected' : (selectedStudent.yearInchargeApproval === 'approved' ? 'active' : 'pending')}`}>
                                                 <div className="step-dot">
                                                     {selectedStudent.wardenApproval === 'approved' ? '✓' :
@@ -1045,9 +1048,8 @@ const PassApproval: React.FC = () => {
                     border-radius: 4px;
                     font-size: 0.75rem;
                     font-weight: 700;
-                    margin-left: 10px;
+                    margin-top: 4px;
                     border: 1px solid #ef4444;
-                    vertical-align: middle;
                 }
 
                 /* Approval Stepper */

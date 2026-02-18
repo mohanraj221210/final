@@ -15,7 +15,7 @@ const SubjectDetails: React.FC = () => {
     const units = id ? UNITS_DATA[id] : [];
     const questionBanks = id ? QUESTION_BANKS_DATA[id] || [] : [];
 
-      const handleLogout = () => {
+    const handleLogout = () => {
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('userType');
         localStorage.removeItem('token');
@@ -25,8 +25,87 @@ const SubjectDetails: React.FC = () => {
     if (!subject) {
         return (
             <div className="page-container">
-                
+
                 <header className="dashboard-header-custom">
+                    <div className="header-container-custom">
+                        <div className="header-left-custom">
+                            <div className="brand-custom">
+                                <span className="brand-icon-custom">🎓</span>
+                                <span className="brand-text-custom">JIT Student Portal</span>
+                            </div>
+                        </div>
+
+                        <button
+                            className="mobile-menu-btn"
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            aria-label="Toggle menu"
+                        >
+                            {isMobileMenuOpen ? '✕' : '☰'}
+                        </button>
+
+                        <nav className={`header-nav-custom ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
+                            <button
+                                className="nav-item-custom"
+                                onClick={() => navigate('/dashboard')}
+                            >
+                                Dashboard
+                            </button>
+                            <button
+                                className="nav-item-custom"
+                                onClick={() => navigate('/staffs')}
+                            >
+                                Staffs
+                            </button>
+                            {/* <button
+                            className="nav-item-custom"
+                            onClick={() => navigate('/student-notice')}
+                        >
+                            Notices
+                        </button> */}
+                            <button
+                                className="nav-item-custom"
+                                onClick={() => navigate('/outpass')}
+                            >
+                                Outpass
+                            </button>
+                            <button
+                                className="nav-item-custom"
+                                onClick={() => navigate('/subjects')}
+                            >
+                                Subjects
+                            </button>
+                            <button
+                                className="nav-item-custom"
+                                onClick={() => navigate('/profile')}
+                            >
+                                Profile
+                            </button>
+                            <button className="logout-btn-custom" onClick={handleLogout}>
+                                Logout
+                            </button>
+                        </nav>
+                    </div>
+                </header>
+
+                <div className="content-wrapper error-state">
+                    <h2>Subject not found</h2>
+                    <button onClick={() => navigate('/subjects')} className="btn btn-primary">
+                        Back to Subjects
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    const handleDownload = (title: string) => {
+        setToastMessage(`Downloading ${title}...`);
+        setShowToast(true);
+    };
+
+    return (
+        <div className="page-container">
+
+            <header className="dashboard-header-custom">
                 <div className="header-container-custom">
                     <div className="header-left-custom">
                         <div className="brand-custom">
@@ -62,85 +141,6 @@ const SubjectDetails: React.FC = () => {
                         >
                             Notices
                         </button> */}
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/outpass')}
-                        >
-                            Outpass
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/subjects')}
-                        >
-                            Subjects
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/profile')}
-                        >
-                            Profile
-                        </button>
-                        <button className="logout-btn-custom" onClick={handleLogout}>
-                            Logout
-                        </button>
-                    </nav>
-                </div>
-            </header>
-
-                <div className="content-wrapper error-state">
-                    <h2>Subject not found</h2>
-                    <button onClick={() => navigate('/subjects')} className="btn btn-primary">
-                        Back to Subjects
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    const handleDownload = (title: string) => {
-        setToastMessage(`Downloading ${title}...`);
-        setShowToast(true);
-    };
-
-    return (
-        <div className="page-container">
-            
-             <header className="dashboard-header-custom">
-                <div className="header-container-custom">
-                    <div className="header-left-custom">
-                        <div className="brand-custom">
-                            <span className="brand-icon-custom">🎓</span>
-                            <span className="brand-text-custom">JIT Student Portal</span>
-                        </div>
-                    </div>
-
-                    <button
-                        className="mobile-menu-btn"
-                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        aria-label="Toggle menu"
-                    >
-                        {isMobileMenuOpen ? '✕' : '☰'}
-                    </button>
-
-                    <nav className={`header-nav-custom ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/dashboard')}
-                        >
-                            Dashboard
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/staffs')}
-                        >
-                            Staffs
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/student-notice')}
-                        >
-                            Notices
-                        </button>
                         <button
                             className="nav-item-custom"
                             onClick={() => navigate('/outpass')}

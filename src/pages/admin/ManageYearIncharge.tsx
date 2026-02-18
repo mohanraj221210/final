@@ -1,13 +1,17 @@
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AdminLayout from './AdminLayout';
 import { adminService } from '../../services/adminService';
 import type { YearIncharge } from '../../types/admin';
+import DeleteConfirmationModal from '../../components/DeleteConfirmationModal';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 const ManageYearIncharge: React.FC = () => {
+    const navigate = useNavigate();
     const [incharges, setIncharges] = useState<YearIncharge[]>([]);
+    const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newIncharge, setNewIncharge] = useState({
@@ -16,6 +20,17 @@ const ManageYearIncharge: React.FC = () => {
         password: '',
         role: 'incharge' // Default or input
     });
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [selectedIncharge, setSelectedIncharge] = useState<{ id: string; name: string } | null>(null);
+
+    const getImageUrl = (photo: string) => {
+        if (!photo) return '';
+        if (photo.startsWith('http') || photo.startsWith('data:')) return photo;
+        const baseUrl = import.meta.env.VITE_CDN_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+        const cleanPhoto = photo.startsWith('/') ? photo : `/${photo}`;
+        return `${cleanBase}${cleanPhoto}`;
+    };
 
     useEffect(() => {
         fetchIncharges();
@@ -32,6 +47,14 @@ const ManageYearIncharge: React.FC = () => {
             setLoading(false);
         }
     };
+
+    const filteredIncharges = incharges.filter(incharge => {
+        const search = searchTerm.toLowerCase();
+        return (
+            incharge.name.toLowerCase().includes(search) ||
+            incharge.email.toLowerCase().includes(search)
+        );
+    });
 
     const handleAddNew = () => {
         setNewIncharge({ name: '', email: '', password: '', role: 'incharge' });
@@ -50,64 +73,126 @@ const ManageYearIncharge: React.FC = () => {
         }
     };
 
-    const handleDelete = async (id: string, name: string) => {
-        if (confirm(`Are you sure you want to remove ${name}?`)) {
-            try {
-                await adminService.deleteIncharge(id);
-                toast.success("Incharge deleted successfully");
-                fetchIncharges();
-            } catch (error) {
-                toast.error("Failed to delete incharge");
-            }
+    const handleDeleteClick = (id: string, name: string) => {
+        setSelectedIncharge({ id, name });
+        setIsDeleteModalOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!selectedIncharge) return;
+        try {
+            await adminService.deleteIncharge(selectedIncharge.id);
+            toast.success("Incharge deleted successfully");
+            fetchIncharges();
+        } catch (error) {
+            toast.error("Failed to delete incharge");
+        } finally {
+            setIsDeleteModalOpen(false);
+            setSelectedIncharge(null);
         }
     };
 
     return (
-        <AdminLayout title="Manage Year Incharge">
-            <ToastContainer position="bottom-right" />
-            <div className="page-header-actions">
-                <p className="description">Assign staff as Year Incharges.</p>
-                <button className="btn-primary" onClick={handleAddNew}>+ Assign Year Incharge</button>
+        <AdminLayout title="Manage Year Incharge" activeMenu="yearIncharge">
+            <ToastContainer position="bottom-right" theme="colored" />
+
+            <div className="admin-page-content">
+                <div className="page-header">
+                    <div>
+                        <h1 className="page-title">Year Incharge Management</h1>
+                        <p className="page-subtitle">Assign and manage year incharges</p>
+                    </div>
+                    <div className="header-actions">
+                        <div className="search-bar">
+                            <span className="search-icon">🔍</span>
+                            <input
+                                type="text"
+                                placeholder="Search by name, email..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <button className="btn-primary" onClick={handleAddNew}>
+                            <span className="icon">+</span> Assign Incharge
+                        </button>
+                    </div>
+                </div>
+
+                <div className="content-card">
+                    {loading ? (
+                        <div className="loading-state">
+                            <div className="spinner"></div>
+                            <span>Loading data...</span>
+                        </div>
+                    ) : (
+                        <div className="table-responsive">
+                            <table className="modern-table">
+                                <thead>
+                                    <tr>
+                                        <th>Incharge Name</th>
+                                        <th>Email Address</th>
+                                        <th>Role</th>
+                                        <th>Assigned Year</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredIncharges.map(item => (
+                                        <tr key={item._id}>
+                                            <td>
+                                                <div className="user-info">
+                                                    <div className="user-avatar-placeholder">
+                                                        {item.photo ? (
+                                                            <img
+                                                                src={getImageUrl(item.photo)}
+                                                                alt={item.name}
+                                                                onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.classList.remove('hidden'); }}
+                                                            />
+                                                        ) : (
+                                                            <span>{item.name.charAt(0)}</span>
+                                                        )}
+                                                        <span className="hidden">{item.name.charAt(0)}</span>
+                                                    </div>
+                                                    <div className="user-details">
+                                                        <span className="user-name">{item.name}</span>
+                                                        <span className="user-id">ID: {item._id.slice(-6).toUpperCase()}</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>{item.email}</td>
+                                            <td>
+                                                <span className="badge badge-purple">{item.role}</span>
+                                            </td>
+                                            <td>
+                                                <span className="font-medium">{item.year || '-'}</span>
+                                            </td>
+                                            <td>
+                                                <div className="action-buttons">
+                                                    <button className="btn-view" onClick={() => navigate(`/admin/year-incharge-details/${item._id}`)}>
+                                                        View Details
+                                                    </button>
+                                                    <button className="btn-icon delete" onClick={() => handleDeleteClick(item._id, item.name)} title="Remove Incharge">
+                                                        🗑️
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {filteredIncharges.length === 0 && (
+                                        <tr>
+                                            <td colSpan={5} className="empty-state">
+                                                {searchTerm ? "No incharges found matching your search." : "No incharges found. Click \"Assign Incharge\" to add one."}
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
             </div>
 
-            <div className="table-container">
-                {loading ? (
-                    <div>Loading...</div>
-                ) : (
-                    <table className="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Role</th>
-                                <th>Year</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {incharges.map(item => (
-                                <tr key={item._id}>
-                                    <td className="font-medium">{item.name}</td>
-                                    <td>{item.email}</td>
-                                    <td>{item.role}</td>
-                                    <td>{item.year || '-'}</td>
-                                    <td>
-                                        <div className="action-buttons">
-                                            <button className="btn-icon delete" onClick={() => handleDelete(item._id, item.name)} title="Delete">🗑️</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                            {incharges.length === 0 && (
-                                <tr>
-                                    <td colSpan={5} className="text-center py-4">No incharges found</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                )}
-            </div>
-
+            {/* Modal */}
             {isModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
@@ -116,23 +201,27 @@ const ManageYearIncharge: React.FC = () => {
                             <button className="close-btn" onClick={() => setIsModalOpen(false)}>×</button>
                         </div>
                         <form onSubmit={handleSave}>
-                            <div className="form-grid">
+                            <div className="modal-body">
                                 <div className="form-group">
-                                    <label>Name</label>
+                                    <label>Full Name</label>
                                     <input
                                         type="text"
                                         required
+                                        placeholder="e.g. Jane Smith"
                                         value={newIncharge.name}
                                         onChange={e => setNewIncharge({ ...newIncharge, name: e.target.value })}
+                                        className="form-input"
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label>Email</label>
+                                    <label>Email Address</label>
                                     <input
                                         type="email"
                                         required
+                                        placeholder="jane@college.edu"
                                         value={newIncharge.email}
                                         onChange={e => setNewIncharge({ ...newIncharge, email: e.target.value })}
+                                        className="form-input"
                                     />
                                 </div>
                                 <div className="form-group">
@@ -140,18 +229,22 @@ const ManageYearIncharge: React.FC = () => {
                                     <input
                                         type="password"
                                         required
+                                        placeholder="••••••••"
                                         value={newIncharge.password}
                                         onChange={e => setNewIncharge({ ...newIncharge, password: e.target.value })}
+                                        className="form-input"
                                     />
                                 </div>
                                 <div className="form-group">
                                     <label>Role</label>
-                                    <input
-                                        type="text"
-                                        required
+                                    <select
                                         value={newIncharge.role}
                                         onChange={e => setNewIncharge({ ...newIncharge, role: e.target.value })}
-                                    />
+                                        className="form-input"
+                                    >
+                                        <option value="incharge">Incharge</option>
+                                        <option value="head">Head Incharge</option>
+                                    </select>
                                 </div>
                             </div>
                             <div className="modal-footer">
@@ -162,29 +255,124 @@ const ManageYearIncharge: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            <DeleteConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={handleConfirmDelete}
+                itemName={selectedIncharge?.name || 'Year Incharge'}
+                itemType="Year Incharge"
+            />
+
             <style>{`
-                /* Reuse styles */
-                .page-header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-                .description { color: #6b7280; margin: 0; }
-                .btn-primary { background: #6366f1; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
-                .btn-primary:hover { background: #4f46e5; }
-                .table-container { background: white; border-radius: 12px; border: 1px solid #e5e7eb; overflow: hidden; }
-                .admin-table { width: 100%; border-collapse: collapse; }
-                .admin-table th, .admin-table td { padding: 16px 24px; text-align: left; border-bottom: 1px solid #f3f4f6; }
-                .admin-table th { background: #f9fafb; color: #6b7280; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; }
+                .admin-page-content {
+                    font-family: 'Inter', system-ui, sans-serif;
+                    padding: 2px;
+                    max-width: 1400px;
+                    margin: 0 auto;
+                }
+
+                .page-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 32px;
+                }
+
+                .page-title {
+                    font-size: 1.8rem;
+                    font-weight: 700;
+                    color: #111827;
+                    margin-bottom: 4px;
+                    letter-spacing: -0.025em;
+                }
+
+                .page-subtitle {
+                    color: #111827;
+                    font-size: 0.95rem;
+                    margin-top: 20px;
+                }
+                .header-actions {
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+                }
+
+                .search-bar {
+                    display: flex;
+                    align-items: center;
+                    background: white;
+                    border: 1px solid #d1d5db;
+                    padding: 10px 16px;
+                    border-radius: 12px;
+                    width: 300px;
+                    gap: 10px;
+                    transition: all 0.2s;
+                    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+                }
+
+                .search-bar:focus-within {
+                    border-color: #6366f1;
+                    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+                }
+
+                .search-icon { color: #9ca3af; }
+                .search-bar input {
+                    border: none; background: transparent; outline: none; width: 100%;
+                    font-size: 0.9rem; color: #111827;
+                }
+
+                .content-card {
+                    background: white;
+                    border-radius: 16px;
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+                    border: 1px solid #e5e7eb;
+                    overflow: hidden;
+                }
+
+                .table-responsive { overflow-x: auto; }
+                .modern-table { width: 100%; border-collapse: collapse; }
+                .modern-table th { background: #f9fafb; padding: 16px 24px; text-align: left; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; border-bottom: 1px solid #e5e7eb; }
+                .modern-table td { padding: 16px 24px; border-bottom: 1px solid #f3f4f6; color: #374151; font-size: 0.95rem; }
+                .modern-table tr:hover { background-color: #f9fafb; }
+
+                .user-info { display: flex; align-items: center; gap: 16px; }
+                .user-avatar-placeholder { width: 40px; height: 40px; border-radius: 50%; background: #f3e8ff; color: #9333ea; display: flex; align-items: center; justify-content: center; font-weight: 600; border: 2px solid #e9d5ff; overflow: hidden; position: relative; }
+                .user-avatar-placeholder img { width: 100%; height: 100%; object-fit: cover; }
+                .hidden { display: none !important; }
+                .user-details { display: flex; flex-direction: column; }
+                .user-name { font-weight: 600; color: #111827; }
+                .user-id { font-size: 0.75rem; color: #9ca3af; }
+
+                .badge { padding: 4px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; display: inline-block; }
+                .badge-purple { background: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff; }
+
+                .btn-primary { background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%); color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2); transition: all 0.2s; }
+                .btn-primary:hover { box-shadow: 0 6px 8px -1px rgba(79, 70, 229, 0.3); transform: translateY(-1px); }
+
                 .action-buttons { display: flex; gap: 8px; }
-                .btn-icon { background: transparent; border: none; cursor: pointer; font-size: 16px; padding: 6px; border-radius: 6px; }
+                .btn-icon { background: transparent; border: none; cursor: pointer; font-size: 1.1rem; padding: 8px; border-radius: 8px; transition: background 0.2s; }
                 .btn-icon:hover { background: #f3f4f6; }
-                .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 50; backdrop-filter: blur(4px); }
-                .modal-content { background: white; border-radius: 16px; width: 100%; max-width: 500px; padding: 0; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
-                .modal-header { padding: 20px 24px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
-                .modal-header h3 { margin: 0; font-size: 1.1rem; }
-                .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #9ca3af; }
-                .form-grid { padding: 24px; display: grid; grid-template-columns: 1fr; gap: 16px; }
-                .form-group label { display: block; font-size: 14px; margin-bottom: 6px; color: #374151; font-weight: 500; }
-                .form-group input, .form-group select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #d1d5db; outline: none; }
-                .modal-footer { padding: 16px 24px; background: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 16px 16px; display: flex; justify-content: flex-end; gap: 12px; }
-                .btn-secondary { background: white; border: 1px solid #d1d5db; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
+                .btn-icon.delete:hover { background: #fee2e2; color: #ef4444; }
+
+                .loading-state, .empty-state { padding: 48px; display: flex; flex-direction: column; align-items: center; gap: 16px; color: #6b7280; text-align: center; }
+                .spinner { width: 32px; height: 32px; border: 3px solid #e5e7eb; border-top-color: #4f46e5; border-radius: 50%; animation: spin 1s linear infinite; }
+
+                /* Modal */
+                .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 100; }
+                .modal-content { background: white; border-radius: 20px; width: 100%; max-width: 480px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); overflow: hidden; animation: modalSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+                .modal-header { padding: 24px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; background: #f9fafb; }
+                .modal-header h3 { margin: 0; font-size: 1.25rem; font-weight: 700; color: #111827; }
+                .close-btn { background: transparent; border: none; font-size: 1.5rem; color: #9ca3af; cursor: pointer; line-height: 1; }
+                .modal-body { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+                .form-group label { display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 8px; }
+                .form-input { width: 100%; padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 10px; font-size: 0.95rem; transition: border-color 0.15s, box-shadow 0.15s; }
+                .form-input:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+                .modal-footer { padding: 20px 24px; background: #f9fafb; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 12px; }
+                .btn-secondary { background: white; border: 1px solid #d1d5db; color: #374151; padding: 10px 18px; border-radius: 10px; font-weight: 500; cursor: pointer; }
+
+                @keyframes spin { to { transform: rotate(360deg); } }
+                @keyframes modalSlide { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
             `}</style>
         </AdminLayout>
     );

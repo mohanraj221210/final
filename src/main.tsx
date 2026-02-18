@@ -50,6 +50,11 @@ import AdminProfile from './pages/admin/AdminProfile'
 import StaffDetailsAdmin from './pages/admin/StaffDetailsAdmin'
 import StaffStudentList from './pages/admin/StaffStudentList'
 import StudentDetailsAdmin from './pages/admin/StudentDetailsAdmin'
+import YearInchargeDetailsAdmin from './pages/admin/YearInchargeDetailsAdmin'
+import WardenDetailsAdmin from './pages/admin/WardenDetailsAdmin'
+import SecurityDetailsAdmin from './pages/admin/SecurityDetailsAdmin'
+import BusDetailsAdmin from './pages/admin/BusDetailsAdmin'
+import OutpassAdmin from './pages/admin/OutpassAdmin'
 
 
 
@@ -91,6 +96,11 @@ createRoot(document.getElementById('root')!).render(
           <ManageBus />
         </ProtectedRoute>
       } />
+      <Route path="/admin/outpass" element={
+        <ProtectedRoute>
+          <OutpassAdmin />
+        </ProtectedRoute>
+      } />
       <Route path="/admin/profile" element={
         <ProtectedRoute>
           <AdminProfile />
@@ -109,6 +119,26 @@ createRoot(document.getElementById('root')!).render(
       <Route path="/admin/student-details/:id" element={
         <ProtectedRoute>
           <StudentDetailsAdmin />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/year-incharge-details/:id" element={
+        <ProtectedRoute>
+          <YearInchargeDetailsAdmin />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/warden-details/:id" element={
+        <ProtectedRoute>
+          <WardenDetailsAdmin />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/security-details/:id" element={
+        <ProtectedRoute>
+          <SecurityDetailsAdmin />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/bus-details/:id" element={
+        <ProtectedRoute>
+          <BusDetailsAdmin />
         </ProtectedRoute>
       } />
 

@@ -45,7 +45,7 @@ const AdminLogin: React.FC = () => {
       if (error.response?.status === 401) {
         toast.error("Invalid credentials. Please try again.", { position: "bottom-right", autoClose: 5000 });
       } else {
-        toast.error("Login failed. Check console or use demo credentials (admin@jit.edu / admin).", { position: "bottom-right", autoClose: 5000 });
+        toast.error("Too many requests. Please try again later.", { position: "bottom-right", autoClose: 5000 });
       }
     } finally {
       setLoading(false);

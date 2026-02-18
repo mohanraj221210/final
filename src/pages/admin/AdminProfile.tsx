@@ -5,12 +5,15 @@ import AdminLayout from './AdminLayout';
 import { adminService } from '../../services/adminService';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ChangePasswordModal from '../../components/ChangePasswordModal';
 
 const AdminProfile: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [admin, setAdmin] = useState<any>(null);
     const [isEditing, setIsEditing] = useState(false);
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const navigate = useNavigate();
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
     // Form state for editing
     const [formData, setFormData] = useState<any>({
@@ -49,19 +52,38 @@ const AdminProfile: React.FC = () => {
         }));
     };
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            if (file.size > 200 * 1024) { // 200KB check
+                toast.error("Image size must be less than 200KB");
+                return;
+            }
+            setSelectedFile(file);
+            // Create a temporary preview URL
+            setFormData((prev: any) => ({
+                ...prev,
+                photo: URL.createObjectURL(file)
+            }));
+        }
+    };
+
     const handleSave = async () => {
         setIsEditing(false);
         const loadingToast = toast.loading("Updating profile...");
 
         try {
-            // If API supports FormData for file upload, use FormData. 
-            // Assuming simplified update for now as Admin update usually doesn't involve photo in basic setups unless specified.
-            // But we will try to support it structure-wise.
+            // Create FormData to handle file upload
+            const data = new FormData();
+            data.append('name', formData.name);
+            data.append('email', formData.email);
+            data.append('phone', formData.phone);
 
-            // For now, let's assume JSON update first as getting FormData right without specific API doc for Admin update can be tricky.
-            // adminService.updateProfile likely takes a partial object.
+            if (selectedFile) {
+                data.append('photo', selectedFile);
+            }
 
-            await adminService.updateProfile(formData);
+            await adminService.updateProfile(data);
 
             toast.update(loadingToast, { render: "Profile updated successfully!", type: "success", isLoading: false, autoClose: 3000 });
             await fetchAdminProfile();
@@ -69,6 +91,17 @@ const AdminProfile: React.FC = () => {
             console.error("Error updating profile:", error);
             toast.update(loadingToast, { render: "Failed to update profile", type: "error", isLoading: false, autoClose: 3000 });
             setIsEditing(true);
+        }
+    };
+
+    const handlePasswordUpdate = async (password: string) => {
+        try {
+            // Sending JSON for password update
+            await adminService.updateProfile({ password });
+            toast.success("Password updated successfully");
+        } catch (error) {
+            toast.error("Failed to update password");
+            throw error;
         }
     };
 
@@ -93,7 +126,7 @@ const AdminProfile: React.FC = () => {
 
     const getImageUrl = (path: string) => {
         if (!path) return '';
-        if (path.startsWith('data:') || path.startsWith('http')) return path;
+        if (path.startsWith('data:') || path.startsWith('http') || path.startsWith('blob:')) return path;
         return `${API_BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
     };
 
@@ -101,15 +134,20 @@ const AdminProfile: React.FC = () => {
         <AdminLayout title="My Profile">
             <ToastContainer position="bottom-right" />
             <div className="profile-page-container">
-                <div className="header-actions">
-                    <button className="back-btn" onClick={() => navigate('/admin/dashboard')}>
+                <div className="profile-page-header-actions">
+                    <button className="back-dashboard-btn" onClick={() => navigate('/admin/dashboard')}>
                         ← Back to Dashboard
                     </button>
 
                     {!isEditing ? (
-                        <button className="btn-primary" onClick={() => setIsEditing(true)}>
-                            ✏️ Edit Profile
-                        </button>
+                        <>
+                            <button className="btn-secondary" onClick={() => setIsPasswordModalOpen(true)} style={{ marginRight: '10px' }}>
+                                🔒 Change Password
+                            </button>
+                            <button className="btn-primary" onClick={() => setIsEditing(true)}>
+                                ✏️ Edit Profile
+                            </button>
+                        </>
                     ) : (
                         <div className="edit-actions">
                             <button className="btn-secondary" onClick={() => {
@@ -127,7 +165,35 @@ const AdminProfile: React.FC = () => {
 
                 <div className="profile-card-main">
                     <div className="profile-header-section">
-                        <div className="avatar-wrapper">
+                        <div
+                            className="profile-header-bg"
+                            style={formData.photo || admin.photo ? {
+                                backgroundImage: `url(${getImageUrl(formData.photo || admin.photo)})`,
+                                filter: 'blur(5px)',
+                                transform: 'scale(1.2)',
+                                width: '100%',
+                                height: '100%',
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                zIndex: 0
+                            } : {}}
+                        ></div>
+                        <div className="avatar-wrapper" style={{ position: 'relative' }}>
+                            {isEditing && (
+                                <div className="avatar-edit-overlay">
+                                    <label htmlFor="photo-upload" className="upload-label">
+                                        📷
+                                    </label>
+                                    <input
+                                        id="photo-upload"
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleFileChange}
+                                        style={{ display: 'none' }}
+                                    />
+                                </div>
+                            )}
                             {/* Initials Avatar or Image */}
                             {formData.photo || admin.photo ? (
                                 <img
@@ -150,7 +216,7 @@ const AdminProfile: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="profile-info-header">
+                        <div className="profile-info-header" style={{ position: 'relative', zIndex: 1 }}>
                             {isEditing ? (
                                 <input
                                     type="text"
@@ -208,7 +274,7 @@ const AdminProfile: React.FC = () => {
                     max-width: 800px;
                     margin: 0 auto;
                 }
-                .header-actions {
+                .profile-page-header-actions {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
@@ -218,12 +284,27 @@ const AdminProfile: React.FC = () => {
                     display: flex;
                     gap: 12px;
                 }
-                .back-btn {
-                    background: none;
-                    border: none;
-                    color: #6366f1;
+                .back-dashboard-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    background: white;
+                    border: 1px solid #e2e8f0;
+                    color: #64748b;
+                    font-size: 0.95rem;
+                    font-weight: 600;
                     cursor: pointer;
-                    font-weight: 500;
+                    margin-bottom: 24px;
+                    padding: 10px 20px;
+                    border-radius: 10px;
+                    transition: all 0.2s;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                }
+                .back-dashboard-btn:hover {
+                    color: #0047AB;
+                    border-color: #0047AB;
+                    transform: translateX(-4px);
+                    box-shadow: 0 4px 12px rgba(0, 71, 171, 0.1);
                 }
                 .btn-primary, .btn-secondary, .btn-success {
                     padding: 8px 16px;
@@ -234,7 +315,7 @@ const AdminProfile: React.FC = () => {
                     color: white;
                 }
                 .btn-primary { background: #3b82f6; }
-                .btn-secondary { background: white; color: #374151; border: 1px solid #d1d5db; }
+                .btn-secondary { background: white; color: #374151; border: 1px solid #d1d5db; margin-left: 270px; }
                 .btn-success { background: #10b981; }
 
                 .profile-card-main {
@@ -251,11 +332,18 @@ const AdminProfile: React.FC = () => {
                     display: flex;
                     gap: 24px;
                     align-items: center;
+                    position: relative;
+                    overflow: hidden;
                 }
                 .avatar-wrapper {
                     width: 100px;
                     height: 100px;
                     flex-shrink: 0;
+                    margin-bottom: 0;
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                    border-radius: 50%;
+                    position: relative;
+                    zIndex: 1;
                 }
                 .profile-avatar-img {
                     width: 100%;
@@ -286,12 +374,12 @@ const AdminProfile: React.FC = () => {
                 .role-badge {
                     display: inline-block;
                     margin-top: 8px;
-                    background: #eff6ff;
-                    color: #3b82f6;
+                    background: #E6F0FF;
+                    color: #00214D;
                     padding: 4px 12px;
                     border-radius: 9999px;
                     font-size: 0.85rem;
-                    font-weight: 500;
+                    font-weight: 600;
                 }
                 .edit-input-large {
                     font-size: 1.5rem;
@@ -335,7 +423,40 @@ const AdminProfile: React.FC = () => {
                     font-size: 1rem;
                 }
                 .hidden { display: none; }
+                
+                .avatar-edit-overlay {
+                    position: absolute;
+                    bottom: 0;
+                    right: 0;
+                    background: #3b82f6;
+                    border-radius: 50%;
+                    width: 32px;
+                    height: 32px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    z-index: 10;
+                    border: 2px solid white;
+                }
+                
+                .upload-label {
+                    cursor: pointer;
+                    font-size: 1.2rem;
+                    line-height: 1;
+                    display: flex; /* Ensure the emoji is centered */
+                    align-items: center;
+                    justify-content: center;
+                    width: 100%;
+                    height: 100%;
+                }
             `}</style>
+            <ChangePasswordModal
+                isOpen={isPasswordModalOpen}
+                onClose={() => setIsPasswordModalOpen(false)}
+                onSubmit={handlePasswordUpdate}
+                userEmail={admin.email}
+            />
         </AdminLayout>
     );
 };

@@ -4,13 +4,13 @@ import { type User, RECENT_DOWNLOADS } from '../../data/sampleData';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
-import StudentHeader from '../../components/StudentHeader';
 
 const Profile: React.FC = () => {
     const [user, setUser] = useState<User>({
         name: '',
         registerNumber: '',
         staffid: {
+            id: '',
             name: '',
         },
         department: '',
@@ -32,6 +32,7 @@ const Profile: React.FC = () => {
     });
     const [isEditing, setIsEditing] = useState(false);
     const [showToast, setShowToast] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const navigate = useNavigate();
     const [completionPercentage, setCompletionPercentage] = useState(0);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -64,6 +65,13 @@ const Profile: React.FC = () => {
     useEffect(() => {
         setCompletionPercentage(calculateCompletion(user));
     }, [user]);
+
+    const handleLogout = () => {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userType');
+        localStorage.removeItem('token');
+        navigate('/login');
+    };
 
     useEffect(() => {
         const fetchUserProfile = async () => {
@@ -166,7 +174,66 @@ const Profile: React.FC = () => {
     return (
         <div className="page-container profile-page">
             < ToastContainer />
-            <StudentHeader user={user} />
+            <header className="dashboard-header-custom">
+                <div className="header-container-custom">
+                    <div className="header-left-custom">
+                        <div className="brand-custom">
+                            <span className="brand-icon-custom">🎓</span>
+                            <span className="brand-text-custom">JIT Student Portal</span>
+                        </div>
+                    </div>
+
+                    <button
+                        className="mobile-menu-btn"
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        aria-label="Toggle menu"
+                    >
+                        {isMobileMenuOpen ? '✕' : '☰'}
+                    </button>
+
+                    <nav className={`header-nav-custom ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
+                        <button
+                            className="nav-item-custom"
+                            onClick={() => navigate('/dashboard')}
+                        >
+                            Dashboard
+                        </button>
+                        <button
+                            className="nav-item-custom"
+                            onClick={() => navigate('/staffs')}
+                        >
+                            Staffs
+                        </button>
+                        {/* <button
+                            className="nav-item-custom"
+                            onClick={() => navigate('/student-notice')}
+                        >
+                            Notices
+                        </button> */}
+                        <button
+                            className="nav-item-custom"
+                            onClick={() => navigate('/outpass')}
+                        >
+                            Outpass
+                        </button>
+                        <button
+                            className="nav-item-custom"
+                            onClick={() => navigate('/subjects')}
+                        >
+                            Subjects
+                        </button>
+                        <button
+                            className="nav-item-custom"
+                            onClick={() => navigate('/profile')}
+                        >
+                            Profile
+                        </button>
+                        <button className="logout-btn-custom" onClick={handleLogout}>
+                            Logout
+                        </button>
+                    </nav>
+                </div>
+            </header>
 
             {showToast && (
                 <Toast

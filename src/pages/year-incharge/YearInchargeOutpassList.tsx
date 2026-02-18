@@ -53,11 +53,11 @@ const YearInchargeOutpassList: React.FC = () => {
                 });
 
                 if (response.status === 200) {
-                    const list = response.data.outpasses || response.data.outpasslist || [];
+                    const list = response.data.outpasslist || [];
                     const sortedList = list.sort((a: any, b: any) => {
                         // Priority 1: Emergency first
-                        const isAEmergency = String(a.outpasstype || '').toLowerCase() === 'emergency';
-                        const isBEmergency = String(b.outpasstype || '').toLowerCase() === 'emergency';
+                        const isAEmergency = a.outpasstype?.toLowerCase() === 'emergency';
+                        const isBEmergency = b.outpasstype?.toLowerCase() === 'emergency';
 
                         if (isAEmergency && !isBEmergency) return -1;
                         if (!isAEmergency && isBEmergency) return 1;
@@ -202,6 +202,12 @@ const YearInchargeOutpassList: React.FC = () => {
                                     <div>
                                         <h3 className="card-name">{typeof outpass.studentid?.name === 'string' ? outpass.studentid.name : 'Unknown'}</h3>
                                         <p className="card-reg">{typeof outpass.studentid?.registerNumber === 'string' ? outpass.studentid.registerNumber : 'N/A'}</p>
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                                        <span className="pass-type-mobile">{outpass.outpasstype}</span>
+                                        {outpass.outpasstype?.toLowerCase() === 'emergency' && (
+                                            <span className="emergency-badge mobile">🚨 CRITICAL</span>
+                                        )}
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
                                         <span className="pass-type-mobile">{outpass.outpasstype}</span>

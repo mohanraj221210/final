@@ -104,6 +104,10 @@ export const adminService = {
         const response = await api.put(`/admin/staff/update/${id}`, data);
         return response.data;
     },
+    resetStaffPassword: async (id: string, newPassword: string) => {
+        const response = await api.put(`/admin/staff/forgotpassword/${id}`, { newPassword });
+        return response.data;
+    },
 
     // Incharge
     addIncharge: async (data: any) => {
@@ -120,6 +124,10 @@ export const adminService = {
     },
     deleteIncharge: async (id: string) => {
         const response = await api.delete(`/admin/incharge/delete/${id}`);
+        return response.data;
+    },
+    updateIncharge: async (id: string, data: any) => {
+        const response = await api.put(`/admin/incharge/update/${id}`, data);
         return response.data;
     },
 
@@ -140,6 +148,10 @@ export const adminService = {
         const response = await api.delete(`/admin/warden/delete/${id}`);
         return response.data;
     },
+    updateWarden: async (id: string, data: any) => {
+        const response = await api.put(`/admin/warden/update/${id}`, data);
+        return response.data;
+    },
 
     // Watchman
     addWatchman: async (data: any) => {
@@ -156,6 +168,10 @@ export const adminService = {
     },
     deleteWatchman: async (id: string) => {
         const response = await api.delete(`/admin/watchman/delete/${id}`);
+        return response.data;
+    },
+    updateWatchman: async (id: string, data: any) => {
+        const response = await api.put(`/admin/watchman/update/${id}`, data);
         return response.data;
     },
 
@@ -179,5 +195,61 @@ export const adminService = {
     deleteBus: async (id: string) => {
         const response = await api.delete(`/admin/bus/delete/${id}`);
         return response.data;
+    },
+    // Outpass
+    // Outpass
+    getAllOutpasses: async () => {
+        const response = await api.get<{ message: string, outpasses: any[] }>('/admin/outpass/list');
+        return response.data;
+    },
+    getOutpassStats: async () => {
+        const response = await api.get<{ message: string, outpasses: any[] }>('/admin/outpass/list');
+        const outpasses = response.data.outpasses || [];
+
+        // Helper to get type safely
+        const getType = (o: any) => (o.outpassType || o.outpasstype || o.type || '').toLowerCase().trim();
+        // Helper to get status safely
+        const getStatus = (o: any) => (o.outpassStatus || o.status || '').toLowerCase().trim();
+
+        // Calculate Overview Stats
+        const stats = {
+            totalOutpasses: outpasses.length,
+            pendingApprovals: outpasses.filter(o => getStatus(o) === 'pending').length,
+            // Count ALL emergency requests for the stat card if the user implies that, 
+            // OR if it's meant to be an "Action item", then pending. 
+            // Usually "Emergency Requests" card implies attention needed, so pending is often right.
+            // BUT if the user says it's "Wrong", maybe they expect TOTAL emergency requests?
+            // The card says "⚠️ Action Required" which implies pending. 
+            // I will stick to pending but fix the property access which is the likely bug.
+            emergencyRequests: outpasses.filter(o =>
+                getType(o) === 'emergency' &&
+                getStatus(o) === 'pending'
+            ).length
+        };
+
+        // Calculate Chart Data (Counts by Type)
+        const typeCounts: { [key: string]: number } = {
+            'OD': 0,
+            'Home Pass': 0,
+            'Emergency': 0,
+            'Outing Pass': 0
+        };
+
+        outpasses.forEach(o => {
+            const type = getType(o);
+            if (type === 'od') typeCounts['OD']++;
+            else if (type.includes('home')) typeCounts['Home Pass']++;
+            else if (type === 'emergency') typeCounts['Emergency']++;
+            else if (type === 'medical' || type === 'outing') typeCounts['Outing Pass']++;
+        });
+
+        const chartData = [
+            { label: 'OD', value: typeCounts['OD'], color: '#6366f1' },
+            { label: 'Home Pass', value: typeCounts['Home Pass'], color: '#ec4899' },
+            { label: 'Emergency', value: typeCounts['Emergency'], color: '#ef4444' },
+            { label: 'Outing Pass', value: typeCounts['Outing Pass'], color: '#f59e0b' },
+        ];
+
+        return { stats, chartData };
     }
 };

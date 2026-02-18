@@ -10,6 +10,16 @@ import 'react-toastify/dist/ReactToastify.css';
 const ManageStaff: React.FC = () => {
     const navigate = useNavigate();
     const [staffList, setStaffList] = useState<Staff[]>([]);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const getImageUrl = (photo: string) => {
+        if (!photo) return '';
+        if (photo.startsWith('http') || photo.startsWith('data:')) return photo;
+        const baseUrl = import.meta.env.VITE_CDN_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+        const cleanPhoto = photo.startsWith('/') ? photo : `/${photo}`;
+        return `${cleanBase}${cleanPhoto}`;
+    };
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -36,6 +46,16 @@ const ManageStaff: React.FC = () => {
         }
     };
 
+    const filteredStaff = staffList.filter(staff => {
+        const search = searchTerm.toLowerCase();
+        return (
+            staff.name.toLowerCase().includes(search) ||
+            staff.email.toLowerCase().includes(search) ||
+            (staff.department && staff.department.toLowerCase().includes(search)) ||
+            (staff.designation && staff.designation.toLowerCase().includes(search))
+        );
+    });
+
     const handleView = (id: string) => {
         navigate(`/admin/staff-details/${id}`);
     };
@@ -58,79 +78,99 @@ const ManageStaff: React.FC = () => {
     };
 
     return (
-        <AdminLayout title="Manage Staff">
-            <ToastContainer position="bottom-right" />
-            <div className="page-header-actions">
-                <p className="description">View staff details or add new staff members.</p>
-                <button className="btn-primary" onClick={handleAddNew}>+ Add New Staff</button>
-            </div>
+        <AdminLayout title="Manage Staff" activeMenu="staff">
+            <ToastContainer position="bottom-right" theme="colored" />
 
-            <div className="table-container">
-                {loading ? (
-                    <div className="p-4 text-center">Loading...</div>
-                ) : (
-                    <table className="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Department</th>
-                                <th>Designation</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {staffList.map(staff => (
-                                <tr key={staff._id}>
-                                    <td className="font-medium">
-                                        <div className="flex items-center gap-3" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                            {staff.photo ? (
-                                                <img
-                                                    src={staff.photo.startsWith('http') || staff.photo.startsWith('data:')
-                                                        ? staff.photo
-                                                        : `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}`.replace('/api', '') + (staff.photo.startsWith('/') ? '' : '/') + staff.photo}
-                                                    alt={staff.name}
-                                                    className="w-10 h-10 rounded-full object-cover"
-                                                    style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #e5e7eb' }}
-                                                    onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.removeAttribute('style'); }}
-                                                />
-                                            ) : (
-                                                <div
-                                                    className="w-10 h-10 rounded-full flex items-center justify-center bg-indigo-100 text-indigo-600 font-bold"
-                                                    style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#e0e7ff', color: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '14px' }}
-                                                >
-                                                    {staff.name.charAt(0)}
+            <div className="admin-page-content">
+                <div className="page-header">
+                    <div>
+                        <h1 className="page-title">Staff Management</h1>
+                        <p className="page-subtitle">View, search, and manage staff members</p>
+                    </div>
+                    <div className="header-actions">
+                        <div className="search-bar">
+                            <span className="search-icon">🔍</span>
+                            <input
+                                type="text"
+                                placeholder="Search by name, email, dept..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <button className="btn-primary" onClick={handleAddNew}>
+                            <span className="icon">+</span> Add New Staff
+                        </button>
+                    </div>
+                </div>
+
+                <div className="content-card">
+                    {loading ? (
+                        <div className="loading-state">
+                            <div className="spinner"></div>
+                            <span>Loading staff data...</span>
+                        </div>
+                    ) : (
+                        <div className="table-responsive">
+                            <table className="modern-table">
+                                <thead>
+                                    <tr>
+                                        <th>Staff Member</th>
+                                        <th>Email</th>
+                                        <th>Department</th>
+                                        <th>Designation</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredStaff.map(staff => (
+                                        <tr key={staff._id}>
+                                            <td>
+                                                <div className="user-info">
+                                                    {staff.photo ? (
+                                                        <img
+                                                            src={getImageUrl(staff.photo)}
+                                                            alt={staff.name}
+                                                            className="user-avatar"
+                                                            onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.removeAttribute('style'); }}
+                                                        />
+                                                    ) : (
+                                                        <div className="user-avatar-placeholder">
+                                                            {staff.name.charAt(0)}
+                                                        </div>
+                                                    )}
+                                                    <div className="user-avatar-placeholder fallback" style={{ display: 'none' }}>
+                                                        {staff.name.charAt(0)}
+                                                    </div>
+                                                    <div className="user-details">
+                                                        <span className="user-name">{staff.name}</span>
+                                                        {/* <span className="user-id">#{staff._id.slice(-6).toUpperCase()}</span> */}
+                                                    </div>
                                                 </div>
-                                            )}
-                                            {/* Fallback avatar if image fails */}
-                                            <div
-                                                className="w-10 h-10 rounded-full flex items-center justify-center bg-indigo-100 text-indigo-600 font-bold"
-                                                style={{ display: 'none', width: '40px', height: '40px', borderRadius: '50%', background: '#e0e7ff', color: '#6366f1', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '14px' }}
-                                            >
-                                                {staff.name.charAt(0)}
-                                            </div>
-
-                                            <span>{staff.name}</span>
-                                        </div>
-                                    </td>
-                                    <td>{staff.email}</td>
-                                    <td>{staff.department || '-'}</td>
-                                    <td>{staff.designation || '-'}</td>
-                                    <td>
-                                        <button className="btn-view" onClick={() => handleView(staff._id)}>
-                                            View
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                            {staffList.length === 0 && (
-                                <tr>
-                                    <td colSpan={5} className="text-center py-4">No staff found</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                )}
+                                            </td>
+                                            <td>{staff.email}</td>
+                                            <td>
+                                                <span className="badge badge-blue">{staff.department || 'N/A'}</span>
+                                            </td>
+                                            <td>{staff.designation || '-'}</td>
+                                            <td>
+                                                <button className="btn-view" onClick={() => handleView(staff._id)}>
+                                                    View Details
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {staffList.length === 0 && (
+                                        <tr>
+                                            <td colSpan={5} className="empty-state">
+                                                {searchTerm ? "No staff found matching your search." : "No staff members found. Click \"Add New Staff\" to get started."}
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Modal */}
@@ -142,38 +182,44 @@ const ManageStaff: React.FC = () => {
                             <button className="close-btn" onClick={() => setIsModalOpen(false)}>×</button>
                         </div>
                         <form onSubmit={handleSave}>
-                            <div className="form-grid">
+                            <div className="modal-body">
                                 <div className="form-group">
-                                    <label>Name</label>
+                                    <label>Full Name</label>
                                     <input
                                         type="text"
                                         required
+                                        placeholder="e.g. John Doe"
                                         value={newStaff.name}
                                         onChange={e => setNewStaff({ ...newStaff, name: e.target.value })}
+                                        className="form-input"
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label>Email</label>
+                                    <label>Email Address</label>
                                     <input
                                         type="email"
                                         required
+                                        placeholder="john@example.com"
                                         value={newStaff.email}
                                         onChange={e => setNewStaff({ ...newStaff, email: e.target.value })}
+                                        className="form-input"
                                     />
                                 </div>
-                                <div className="form-group full-width">
+                                <div className="form-group">
                                     <label>Password</label>
                                     <input
                                         type="password"
                                         required
+                                        placeholder="••••••••"
                                         value={newStaff.password}
                                         onChange={e => setNewStaff({ ...newStaff, password: e.target.value })}
+                                        className="form-input"
                                     />
                                 </div>
                             </div>
                             <div className="modal-footer">
                                 <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>
-                                <button type="submit" className="btn-primary">Register Staff</button>
+                                <button type="submit" className="btn-primary">Create Account</button>
                             </div>
                         </form>
                     </div>
@@ -181,173 +227,312 @@ const ManageStaff: React.FC = () => {
             )}
 
             <style>{`
-                .page-header-actions {
+                .admin-page-content {
+                    font-family: 'Inter', system-ui, sans-serif;
+                    padding: 2px;
+                    max-width: 1400px;
+                    margin: 0 auto;
+                }
+
+                .page-header {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    margin-bottom: 24px;
+                    margin-bottom: 32px;
                 }
 
-                .description {
-                    color: #6b7280;
-                    margin: 0;
+                .page-title {
+                    font-size: 1.8rem;
+                    font-weight: 700;
+                    color: #111827;
+                    margin-bottom: 4px;
+                    letter-spacing: -0.025em;
                 }
 
-                .btn-primary {
-                    background: #6366f1;
-                    color: white;
-                    border: none;
-                    padding: 10px 20px;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    font-weight: 500;
-                    transition: background 0.2s;
+                .page-subtitle {
+                    color: #111827;
+                    font-size: 0.95rem;
+                    margin-top: 20px;
                 }
 
-                .btn-primary:hover {
-                    background: #4f46e5;
+                .header-actions {
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
                 }
 
-                .table-container {
+                .search-bar {
+                    display: flex;
+                    align-items: center;
                     background: white;
+                    border: 1px solid #d1d5db;
+                    padding: 10px 16px;
                     border-radius: 12px;
-                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+                    width: 300px;
+                    gap: 10px;
+                    transition: all 0.2s;
+                    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+                }
+
+                .search-bar:focus-within {
+                    border-color: #6366f1;
+                    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+                }
+
+                .search-icon {
+                    color: #9ca3af;
+                    font-size: 1rem;
+                }
+
+                .search-bar input {
+                    border: none;
+                    background: transparent;
+                    outline: none;
+                    width: 100%;
+                    font-size: 0.95rem;
+                    color: #111827;
+                }
+
+                .content-card {
+                    background: white;
+                    border-radius: 16px;
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
                     border: 1px solid #e5e7eb;
+                    overflow: hidden;
+                }
+
+                .table-responsive {
                     overflow-x: auto;
                 }
 
-                .admin-table {
+                .modern-table {
                     width: 100%;
                     border-collapse: collapse;
                 }
 
-                .admin-table th, .admin-table td {
+                .modern-table th {
+                    background: #f9fafb;
                     padding: 16px 24px;
                     text-align: left;
-                    border-bottom: 1px solid #f3f4f6;
-                }
-
-                .admin-table th {
-                    background: #f9fafb;
-                    color: #6b7280;
+                    font-size: 0.75rem;
                     font-weight: 600;
-                    font-size: 0.85rem;
                     text-transform: uppercase;
-                    letter-spacing: 0.5px;
+                    color: #6b7280;
+                    letter-spacing: 0.05em;
+                    border-bottom: 1px solid #e5e7eb;
                 }
 
-                .admin-table tr:hover {
-                    background: #f9fafb;
+                .modern-table td {
+                    padding: 16px 24px;
+                    border-bottom: 1px solid #f3f4f6;
+                    color: #374151;
+                    font-size: 0.95rem;
                 }
 
-                .font-medium {
-                    font-weight: 500;
-                    color: #111827;
+                .modern-table tr:last-child td {
+                    border-bottom: none;
                 }
 
-                .btn-view {
-                    background: #eff6ff;
-                    color: #3b82f6;
-                    border: 1px solid #dbeafe;
-                    padding: 6px 12px;
-                    border-radius: 6px;
-                    cursor: pointer;
-                    font-size: 0.9rem;
-                    font-weight: 500;
-                    transition: all 0.2s;
+                .modern-table tr:hover {
+                    background-color: #f9fafb;
                 }
 
-                .btn-view:hover {
-                    background: #2563eb;
-                    color: white;
+                .user-info {
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
                 }
 
-                /* Modal Styles */
-                .modal-overlay {
-                    position: fixed;
-                    inset: 0;
-                    background: rgba(0, 0, 0, 0.5);
+                .user-avatar {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    object-fit: cover;
+                    border: 2px solid #e5e7eb;
+                }
+
+                .user-avatar-placeholder {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    background: #e0e7ff;
+                    color: #4f46e5;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    z-index: 50;
+                    font-weight: 600;
+                    font-size: 1rem;
+                    border: 2px solid #c7d2fe;
+                }
+
+                .user-details {
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .user-name {
+                    font-weight: 600;
+                    color: #111827;
+                }
+
+                .user-id {
+                    font-size: 0.75rem;
+                    color: #9ca3af;
+                }
+
+                .badge {
+                    padding: 4px 10px;
+                    border-radius: 9999px;
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                    display: inline-block;
+                }
+
+                .badge-blue {
+                    background: #eff6ff;
+                    color: #2563eb;
+                    border: 1px solid #dbeafe;
+                }
+
+                .btn-primary {
+                    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+                    color: white;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 10px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+                    transition: all 0.2s;
+                }
+
+                .btn-primary:hover {
+                    box-shadow: 0 6px 8px -1px rgba(79, 70, 229, 0.3);
+                    transform: translateY(-1px);
+                }
+
+                .btn-icon {
+                    background: transparent;
+                    border: none;
+                    cursor: pointer;
+                    font-size: 1.2rem;
+                    padding: 8px;
+                    border-radius: 8px;
+                    transition: background 0.2s;
+                }
+
+                .btn-icon:hover {
+                    background: #f3f4f6;
+                }
+
+                .loading-state {
+                    padding: 48px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 16px;
+                    color: #6b7280;
+                }
+
+                .spinner {
+                    width: 32px;
+                    height: 32px;
+                    border: 3px solid #e5e7eb;
+                    border-top-color: #4f46e5;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                }
+
+                .empty-state {
+                    text-align: center;
+                    padding: 48px;
+                    color: #6b7280;
+                }
+
+                /* Modal */
+                .modal-overlay {
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(0, 0, 0, 0.4);
                     backdrop-filter: blur(4px);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 100;
                 }
 
                 .modal-content {
                     background: white;
-                    border-radius: 16px;
+                    border-radius: 20px;
                     width: 100%;
-                    max-width: 500px;
-                    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-                    animation: zoomIn 0.2s ease-out;
-                }
-
-                @keyframes zoomIn {
-                    from { transform: scale(0.95); opacity: 0; }
-                    to { transform: scale(1); opacity: 1; }
+                    max-width: 480px;
+                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                    overflow: hidden;
+                    animation: modalSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1);
                 }
 
                 .modal-header {
-                    padding: 20px 24px;
+                    padding: 24px;
                     border-bottom: 1px solid #e5e7eb;
                     display: flex;
-                    align-items: center;
                     justify-content: space-between;
+                    align-items: center;
+                    background: #f9fafb;
                 }
 
                 .modal-header h3 {
                     margin: 0;
-                    font-size: 1.1rem;
+                    font-size: 1.25rem;
+                    font-weight: 700;
                     color: #111827;
                 }
 
                 .close-btn {
                     background: transparent;
                     border: none;
-                    font-size: 24px;
+                    font-size: 1.5rem;
                     color: #9ca3af;
                     cursor: pointer;
+                    line-height: 1;
                 }
 
-                .form-grid {
+                .modal-body {
                     padding: 24px;
-                    display: grid;
-                    grid-template-columns: 1fr;
-                    gap: 16px;
-                }
-
-                .full-width {
-                    grid-column: span 1;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 20px;
                 }
 
                 .form-group label {
                     display: block;
-                    font-size: 14px;
+                    font-size: 0.875rem;
+                    font-weight: 600;
                     color: #374151;
-                    margin-bottom: 6px;
-                    font-weight: 500;
+                    margin-bottom: 8px;
                 }
 
-                .form-group input, .form-group select {
+                .form-input {
                     width: 100%;
-                    padding: 10px;
+                    padding: 10px 14px;
                     border: 1px solid #d1d5db;
-                    border-radius: 8px;
-                    outline: none;
-                    transition: border 0.2s;
+                    border-radius: 10px;
+                    font-size: 0.95rem;
+                    transition: border-color 0.15s, box-shadow 0.15s;
                 }
 
-                .form-group input:focus {
+                .form-input:focus {
+                    outline: none;
                     border-color: #6366f1;
                     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
                 }
 
                 .modal-footer {
-                    padding: 16px 24px;
+                    padding: 20px 24px;
                     background: #f9fafb;
                     border-top: 1px solid #e5e7eb;
-                    border-radius: 0 0 16px 16px;
                     display: flex;
                     justify-content: flex-end;
                     gap: 12px;
@@ -357,10 +542,19 @@ const ManageStaff: React.FC = () => {
                     background: white;
                     border: 1px solid #d1d5db;
                     color: #374151;
-                    padding: 10px 20px;
-                    border-radius: 8px;
-                    cursor: pointer;
+                    padding: 10px 18px;
+                    border-radius: 10px;
                     font-weight: 500;
+                    cursor: pointer;
+                }
+
+                @keyframes spin {
+                    to { transform: rotate(360deg); }
+                }
+
+                @keyframes modalSlide {
+                    from { transform: translateY(20px); opacity: 0; }
+                    to { transform: translateY(0); opacity: 1; }
                 }
             `}</style>
         </AdminLayout>

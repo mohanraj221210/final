@@ -4,7 +4,6 @@ import { RECENT_DOWNLOADS, type User } from '../../data/sampleData';
 import axios from 'axios';
 import { useEffect } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
-
 import StudentHeader from '../../components/StudentHeader';
 import { isProfileComplete } from '../../utils/profileHelper';
 
@@ -27,6 +26,7 @@ const Dashboard: React.FC = () => {
         name: "",
         registerNumber: "",
         staffid: {
+            id: "",
             name: "",
         },
         department: "",

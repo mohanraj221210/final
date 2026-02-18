@@ -165,7 +165,7 @@ const YearInchargeLogin: React.FC = () => {
           display: flex;
           align-items: center;
           justify-content: center;
-          background: linear-gradient(135deg, rgba(0, 71, 171, 0.9) 0%, rgba(0, 33, 77, 0.95) 100%), url('/src/assets/gate.jpg');
+          background: linear-gradient(135deg, rgba(0, 71, 171, 0.9) 0%, rgba(0, 33, 77, 0.95) 100%), url('/gate.jpg');
           background-size: cover;
           background-position: center;
           background-attachment: fixed;
