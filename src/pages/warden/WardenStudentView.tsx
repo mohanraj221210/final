@@ -137,10 +137,17 @@ const WardenStudentView: React.FC = () => {
           </div>
           <div className="section-body info-grid-with-avatar">
             <div className="avatar-box">
-              {s.name ? (
-                <div> <img src={`${import.meta.env.VITE_CDN_URL}${s.photo}`} alt="Student" className="initials-avatar" /></div>
+              {s.photo ? (
+                <img
+                  src={`${import.meta.env.VITE_CDN_URL}${s.photo}`}
+                  alt="Student"
+                  className="initials-avatar"
+                  style={{ objectFit: 'cover' }}
+                />
               ) : (
-                <div className="initials-avatar">NA</div>
+                <div className="initials-avatar">
+                  {s.name ? s.name.charAt(0).toUpperCase() : "NA"}
+                </div>
               )}
             </div>
             <div className="info-fields">
