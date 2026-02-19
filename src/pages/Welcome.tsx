@@ -64,15 +64,6 @@ const Welcome: React.FC = () => {
                 <span className="arrow-icon">→</span>
               </button>
 
-              <button className="btn-role super-admin-btn" onClick={() => navigate('/admin-login')}>
-                <span className="role-icon">⚙️</span>
-                <div className="role-text">
-                  <span className="role-title">Admin Login</span>
-                  <span className="role-desc">System administration</span>
-                </div>
-                <span className="arrow-icon">→</span>
-              </button>
-
               <button className="btn-role admin-btn" onClick={() => navigate('/watchmanlogin')}>
                 <span className="role-icon">👮🏻</span>
                 <div className="role-text">
