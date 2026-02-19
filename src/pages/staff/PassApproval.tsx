@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import axios from 'axios';
+import { useLocation } from 'react-router-dom';
 import StaffHeader from '../../components/StaffHeader';
 
 type ApprovalStatus = 'pending' | 'approved' | 'rejected';
+
+// ... (interfaces remain same)
 
 interface StudentOutpass {
     id: string;
@@ -53,9 +56,12 @@ interface StudentOutpass {
 }
 
 const PassApproval: React.FC = () => {
+    const location = useLocation();
     const [selectedStudent, setSelectedStudent] = useState<StudentOutpass | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
-    const [filterStatus, setFilterStatus] = useState<'all' | ApprovalStatus>('all');
+    const [filterStatus, setFilterStatus] = useState<'all' | ApprovalStatus>(
+        (location.state as any)?.filter || 'all'
+    );
     const [showActionModal, setShowActionModal] = useState(false);
     const [actionType, setActionType] = useState<'approve' | 'reject'>('approve');
     const [actionRemarks, setActionRemarks] = useState('');
@@ -473,6 +479,43 @@ const PassApproval: React.FC = () => {
                                             <div className="profile-field">
                                                 <label>MOBILE NUMBER</label>
                                                 <div className="field-value">{selectedStudent.mobile}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Request Details */}
+                            <div className="detail-card">
+                                <div className="card-header">
+                                    <span className="card-icon">📝</span>
+                                    <h2>Request Details</h2>
+                                </div>
+                                <div className="card-body">
+                                    <div className="info-grid">
+                                        <div className="info-field" style={{ gridColumn: '1 / -1' }}>
+                                            <label>REASON</label>
+                                            <div className="field-value" style={{ whiteSpace: 'pre-wrap' }}>{selectedStudent.reason}</div>
+                                        </div>
+                                        <div className="info-field">
+                                            <label>FROM DATE & TIME</label>
+                                            <div className="field-value">{formatDateTime(selectedStudent.fromDate)}</div>
+                                        </div>
+                                        <div className="info-field">
+                                            <label>TO DATE & TIME</label>
+                                            <div className="field-value">{formatDateTime(selectedStudent.toDate)}</div>
+                                        </div>
+                                        <div className="info-field">
+                                            <label>OUTPASS TYPE</label>
+                                            <div className="field-value">
+                                                <span className={`status-badge`} style={{
+                                                    backgroundColor: selectedStudent.outpasstype?.toLowerCase() === 'emergency' ? '#fee2e2' : '#d1fae5',
+                                                    color: selectedStudent.outpasstype?.toLowerCase() === 'emergency' ? '#ef4444' : '#10b981',
+                                                    width: 'fit-content',
+                                                    display: 'inline-block'
+                                                }}>
+                                                    {selectedStudent.outpasstype || 'General'}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
