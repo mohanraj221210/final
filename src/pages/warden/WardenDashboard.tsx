@@ -129,7 +129,7 @@ const Dashboard: React.FC = () => {
                 const outpasses = response.data.outpasses || response.data.data || response.data.students || [];
 
                 const emergencyRequests = outpasses.filter((o: any) => {
-                    const type = (o.outpasstype || o.type || '').toLowerCase();
+                    const type = (o.outpasstype || o.outpassType || o.type || '').toLowerCase();
                     const status = (o.wardenapprovalstatus || '').toLowerCase();
                     return type === 'emergency' && status === 'pending';
                 });

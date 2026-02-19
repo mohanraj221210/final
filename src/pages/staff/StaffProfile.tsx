@@ -5,6 +5,7 @@ import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import ImageCropper from '../../components/ImageCropper';
 import imageCompression from 'browser-image-compression';
+import { DEPARTMENTS, DESIGNATIONS } from '../../constants/dropdownOptions';
 
 
 const StaffProfile: React.FC = () => {
@@ -418,11 +419,9 @@ const StaffProfile: React.FC = () => {
                                             style={{ width: 'auto', maxWidth: '300px' }}
                                         >
                                             <option value="">Select Designation</option>
-                                            <option value="Professor">Professor</option>
-                                            <option value="Associate Professor">Associate Professor</option>
-                                            <option value="Assistant Professor">Assistant Professor</option>
-                                            <option value="Head of Department">Head of Department</option>
-                                            <option value="Lab Assistant">Lab Assistant</option>
+                                            {DESIGNATIONS.map((opt) => (
+                                                <option key={opt} value={opt}>{opt}</option>
+                                            ))}
                                         </select>
                                         <select
                                             name="department"
@@ -432,12 +431,9 @@ const StaffProfile: React.FC = () => {
                                             style={{ width: 'auto', maxWidth: '300px' }}
                                         >
                                             <option value="">Select Department</option>
-                                            <option value="Computer Science and Engineering">Computer Science and Engineering</option>
-                                            <option value="Information Technology">Information Technology</option>
-                                            <option value="Electronics and Communication Engineering">Electronics and Communication Engineering</option>
-                                            <option value="Mechanical Engineering">Mechanical Engineering</option>
-                                            <option value="Artificial Intelligence and Data Science">Artificial Intelligence and Data Science</option>
-                                            <option value="Master of Business Administration">Master of Business Administration</option>
+                                            {DEPARTMENTS.map((opt) => (
+                                                <option key={opt} value={opt}>{opt}</option>
+                                            ))}
                                         </select>
                                     </>
                                 ) : (

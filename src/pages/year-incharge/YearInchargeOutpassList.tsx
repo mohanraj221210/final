@@ -134,9 +134,11 @@ const YearInchargeOutpassList: React.FC = () => {
                                     <tr key={outpass._id}>
                                         <td data-label="Student Details">
                                             <div className="student-info">
-                                                <span className="font-bold">{outpass.studentid?.name}</span>
-                                                <span className="text-sm text-gray-500">{outpass.studentid?.registerNumber}</span>
-                                                <span className="text-xs text-gray-400">{outpass.studentid?.year} - {outpass.studentid?.department}</span>
+                                                <span className="font-bold">{typeof outpass.studentid?.name === 'string' ? outpass.studentid.name : 'Unknown'}</span>
+                                                <span className="text-sm text-gray-500">{typeof outpass.studentid?.registerNumber === 'string' ? outpass.studentid.registerNumber : 'N/A'}</span>
+                                                <span className="text-xs text-gray-400">
+                                                    {typeof outpass.studentid?.year === 'string' ? outpass.studentid.year : ''} - {typeof outpass.studentid?.department === 'string' ? outpass.studentid.department : ''}
+                                                </span>
                                             </div>
                                         </td>
                                         <td data-label="Pass Information">
@@ -198,8 +200,14 @@ const YearInchargeOutpassList: React.FC = () => {
                             <div className="mobile-card" key={outpass._id}>
                                 <div className="card-header-mobile">
                                     <div>
-                                        <h3 className="card-name">{outpass.studentid?.name}</h3>
-                                        <p className="card-reg">{outpass.studentid?.registerNumber}</p>
+                                        <h3 className="card-name">{typeof outpass.studentid?.name === 'string' ? outpass.studentid.name : 'Unknown'}</h3>
+                                        <p className="card-reg">{typeof outpass.studentid?.registerNumber === 'string' ? outpass.studentid.registerNumber : 'N/A'}</p>
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                                        <span className="pass-type-mobile">{outpass.outpasstype}</span>
+                                        {outpass.outpasstype?.toLowerCase() === 'emergency' && (
+                                            <span className="emergency-badge mobile">🚨 CRITICAL</span>
+                                        )}
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
                                         <span className="pass-type-mobile">{outpass.outpasstype}</span>
@@ -212,7 +220,9 @@ const YearInchargeOutpassList: React.FC = () => {
                                 <div className="card-body-mobile">
                                     <div className="info-row">
                                         <span className="label">Dept/Year:</span>
-                                        <span className="value">{outpass.studentid?.department} - {outpass.studentid?.year}</span>
+                                        <span className="value">
+                                            {typeof outpass.studentid?.department === 'string' ? outpass.studentid.department : ''} - {typeof outpass.studentid?.year === 'string' ? outpass.studentid.year : ''}
+                                        </span>
                                     </div>
                                     <div className="info-row">
                                         <span className="label">From:</span>

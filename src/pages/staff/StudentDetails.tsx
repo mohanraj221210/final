@@ -4,6 +4,7 @@ import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import StaffHeader from '../../components/StaffHeader';
+import { DEPARTMENTS, YEARS, BATCHES, GENDERS } from '../../constants/dropdownOptions';
 
 // Define Student Interface matching the API response
 interface Student {
@@ -287,9 +288,30 @@ const StudentDetails: React.FC = () => {
                         <div className="info-section">
                             <h3>Academic Information</h3>
                             <div className="fields-row">
-                                <Field label="Department" name="department" value={formData.department} isEditing={isEditing} onChange={handleInputChange} />
-                                <Field label="Batch" name="batch" value={formData.batch} isEditing={isEditing} onChange={handleInputChange} />
-                                <Field label="Year" name="year" value={formData.year} isEditing={isEditing} onChange={handleInputChange} />
+                                <Field
+                                    label="Department"
+                                    name="department"
+                                    value={formData.department}
+                                    isEditing={isEditing}
+                                    onChange={handleInputChange}
+                                    options={DEPARTMENTS}
+                                />
+                                <Field
+                                    label="Batch"
+                                    name="batch"
+                                    value={formData.batch}
+                                    isEditing={isEditing}
+                                    onChange={handleInputChange}
+                                    options={BATCHES}
+                                />
+                                <Field
+                                    label="Year"
+                                    name="year"
+                                    value={formData.year}
+                                    isEditing={isEditing}
+                                    onChange={handleInputChange}
+                                    options={YEARS}
+                                />
                                 <Field label="Semester" name="semester" value={formData.semester} isEditing={isEditing} onChange={handleInputChange} />
                                 <Field label="CGPA" name="cgpa" value={formData.cgpa} isEditing={isEditing} onChange={handleInputChange} />
                                 <Field label="Arrears" name="arrears" value={formData.arrears} isEditing={isEditing} onChange={handleInputChange} />
@@ -303,7 +325,14 @@ const StudentDetails: React.FC = () => {
                                 <Field label="Email" name="email" value={formData.email} isEditing={isEditing} onChange={handleInputChange} />
                                 <Field label="Phone" name="phone" value={formData.phone} isEditing={isEditing} onChange={handleInputChange} />
                                 <Field label="Parent Phone" name="parentnumber" value={formData.parentnumber} isEditing={isEditing} onChange={handleInputChange} />
-                                <Field label="Gender" name="gender" value={formData.gender} isEditing={isEditing} onChange={handleInputChange} />
+                                <Field
+                                    label="Gender"
+                                    name="gender"
+                                    value={formData.gender}
+                                    isEditing={isEditing}
+                                    onChange={handleInputChange}
+                                    options={GENDERS}
+                                />
                             </div>
                         </div>
 

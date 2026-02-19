@@ -34,7 +34,6 @@ const Staffs: React.FC = () => {
         staff();
     }, []);
 
-
     const filteredStaff = staffData.filter(staff => {
         const matchesSearch = staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             staff.subjects.some((sub: String) => sub.toLowerCase().includes(searchTerm.toLowerCase()));

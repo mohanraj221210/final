@@ -131,6 +131,8 @@ const YearInchargeProfile: React.FC = () => {
         setCompletionPercentage(Math.round((completed / 9) * 100));
     };
 
+    const url = import.meta.env.VITE_CDN_URL;
+
     const fetchProfile = async () => {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -218,7 +220,8 @@ const YearInchargeProfile: React.FC = () => {
             profile.handlingyears.forEach(val => formData.append('handlingyears', val));
             profile.handlingbatches.forEach(val => formData.append('handlingbatches', val));
             profile.handlingdepartments.forEach(val => formData.append('handlingdepartments', val));
-            // Year and Role are typically immutable by the user, so not appending them
+            formData.append('year', profile.year);
+            // Role is typically immutable by the user, so not appending it
 
             if (selectedFile) {
                 formData.append('photo', selectedFile);
@@ -287,7 +290,7 @@ const YearInchargeProfile: React.FC = () => {
                             <div className="profile-header">
                                 <div className="avatar-container">
                                     <img
-                                        src={previewImage || jitProfile}
+                                        src={url + previewImage || jitProfile}
                                         alt="Profile"
                                         className="profile-avatar"
                                         onError={(e) => { e.currentTarget.src = jitProfile; }}
@@ -394,9 +397,9 @@ const YearInchargeProfile: React.FC = () => {
                                         type="text"
                                         name="year"
                                         value={profile.year}
-                                        disabled={true}
+                                        onChange={handleChange}
+                                        disabled={!isEditing}
                                         className="input"
-                                        style={{ backgroundColor: '#f8fafc', cursor: 'not-allowed' }}
                                     />
                                 </div>
 

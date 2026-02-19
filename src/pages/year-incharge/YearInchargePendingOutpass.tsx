@@ -49,17 +49,20 @@ const YearInchargePendingOutpass: React.FC = () => {
 
             if (res.status === 200) {
                 // Filter: staff approved AND incharge pending (Warden approval not required as per user response)
-                const list = res.data.outpasslist || [];
+                console.log("Full Outpass List Response:", res.data); // Debugging
+                const list = res.data.outpasses || res.data.outpasslist || [];
                 const filtered = list.filter((o: any) =>
-                    o.staffapprovalstatus === 'approved' &&
-                    o.yearinchargeapprovalstatus === 'pending'
+                    String(o.staffapprovalstatus || '').toLowerCase() === 'approved' &&
+                    String(o.yearinchargeapprovalstatus || '').toLowerCase() === 'pending'
                 );
 
                 // Sort Emergency first
                 filtered.sort((a: any, b: any) => {
-                    if (a.outpasstype === 'Emergency' && b.outpasstype !== 'Emergency') return -1;
-                    if (a.outpasstype !== 'Emergency' && b.outpasstype === 'Emergency') return 1;
-                    return 0;
+                    const aType = String(a.outpasstype || '').toLowerCase();
+                    const bType = String(b.outpasstype || '').toLowerCase();
+                    if (aType === 'emergency' && bType !== 'emergency') return -1;
+                    if (aType !== 'emergency' && bType === 'emergency') return 1;
+                    return new Date(b.fromDate).getTime() - new Date(a.fromDate).getTime();
                 });
 
                 setPendingOutpasses(filtered);
@@ -98,15 +101,15 @@ const YearInchargePendingOutpass: React.FC = () => {
                             >
                                 <div className="student-card-main">
                                     <div className="student-id-highlight">
-                                        {item.studentid?.registerNumber}
+                                        {typeof item.studentid?.registerNumber === 'string' ? item.studentid.registerNumber : 'N/A'}
                                     </div>
                                     <div className="student-info">
                                         <div className="student-name">
-                                            {item.studentid?.name}
-                                            {item.outpasstype === 'Emergency' && <span className="emergency-badge">EMERGENCY</span>}
+                                            {typeof item.studentid?.name === 'string' ? item.studentid.name : 'Unknown Name'}
+                                            {typeof item.outpasstype === 'string' && item.outpasstype?.toLowerCase() === 'emergency' && <span className="emergency-badge">EMERGENCY</span>}
                                         </div>
                                         <div className="student-meta">
-                                            Year {item.studentid?.year} • {item.outpasstype || 'General'} • Applied on {new Date(item.fromDate).toLocaleDateString()}
+                                            Year {typeof item.studentid?.year === 'string' ? item.studentid.year : 'N/A'} • {typeof item.outpasstype === 'string' ? item.outpasstype : 'General'} • Applied on {new Date(item.fromDate).toLocaleDateString()}
                                         </div>
                                     </div>
                                 </div>

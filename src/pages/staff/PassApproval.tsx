@@ -407,7 +407,9 @@ const PassApproval: React.FC = () => {
                                             <div className="student-info">
                                                 <div className="student-name">
                                                     {student.studentname}
-                                                    {student.outpasstype === 'Emergency' && <span className="emergency-badge">EMERGENCY</span>}
+                                                    {student.outpasstype?.toLowerCase() === 'emergency' && (
+                                                        <span className="emergency-badge">EMERGENCY</span>
+                                                    )}
                                                 </div>
                                                 <div className="student-meta">
                                                     Year {student.year} • {student.outpasstype || 'General'} • Applied on {formatDateTime(student.appliedDate)}
