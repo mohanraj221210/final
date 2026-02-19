@@ -141,10 +141,10 @@ const AdminDashboard: React.FC = () => {
                     <div className="chart-card large">
                         <div className="chart-header">
                             <h3>Outpass Statistics</h3>
-                            <div className="chart-actions">
+                            {/* <div className="chart-actions">
                                 <button className="btn-filter">Weekly</button>
                                 <button className="btn-export">Export</button>
-                            </div>
+                            </div> */}
                         </div>
                         <div className="bar-chart-container">
                             <div className="y-axis">
