@@ -549,7 +549,7 @@ const Profile: React.FC = () => {
                                         value={user.cgpa || ''}
                                         readOnly
                                         disabled={true}
-                                        className="input"
+                                        className="input blurred-input"
                                         step="0.01"
                                         min="0"
                                         max="10"
@@ -564,7 +564,7 @@ const Profile: React.FC = () => {
                                         value={user.arrears}
                                         readOnly
                                         disabled={true}
-                                        className="input"
+                                        className="input blurred-input"
                                         min="0"
                                     />
                                 </div>
@@ -873,6 +873,16 @@ const Profile: React.FC = () => {
                 .content-wrapper-custom {
                     margin-top: 70px;
                     padding: 0;
+                }
+
+                .blurred-input {
+                    filter: blur(0.7px);
+                    transition: filter 0.3s ease;
+                    cursor: pointer;
+                }
+                .blurred-input:hover, .blurred-input:focus {
+                    filter: blur(0);
+                }
                 }
 
                 .profile-layout {
