@@ -128,7 +128,7 @@ const StaffDashboard: React.FC = () => {
 
                             <div
                                 className="action-card"
-                                onClick={() => navigate('/passApproval')}
+                                onClick={() => navigate('/passApproval', { state: { filter: 'pending' } })}
                             >
                                 <div className="action-icon-wrapper">
                                     <span className="action-icon">⏳</span>
