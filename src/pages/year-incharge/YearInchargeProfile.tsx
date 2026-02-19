@@ -131,8 +131,6 @@ const YearInchargeProfile: React.FC = () => {
         setCompletionPercentage(Math.round((completed / 9) * 100));
     };
 
-    const url = import.meta.env.VITE_CDN_URL;
-
     const fetchProfile = async () => {
         const token = localStorage.getItem('token');
         if (!token) {
