@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import YearInchargeNav from '../../components/YearInchargeNav';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
+import ImageCropper from '../../components/ImageCropper';
+import imageCompression from 'browser-image-compression';
 import { useNavigate } from 'react-router-dom';
 import Loader from '../../components/Loader';
 import jitProfile from '../../assets/jit.webp'; // Fallback image similar to WardenProfile
@@ -22,6 +24,72 @@ interface YearIncharge {
 const YearInchargeProfile: React.FC = () => {
     const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(false);
+
+    // Cropper State
+    const [showCropper, setShowCropper] = useState(false);
+    const [tempImage, setTempImage] = useState<string | null>(null);
+
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validation: Max 5MB
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error("Image size must be less than 5 MB");
+            e.target.value = '';
+            return;
+        }
+
+        // Validation: Allowed types
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+        if (!allowedTypes.includes(file.type)) {
+            toast.error("Only JPG, JPEG, and PNG formats are allowed");
+            e.target.value = '';
+            return;
+        }
+
+        const objectUrl = URL.createObjectURL(file);
+        setTempImage(objectUrl);
+        setShowCropper(true);
+        e.target.value = '';
+    };
+
+    const handleCropComplete = async (croppedBlob: Blob) => {
+        try {
+            const file = new File([croppedBlob], "profile_cropped.jpg", { type: "image/jpeg" });
+
+            const options = {
+                maxSizeMB: 0.2, // 200KB
+                maxWidthOrHeight: 1024,
+                useWebWorker: true,
+            };
+
+            const compressedFile = await imageCompression(file, options);
+            const compressedBlob = new File([compressedFile], "profile_compressed.jpg", { type: "image/jpeg" });
+
+            setSelectedFile(compressedBlob);
+            setImageError("");
+
+            // Preview
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setPreviewImage(reader.result as string);
+            };
+            reader.readAsDataURL(compressedBlob);
+
+            setShowCropper(false);
+            setTempImage(null);
+            toast.info("Image cropped and compressed. Click 'Save Changes' to upload.");
+        } catch (error) {
+            console.error("Compression error:", error);
+            toast.error("Image compression failed");
+        }
+    };
+
+    const handleCropCancel = () => {
+        setShowCropper(false);
+        setTempImage(null);
+    };
     const [loading, setLoading] = useState(true);
     const [profile, setProfile] = useState<YearIncharge>({
         name: '',
@@ -125,45 +193,7 @@ const YearInchargeProfile: React.FC = () => {
         });
     };
 
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
 
-        // Validation: Max 200KB
-        if (file.size > 200 * 1024) {
-            const errorMsg = "Image size must be 200KB or less";
-            setImageError(errorMsg);
-            toast.error(errorMsg);
-            setSelectedFile(null);
-            // Revert to original
-            setPreviewImage(profile.photo);
-            // Reset input value
-            e.target.value = '';
-            return;
-        }
-
-        // Validation: Type
-        if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) {
-            const errorMsg = "Only JPG, JPEG, and PNG formats are allowed";
-            setImageError(errorMsg);
-            toast.error(errorMsg);
-            setSelectedFile(null);
-            setPreviewImage(profile.photo);
-            e.target.value = '';
-            return;
-        }
-
-        // All good
-        setImageError("");
-        setSelectedFile(file);
-
-        // Create preview
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setPreviewImage(reader.result as string);
-        };
-        reader.readAsDataURL(file);
-    };
 
     const handleSave = async () => {
         if (imageError) {
@@ -268,7 +298,7 @@ const YearInchargeProfile: React.FC = () => {
                                             <input
                                                 type="file"
                                                 accept="image/png, image/jpeg, image/jpg"
-                                                onChange={handleImageChange}
+                                                onChange={handleImageUpload}
                                                 className="hidden-input"
                                             />
                                         </label>
@@ -485,6 +515,13 @@ const YearInchargeProfile: React.FC = () => {
                 </div>
             </div>
 
+            {showCropper && tempImage && (
+                <ImageCropper
+                    imageSrc={tempImage}
+                    onCropComplete={handleCropComplete}
+                    onCancel={handleCropCancel}
+                />
+            )}
             <style>{`
                 .page-container {
                     min-height: 100vh;

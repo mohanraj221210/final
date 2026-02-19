@@ -37,7 +37,8 @@ const StudentRegistration: React.FC = () => {
     const [singleForm, setSingleForm] = useState({
         name: '',
         email: '',
-        password: ''
+        password: '',
+        department: ''
     });
     const nameInputRef = useRef<HTMLInputElement>(null);
 
@@ -213,7 +214,7 @@ const StudentRegistration: React.FC = () => {
     const handleSingleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!singleForm.name || !singleForm.email || !singleForm.password) {
+        if (!singleForm.name || !singleForm.email || !singleForm.password || !singleForm.department) {
             toast.error("All fields are required");
             return;
         }
@@ -233,7 +234,7 @@ const StudentRegistration: React.FC = () => {
 
             if (response.status === 200 || response.status === 201) {
                 toast.success("Student registered successfully");
-                setSingleForm({ name: '', email: '', password: '' });
+                setSingleForm({ name: '', email: '', password: '', department: '' });
                 // Focus back on name input for next entry
                 setTimeout(() => {
                     nameInputRef.current?.focus();
@@ -396,6 +397,24 @@ const StudentRegistration: React.FC = () => {
                                         onChange={(e) => setSingleForm({ ...singleForm, email: e.target.value })}
                                         disabled={loading}
                                     />
+                                </div>
+                                <div className="form-group">
+                                    <label>Department</label>
+                                    <select
+                                        value={singleForm.department}
+                                        onChange={(e) => setSingleForm({ ...singleForm, department: e.target.value })}
+                                        disabled={loading}
+                                        className="input-select"
+                                        style={{ width: '100%', padding: '14px 16px', border: '1px solid #e2e8f0', borderRadius: '12px', fontSize: '1rem', background: '#f8fafc' }}
+                                    >
+                                        <option value="">Select Department</option>
+                                        <option value="Computer Science and Engineering">Computer Science and Engineering</option>
+                                        <option value="Information Technology">Information Technology</option>
+                                        <option value="Electronics and Communication Engineering">Electronics and Communication Engineering</option>
+                                        <option value="Mechanical Engineering">Mechanical Engineering</option>
+                                        <option value="Artificial Intelligence and Data Science">Artificial Intelligence and Data Science</option>
+                                        <option value="Master of Business Administration">Master of Business Administration</option>
+                                    </select>
                                 </div>
                                 <div className="form-group">
                                     <label>Password</label>

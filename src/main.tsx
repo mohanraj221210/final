@@ -39,7 +39,7 @@ import YearInchargePendingOutpass from './pages/year-incharge/YearInchargePendin
 import YearInchargeOutpassList from './pages/year-incharge/YearInchargeOutpassList'
 import YearInchargeStudentView from './pages/year-incharge/YearInchargeStudentView'
 import YearInchargeProfile from './pages/year-incharge/YearInchargeProfile'
-import AdminLogin from './pages/admin/AdminLogin'
+
 
 
 
@@ -49,7 +49,7 @@ createRoot(document.getElementById('root')!).render(
   <BrowserRouter>
     <AxiosInterceptor />
     <Routes>
-      <Route path="/admin-login" element={<AdminLogin />} />
+      
       <Route path="/" element={<Welcome />} />
       <Route path="/login" element={<Login />} />
       <Route path="/wardenlogin" element={<Wardenlogin />} />

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import StaffHeader from '../../components/StaffHeader';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
+import ImageCropper from '../../components/ImageCropper';
+import imageCompression from 'browser-image-compression';
 
 
 const StaffProfile: React.FC = () => {
@@ -30,6 +32,72 @@ const StaffProfile: React.FC = () => {
     const [newAchievement, setNewAchievement] = useState('');
 
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [showCropper, setShowCropper] = useState(false);
+    const [tempImage, setTempImage] = useState<string | null>(null);
+
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validation: Max 5MB (increased for cropping)
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error("Image size must be less than 5 MB");
+            e.target.value = '';
+            return;
+        }
+
+        // Validation: Allowed types
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+        if (!allowedTypes.includes(file.type)) {
+            toast.error("Only JPG, JPEG, and PNG formats are allowed");
+            e.target.value = '';
+            return;
+        }
+
+        const objectUrl = URL.createObjectURL(file);
+        setTempImage(objectUrl);
+        setShowCropper(true);
+        e.target.value = '';
+    };
+
+    const handleCropComplete = async (croppedBlob: Blob) => {
+        try {
+            const file = new File([croppedBlob], "profile_cropped.jpg", { type: "image/jpeg" });
+
+            const options = {
+                maxSizeMB: 0.2, // 200KB
+                maxWidthOrHeight: 1024,
+                useWebWorker: true,
+            };
+
+            const compressedFile = await imageCompression(file, options);
+            const compressedBlob = new File([compressedFile], "profile_compressed.jpg", { type: "image/jpeg" });
+
+            setSelectedFile(compressedBlob);
+
+            // Preview
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFormData((prev: any) => ({
+                    ...prev,
+                    photo: reader.result
+                }));
+            };
+            reader.readAsDataURL(compressedBlob);
+
+            setShowCropper(false);
+            setTempImage(null);
+            toast.info("Image cropped and compressed. Click 'Save Changes' to upload.");
+        } catch (error) {
+            console.error("Compression error:", error);
+            toast.error("Image compression failed");
+        }
+    };
+
+    const handleCropCancel = () => {
+        setShowCropper(false);
+        setTempImage(null);
+    };
 
     const navigate = useNavigate();
 
@@ -317,39 +385,7 @@ const StaffProfile: React.FC = () => {
                                         accept="image/*"
                                         id="photo-upload"
                                         style={{ display: 'none' }}
-                                        onChange={(e) => {
-                                            const file = e.target.files?.[0];
-                                            if (file) {
-                                                // Validation: Max 200KB
-                                                if (file.size > 200 * 1024) {
-                                                    toast.error("Image size must be 200 KB or less");
-                                                    e.target.value = ''; // Reset input
-                                                    setSelectedFile(null);
-                                                    return;
-                                                }
-
-                                                // Validation: Allowed types
-                                                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-                                                if (!allowedTypes.includes(file.type)) {
-                                                    toast.error("Only JPG, JPEG, and PNG formats are allowed");
-                                                    e.target.value = ''; // Reset input
-                                                    setSelectedFile(null);
-                                                    return;
-                                                }
-
-                                                setSelectedFile(file); // Set file for upload
-
-                                                // Preview
-                                                const reader = new FileReader();
-                                                reader.onloadend = () => {
-                                                    setFormData((prev: any) => ({
-                                                        ...prev,
-                                                        photo: reader.result
-                                                    }));
-                                                };
-                                                reader.readAsDataURL(file);
-                                            }
-                                        }}
+                                        onChange={handleImageUpload}
                                     />
                                     <label htmlFor="photo-upload" className="photo-edit-btn" title="Change Photo">
                                         📷
@@ -632,6 +668,13 @@ const StaffProfile: React.FC = () => {
                     </div >
                 </div >
             </div >
+            {showCropper && tempImage && (
+                <ImageCropper
+                    imageSrc={tempImage}
+                    onCropComplete={handleCropComplete}
+                    onCancel={handleCropCancel}
+                />
+            )}
 
             <style>{`
                 .staff-profile-page {

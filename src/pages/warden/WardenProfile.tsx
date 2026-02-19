@@ -4,6 +4,8 @@ import Nav from "../../components/WardenNav";
 import Toast from "../../components/Toast";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
+import ImageCropper from "../../components/ImageCropper";
+import imageCompression from 'browser-image-compression';
 
 interface Warden {
   name: string;
@@ -55,6 +57,8 @@ const WardenProfile: React.FC = () => {
 
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [showCropper, setShowCropper] = useState(false);
+  const [tempImage, setTempImage] = useState<string | null>(null);
 
   const fetchProfile = async () => {
     try {
@@ -91,22 +95,60 @@ const WardenProfile: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validation: Max 200KB
-    if (file.size > 200 * 1024) {
-      toast.error("Image size must be less than 200KB");
-      e.target.value = ""; // Reset input
+    // Validation: Max 5MB
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size must be less than 5 MB");
+      e.target.value = "";
       return;
     }
 
-    // Validation: Only JPEG and PNG
-    if (!["image/jpeg", "image/png"].includes(file.type)) {
-      toast.error("Only JPEG and PNG formats are allowed");
-      e.target.value = ""; // Reset input
+    // Validation: Allowed types
+    if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type)) {
+      toast.error("Only JPG, JPEG, and PNG formats are allowed");
+      e.target.value = "";
       return;
     }
 
-    setSelectedPhoto(file);
-    setPreviewUrl(URL.createObjectURL(file));
+    const objectUrl = URL.createObjectURL(file);
+    setTempImage(objectUrl);
+    setShowCropper(true);
+    e.target.value = "";
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    try {
+      const file = new File([croppedBlob], "profile_cropped.jpg", { type: "image/jpeg" });
+
+      const options = {
+        maxSizeMB: 0.2, // 200KB
+        maxWidthOrHeight: 1024,
+        useWebWorker: true,
+      };
+
+      const compressedFile = await imageCompression(file, options);
+      const compressedBlob = new File([compressedFile], "profile_compressed.jpg", { type: "image/jpeg" });
+
+      setSelectedPhoto(compressedBlob);
+
+      // Preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(compressedBlob);
+
+      setShowCropper(false);
+      setTempImage(null);
+      toast.info("Image cropped and compressed. Click 'Save Changes' to upload.");
+    } catch (error) {
+      console.error("Compression error:", error);
+      toast.error("Image compression failed");
+    }
+  };
+
+  const handleCropCancel = () => {
+    setShowCropper(false);
+    setTempImage(null);
   };
 
   const handleSave = async () => {
@@ -407,6 +449,14 @@ const WardenProfile: React.FC = () => {
         </div>
       </div>
 
+
+      {showCropper && tempImage && (
+        <ImageCropper
+          imageSrc={tempImage}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+      )}
 
       <style>{`
         

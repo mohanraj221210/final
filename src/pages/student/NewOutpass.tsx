@@ -9,13 +9,16 @@ const Outpass: React.FC = () => {
         outpasstype: 'Outing',
         fromDate: '',
         toDate: '',
-        reason: ''
+        reason: '',
+        skillrack: '',
+        attendance: ''
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
     const [residenceType, setResidenceType] = useState<string>('');
     const [hasPendingOutpass, setHasPendingOutpass] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
     React.useEffect(() => {
         const checkProfile = async () => {
@@ -79,17 +82,58 @@ const Outpass: React.FC = () => {
         checkProfile();
     }, [navigate]);
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+
+            // Validate file type (PDF only)
+            if (file.type !== 'application/pdf') {
+                toast.error('Only PDF files are allowed');
+                e.target.value = ''; // Reset input
+                setSelectedFile(null);
+                return;
+            }
+
+            // Validate file size (max 200KB)
+            const maxSize = 200 * 1024; // 200KB in bytes
+            if (file.size > maxSize) {
+                toast.error('File size must be less than 200KB');
+                e.target.value = ''; // Reset input
+                setSelectedFile(null);
+                return;
+            }
+
+            setSelectedFile(file);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
 
         try {
             const token = localStorage.getItem('token');
+            // Use FormData for file upload
+            const submitData = new FormData();
+            submitData.append('outpasstype', formData.outpasstype);
+            submitData.append('fromDate', formData.fromDate);
+            submitData.append('toDate', formData.toDate);
+            submitData.append('reason', formData.reason);
+            submitData.append('skillrack', (formData as any).skillrack || '');
+            submitData.append('attendance', (formData as any).attendance || '');
+
+            if (formData.outpasstype === 'OD' && selectedFile) {
+                submitData.append('file', selectedFile);
+            }
+
             const response = await axios.post(
                 `${import.meta.env.VITE_API_URL}/api/outpass/apply`,
-                formData,
+                submitData,
                 {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'multipart/form-data'
+                    }
                 }
             );
 
@@ -222,6 +266,46 @@ const Outpass: React.FC = () => {
                                     Only OD and Emergency outpasses are allowed for Day Scholars.
                                 </p>
                             )}
+                        </div>
+
+                        {formData.outpasstype === 'OD' && (
+                            <div className="form-group">
+                                <label>Upload Supporting Document (PDF, max 200KB)</label>
+                                <input
+                                    type="file"
+                                    accept=".pdf"
+                                    onChange={handleFileChange}
+                                    className="form-input"
+                                    required={formData.outpasstype === 'OD'}
+                                />
+                            </div>
+                        )}
+
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>SkillRack problems solved</label>
+                                <input
+                                    type="text"
+                                    name="skillrack"
+                                    value={(formData as any).skillrack || ''}
+                                    onChange={handleChange}
+                                    placeholder="problems solved"
+                                    className="form-input"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Attendance Percentage (%)</label>
+                                <input
+                                    type="number"
+                                    name="attendance"
+                                    value={(formData as any).attendance || ''}
+                                    onChange={handleChange}
+                                    placeholder="e.g. 85"
+                                    min="0"
+                                    max="100"
+                                    className="form-input"
+                                />
+                            </div>
                         </div>
 
                         <div className="form-row">
