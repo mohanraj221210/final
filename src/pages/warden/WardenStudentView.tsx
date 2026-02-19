@@ -32,6 +32,24 @@ const WardenStudentView: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<'approved' | 'rejected' | null>(null);
   const [remarks, setRemarks] = useState("");
+  const [showDocumentModal, setShowDocumentModal] = useState(false);
+  const [documentUrl, setDocumentUrl] = useState<string | null>(null);
+  const [documentType, setDocumentType] = useState<'image' | 'pdf'>('image');
+
+  const handleViewDocument = (url: string | null) => {
+    if (!url) {
+      toast.error("Document not found");
+      return;
+    }
+    const fullUrl = `${import.meta.env.VITE_CDN_URL}${url}`;
+    setDocumentUrl(fullUrl);
+    if (url.toLowerCase().endsWith('.pdf')) {
+      setDocumentType('pdf');
+    } else {
+      setDocumentType('image');
+    }
+    setShowDocumentModal(true);
+  };
 
   const openConfirmation = (type: 'approved' | 'rejected') => {
     setModalType(type);
@@ -139,7 +157,11 @@ const WardenStudentView: React.FC = () => {
             <div className="avatar-box">
               {s.photo ? (
                 <img
-                  src={`${import.meta.env.VITE_CDN_URL}${s.photo}`}
+                  src={
+                    s.photo.startsWith('http') || s.photo.startsWith('data:')
+                      ? s.photo
+                      : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${s.photo?.replace(/^\//, '')}`
+                  }
                   alt="Student"
                   className="initials-avatar"
                   style={{ objectFit: 'cover' }}
@@ -174,6 +196,21 @@ const WardenStudentView: React.FC = () => {
               <div className="field-group">
                 <label>MOBILE NUMBER</label>
                 <div className="display-box">{s.phone || "N/A"}</div>
+              </div>
+              <div className="field-group">
+                <label>PARENT CONTACT</label>
+                <div className="display-box" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  {s.parentPhone || s.parentContact || "N/A"}
+                  {(s.parentPhone || s.parentContact) && (
+                    <a
+                      href={`tel:${s.parentPhone || s.parentContact}`}
+                      className="dial-btn"
+                      title="Call Parent"
+                    >
+                      📞
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -255,6 +292,20 @@ const WardenStudentView: React.FC = () => {
                 <div className="display-box">{student.placeOfVisit || "N/A"}</div>
               </div> */}
             </div>
+
+            {(student.proof || student.document || student.file) && (
+              <div className="field-group full-width" style={{ marginTop: '16px' }}>
+                <label>SUPPORTING DOCUMENT</label>
+                <div>
+                  <button
+                    className="view-doc-btn"
+                    onClick={() => handleViewDocument(student.proof || student.document || student.file)}
+                  >
+                    <span>👁️</span> View Document
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -334,6 +385,32 @@ const WardenStudentView: React.FC = () => {
                 disabled={!remarks.trim()}
               >
                 {modalType === 'approved' ? 'Confirm Approval' : 'Confirm Rejection'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDocumentModal && (
+        <div className="modal-overlay" onClick={() => setShowDocumentModal(false)}>
+          <div className="modal-card doc-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Document Viewer</h3>
+              <button className="close-btn" onClick={() => setShowDocumentModal(false)}>✕</button>
+            </div>
+            <div className="modal-body doc-body">
+              {documentType === 'image' ? (
+                <img src={documentUrl!} alt="Proof" className="doc-preview-img" />
+              ) : (
+                <iframe src={documentUrl!} title="Proof Document" className="doc-preview-frame"></iframe>
+              )}
+            </div>
+            <div className="modal-footer">
+              <a href={documentUrl!} download target="_blank" rel="noreferrer" className="btn-confirm approved" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                Download File
+              </a>
+              <button className="btn-cancel" onClick={() => setShowDocumentModal(false)}>
+                Close
               </button>
             </div>
           </div>
@@ -612,6 +689,24 @@ const WardenStudentView: React.FC = () => {
              color: #9ca3af;
              text-align: center;
           }
+
+          .dial-btn {
+             display: inline-flex !important;
+          }
+        }
+
+        .dial-btn {
+           display: none;
+           justify-content: center;
+           align-items: center;
+           width: 36px;
+           height: 36px;
+           background-color: #10b981;
+           color: white;
+           border-radius: 50%;
+           text-decoration: none;
+           font-size: 1.2rem;
+           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         /* Modal Styles */
@@ -760,12 +855,73 @@ const WardenStudentView: React.FC = () => {
           cursor: not-allowed;
         }
 
-        @keyframes modalSlideUp {
-          from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
         }
+
+        .view-doc-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #3b82f6;
+            border-radius: 6px;
+            color: #3b82f6;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 4px;
+            transition: all 0.2s;
+        }
+
+        .view-doc-btn:hover {
+            background: #eff6ff;
+            transform: translateY(-1px);
+        }
+
+        .doc-modal {
+            width: 95%;
+            max-width: 800px;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media (min-width: 1024px) {
+            .doc-modal {
+                max-width: 1200px; /* Larger modal only on desktop */
+                height: 90vh;
+            }
+
+            .view-doc-btn {
+                padding: 12px 24px; /* Larger button only on desktop */
+                font-size: 1.1rem;
+            }
+        }
+
+        .doc-body {
+            flex: 1;
+            padding: 0;
+            background: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 0;
+        }
+
+        .doc-preview-img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .doc-preview-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
       `}</style>
-    </div>
+    </div >
   );
 };
 

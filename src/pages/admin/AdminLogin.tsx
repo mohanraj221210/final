@@ -42,10 +42,19 @@ const AdminLogin: React.FC = () => {
         return;
       }
 
-      if (error.response?.status === 401) {
-        toast.error("Invalid credentials. Please try again.", { position: "bottom-right", autoClose: 5000 });
+      if (error.response) {
+        if (error.response.status === 401) {
+          toast.error("Invalid credentials. Please try again.", { position: "bottom-right", autoClose: 5000 });
+        } else if (error.response.status === 404) {
+          toast.error("User not found. Please check your email.", { position: "bottom-right", autoClose: 5000 });
+        } else if (error.response.status === 429) {
+          toast.error("Too many requests. Please try again later.", { position: "bottom-right", autoClose: 5000 });
+        } else {
+          const message = error.response.data?.message || "Login failed. Please try again.";
+          toast.error(message, { position: "bottom-right", autoClose: 5000 });
+        }
       } else {
-        toast.error("Too many requests. Please try again later.", { position: "bottom-right", autoClose: 5000 });
+        toast.error("Network error. Please check your connection.", { position: "bottom-right", autoClose: 5000 });
       }
     } finally {
       setLoading(false);

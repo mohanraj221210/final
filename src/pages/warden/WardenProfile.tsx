@@ -38,7 +38,7 @@ const WardenProfile: React.FC = () => {
 
   // Calculate completion percentage
   const calculateCompletion = (wardenData: Warden) => {
-    const requiredFields = ['name', 'email', 'phone', 'gender', 'hostelname', 'photo'];
+    const requiredFields = ['name', 'email', 'phone', 'gender', 'hostelname'];
 
     // Filter out fields that are present and not empty
     const filledFields = requiredFields.filter(field => {
@@ -72,7 +72,11 @@ const WardenProfile: React.FC = () => {
       );
 
       if (response.status === 200) {
-        setWarden(response.data.warden);
+        const data = response.data.warden;
+        if (data.gender === "undefined" || !data.gender) {
+          data.gender = "male";
+        }
+        setWarden(data);
         // toast.success("Warden profile loaded");
       }
     } catch (err) {
@@ -410,7 +414,7 @@ const WardenProfile: React.FC = () => {
                   <label>Gender</label>
                   <select
                     name="gender"
-                    value={warden.gender}
+                    value={warden.gender?.toLowerCase() || 'male'}
                     onChange={handleChange}
                     disabled={!isEditing}
                     className="input"

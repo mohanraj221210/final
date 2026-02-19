@@ -236,13 +236,19 @@ const ManageWarden: React.FC = () => {
                                 </div>
                                 <div className="form-group">
                                     <label>Hostel Name</label>
-                                    <input
-                                        type="text"
-                                        placeholder="e.g. Boys Hostel A"
+                                    <select
                                         value={newWarden.hostelname}
                                         onChange={e => setNewWarden({ ...newWarden, hostelname: e.target.value })}
                                         className="form-input"
-                                    />
+                                    >
+                                        <option value="">Select Hostel</option>
+                                        <option value="Boys Hostel 1">Boys Hostel 1</option>
+                                        <option value="Boys Hostel 2">Boys Hostel 2</option>
+                                        <option value="Boys Hostel 3">Boys Hostel 3</option>
+                                        <option value="Girls Hostel 1">Girls Hostel 1</option>
+                                        <option value="Girls Hostel 2">Girls Hostel 2</option>
+                                        <option value="Girls Hostel 3">Girls Hostel 3</option>
+                                    </select>
                                 </div>
                             </div>
                             <div className="modal-footer">
