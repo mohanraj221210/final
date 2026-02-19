@@ -12,6 +12,9 @@ const YearInchargeStudentView: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [remarks, setRemarks] = useState('');
     const [actionLoading, setActionLoading] = useState(false);
+    const [showDocumentModal, setShowDocumentModal] = useState(false);
+    const [documentUrl, setDocumentUrl] = useState<string | null>(null);
+    const [documentType, setDocumentType] = useState<'image' | 'pdf'>('image');
 
     useEffect(() => {
         const fetchOutpassDetails = async () => {
@@ -98,6 +101,22 @@ const YearInchargeStudentView: React.FC = () => {
         } finally {
             setActionLoading(false);
         }
+    };
+
+    const handleViewDocument = (url: string | null) => {
+        if (!url) {
+            toast.error("Document not found");
+            return;
+        }
+        const fullUrl = `${import.meta.env.VITE_CDN_URL}${url}`;
+        setDocumentUrl(fullUrl);
+        // Basic check for PDF
+        if (url.toLowerCase().endsWith('.pdf')) {
+            setDocumentType('pdf');
+        } else {
+            setDocumentType('image');
+        }
+        setShowDocumentModal(true);
     };
 
     if (loading) return <LoadingSpinner />;
@@ -228,6 +247,43 @@ const YearInchargeStudentView: React.FC = () => {
                                     <p>{new Date(outpass.toDate).toLocaleString()}</p>
                                 </div>
                             </div>
+                            <div className="detail-row">
+                                <div className="detail-group">
+                                    <label>SkillRack</label>
+                                    <p>{outpass.skillrack || 'N/A'}</p>
+                                </div>
+                                <div className="detail-group">
+                                    <label>Attendance</label>
+                                    <p>{outpass.attendance || 'N/A'}%</p>
+                                </div>
+                            </div>
+
+                            {(outpass.proof || outpass.document || outpass.file) && (
+                                <div className="detail-group" style={{ marginTop: '16px' }}>
+                                    <label>Supporting Document</label>
+                                    <button
+                                        onClick={() => handleViewDocument(outpass.proof || outpass.document || outpass.file)}
+                                        style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            padding: '8px 16px',
+                                            background: 'white',
+                                            border: '1px solid #3b82f6',
+                                            borderRadius: '6px',
+                                            color: '#3b82f6',
+                                            textDecoration: 'none',
+                                            fontWeight: 500,
+                                            marginTop: '8px',
+                                            fontSize: '0.9rem',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <span style={{ fontSize: '1.1rem' }}>👁️</span> View Document
+                                    </button>
+                                </div>
+                            )}
+
                             <div className="detail-group">
                                 <label>Reason</label>
                                 <p className="reason-text">{typeof outpass.reason === 'string' ? outpass.reason : 'No reason provided'}</p>
@@ -263,9 +319,167 @@ const YearInchargeStudentView: React.FC = () => {
                         </div>
                     </div>
                 </div>
-            </div >
+            </div>
+            {/* Document Viewer Modal */}
+            {showDocumentModal && (
+                <div className="modal-overlay" onClick={() => setShowDocumentModal(false)}>
+                    <div className="modal-content doc-modal" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3>Document Viewer</h3>
+                            <button className="close-btn" onClick={() => setShowDocumentModal(false)}>×</button>
+                        </div>
+                        <div className="modal-body doc-body">
+                            {documentType === 'image' ? (
+                                <img src={documentUrl!} alt="Proof" className="doc-preview-img" />
+                            ) : (
+                                <iframe src={documentUrl!} title="Proof Document" className="doc-preview-frame"></iframe>
+                            )}
+                        </div>
+                        <div className="modal-footer">
+                            <a href={documentUrl!} download target="_blank" rel="noreferrer" className="action-btn download-btn">
+                                Download File
+                            </a>
+                            <button className="action-btn cancel-btn" onClick={() => setShowDocumentModal(false)}>
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )
+            }
 
             <style>{`
+                /* Modal Styles */
+                .modal-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 1000;
+                    backdrop-filter: blur(4px);
+                }
+
+                .modal-content {
+                    background: white;
+                    border-radius: 16px;
+                    width: 90%;
+                    max-width: 500px;
+                    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                    animation: slideIn 0.3s ease-out;
+                }
+                
+                .doc-modal {
+                    max-width: 800px;
+                    height: 80vh;
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .doc-body {
+                    flex: 1;
+                    padding: 0;
+                    background: #f1f5f9;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    overflow: hidden;
+                }
+
+                .doc-preview-img {
+                    max-width: 100%;
+                    max-height: 100%;
+                    object-fit: contain;
+                }
+
+                .doc-preview-frame {
+                    width: 100%;
+                    height: 100%;
+                    border: none;
+                }
+
+                .modal-header {
+                    padding: 20px;
+                    border-bottom: 1px solid #e2e8f0;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+
+                .modal-header h3 {
+                    margin: 0;
+                    color: #0f172a;
+                    font-size: 1.25rem;
+                }
+
+                .close-btn {
+                    background: none;
+                    border: none;
+                    font-size: 1.5rem;
+                    color: #64748b;
+                    cursor: pointer;
+                    padding: 0;
+                    line-height: 1;
+                }
+
+                .modal-footer {
+                    padding: 20px;
+                    border-top: 1px solid #e2e8f0;
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 12px;
+                }
+
+                .action-btn {
+                    padding: 10px 20px;
+                    border-radius: 8px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    border: none;
+                    font-size: 0.95rem;
+                    text-decoration: none;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .download-btn {
+                    background: #3b82f6;
+                    color: white;
+                }
+
+                .download-btn:hover {
+                    background: #2563eb;
+                }
+
+                .cancel-btn {
+                    background: #f1f5f9;
+                    color: #64748b;
+                }
+
+                .cancel-btn:hover {
+                    background: #e2e8f0;
+                    color: #475569;
+                }
+
+                /* Animations */
+                @keyframes slideIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+
+                /* Page Styles */
                 .details-grid {
                     display: grid;
                     grid-template-columns: 350px 1fr;

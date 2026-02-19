@@ -24,6 +24,10 @@ interface StudentOutpass {
     hostelname: string;
     hostelroomno: string;
 
+    // Bus Details
+    boardingPoint?: string;
+    busNo?: string;
+
     // Last Outpass
     lastOutpassFrom?: string;
     lastOutpassTo?: string;
@@ -43,6 +47,9 @@ interface StudentOutpass {
     staffApprovedBy?: string;
     outpasstype: string;
     residencetype?: string;
+    skillrack?: string;
+    attendance?: string;
+    document?: string;
 }
 
 const PassApproval: React.FC = () => {
@@ -56,6 +63,9 @@ const PassApproval: React.FC = () => {
     const [roommates, setRoommates] = useState<any[]>([]);
     const [loadingRoommates, setLoadingRoommates] = useState(false);
     const [currentStaffName, setCurrentStaffName] = useState('');
+    const [showDocumentModal, setShowDocumentModal] = useState(false);
+    const [documentUrl, setDocumentUrl] = useState<string | null>(null);
+    const [documentType, setDocumentType] = useState<'image' | 'pdf'>('image');
 
     useEffect(() => {
         const fetchStaffProfile = async () => {
@@ -102,11 +112,13 @@ const PassApproval: React.FC = () => {
                     parentContact: studentDetails.parentnumber || 'N/A',
                     hostelname: studentDetails.hostelname || 'N/A',
                     hostelroomno: studentDetails.hostelroomno || 'N/A',
+                    boardingPoint: studentDetails.boardingpoint || 'N/A', // Match lowercase API key
+                    busNo: studentDetails.busno || 'N/A', // Match lowercase API key
                     reason: data.reason,
                     fromDate: data.fromDate,
                     toDate: data.toDate,
                     staffApproval: data.staffapprovalstatus || 'pending',
-                    staffApprovedBy: data.staffApprovedBy, // Map from API if available
+                    staffApprovedBy: data.staffApprovedBy,
                     yearInchargeApproval: data.yearinchargeapprovalstatus || 'pending',
                     wardenApproval: data.wardenapprovalstatus || 'pending',
                     lastOutpassFrom: data.lastOutpassFrom,
@@ -115,7 +127,10 @@ const PassApproval: React.FC = () => {
                     lastOutpassApprovedBy: data.lastOutpassApprovedBy,
                     lastOutpassStatus: data.lastOutpassStatus,
                     outpasstype: data.outpassType,
-                    residencetype: studentDetails.residenceType || 'dayScholar'
+                    residencetype: studentDetails.residencetype || 'day scholar', // Match lowercase API key
+                    skillrack: data.skillrack || 'N/A',
+                    attendance: data.attendance || 'N/A',
+                    document: data.proof || data.document || data.file || null
                 };
 
                 setSelectedStudent(mappedStudent);
@@ -303,7 +318,21 @@ const PassApproval: React.FC = () => {
         }
     };
 
-
+    const handleViewDocument = (url: string | null) => {
+        if (!url) {
+            toast.error("Document not found");
+            return;
+        }
+        const fullUrl = `${import.meta.env.VITE_CDN_URL}${url}`;
+        setDocumentUrl(fullUrl);
+        // Basic check for PDF
+        if (url.toLowerCase().endsWith('.pdf')) {
+            setDocumentType('pdf');
+        } else {
+            setDocumentType('image');
+        }
+        setShowDocumentModal(true);
+    };
 
     const canApprove = selectedStudent && selectedStudent.staffApproval === 'pending';
 
@@ -468,124 +497,166 @@ const PassApproval: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="detail-card">
-                                <div className="card-header">
-                                    <span className="card-icon">🏢</span>
-                                    <h2>Hostel Details</h2>
-                                </div>
-                                <div className="card-body">
-                                    <div className="info-grid">
-                                        <div className="info-field">
-                                            <label>HOSTEL NAME</label>
-                                            <div className="field-value">{selectedStudent.hostelname}</div>
+                            {/* Residence Details (Hostel or Bus) */}
+                            {selectedStudent.residencetype?.toLowerCase() === 'hostel' ? (
+                                <>
+                                    <div className="detail-card">
+                                        <div className="card-header">
+                                            <span className="card-icon">🏢</span>
+                                            <h2>Hostel Details</h2>
                                         </div>
-                                        <div className="info-field">
-                                            <label>ROOM NUMBER</label>
-                                            <div className="field-value">{selectedStudent.hostelroomno}</div>
+                                        <div className="card-body">
+                                            <div className="info-grid">
+                                                <div className="info-field">
+                                                    <label>HOSTEL NAME</label>
+                                                    <div className="field-value">{selectedStudent.hostelname}</div>
+                                                </div>
+                                                <div className="info-field">
+                                                    <label>ROOM NUMBER</label>
+                                                    <div className="field-value">{selectedStudent.hostelroomno}</div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
 
-                            {/* Last Outpass Details */}
-                            {selectedStudent.lastOutpassFrom && (
+                                    {/* Roommate Details (Only for Hostel) */}
+                                    <div className="detail-card">
+                                        <div className="card-header">
+                                            <span className="card-icon">�</span>
+                                            <h2>Roommate Details</h2>
+                                        </div>
+                                        <div className="card-body">
+                                            {loadingRoommates ? (
+                                                <div className="loading-text">Loading roommates...</div>
+                                            ) : roommates.length > 0 ? (
+                                                <div className="roommates-grid">
+                                                    {roommates.map((roommate: any) => (
+                                                        <div key={roommate._id} className="roommate-card">
+                                                            <div className="roommate-avatar">
+                                                                <img
+                                                                    src={roommate.photo || `https://ui-avatars.com/api/?name=${roommate.name}&background=random`}
+                                                                    alt={roommate.name}
+                                                                    style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                                                                />
+                                                            </div>
+                                                            <div className="roommate-info">
+                                                                <p style={{ margin: 0, fontWeight: 600 }}>{roommate.name}</p>
+                                                                <p style={{ margin: 0 }}>{roommate.registerNumber}</p>
+                                                                <span className="dept-badge">{roommate.department}</span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="no-data">No roommates found</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                /* Bus Details for Day Scholars */
                                 <div className="detail-card">
                                     <div className="card-header">
-                                        <span className="card-icon">📋</span>
-                                        <h2>Last Outpass Details</h2>
+                                        <span className="card-icon">�</span>
+                                        <h2>Bus Details</h2>
                                     </div>
                                     <div className="card-body">
                                         <div className="info-grid">
                                             <div className="info-field">
-                                                <label>DATE RANGE</label>
-                                                <div className="field-value">
-                                                    {formatDateTime(selectedStudent.lastOutpassFrom!)} → {formatDateTime(selectedStudent.lastOutpassTo!)}
-                                                </div>
+                                                <label>BOARDING POINT</label>
+                                                <div className="field-value">{selectedStudent.boardingPoint || 'N/A'}</div>
                                             </div>
                                             <div className="info-field">
-                                                <label>REASON</label>
-                                                <div className="field-value">{selectedStudent.lastOutpassReason}</div>
-                                            </div>
-                                            <div className="info-field">
-                                                <label>APPROVED BY</label>
-                                                <div className="field-value">{selectedStudent.lastOutpassApprovedBy}</div>
-                                            </div>
-                                            <div className="info-field">
-                                                <label>STATUS</label>
-                                                {getStatusBadge(selectedStudent.lastOutpassStatus!)}
+                                                <label>BUS NUMBER</label>
+                                                <div className="field-value">{selectedStudent.busNo || 'N/A'}</div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             )}
 
-                            {/* Outpass Request Details */}
-                            <div className="detail-card highlight-card">
-                                <div className="card-header">
-                                    <span className="card-icon">📝</span>
-                                    <h2>Outpass Request Details</h2>
-                                </div>
-                                <div className="card-body">
-                                    <div className="info-grid">
-                                        <div className="info-field full-width">
-                                            <label>OUTPASS TYPE</label>
-                                            <div className="field-value">
-                                                {selectedStudent.outpasstype || 'General'}
-                                                {selectedStudent.outpasstype?.toLowerCase() === 'emergency' && (
-                                                    <span className="emergency-badge" style={{ marginLeft: '10px' }}>🚨 EMERGENCY</span>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div className="info-field full-width">
-                                            <label>REASON FOR OUTPASS</label>
-                                            <div className="field-value">{selectedStudent.reason}</div>
-                                        </div>
-                                        <div className="info-field">
-                                            <label>FROM DATE & TIME</label>
-                                            <div className="field-value">{formatDateTime(selectedStudent.fromDate)}</div>
-                                        </div>
-                                        <div className="info-field">
-                                            <label>TO DATE & TIME</label>
-                                            <div className="field-value">{formatDateTime(selectedStudent.toDate)}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Roommate Details */}
-                            {selectedStudent.hostelname && selectedStudent.hostelname !== 'N/A' && (
+                            {/* OD Document Section */}
+                            {selectedStudent.document && (
                                 <div className="detail-card">
                                     <div className="card-header">
-                                        <span className="card-icon">👥</span>
-                                        <h2>Roommate Details</h2>
+                                        <span className="card-icon">📄</span>
+                                        <h2>Supporting Document</h2>
                                     </div>
                                     <div className="card-body">
-                                        {loadingRoommates ? (
-                                            <div className="loading-text">Loading roommates...</div>
-                                        ) : roommates.length > 0 ? (
-                                            <div className="roommates-grid">
-                                                {roommates.map((roommate: any) => (
-                                                    <div key={roommate._id} className="roommate-card">
-                                                        <div className="roommate-avatar">
-                                                            <img
-                                                                src={roommate.photo || `https://ui-avatars.com/api/?name=${roommate.name}&background=random`}
-                                                                alt={roommate.name}
-                                                                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
-                                                            />
-                                                        </div>
-                                                        <div className="roommate-info">
-                                                            <h4>{roommate.name}</h4>
-                                                            <p style={{ margin: 0 }}>{roommate.registerNumber}</p>
-                                                            <span className="dept-badge">{roommate.department}</span>
-                                                        </div>
-                                                    </div>
-                                                ))}
+                                        <div style={{ padding: '10px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                            <div>
+                                                <p style={{ margin: 0, fontWeight: 500, color: '#334155' }}>OD Proof Document</p>
+                                                <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>Uploaded by student</p>
                                             </div>
-                                        ) : (
-                                            <div className="no-data">
-                                                <p>No roommates assigned or found.</p>
-                                            </div>
-                                        )}
+                                            <button
+                                                onClick={() => handleViewDocument(selectedStudent.document!)}
+                                                className="view-doc-btn"
+                                                style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '8px',
+                                                    padding: '8px 16px',
+                                                    background: 'white',
+                                                    border: '1px solid #3b82f6',
+                                                    borderRadius: '6px',
+                                                    color: '#3b82f6',
+                                                    cursor: 'pointer',
+                                                    fontSize: '0.9rem',
+                                                    fontWeight: 500
+                                                }}
+                                            >
+                                                👁️ View Proof
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Document Modal */}
+                            {showDocumentModal && documentUrl && (
+                                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <div className="bg-white rounded-lg p-4 w-full max-w-4xl h-[90vh] flex flex-col" style={{ background: 'white', padding: '20px', borderRadius: '12px', width: '90%', maxWidth: '1000px', height: '90vh', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+                                        <div className="flex justify-between items-center mb-4" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                            <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>Supporting Document</h3>
+                                            <button
+                                                onClick={() => setShowDocumentModal(false)}
+                                                style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#64748b' }}
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                        <div style={{ flex: 1, overflow: 'hidden', background: '#f1f5f9', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            {documentType === 'pdf' ? (
+                                                <iframe
+                                                    src={documentUrl}
+                                                    style={{ width: '100%', height: '100%', border: 'none' }}
+                                                    title="Document Viewer"
+                                                />
+                                            ) : (
+                                                <img
+                                                    src={documentUrl}
+                                                    alt="Proof"
+                                                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                                                />
+                                            )}
+                                        </div>
+                                        <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+                                            <a
+                                                href={documentUrl}
+                                                download={`proof_document.${documentType === 'pdf' ? 'pdf' : 'jpg'}`}
+                                                style={{
+                                                    padding: '8px 16px',
+                                                    background: '#3b82f6',
+                                                    color: 'white',
+                                                    borderRadius: '6px',
+                                                    textDecoration: 'none',
+                                                    fontSize: '0.9rem',
+                                                    fontWeight: 500
+                                                }}
+                                            >
+                                                Download File
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -651,52 +722,56 @@ const PassApproval: React.FC = () => {
                         </div>
 
                         {/* Sticky Action Buttons */}
-                        {canApprove && (
-                            <div className="sticky-actions">
-                                <button className="action-btn approve-btn" onClick={handleApprove}>
-                                    ✓ Approve
-                                </button>
-                                <button className="action-btn reject-btn" onClick={handleReject}>
-                                    ✗ Reject
-                                </button>
-                            </div>
-                        )}
-                    </div>
+                        {
+                            canApprove && (
+                                <div className="sticky-actions">
+                                    <button className="action-btn approve-btn" onClick={handleApprove}>
+                                        ✓ Approve
+                                    </button>
+                                    <button className="action-btn reject-btn" onClick={handleReject}>
+                                        ✗ Reject
+                                    </button>
+                                </div>
+                            )
+                        }
+                    </div >
                 )}
-            </div>
+            </div >
 
             {/* Action Modal (Approve/Reject) */}
-            {showActionModal && (
-                <div className="modal-overlay" onClick={() => setShowActionModal(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h3>{actionType === 'approve' ? 'Approve Outpass Request' : 'Reject Outpass Request'}</h3>
-                            <button className="modal-close" onClick={() => setShowActionModal(false)}>✕</button>
-                        </div>
-                        <div className="modal-body">
-                            <label>Remarks (Required)</label>
-                            <textarea
-                                value={actionRemarks}
-                                onChange={(e) => setActionRemarks(e.target.value)}
-                                placeholder={actionType === 'approve' ? 'Please provide approval remarks...' : 'Please provide reason for rejection...'}
-                                rows={4}
-                            />
-                        </div>
-                        <div className="modal-footer">
-                            <button className="modal-btn cancel-btn" onClick={() => setShowActionModal(false)}>
-                                Cancel
-                            </button>
-                            <button
-                                className={`modal-btn ${actionType === 'approve' ? 'approve-confirm-btn' : 'confirm-btn'}`}
-                                onClick={confirmAction}
-                                disabled={!actionRemarks.trim()}
-                            >
-                                {actionType === 'approve' ? 'Confirm Approval' : 'Confirm Rejection'}
-                            </button>
+            {
+                showActionModal && (
+                    <div className="modal-overlay" onClick={() => setShowActionModal(false)}>
+                        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <h3>{actionType === 'approve' ? 'Approve Outpass Request' : 'Reject Outpass Request'}</h3>
+                                <button className="modal-close" onClick={() => setShowActionModal(false)}>✕</button>
+                            </div>
+                            <div className="modal-body">
+                                <label>Remarks (Required)</label>
+                                <textarea
+                                    value={actionRemarks}
+                                    onChange={(e) => setActionRemarks(e.target.value)}
+                                    placeholder={actionType === 'approve' ? 'Please provide approval remarks...' : 'Please provide reason for rejection...'}
+                                    rows={4}
+                                />
+                            </div>
+                            <div className="modal-footer">
+                                <button className="modal-btn cancel-btn" onClick={() => setShowActionModal(false)}>
+                                    Cancel
+                                </button>
+                                <button
+                                    className={`modal-btn ${actionType === 'approve' ? 'approve-confirm-btn' : 'confirm-btn'}`}
+                                    onClick={confirmAction}
+                                    disabled={!actionRemarks.trim()}
+                                >
+                                    {actionType === 'approve' ? 'Confirm Approval' : 'Confirm Rejection'}
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             <style>{`
                 .approver-name {
@@ -1511,7 +1586,7 @@ const PassApproval: React.FC = () => {
                     }
                 }
             `}</style>
-        </div>
+        </div >
     );
 };
 

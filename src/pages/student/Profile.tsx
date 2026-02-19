@@ -4,6 +4,8 @@ import { type User, RECENT_DOWNLOADS } from '../../data/sampleData';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
+import ImageCropper from '../../components/ImageCropper';
+import imageCompression from 'browser-image-compression';
 
 const Profile: React.FC = () => {
     const [user, setUser] = useState<User>({
@@ -103,6 +105,9 @@ const Profile: React.FC = () => {
         setUser(prev => ({ ...prev, [name]: value }));
     };
 
+    const [showCropper, setShowCropper] = useState(false);
+    const [tempImage, setTempImage] = useState<string | null>(null);
+
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -114,16 +119,48 @@ const Profile: React.FC = () => {
             return;
         }
 
-        if (file.size > 200 * 1024) { // 200 KB
-            toast.error("Image size must be less than 200 KB");
+        if (file.size > 5 * 1024 * 1024) { // Increased limit for initial upload (5MB)
+            toast.error("Image size must be less than 5 MB");
             return;
         }
 
-        // Preview and State Update
-        setSelectedFile(file);
-        setUser(prev => ({ ...prev, photo: URL.createObjectURL(file) }));
-        setIsEditing(true); // Auto-enable edit mode if not already
-        toast.info("Image selected. Click 'Save Changes' to upload.");
+        // Create object URL for cropper
+        const objectUrl = URL.createObjectURL(file);
+        setTempImage(objectUrl);
+        setShowCropper(true);
+
+        // Reset input value so same file can be selected again if needed
+        e.target.value = '';
+    };
+
+    const handleCropComplete = async (croppedBlob: Blob) => {
+        try {
+            const file = new File([croppedBlob], "profile_cropped.jpg", { type: "image/jpeg" });
+
+            const options = {
+                maxSizeMB: 0.2, // 200KB
+                maxWidthOrHeight: 1024,
+                useWebWorker: true,
+            };
+
+            const compressedFile = await imageCompression(file, options);
+            const compressedBlob = new File([compressedFile], "profile_compressed.jpg", { type: "image/jpeg" });
+
+            setSelectedFile(compressedBlob);
+            setUser(prev => ({ ...prev, photo: URL.createObjectURL(compressedBlob) }));
+            setIsEditing(true);
+            setShowCropper(false);
+            setTempImage(null);
+            toast.info("Image cropped and compressed. Click 'Save Changes' to upload.");
+        } catch (error) {
+            console.error("Compression error:", error);
+            toast.error("Image compression failed");
+        }
+    };
+
+    const handleCropCancel = () => {
+        setShowCropper(false);
+        setTempImage(null);
     };
 
 
@@ -382,7 +419,7 @@ const Profile: React.FC = () => {
                                         name="department"
                                         value={user.department}
                                         onChange={handleChange}
-                                        disabled={!isEditing}
+                                        disabled={true}
                                         className="input"
                                     >
                                         <option value="">Select Department</option>
@@ -648,6 +685,14 @@ const Profile: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {showCropper && tempImage && (
+                <ImageCropper
+                    imageSrc={tempImage}
+                    onCropComplete={handleCropComplete}
+                    onCancel={handleCropCancel}
+                />
+            )}
 
             <style>{`
             /* Custom Dashboard Header */
