@@ -290,7 +290,13 @@ const YearInchargeProfile: React.FC = () => {
                             <div className="profile-header">
                                 <div className="avatar-container">
                                     <img
-                                        src={url + previewImage || jitProfile}
+                                        src={
+                                            previewImage
+                                                ? (previewImage.startsWith('data:') || previewImage.startsWith('http')
+                                                    ? previewImage
+                                                    : `${import.meta.env.VITE_CDN_URL}${previewImage}`)
+                                                : jitProfile
+                                        }
                                         alt="Profile"
                                         className="profile-avatar"
                                         onError={(e) => { e.currentTarget.src = jitProfile; }}
@@ -391,17 +397,7 @@ const YearInchargeProfile: React.FC = () => {
                                     </select>
                                 </div>
 
-                                <div className="form-group">
-                                    <label>Year / Block</label>
-                                    <input
-                                        type="text"
-                                        name="year"
-                                        value={profile.year}
-                                        onChange={handleChange}
-                                        disabled={!isEditing}
-                                        className="input"
-                                    />
-                                </div>
+
 
                                 <div className="form-group">
                                     <label>Handling Year </label>

@@ -28,6 +28,7 @@ interface Student {
     arrears?: number;
     isblocked?: boolean;
     photo?: string;
+    document?: string;
 }
 
 const StudentDetails: React.FC = () => {
@@ -39,6 +40,9 @@ const StudentDetails: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState<Partial<Student>>({});
+    const [showDocumentModal, setShowDocumentModal] = useState(false);
+    const [documentUrl, setDocumentUrl] = useState<string | null>(null);
+    const [documentType, setDocumentType] = useState<'image' | 'pdf'>('image');
 
     // Fetch Student Details
     useEffect(() => {
@@ -124,6 +128,21 @@ const StudentDetails: React.FC = () => {
         } catch (error) {
             toast.error("Failed to delete student");
         }
+    };
+
+    const handleViewDocument = (url: string | undefined) => {
+        if (!url) {
+            toast.error("Document not found");
+            return;
+        }
+        const fullUrl = `${import.meta.env.VITE_CDN_URL}${url}`;
+        setDocumentUrl(fullUrl);
+        if (url.toLowerCase().endsWith('.pdf')) {
+            setDocumentType('pdf');
+        } else {
+            setDocumentType('image');
+        }
+        setShowDocumentModal(true);
     };
 
     if (loading) return <div className="loading-screen">Loading...</div>;
@@ -268,6 +287,30 @@ const StudentDetails: React.FC = () => {
                                 </div>
                             </div>
 
+                            {student.document && (
+                                <div className="info-row-modern">
+                                    <span className="icon">📄</span>
+                                    <div>
+                                        <label>Document</label>
+                                        <button
+                                            onClick={() => handleViewDocument(student.document)}
+                                            style={{
+                                                background: 'none',
+                                                border: 'none',
+                                                color: '#2563eb',
+                                                cursor: 'pointer',
+                                                padding: 0,
+                                                fontWeight: 600,
+                                                fontSize: '1rem',
+                                                textDecoration: 'underline'
+                                            }}
+                                        >
+                                            View OD Document
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="card-actions-modern">
                                 <button
                                     className={`btn-block-modern ${student.isblocked ? 'unblock' : 'block'}`}
@@ -365,6 +408,44 @@ const StudentDetails: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Document Modal */}
+            {
+                showDocumentModal && documentUrl && (
+                    <div className="modal-overlay" onClick={() => setShowDocumentModal(false)}>
+                        <div className="modal-content-doc" onClick={(e) => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <h3>Supporting Document</h3>
+                                <button className="modal-close" onClick={() => setShowDocumentModal(false)}>✕</button>
+                            </div>
+                            <div className="doc-viewer-container">
+                                {documentType === 'pdf' ? (
+                                    <iframe
+                                        src={documentUrl}
+                                        className="doc-iframe"
+                                        title="Document Viewer"
+                                    />
+                                ) : (
+                                    <img
+                                        src={documentUrl}
+                                        alt="Proof"
+                                        className="doc-image"
+                                    />
+                                )}
+                            </div>
+                            <div className="modal-footer">
+                                <a
+                                    href={documentUrl}
+                                    download={`proof_document.${documentType === 'pdf' ? 'pdf' : 'jpg'}`}
+                                    className="download-btn"
+                                >
+                                    Download File
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
 
             <style>{`
                 .details-page {
@@ -687,11 +768,97 @@ const StudentDetails: React.FC = () => {
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    font-size: 1.2rem;
                     color: #64748b;
                 }
+
+                /* Modal Styles */
+                .modal-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background-color: rgba(0,0,0,0.8);
+                    z-index: 1000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .modal-content-doc {
+                    background: white;
+                    padding: 20px;
+                    border-radius: 12px;
+                    width: 90%;
+                    max-width: 1000px;
+                    height: 90vh;
+                    display: flex;
+                    flex-direction: column;
+                    position: relative;
+                }
+
+                .modal-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 16px;
+                }
+
+                .modal-header h3 {
+                    margin: 0;
+                    font-size: 1.25rem;
+                    font-weight: 600;
+                    color: #1e293b;
+                }
+
+                .modal-close {
+                    background: none;
+                    border: none;
+                    font-size: 1.5rem;
+                    cursor: pointer;
+                    color: #64748b;
+                }
+
+                .doc-viewer-container {
+                    flex: 1;
+                    overflow: hidden;
+                    background: #f1f5f9;
+                    border-radius: 8px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .doc-iframe {
+                    width: 100%;
+                    height: 100%;
+                    border: none;
+                }
+
+                .doc-image {
+                    max-width: 100%;
+                    max-height: 100%;
+                    object-fit: contain;
+                }
+
+                .modal-footer {
+                    margin-top: 16px;
+                    display: flex;
+                    justify-content: flex-end;
+                }
+
+                .download-btn {
+                    padding: 8px 16px;
+                    background: #3b82f6;
+                    color: white;
+                    border-radius: 6px;
+                    text-decoration: none;
+                    font-size: 0.9rem;
+                    font-weight: 500;
+                    display: inline-block;
+                }
             `}</style>
-        </div>
+        </div >
     );
 };
 

@@ -36,6 +36,7 @@ interface OutpassData {
         rejectedAt?: string;
     };
     createdAt: string;
+    document?: string;
 }
 
 const OutpassDetails: React.FC = () => {
@@ -47,6 +48,9 @@ const OutpassDetails: React.FC = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
     const [residenceType, setResidenceType] = useState<string>('');
     const [user, setUser] = useState<any>(null);
+    const [showDocumentModal, setShowDocumentModal] = useState(false);
+    const [documentUrl, setDocumentUrl] = useState<string | null>(null);
+    const [documentType, setDocumentType] = useState<'image' | 'pdf'>('image');
 
     useEffect(() => {
         const fetchData = async () => {
@@ -86,6 +90,7 @@ const OutpassDetails: React.FC = () => {
                         reason: item.reason,
                         overallStatus: item.status || 'pending',
                         createdAt: item.createdAt,
+                        document: item.proof || item.document || item.file || null,
                         staffApproval: {
                             status: item.staffapprovalstatus || 'pending',
                             approverName: item.staffid?.name,
@@ -127,7 +132,6 @@ const OutpassDetails: React.FC = () => {
             pending: { dot: '●', label: 'Pending', color: '#f59e0b', bg: '#fef3c7' },
             approved: { dot: '●', label: 'Approved', color: '#10b981', bg: '#d1fae5' },
             rejected: { dot: '●', label: 'Rejected', color: '#ef4444', bg: '#fee2e2' },
-            // Add fallback for potential other statuses
             declined: { dot: '●', label: 'Rejected', color: '#ef4444', bg: '#fee2e2' },
         };
 
@@ -169,6 +173,21 @@ const OutpassDetails: React.FC = () => {
 
     const handleBackToList = () => {
         setSelectedOutpass(null);
+    };
+
+    const handleViewDocument = (url: string | undefined) => {
+        if (!url) {
+            toast.error("Document not found");
+            return;
+        }
+        const fullUrl = `${import.meta.env.VITE_CDN_URL}${url}`;
+        setDocumentUrl(fullUrl);
+        if (url.toLowerCase().endsWith('.pdf')) {
+            setDocumentType('pdf');
+        } else {
+            setDocumentType('image');
+        }
+        setShowDocumentModal(true);
     };
 
     return (
@@ -352,6 +371,31 @@ const OutpassDetails: React.FC = () => {
                             </div>
                         </div>
 
+                        {/* OD Document Section */}
+                        {/* OD Document Section */}
+                        {selectedOutpass.document && (
+                            <div className="approval-card" style={{ marginBottom: '20px' }}>
+                                <div className="approval-card-header">
+                                    <span className="approval-icon">📄</span>
+                                    <h3>Supporting Document</h3>
+                                </div>
+                                <div className="approval-card-body">
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                        <div>
+                                            <p style={{ margin: 0, fontWeight: 600, color: '#334155' }}>OD Proof Document</p>
+                                            <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Uploaded by student</p>
+                                        </div>
+                                        <button
+                                            onClick={() => handleViewDocument(selectedOutpass.document)}
+                                            className="view-doc-btn"
+                                        >
+                                            👁️ View Proof
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Approval Status Section */}
                         <div className="approval-section">
                             {/* Staff Approval Card */}
@@ -389,7 +433,7 @@ const OutpassDetails: React.FC = () => {
                                             </div>
                                         </div>
                                     )}
-                                    
+
                                     {selectedOutpass.staffApproval.remarks && (
                                         <div className="approval-field">
                                             <label>STAFF REMARKS</label>
@@ -436,7 +480,7 @@ const OutpassDetails: React.FC = () => {
                                             </div>
                                         </div>
                                     )}
-                                    
+
                                     {selectedOutpass.yearInchargeApproval.remarks && (
                                         <div className="approval-field">
                                             <label>REMARKS</label>
@@ -484,7 +528,7 @@ const OutpassDetails: React.FC = () => {
                                                 </div>
                                             </div>
                                         )}
-                                        
+
                                         {selectedOutpass.wardenApproval.remarks && (
                                             <div className="approval-field">
                                                 <label>WARDEN REMARKS</label>
@@ -500,6 +544,42 @@ const OutpassDetails: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* Document Modal */}
+            {showDocumentModal && documentUrl && (
+                <div className="modal-overlay" onClick={() => setShowDocumentModal(false)}>
+                    <div className="modal-content-doc" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3>Supporting Document</h3>
+                            <button className="modal-close" onClick={() => setShowDocumentModal(false)}>✕</button>
+                        </div>
+                        <div className="doc-viewer-container">
+                            {documentType === 'pdf' ? (
+                                <iframe
+                                    src={documentUrl}
+                                    className="doc-iframe"
+                                    title="Document Viewer"
+                                />
+                            ) : (
+                                <img
+                                    src={documentUrl}
+                                    alt="Proof"
+                                    className="doc-image"
+                                />
+                            )}
+                        </div>
+                        <div className="modal-footer">
+                            <a
+                                href={documentUrl}
+                                download={`proof_document.${documentType === 'pdf' ? 'pdf' : 'jpg'}`}
+                                className="download-btn"
+                            >
+                                Download File
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <style>{`
                 /* Custom Dashboard Header */
@@ -798,6 +878,113 @@ const OutpassDetails: React.FC = () => {
                 }
 
                 .applied-date {
+                    font-weight: 600;
+                    color: #475569;
+                }
+                
+                .view-doc-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 8px 16px;
+                    background: white;
+                    border: 1px solid #3b82f6;
+                    borderRadius: 6px;
+                    color: #3b82f6;
+                    cursor: pointer;
+                    fontSize: 0.9rem;
+                    fontWeight: 500;
+                    transition: all 0.2s;
+                }
+                .view-doc-btn:hover {
+                    background: #eff6ff;
+                }
+
+                /* Modal Styles */
+                .modal-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background-color: rgba(0,0,0,0.8);
+                    z-index: 1000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .modal-content-doc {
+                    background: white;
+                    padding: 20px;
+                    border-radius: 12px;
+                    width: 90%;
+                    max-width: 1000px;
+                    height: 90vh;
+                    display: flex;
+                    flex-direction: column;
+                    position: relative;
+                }
+
+                .modal-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 16px;
+                }
+
+                .modal-header h3 {
+                    margin: 0;
+                    font-size: 1.25rem;
+                    font-weight: 600;
+                }
+
+                .modal-close {
+                    background: none;
+                    border: none;
+                    font-size: 1.5rem;
+                    cursor: pointer;
+                    color: #64748b;
+                }
+
+                .doc-viewer-container {
+                    flex: 1;
+                    overflow: hidden;
+                    background: #f1f5f9;
+                    border-radius: 8px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .doc-iframe {
+                    width: 100%;
+                    height: 100%;
+                    border: none;
+                }
+
+                .doc-image {
+                    max-width: 100%;
+                    max-height: 100%;
+                    object-fit: contain;
+                }
+
+                .modal-footer {
+                    margin-top: 16px;
+                    display: flex;
+                    justify-content: flex-end;
+                }
+
+                .download-btn {
+                    padding: 8px 16px;
+                    background: #3b82f6;
+                    color: white;
+                    border-radius: 6px;
+                    text-decoration: none;
+                    font-size: 0.9rem;
+                    font-weight: 500;
+                    display: inline-block;
+                }
                     font-weight: 600;
                     color: #475569;
                 }
