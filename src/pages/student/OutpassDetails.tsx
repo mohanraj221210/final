@@ -13,6 +13,7 @@ interface OutpassData {
     fromDate: string;
     toDate: string;
     reason: string;
+    outpassType: string;
     overallStatus: ApprovalStatus;
     staffApproval: {
         status: ApprovalStatus;
@@ -88,6 +89,7 @@ const OutpassDetails: React.FC = () => {
                         fromDate: item.fromDate,
                         toDate: item.toDate,
                         reason: item.reason,
+                        outpassType: item.outpasstype || 'General',
                         overallStatus: item.status || 'pending',
                         createdAt: item.createdAt,
                         document: item.proof || item.document || item.file || null,
@@ -284,7 +286,20 @@ const OutpassDetails: React.FC = () => {
                                                 {formatDateTime(outpass.fromDate)} → {formatDateTime(outpass.toDate)}
                                             </span>
                                         </div>
-                                        {getStatusBadge(outpass.overallStatus)}
+                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                            <span className="outpass-type-badge" style={{
+                                                padding: '4px 12px',
+                                                borderRadius: '20px',
+                                                fontSize: '0.8rem',
+                                                fontWeight: 600,
+                                                backgroundColor: outpass.outpassType.toLowerCase() === 'emergency' ? '#fee2e2' : '#e0f2fe',
+                                                color: outpass.outpassType.toLowerCase() === 'emergency' ? '#ef4444' : '#0ea5e9',
+                                                border: `1px solid ${outpass.outpassType.toLowerCase() === 'emergency' ? '#fca5a5' : '#7dd3fc'}`
+                                            }}>
+                                                {outpass.outpassType}
+                                            </span>
+                                            {getStatusBadge(outpass.overallStatus)}
+                                        </div>
                                     </div>
                                     <div className="outpass-card-body">
                                         <div className="reason-section">
@@ -343,6 +358,21 @@ const OutpassDetails: React.FC = () => {
                                 <label>STUDENT ID</label>
                                 <div className="info-value">
                                     {selectedOutpass.studentId}
+                                </div>
+                            </div>
+                            <div className="info-field">
+                                <label>OUTPASS TYPE</label>
+                                <div className="info-value">
+                                    <span style={{
+                                        padding: '4px 12px',
+                                        borderRadius: '6px',
+                                        fontSize: '0.9rem',
+                                        fontWeight: 600,
+                                        backgroundColor: selectedOutpass.outpassType.toLowerCase() === 'emergency' ? '#fee2e2' : '#e0f2fe',
+                                        color: selectedOutpass.outpassType.toLowerCase() === 'emergency' ? '#ef4444' : '#0ea5e9',
+                                    }}>
+                                        {selectedOutpass.outpassType}
+                                    </span>
                                 </div>
                             </div>
                             <div className="info-field">
