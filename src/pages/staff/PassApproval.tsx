@@ -132,7 +132,7 @@ const PassApproval: React.FC = () => {
                     lastOutpassReason: data.lastOutpassReason,
                     lastOutpassApprovedBy: data.lastOutpassApprovedBy,
                     lastOutpassStatus: data.lastOutpassStatus,
-                    outpasstype: data.outpassType,
+                    outpasstype: data.outpasstype,
                     residencetype: studentDetails.residencetype || 'day scholar', // Match lowercase API key
                     skillrack: data.skillrack || 'N/A',
                     attendance: data.attendance || 'N/A',
@@ -514,7 +514,7 @@ const PassApproval: React.FC = () => {
                                                     width: 'fit-content',
                                                     display: 'inline-block'
                                                 }}>
-                                                    {selectedStudent.outpasstype || 'General'}
+                                                    {selectedStudent.outpasstype}
                                                 </span>
                                             </div>
                                         </div>

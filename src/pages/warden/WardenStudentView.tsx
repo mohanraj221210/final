@@ -200,10 +200,10 @@ const WardenStudentView: React.FC = () => {
               <div className="field-group">
                 <label>PARENT CONTACT</label>
                 <div className="display-box" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  {s.parentPhone || s.parentContact || "N/A"}
-                  {(s.parentPhone || s.parentContact) && (
+                  {s.parentPhone || s.parentnumber || "N/A"}
+                  {(s.parentPhone || s.parentnumber) && (
                     <a
-                      href={`tel:${s.parentPhone || s.parentContact}`}
+                      href={`tel:${s.parentPhone || s.parentnumber}`}
                       className="dial-btn"
                       title="Call Parent"
                     >
