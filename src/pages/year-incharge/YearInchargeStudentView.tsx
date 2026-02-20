@@ -181,6 +181,27 @@ const YearInchargeStudentView: React.FC = () => {
                                     <p>{typeof outpass.studentid?.phone === 'string' ? outpass.studentid.phone : 'N/A'}</p>
                                 </div>
                             </div>
+                            <div className="info-row-modern">
+                                <span className="icon">👨‍👩‍👧‍👦</span>
+                                <div>
+                                    <label>Parent Contact</label>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <p style={{ margin: 0 }}>
+                                            {typeof outpass.studentid?.parentPhone === 'string' && outpass.studentid.parentPhone ? outpass.studentid.parentPhone :
+                                                (typeof outpass.studentid?.parentnumber === 'string' && outpass.studentid.parentnumber ? outpass.studentid.parentnumber : 'N/A')}
+                                        </p>
+                                        {(typeof outpass.studentid?.parentPhone === 'string' || typeof outpass.studentid?.parentnumber === 'string') && (
+                                            <a
+                                                href={`tel:${outpass.studentid?.parentPhone || outpass.studentid?.parentnumber}`}
+                                                className="dial-btn"
+                                                title="Call Parent"
+                                            >
+                                                📞
+                                            </a>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -752,7 +773,25 @@ const YearInchargeStudentView: React.FC = () => {
                     transform: translateY(-2px);
                 }
 
+                .dial-btn {
+                    display: none;
+                }
+
                 @media (max-width: 768px) {
+                    .dial-btn {
+                        display: inline-flex;
+                        justify-content: center;
+                        align-items: center;
+                        width: 24px;
+                        height: 24px;
+                        background: #10b981;
+                        color: white;
+                        border-radius: 50%;
+                        text-decoration: none;
+                        font-size: 0.8rem;
+                        margin-left: 8px;
+                    }
+
                     .details-grid {
                         grid-template-columns: 1fr;
                     }

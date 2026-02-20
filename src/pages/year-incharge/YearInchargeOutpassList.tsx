@@ -48,7 +48,7 @@ const YearInchargeOutpassList: React.FC = () => {
             }
 
             try {
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}/incharge/outpass/list`, {
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}/incharge/outpass/list/all`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
@@ -158,10 +158,15 @@ const YearInchargeOutpassList: React.FC = () => {
                                         <td data-label="Residence">
                                             <div className="residence-info">
                                                 <span className="residence-type">{outpass.studentid?.residencetype}</span>
-                                                {outpass.studentid?.residencetype !== 'dayscholar' && (
+                                                {outpass.studentid?.residencetype?.toLowerCase().replace(/\s/g, '') === 'dayscholar' ? (
                                                     <>
                                                         <span className="text-xs">Bus: {outpass.studentid?.busno || 'N/A'}</span>
                                                         <span className="text-xs">Boarding: {outpass.studentid?.boardingpoint || 'N/A'}</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <span className="text-xs">Hostel: {outpass.studentid?.hostelname || 'N/A'}</span>
+                                                        <span className="text-xs">Room: {outpass.studentid?.hostelroomno || 'N/A'}</span>
                                                     </>
                                                 )}
                                             </div>
@@ -174,7 +179,7 @@ const YearInchargeOutpassList: React.FC = () => {
                                                 <span className={`status-badge ${getStatusColor(outpass.yearinchargeapprovalstatus)}`}>
                                                     Incharge: {outpass.yearinchargeapprovalstatus}
                                                 </span>
-                                                {outpass.studentid?.residencetype?.toLowerCase().replace(/\s/g, '') !== 'dayscholar' && (
+                                                {outpass.studentid?.residencetype?.toLowerCase().replace(/\s/g, '') !== 'dayscholar' && outpass.yearinchargeapprovalstatus !== 'rejected' && (
                                                     <span className={`status-badge ${getStatusColor(outpass.wardenapprovalstatus)}`}>
                                                         Warden: {outpass.wardenapprovalstatus}
                                                     </span>
@@ -242,7 +247,7 @@ const YearInchargeOutpassList: React.FC = () => {
                                         <span className={`status-badge-mobile ${getStatusColor(outpass.yearinchargeapprovalstatus)}`}>
                                             Incharge: {outpass.yearinchargeapprovalstatus}
                                         </span>
-                                        {outpass.studentid?.residencetype?.toLowerCase().replace(/\s/g, '') !== 'dayscholar' && (
+                                        {outpass.studentid?.residencetype?.toLowerCase().replace(/\s/g, '') !== 'dayscholar' && outpass.yearinchargeapprovalstatus !== 'rejected' && (
                                             <span className={`status-badge-mobile ${getStatusColor(outpass.wardenapprovalstatus)}`}>
                                                 Warden: {outpass.wardenapprovalstatus}
                                             </span>

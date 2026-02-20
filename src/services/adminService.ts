@@ -25,6 +25,8 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
+let getProfilePromise: Promise<AdminProfile> | null = null;
+
 export const adminService = {
     // Auth
     login: async (credentials: any) => {
@@ -33,12 +35,35 @@ export const adminService = {
     },
 
     // Profile
+    // Profile
     getProfile: async () => {
-        const response = await api.get<{ message: string, admin: AdminProfile }>('/admin/profile');
-        return response.data.admin;
+        if (!getProfilePromise) {
+            getProfilePromise = api.get<{ message: string, admin: AdminProfile }>('/admin/profile')
+                .then(response => response.data.admin)
+                .finally(() => {
+                    // Reset promise after a short delay or immediately?
+                    // If we reset immediately, concurrent calls get the promise.
+                    // Subsequent calls (e.g. refresh button) will create a new one.
+                    getProfilePromise = null;
+                });
+        }
+        return getProfilePromise;
     },
     updateProfile: async (data: any) => {
-        const response = await api.put('/admin/profile/update', data);
+        // Force JSON for stability if backend crashes on partial FormData/multipart
+        // Convert any FormData back to object if necessary, or assume caller provides object now
+        let payload = data;
+        if (data instanceof FormData) {
+            payload = {};
+            data.forEach((value, key) => {
+                payload[key] = value;
+            });
+        }
+        const response = await api.put('/admin/profile/update', payload);
+        return response.data;
+    },
+    changePassword: async (email: string, newPassword: string) => {
+        const response = await api.post('/admin/forgot/password', { email, newPassword });
         return response.data;
     },
 

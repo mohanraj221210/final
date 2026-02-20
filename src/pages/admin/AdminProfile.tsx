@@ -1,5 +1,5 @@
+import React, { useEffect, useState, useRef } from 'react';
 
-import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from './AdminLayout';
 import { adminService } from '../../services/adminService';
@@ -7,13 +7,15 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
 
+
+
 const AdminProfile: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [admin, setAdmin] = useState<any>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const navigate = useNavigate();
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
 
     // Form state for editing
     const [formData, setFormData] = useState<any>({
@@ -25,13 +27,14 @@ const AdminProfile: React.FC = () => {
         photo: ''
     });
 
-
+    const fetchedRef = useRef(false);
 
     const fetchAdminProfile = async () => {
         try {
             const data = await adminService.getProfile();
             setAdmin(data);
             setFormData(data); // Populate form
+            toast.success("Profile fetched successfully");
         } catch (error) {
             console.error("Error fetching admin profile:", error);
             toast.error("Failed to fetch profile data");
@@ -41,7 +44,10 @@ const AdminProfile: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchAdminProfile();
+        if (!fetchedRef.current) {
+            fetchedRef.current = true;
+            fetchAdminProfile();
+        }
     }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -52,38 +58,27 @@ const AdminProfile: React.FC = () => {
         }));
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            if (file.size > 200 * 1024) { // 200KB check
-                toast.error("Image size must be less than 200KB");
-                return;
-            }
-            setSelectedFile(file);
-            // Create a temporary preview URL
-            setFormData((prev: any) => ({
-                ...prev,
-                photo: URL.createObjectURL(file)
-            }));
-        }
-    };
+
 
     const handleSave = async () => {
         setIsEditing(false);
         const loadingToast = toast.loading("Updating profile...");
 
         try {
-            // Create FormData to handle file upload
-            const data = new FormData();
-            data.append('name', formData.name);
-            data.append('email', formData.email);
-            data.append('phone', formData.phone);
+            const payload = new FormData();
 
-            if (selectedFile) {
-                data.append('photo', selectedFile);
-            }
+            // Append all fields from formData EXCEPT photo
+            Object.keys(formData).forEach(key => {
+                if (key === 'photo') return; // Skip photo
+                const value = formData[key];
+                if (value !== null && value !== undefined) {
+                    payload.append(key, value.toString());
+                }
+            });
 
-            await adminService.updateProfile(data);
+            // adminService.updateProfile handles the API call
+            // axios automatically sets Content-Type to multipart/form-data when data is FormData
+            await adminService.updateProfile(payload);
 
             toast.update(loadingToast, { render: "Profile updated successfully!", type: "success", isLoading: false, autoClose: 3000 });
             await fetchAdminProfile();
@@ -96,8 +91,7 @@ const AdminProfile: React.FC = () => {
 
     const handlePasswordUpdate = async (password: string) => {
         try {
-            // Sending JSON for password update
-            await adminService.updateProfile({ password });
+            await adminService.changePassword(admin.email, password);
             toast.success("Password updated successfully");
         } catch (error) {
             toast.error("Failed to update password");
@@ -180,20 +174,7 @@ const AdminProfile: React.FC = () => {
                             } : {}}
                         ></div>
                         <div className="avatar-wrapper" style={{ position: 'relative' }}>
-                            {isEditing && (
-                                <div className="avatar-edit-overlay">
-                                    <label htmlFor="photo-upload" className="upload-label">
-                                        📷
-                                    </label>
-                                    <input
-                                        id="photo-upload"
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleFileChange}
-                                        style={{ display: 'none' }}
-                                    />
-                                </div>
-                            )}
+
                             {/* Initials Avatar or Image */}
                             {formData.photo || admin.photo ? (
                                 <img
@@ -424,32 +405,7 @@ const AdminProfile: React.FC = () => {
                 }
                 .hidden { display: none; }
                 
-                .avatar-edit-overlay {
-                    position: absolute;
-                    bottom: 0;
-                    right: 0;
-                    background: #3b82f6;
-                    border-radius: 50%;
-                    width: 32px;
-                    height: 32px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    z-index: 10;
-                    border: 2px solid white;
-                }
-                
-                .upload-label {
-                    cursor: pointer;
-                    font-size: 1.2rem;
-                    line-height: 1;
-                    display: flex; /* Ensure the emoji is centered */
-                    align-items: center;
-                    justify-content: center;
-                    width: 100%;
-                    height: 100%;
-                }
+
             `}</style>
             <ChangePasswordModal
                 isOpen={isPasswordModalOpen}
@@ -457,6 +413,7 @@ const AdminProfile: React.FC = () => {
                 onSubmit={handlePasswordUpdate}
                 userEmail={admin.email}
             />
+
         </AdminLayout>
     );
 };
