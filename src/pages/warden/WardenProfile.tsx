@@ -35,6 +35,7 @@ const WardenProfile: React.FC = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [imageRefreshKey, setImageRefreshKey] = useState(Date.now());
 
   // Calculate completion percentage
   const calculateCompletion = (wardenData: Warden) => {
@@ -185,6 +186,7 @@ const WardenProfile: React.FC = () => {
         fetchProfile(); // Refresh data from server
         setPreviewUrl(null); // Clear preview 
         setSelectedPhoto(null);
+        setImageRefreshKey(Date.now());
       }
     } catch (err) {
       toast.error("Failed to update profile");
@@ -238,6 +240,7 @@ const WardenProfile: React.FC = () => {
                 <div className="avatar-container">
                   {previewUrl || (warden.photo && warden.photo.trim() !== '') ? (
                     <img
+                      key={`${previewUrl || warden.photo}-${imageRefreshKey}`}
                       src={
                         previewUrl ||
                         (warden.photo
@@ -245,7 +248,7 @@ const WardenProfile: React.FC = () => {
                             warden.photo.startsWith("blob:") ||
                             warden.photo.startsWith("http")
                             ? warden.photo
-                            : `${import.meta.env.VITE_CDN_URL}${warden.photo}`
+                            : `${import.meta.env.VITE_CDN_URL}${warden.photo}?t=${imageRefreshKey}`
                           : "")
                       }
                       alt="Profile"
