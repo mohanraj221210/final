@@ -10,11 +10,11 @@ import imageCompression from 'browser-image-compression';
 const Profile: React.FC = () => {
     const [user, setUser] = useState<User>({
         name: '',
-        registerNumber: '',
         staffid: {
             id: '',
             name: '',
         },
+        registerNumber: '',
         department: '',
         semester: 0,
         year: '',
@@ -38,6 +38,8 @@ const Profile: React.FC = () => {
     const navigate = useNavigate();
     const [completionPercentage, setCompletionPercentage] = useState(0);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [showCropper, setShowCropper] = useState(false);
+    const [tempImage, setTempImage] = useState<string | null>(null);
 
     const calculateCompletion = (userData: User) => {
         const commonFields = [
@@ -104,9 +106,6 @@ const Profile: React.FC = () => {
         const { name, value } = e.target;
         setUser(prev => ({ ...prev, [name]: value }));
     };
-
-    const [showCropper, setShowCropper] = useState(false);
-    const [tempImage, setTempImage] = useState<string | null>(null);
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -549,7 +548,7 @@ const Profile: React.FC = () => {
                                         value={user.cgpa || ''}
                                         readOnly
                                         disabled={true}
-                                        className="input blurred-input"
+                                        className="input"
                                         step="0.01"
                                         min="0"
                                         max="10"
@@ -564,7 +563,7 @@ const Profile: React.FC = () => {
                                         value={user.arrears}
                                         readOnly
                                         disabled={true}
-                                        className="input blurred-input"
+                                        className="input"
                                         min="0"
                                     />
                                 </div>
@@ -873,16 +872,6 @@ const Profile: React.FC = () => {
                 .content-wrapper-custom {
                     margin-top: 70px;
                     padding: 0;
-                }
-
-                .blurred-input {
-                    filter: blur(0.7px);
-                    transition: filter 0.3s ease;
-                    cursor: pointer;
-                }
-                .blurred-input:hover, .blurred-input:focus {
-                    filter: blur(0);
-                }
                 }
 
                 .profile-layout {

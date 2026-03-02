@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import WardenNav from "../../components/WardenNav";
-import LoadingSpinner from "../../components/LoadingSpinner";
 
 interface Student {
   _id?: string;
@@ -28,7 +27,6 @@ interface Student {
 
 const PendingOutpass: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const itemsPerPage = 8;
   const navigate = useNavigate();
@@ -73,7 +71,6 @@ const PendingOutpass: React.FC = () => {
     } catch (error) {
       console.error("Failed to fetch data", error);
     } finally {
-      setLoading(false);
     }
   };
 
@@ -87,13 +84,7 @@ const PendingOutpass: React.FC = () => {
         <h1>Pending Outpass Students</h1>
 
         <div className="student-list">
-          {loading ? (
-            <LoadingSpinner />
-          ) : students.length === 0 ? (
-            <div className="no-data-message" style={{ textAlign: "center", padding: "40px", color: "#64748b" }}>
-              No pending outpasses
-            </div>
-          ) : (
+          {(
             students.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((s) => (
               <div
                 key={s._id || s.id}

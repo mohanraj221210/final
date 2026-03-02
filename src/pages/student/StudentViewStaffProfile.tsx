@@ -97,12 +97,7 @@ const StudentViewStaffProfile: React.FC = () => {
                             >
                                 Staffs
                             </button>
-                            {/* <button
-                                className="nav-item-custom"
-                                onClick={() => navigate('/student-notice')}
-                            >
-                                Notices
-                            </button> */}
+
                             <button
                                 className="nav-item-custom"
                                 onClick={() => navigate('/outpass')}
@@ -174,12 +169,6 @@ const StudentViewStaffProfile: React.FC = () => {
                             onClick={() => navigate('/staffs')}
                         >
                             Staffs
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/student-notice')}
-                        >
-                            Notices
                         </button>
                         <button
                             className="nav-item-custom"

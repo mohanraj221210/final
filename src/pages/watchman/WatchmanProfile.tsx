@@ -185,7 +185,7 @@ const WatchmanProfile: React.FC = () => {
                             <div className="profile-header">
                                 <div className="avatar-container">
                                     <img
-                                        src={previewUrl || watchman.photo || watchmanProfile}
+                                        src={previewUrl || `${import.meta.env.VITE_CDN_URL}${watchman.photo}` || watchmanProfile}
                                         alt="Profile"
                                         className="profile-avatar"
                                     />
