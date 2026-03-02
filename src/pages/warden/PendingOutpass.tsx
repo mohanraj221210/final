@@ -84,13 +84,7 @@ const PendingOutpass: React.FC = () => {
         <h1>Pending Outpass Students</h1>
 
         <div className="student-list">
-          {loading ? (
-            <LoadingSpinner />
-          ) : students.length === 0 ? (
-            <div className="no-data-message" style={{ textAlign: "center", padding: "40px", color: "#64748b" }}>
-              No pending outpasses
-            </div>
-          ) : (
+          {(
             students.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((s) => (
               <div
                 key={s._id || s.id}

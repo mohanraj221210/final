@@ -577,7 +577,7 @@ const PassApproval: React.FC = () => {
                                                         <div key={roommate._id} className="roommate-card">
                                                             <div className="roommate-avatar">
                                                                 <img
-                                                                    src={roommate.photo || `https://ui-avatars.com/api/?name=${roommate.name}&background=random`}
+                                                                    src={`${import.meta.env.VITE_CDN_URL}${roommate.photo}` || `https://ui-avatars.com/api/?name=${roommate.name}&background=random`}
                                                                     alt={roommate.name}
                                                                     style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
                                                                 />
