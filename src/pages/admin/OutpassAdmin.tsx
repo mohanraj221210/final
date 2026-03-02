@@ -69,7 +69,7 @@ const OutpassAdmin: React.FC = () => {
         try {
             const data = await adminService.getAllOutpasses();
             // @ts-ignore
-            const list = data.outpasses || data.data || [];
+            const list = data.outpasses || data.filterOutpass || data.data || [];
             if (Array.isArray(list)) {
                 setOutpasses(list);
             } else {

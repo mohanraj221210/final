@@ -21,6 +21,9 @@ interface Outpass {
     staffapprovalstatus: string;
     wardenapprovalstatus: string;
     yearinchargeapprovalstatus: string;
+    proof?: string;
+    document?: string;
+    file?: string;
 }
 
 const YearInchargePendingOutpass: React.FC = () => {
@@ -50,7 +53,7 @@ const YearInchargePendingOutpass: React.FC = () => {
             if (res.status === 200) {
                 // Filter: staff approved AND incharge pending (Warden approval not required as per user response)
                 console.log("Full Outpass List Response:", res.data); // Debugging
-                const list = res.data.outpasses || res.data.outpasslist || [];
+                const list = res.data.outpasses || res.data.outpasslist || res.data.filterOutpass || [];
                 const filtered = list.filter((o: any) =>
                     String(o.staffapprovalstatus || '').toLowerCase() === 'approved' &&
                     String(o.yearinchargeapprovalstatus || '').toLowerCase() === 'pending'
@@ -118,6 +121,28 @@ const YearInchargePendingOutpass: React.FC = () => {
                                         <span className="status-dot">●</span>
                                         Pending
                                     </span>
+                                    {(item.proof || item.document || item.file) && (
+                                        <button
+                                            className="view-doc-btn-list"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                const url = (item.proof || item.document || item.file)!;
+                                                window.open(`${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${url.replace(/^\//, '')}`, '_blank');
+                                            }}
+                                            style={{
+                                                padding: '8px 16px',
+                                                background: '#eff6ff',
+                                                border: '1px solid #3b82f6',
+                                                borderRadius: '8px',
+                                                color: '#3b82f6',
+                                                fontSize: '0.85rem',
+                                                fontWeight: '600',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            📄 View Doc
+                                        </button>
+                                    )}
                                     <span className="view-arrow">View →</span>
                                 </div>
                             </div>

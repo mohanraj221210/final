@@ -228,8 +228,8 @@ export const adminService = {
         return response.data;
     },
     getOutpassStats: async () => {
-        const response = await api.get<{ message: string, outpasses: any[] }>('/admin/outpass/list');
-        const outpasses = response.data.outpasses || [];
+        const response = await api.get<{ message: string, outpasses: any[], filterOutpass?: any[] }>('/admin/outpass/list');
+        const outpasses = response.data.outpasses || response.data.filterOutpass || [];
 
         // Helper to get type safely
         const getType = (o: any) => (o.outpassType || o.outpasstype || o.type || '').toLowerCase().trim();

@@ -100,7 +100,7 @@ const PassApproval: React.FC = () => {
             });
 
             if (response.status === 200) {
-                const data = response.data.outpass;
+                const data = response.data.outpass || (response.data.filterOutpass && response.data.filterOutpass[0]) || {};
                 const roomMatesData = response.data.roomMates || [];
                 const studentDetails = data.studentid || {};
 
@@ -160,7 +160,8 @@ const PassApproval: React.FC = () => {
                 });
 
                 if (response.status === 200) {
-                    const mappedStudents = (response.data.outpasses || [])
+                    const outpassList = response.data.outpasses || response.data.filterOutpass || [];
+                    const mappedStudents = outpassList
                         .map((item: any) => {
                             const studentDetails = item.studentid || {};
                             return {
@@ -478,7 +479,7 @@ const PassApproval: React.FC = () => {
                                             </div>
                                             <div className="profile-field">
                                                 <label>MOBILE NUMBER</label>
-                                                <div className="field-value">{selectedStudent.mobile}</div>
+                                                <div className="field-value" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>{selectedStudent.mobile}{selectedStudent.mobile && <a href={"tel:" + selectedStudent.mobile} title="Call Student" className="dial-btn" style={{ background: "#10b981", color: "white", borderRadius: "50%", width: "24px", height: "24px", display: "inline-flex", alignItems: "center", justifyContent: "center", textDecoration: "none", fontSize: "0.8rem" }}>📞</a>}</div>
                                             </div>
                                         </div>
                                     </div>
@@ -534,7 +535,7 @@ const PassApproval: React.FC = () => {
                                     <div className="info-grid">
                                         <div className="info-field">
                                             <label>PARENT CONTACT</label>
-                                            <div className="field-value">{selectedStudent.parentContact}</div>
+                                            <div className="field-value" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>{selectedStudent.parentContact}{selectedStudent.parentContact && <a href={"tel:" + selectedStudent.parentContact} title="Call Parent" className="dial-btn" style={{ background: "#10b981", color: "white", borderRadius: "50%", width: "24px", height: "24px", display: "inline-flex", alignItems: "center", justifyContent: "center", textDecoration: "none", fontSize: "0.8rem" }}>📞</a>}</div>
                                         </div>
                                     </div>
                                 </div>

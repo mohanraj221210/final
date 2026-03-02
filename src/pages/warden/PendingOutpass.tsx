@@ -21,6 +21,9 @@ interface Student {
     year?: string;
   };
   outpasstype?: string;
+  proof?: string;
+  document?: string;
+  file?: string;
 }
 
 const PendingOutpass: React.FC = () => {
@@ -44,7 +47,7 @@ const PendingOutpass: React.FC = () => {
         }
       );
 
-      const allData = res.data.outpasses || res.data.data || res.data.students || [];
+      const allData = res.data.outpasses || res.data.filterOutpass || res.data.data || res.data.students || [];
       const pendingData = allData.filter((item: any) => {
         const ws = item.wardenapprovalstatus?.toLowerCase() || "";
         return ws !== 'Approved' && ws !== 'Rejected' && ws !== 'Declined';
@@ -116,6 +119,28 @@ const PendingOutpass: React.FC = () => {
                     <span className="status-dot">●</span>
                     Pending
                   </span>
+                  {(s.proof || s.document || s.file || (s as any).outpassdoc) && (
+                    <button
+                      className="view-doc-btn-list"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const url = (s.proof || s.document || s.file || (s as any).outpassdoc)!;
+                        window.open(`${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${url.replace(/^\//, '')}`, '_blank');
+                      }}
+                      style={{
+                        padding: '8px 16px',
+                        background: '#eff6ff',
+                        border: '1px solid #3b82f6',
+                        borderRadius: '8px',
+                        color: '#3b82f6',
+                        fontSize: '0.85rem',
+                        fontWeight: '600',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      📄 View Doc
+                    </button>
+                  )}
                   <span className="view-arrow">View →</span>
                 </div>
               </div>
@@ -143,10 +168,31 @@ const PendingOutpass: React.FC = () => {
                   )}
                 </p>
 
-                <div className="card-footer">
+                <div className="card-footer" style={{ gap: '8px', flexWrap: 'wrap' }}>
                   <span className="status-pill status-pending">
                     • Pending
                   </span>
+                  {(s.proof || s.document || s.file || (s as any).outpassdoc) && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const url = (s.proof || s.document || s.file || (s as any).outpassdoc)!;
+                        window.open(`${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${url.replace(/^\//, '')}`, '_blank');
+                      }}
+                      style={{
+                        padding: '4px 8px',
+                        background: '#eff6ff',
+                        border: '1px solid #3b82f6',
+                        borderRadius: '6px',
+                        color: '#3b82f6',
+                        fontSize: '0.75rem',
+                        fontWeight: '600',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      📄 Doc
+                    </button>
+                  )}
                   <button
                     className="card-view-link"
                     onClick={() => navigate(`/warden/student/${s._id || s.id}`)}
