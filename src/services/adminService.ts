@@ -81,19 +81,6 @@ export const adminService = {
         return response.data.student;
     },
     updateStudent: async (id: string, data: any) => {
-        // API didn't explicitly specify update student endpoint in the list but usually it exists or similar. 
-        // Wait, the prompt lists "Student Add", "Student List", "Student Detail", "Student Delete". 
-        // It DOES NOT explicitly list "Student Update" in the "Student Add" section, but implies editing in the text description.
-        // Checking Staff Portal "Staff Updated Students" - PUT staff/update/students
-        // But for Admin editing student? 
-        // The user said: "in that page the admin also able to edit the student details"
-        // I will assume there IS an update endpoint or I might need to use the staff one?
-        // Actually, looking at `StudentDetails.tsx` (Staff), it uses `POST /staff/student/update/${id}`.
-        // It's likely `PUT /admin/student/update/${id}` or similar exists or I should use the staff one?
-        // The prompt lists "Admin Profile Update", "Staff Updated Students", "Bus Update Detail".
-        // It DOES NOT list "Student Update" for Admin. 
-        // However, standard REST practices imply it. I will try `PUT /admin/student/update/${id}` as a guess or look for parallels.
-        // Actually, let's assume `PUT /admin/student/update/:id` exists since user asked for it.
         const response = await api.put(`/admin/student/update/${id}`, data);
         return response.data;
     },
@@ -117,6 +104,10 @@ export const adminService = {
     },
     updateStaffStudents: async (data: { staffid: string, newStaffId: string }) => {
         const response = await api.put('/staff/update/students', data);
+        return response.data;
+    },
+    resetStudentPassword: async (id: string, newPassword: string) => {
+        const response = await api.put(`/admin/student/forgotpassword/${id}`, { newPassword });
         return response.data;
     },
     deleteStaff: async (id: string) => {
