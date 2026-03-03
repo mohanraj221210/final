@@ -28,8 +28,13 @@ interface Student {
 const PendingOutpass: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [page, setPage] = useState(1);
+  const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'yesterday' | 'this_week' | 'this_month'>('all');
+  const [showDocumentModal, setShowDocumentModal] = useState(false);
+  const [documentUrl, setDocumentUrl] = useState<string | null>(null);
+  const [documentType, setDocumentType] = useState<'image' | 'pdf'>('image');
   const itemsPerPage = 8;
   const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchStudents();
@@ -74,6 +79,51 @@ const PendingOutpass: React.FC = () => {
     }
   };
 
+  const handleViewDocument = (url: string | null) => {
+    if (!url) return;
+    const fullUrl = `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${url.replace(/^\//, '')}`;
+    setDocumentUrl(fullUrl);
+    if (url.toLowerCase().endsWith('.pdf')) {
+      setDocumentType('pdf');
+    } else {
+      setDocumentType('image');
+    }
+    setShowDocumentModal(true);
+  };
+
+  const filteredStudents = students.filter(s => {
+    let matchesDate = true;
+    const appliedDate = new Date(s.createdAt || s.outDate || Date.now());
+    if (dateFilter !== 'all') {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (dateFilter === 'today') matchesDate = appliedDate >= today;
+      else if (dateFilter === 'yesterday') {
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        matchesDate = appliedDate >= yesterday && appliedDate < today;
+      }
+      else if (dateFilter === 'this_week') {
+        const thisWeek = new Date(today);
+        thisWeek.setDate(today.getDate() - today.getDay());
+        matchesDate = appliedDate >= thisWeek;
+      }
+      else if (dateFilter === 'this_month') {
+        const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        matchesDate = appliedDate >= thisMonth;
+      }
+    }
+
+    const dateStr = appliedDate ? appliedDate.toLocaleDateString() : '';
+    const nameMatch = s.studentName?.toLowerCase().includes(searchTerm.toLowerCase()) || s.studentid?.name?.toLowerCase().includes(searchTerm.toLowerCase()) || '';
+    const regMatch = s.register_number?.toLowerCase().includes(searchTerm.toLowerCase()) || s.studentid?.registerNumber?.toLowerCase().includes(searchTerm.toLowerCase()) || '';
+
+    const matchesSearch = searchTerm === "" || nameMatch || regMatch || dateStr.includes(searchTerm.toLowerCase());
+
+    return matchesDate && matchesSearch;
+  });
+
   return (
     <div className="page-container">
       <WardenNav />
@@ -81,11 +131,66 @@ const PendingOutpass: React.FC = () => {
         <button className="back-btn" onClick={() => navigate("/warden-dashboard")}>
           ← Back
         </button>
-        <h1>Pending Outpass Students</h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+          <h1 style={{ margin: 0 }}>Pending Outpass Students</h1>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
+              <span className="search-icon" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }}>🔍</span>
+              <input
+                type="text"
+                placeholder="Search by name, reg no, date..."
+                value={searchTerm}
+                onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
+                style={{
+                  width: '100%',
+                  padding: '10px 16px 10px 40px',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                }}
+              />
+            </div>
+            <div style={{ position: 'relative', display: 'inline-block' }}>
+              <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '14px', pointerEvents: 'none' }}>
+                📅
+              </span>
+              <select
+                className="date-filter-select"
+                value={dateFilter}
+                onChange={(e) => { setDateFilter(e.target.value as any); setPage(1); }}
+                style={{
+                  padding: '10px 32px 10px 36px',
+                  borderRadius: '12px',
+                  border: '1px solid #cbd5e1',
+                  background: 'white',
+                  color: '#1e293b',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  outline: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                  appearance: 'none',
+                  minWidth: '150px'
+                }}
+              >
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="this_week">This Week</option>
+                <option value="this_month">This Month</option>
+              </select>
+              <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '10px', pointerEvents: 'none' }}>
+                ▼
+              </span>
+            </div>
+          </div>
+        </div>
 
         <div className="student-list">
           {(
-            students.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((s) => (
+            filteredStudents.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((s) => (
               <div
                 key={s._id || s.id}
                 className="student-card"
@@ -116,7 +221,7 @@ const PendingOutpass: React.FC = () => {
                       onClick={(e) => {
                         e.stopPropagation();
                         const url = (s.proof || s.document || s.file || (s as any).outpassdoc)!;
-                        window.open(`${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${url.replace(/^\//, '')}`, '_blank');
+                        handleViewDocument(url);
                       }}
                       style={{
                         padding: '8px 16px',
@@ -139,9 +244,9 @@ const PendingOutpass: React.FC = () => {
           )}
         </div>
 
-        {students.length > 0 && (
+        {filteredStudents.length > 0 && (
           <div className="mobile-cards-view">
-            {students.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((s) => (
+            {filteredStudents.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((s) => (
               <div className="mobile-card" key={s._id || s.id}>
                 <div className="card-badge">
                   {s.studentid?.registerNumber || s.register_number || s.department || "N/A"}
@@ -168,7 +273,7 @@ const PendingOutpass: React.FC = () => {
                       onClick={(e) => {
                         e.stopPropagation();
                         const url = (s.proof || s.document || s.file || (s as any).outpassdoc)!;
-                        window.open(`${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${url.replace(/^\//, '')}`, '_blank');
+                        handleViewDocument(url);
                       }}
                       style={{
                         padding: '4px 8px',
@@ -196,7 +301,7 @@ const PendingOutpass: React.FC = () => {
           </div>
         )}
 
-        {students.length === 0 && (
+        {filteredStudents.length === 0 && (
           <div className="mobile-empty-state">
             <div className="empty-content">
               <span className="empty-icon">✨</span>
@@ -206,7 +311,7 @@ const PendingOutpass: React.FC = () => {
         )}
 
         {/* Pagination logic ... */}
-        {students.length > 0 && (
+        {filteredStudents.length > 0 && (
           <div className="pagination">
             <button
               disabled={page === 1}
@@ -216,15 +321,64 @@ const PendingOutpass: React.FC = () => {
             </button>
 
             <span>
-              Page {page} of {Math.ceil(students.length / itemsPerPage)}
+              Page {page} of {Math.ceil(filteredStudents.length / itemsPerPage)}
             </span>
 
             <button
-              disabled={page === Math.ceil(students.length / itemsPerPage)}
+              disabled={page === Math.ceil(filteredStudents.length / itemsPerPage)}
               onClick={() => setPage((p) => p + 1)}
             >
               Next
             </button>
+          </div>
+        )}
+
+        {/* Document Modal */}
+        {showDocumentModal && documentUrl && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setShowDocumentModal(false)}>
+            <div className="bg-white rounded-lg p-4 w-full max-w-4xl h-[90vh] flex flex-col" style={{ background: 'white', padding: '20px', borderRadius: '12px', width: '90%', maxWidth: '1000px', height: '90vh', display: 'flex', flexDirection: 'column', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+              <div className="flex justify-between items-center mb-4" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>Supporting Document</h3>
+                <button
+                  onClick={() => setShowDocumentModal(false)}
+                  style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#64748b' }}
+                >
+                  ✕
+                </button>
+              </div>
+              <div style={{ flex: 1, overflow: 'hidden', background: '#f1f5f9', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {documentType === 'pdf' ? (
+                  <iframe
+                    src={documentUrl}
+                    style={{ width: '100%', height: '100%', border: 'none' }}
+                    title="Document Viewer"
+                  />
+                ) : (
+                  <img
+                    src={documentUrl}
+                    alt="Proof"
+                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                  />
+                )}
+              </div>
+              <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+                <a
+                  href={documentUrl}
+                  download={`proof_document.${documentType === 'pdf' ? 'pdf' : 'jpg'}`}
+                  style={{
+                    padding: '8px 16px',
+                    background: '#3b82f6',
+                    color: 'white',
+                    borderRadius: '6px',
+                    textDecoration: 'none',
+                    fontSize: '0.9rem',
+                    fontWeight: 500
+                  }}
+                >
+                  Download File
+                </a>
+              </div>
+            </div>
           </div>
         )}
 

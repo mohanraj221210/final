@@ -62,6 +62,7 @@ const PassApproval: React.FC = () => {
     const [filterStatus, setFilterStatus] = useState<'all' | ApprovalStatus>(
         (location.state as any)?.filter || 'all'
     );
+    const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'yesterday' | 'this_week' | 'this_month'>('all');
     const [showActionModal, setShowActionModal] = useState(false);
     const [actionType, setActionType] = useState<'approve' | 'reject'>('approve');
     const [actionRemarks, setActionRemarks] = useState('');
@@ -185,7 +186,8 @@ const PassApproval: React.FC = () => {
                                 yearInchargeApproval: item.yearinchargeapprovalstatus || 'pending',
                                 wardenApproval: item.wardenapprovalstatus || 'pending',
                                 outpasstype: item.outpasstype,
-                                residencetype: studentDetails.residencetype || 'dayScholar'
+                                residencetype: studentDetails.residencetype || 'dayScholar',
+                                document: item.proof || item.document || item.file || null
                             };
                         });
 
@@ -210,16 +212,40 @@ const PassApproval: React.FC = () => {
 
     // Filter and search logic
     const filteredStudents = students.filter(student => {
+        const dateStr = student.appliedDate ? new Date(student.appliedDate).toLocaleDateString() : '';
         const matchesSearch =
             student.studentId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            student.studentname.toLowerCase().includes(searchQuery.toLowerCase());
+            student.studentname.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            dateStr.includes(searchQuery.toLowerCase());
 
         // FIX: Filter based purely on Staff Approval status for this page
         const overallStatus = student.staffApproval;
 
         const matchesFilter = filterStatus === 'all' || overallStatus === filterStatus;
 
-        return matchesSearch && matchesFilter;
+        let matchesDate = true;
+        if (dateFilter !== 'all') {
+            const appliedDate = new Date(student.appliedDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (dateFilter === 'today') {
+                matchesDate = appliedDate >= today;
+            } else if (dateFilter === 'yesterday') {
+                const yesterday = new Date(today);
+                yesterday.setDate(yesterday.getDate() - 1);
+                matchesDate = appliedDate >= yesterday && appliedDate < today;
+            } else if (dateFilter === 'this_week') {
+                const thisWeek = new Date(today);
+                thisWeek.setDate(today.getDate() - today.getDay());
+                matchesDate = appliedDate >= thisWeek;
+            } else if (dateFilter === 'this_month') {
+                const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                matchesDate = appliedDate >= thisMonth;
+            }
+        }
+
+        return matchesSearch && matchesFilter && matchesDate;
     }).sort((a, b) => {
         // Priority 1: Emergency First
         const isAEmergency = a.outpasstype?.toLowerCase() === 'emergency';
@@ -362,12 +388,45 @@ const PassApproval: React.FC = () => {
                                 <span className="search-icon">🔍</span>
                                 <input
                                     type="text"
-                                    placeholder="Search by Student ID or Name"
+                                    placeholder="Search by ID, Name, or Date..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                             </div>
-                            <div className="filter-buttons">
+                            <div className="filter-buttons" style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                <div style={{ position: 'relative', display: 'inline-block' }}>
+                                    <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '14px', pointerEvents: 'none' }}>
+                                        📅
+                                    </span>
+                                    <select
+                                        className="date-filter-select"
+                                        value={dateFilter}
+                                        onChange={(e) => setDateFilter(e.target.value as any)}
+                                        style={{
+                                            padding: '10px 32px 10px 36px',
+                                            borderRadius: '12px',
+                                            border: '1px solid #cbd5e1',
+                                            background: 'white',
+                                            color: '#1e293b',
+                                            fontSize: '14px',
+                                            fontWeight: '600',
+                                            outline: 'none',
+                                            cursor: 'pointer',
+                                            boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                                            appearance: 'none',
+                                            minWidth: '150px'
+                                        }}
+                                    >
+                                        <option value="all">All Time</option>
+                                        <option value="today">Today</option>
+                                        <option value="yesterday">Yesterday</option>
+                                        <option value="this_week">This Week</option>
+                                        <option value="this_month">This Month</option>
+                                    </select>
+                                    <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '10px', pointerEvents: 'none' }}>
+                                        ▼
+                                    </span>
+                                </div>
                                 <button
                                     className={`filter-btn ${filterStatus === 'all' ? 'active' : ''}`}
                                     onClick={() => setFilterStatus('all')}
@@ -426,8 +485,29 @@ const PassApproval: React.FC = () => {
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="student-card-action">
+                                        <div className="student-card-action" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                                             {getStatusBadge(overallStatus as ApprovalStatus)}
+                                            {student.document && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        window.open(`${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${student.document!.replace(/^\//, '')}`, '_blank');
+                                                    }}
+                                                    style={{
+                                                        padding: '6px 12px',
+                                                        background: '#eff6ff',
+                                                        border: '1px solid #3b82f6',
+                                                        borderRadius: '6px',
+                                                        color: '#3b82f6',
+                                                        fontSize: '0.85rem',
+                                                        fontWeight: '600',
+                                                        cursor: 'pointer',
+                                                        whiteSpace: 'nowrap'
+                                                    }}
+                                                >
+                                                    📄 View Doc
+                                                </button>
+                                            )}
                                             <span className="view-arrow">View →</span>
                                         </div>
                                     </div>

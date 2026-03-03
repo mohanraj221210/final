@@ -284,13 +284,38 @@ const OutpassAdmin: React.FC = () => {
                         <option value="Emergency">Emergency</option>
                     </select>
 
-                    <select value={filterTime} onChange={(e) => setFilterTime(e.target.value)} className="filter-select">
-                        <option value="All">All Time</option>
-                        <option value="Today">Today</option>
-                        <option value="Yesterday">Yesterday</option>
-                        <option value="This Week">This Week</option>
-                        <option value="This Month">This Month</option>
-                    </select>
+                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                        <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#6b7280', fontSize: '14px', pointerEvents: 'none' }}>
+                            📅
+                        </span>
+                        <select
+                            value={filterTime}
+                            onChange={(e) => setFilterTime(e.target.value)}
+                            style={{
+                                padding: '10px 32px 10px 36px',
+                                borderRadius: '12px',
+                                border: '1px solid #d1d5db',
+                                background: 'white',
+                                color: '#374151',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                outline: 'none',
+                                cursor: 'pointer',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                                appearance: 'none',
+                                minWidth: '150px'
+                            }}
+                        >
+                            <option value="All">All Time</option>
+                            <option value="Today">Today</option>
+                            <option value="Yesterday">Yesterday</option>
+                            <option value="This Week">This Week</option>
+                            <option value="This Month">This Month</option>
+                        </select>
+                        <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#6b7280', fontSize: '10px', pointerEvents: 'none' }}>
+                            ▼
+                        </span>
+                    </div>
                 </div>
 
                 <button onClick={handleDownload} className="btn-download">

@@ -233,6 +233,26 @@ const Dashboard: React.FC = () => {
                                             <span className="action-text">Outpass List</span>
                                         </div>
 
+                                        {/* Emergency List */}
+                                        <div
+                                            className={`action-card ${zoomingPath === '/warden/emergency-outpass-list' ? 'zooming' : ''}`}
+                                            onClick={() => isProfileComplete ? handleQuickAction('/warden/emergency-outpass-list') : null}
+                                            style={{ cursor: isProfileComplete ? 'pointer' : 'not-allowed' }}
+                                        >
+                                            <span className="action-icon">🏥</span>
+                                            <span className="action-text">Emergency History</span>
+                                        </div>
+
+                                        {/* Edit Profile */}
+                                        <div
+                                            className={`action-card ${zoomingPath === '/warden-profile' ? 'zooming' : ''}`}
+                                            onClick={() => isProfileComplete ? handleQuickAction('/warden-profile') : null}
+                                            style={{ cursor: isProfileComplete ? 'pointer' : 'not-allowed' }}
+                                        >
+                                            <span className="action-icon">⚙️</span>
+                                            <span className="action-text">Edit Profile</span>
+                                        </div>
+
                                     </div>
 
                                 </section>
