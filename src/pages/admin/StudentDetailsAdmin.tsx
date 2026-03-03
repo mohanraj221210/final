@@ -79,7 +79,7 @@ const StudentDetailsAdmin: React.FC = () => {
     const handlePasswordUpdate = async (password: string) => {
         if (!student) return;
         try {
-            await adminService.updateStudent(student._id, { ...student, password });
+            await adminService.resetStudentPassword(student._id, password);
             toast.success("Password updated successfully");
         } catch (error) {
             toast.error("Failed to update password");
