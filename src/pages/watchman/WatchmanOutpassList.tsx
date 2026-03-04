@@ -10,6 +10,7 @@ const WatchmanOutpassList: React.FC = () => {
   const [outpasses, setOutpasses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateFilter, setDateFilter] = useState<'All' | 'Today' | 'Yesterday' | 'This Week' | 'This Month'>('All');
+  const [searchTerm, setSearchTerm] = useState("");
 
   const itemsPerPage = 8;
 
@@ -68,32 +69,43 @@ const WatchmanOutpassList: React.FC = () => {
 
   // Filter logic
   const filteredOutpasses = outpasses.filter((item) => {
-    if (dateFilter === 'All') return true;
-
     const itemDate = new Date(item.createdAt || item.outDate);
+    const dateStr = itemDate.toLocaleDateString();
+
+    // Evaluate searching
+    const studentName = item.studentid?.name || '';
+    const registerNo = item.studentid?.registerNumber || '';
+
+    const matchesSearch = searchTerm === "" ||
+      studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      registerNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      dateStr.includes(searchTerm.toLowerCase());
+
+    let matchesDate = true;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     if (dateFilter === 'Today') {
-      return itemDate >= today;
+      matchesDate = itemDate >= today;
     } else if (dateFilter === 'Yesterday') {
       const yesterday = new Date(today);
       yesterday.setDate(yesterday.getDate() - 1);
       const endYesterday = new Date(yesterday);
       endYesterday.setHours(23, 59, 59, 999);
-      return itemDate >= yesterday && itemDate <= endYesterday;
+      matchesDate = itemDate >= yesterday && itemDate <= endYesterday;
     } else if (dateFilter === 'This Week') {
       const startOfWeek = new Date(today);
       const day = startOfWeek.getDay() || 7;
       if (day !== 1) startOfWeek.setHours(-24 * (day - 1));
       else startOfWeek.setHours(0, 0, 0, 0);
       startOfWeek.setHours(0, 0, 0, 0);
-      return itemDate >= startOfWeek;
+      matchesDate = itemDate >= startOfWeek;
     } else if (dateFilter === 'This Month') {
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      return itemDate >= startOfMonth;
+      matchesDate = itemDate >= startOfMonth;
     }
-    return true;
+
+    return matchesDate && matchesSearch;
   });
 
   const totalPages = Math.ceil(filteredOutpasses.length / itemsPerPage);
@@ -115,7 +127,26 @@ const WatchmanOutpassList: React.FC = () => {
             <h1 style={{ marginTop: "10px", marginBottom: "10px" }}>Watchman Approved Outpass List</h1>
           </div>
 
-          <div className="filter-controls">
+          <div className="filter-controls" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div style={{ position: 'relative', flex: 1, minWidth: '200px', maxWidth: '300px' }}>
+              <span className="search-icon" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }}>🔍</span>
+              <input
+                type="text"
+                placeholder="Search by name, reg no, date..."
+                value={searchTerm}
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                style={{
+                  width: '100%',
+                  padding: '10px 16px 10px 40px',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
             <div className="filter-tabs desktop-only">
               {['All', 'Today', 'Yesterday', 'This Week', 'This Month'].map((filter) => (
                 <button
@@ -128,15 +159,37 @@ const WatchmanOutpassList: React.FC = () => {
               ))}
             </div>
 
-            <select
-              className="filter-dropdown mobile-only"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value as any)}
-            >
-              {['All', 'Today', 'Yesterday', 'This Week', 'This Month'].map((filter) => (
-                <option key={filter} value={filter}>{filter}</option>
-              ))}
-            </select>
+            <div className="mobile-only" style={{ position: 'relative', display: 'inline-block' }}>
+              <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '14px', pointerEvents: 'none' }}>
+                📅
+              </span>
+              <select
+                className="filter-dropdown"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value as any)}
+                style={{
+                  padding: '10px 32px 10px 36px',
+                  borderRadius: '12px',
+                  border: '1px solid #cbd5e1',
+                  background: 'white',
+                  color: '#1e293b',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  outline: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                  appearance: 'none',
+                  width: '100%'
+                }}
+              >
+                {['All', 'Today', 'Yesterday', 'This Week', 'This Month'].map((filter) => (
+                  <option key={filter} value={filter}>{filter}</option>
+                ))}
+              </select>
+              <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '10px', pointerEvents: 'none' }}>
+                ▼
+              </span>
+            </div>
           </div>
         </div>
 

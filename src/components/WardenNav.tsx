@@ -61,6 +61,14 @@ const WardenNav: React.FC = () => {
                         Outpass List
                     </Link>
                     <Link
+                        to="/warden/apply-emergency"
+                        className={`nav-link ${isActive('/warden/apply-emergency') ? 'active' : ''}`}
+                        onClick={closeMenu}
+                        style={{ color: isActive('/warden/apply-emergency') ? 'white' : '#ef4444', fontWeight: 600 }}
+                    >
+                        🚨 Apply Emergency
+                    </Link>
+                    <Link
                         to="/warden-profile"
                         className={`nav-link ${isActive('/warden-profile') ? 'active' : ''}`}
                         onClick={closeMenu}

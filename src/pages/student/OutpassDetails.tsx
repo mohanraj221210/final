@@ -77,7 +77,8 @@ const OutpassDetails: React.FC = () => {
                 }
 
                 if (outpassResponse.status === 200) {
-                    const mappedOutpasses = (outpassResponse.data.outpasses || []).map((item: any) => ({
+                    const outpassList = outpassResponse.data.outpasses || outpassResponse.data.filterOutpass || [];
+                    const mappedOutpasses = outpassList.map((item: any) => ({
                         id: item._id,
                         // Fix: valid renderable string is extracted from studentid object
                         studentId: (typeof item.studentid === 'object' && item.studentid !== null)

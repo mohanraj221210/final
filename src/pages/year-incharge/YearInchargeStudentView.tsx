@@ -32,7 +32,7 @@ const YearInchargeStudentView: React.FC = () => {
                 });
 
                 if (response.status === 200) {
-                    const list = response.data.outpasses || response.data.outpasslist || [];
+                    const list = response.data.outpasses || response.data.outpasslist || response.data.filterOutpass || [];
                     const found = list.find((o: any) => o._id === id);
                     if (found) {
                         setOutpass(found);
@@ -137,7 +137,17 @@ const YearInchargeStudentView: React.FC = () => {
                     <div className="student-card-modern">
                         <div className="card-header-gradient">
                             <div className="avatar-large">
-                                {typeof outpass.studentid?.name === 'string' ? outpass.studentid.name.charAt(0) : 'S'}
+                                {outpass.studentid?.photo ? (
+                                    <img
+                                        src={outpass.studentid.photo.startsWith('http') || outpass.studentid.photo.startsWith('data:')
+                                            ? outpass.studentid.photo
+                                            : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${outpass.studentid.photo.replace(/^\//, '')}`}
+                                        alt="Student"
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                                    />
+                                ) : (
+                                    typeof outpass.studentid?.name === 'string' ? outpass.studentid.name.charAt(0) : 'S'
+                                )}
                             </div>
                             <h3>{typeof outpass.studentid?.name === 'string' ? outpass.studentid.name : 'Unknown Name'}</h3>
                             <span className="badge-reg">{typeof outpass.studentid?.registerNumber === 'string' ? outpass.studentid.registerNumber : 'N/A'}</span>
@@ -178,7 +188,18 @@ const YearInchargeStudentView: React.FC = () => {
                                 <span className="icon">📞</span>
                                 <div>
                                     <label>Contact Number</label>
-                                    <p>{typeof outpass.studentid?.phone === 'string' ? outpass.studentid.phone : 'N/A'}</p>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <p style={{ margin: 0 }}>{typeof outpass.studentid?.phone === 'string' ? outpass.studentid.phone : 'N/A'}</p>
+                                        {typeof outpass.studentid?.phone === 'string' && (
+                                            <a
+                                                href={`tel:${outpass.studentid.phone}`}
+                                                className="dial-btn"
+                                                title="Call Student"
+                                            >
+                                                📞
+                                            </a>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                             <div className="info-row-modern">
