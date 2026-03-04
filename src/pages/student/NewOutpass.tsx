@@ -20,6 +20,26 @@ const Outpass: React.FC = () => {
     const [hasPendingOutpass, setHasPendingOutpass] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+    const now = new Date();
+    const currentHour = now.getHours();
+    const isPortalOpen = currentHour >= 6 && currentHour < 10;
+    const isEmergency = formData.outpasstype === 'Emergency';
+
+    const getMinFromDateTime = () => {
+        const minD = new Date();
+        if (formData.outpasstype !== 'Emergency') {
+            minD.setDate(minD.getDate() + 1);
+            minD.setHours(0, 0, 0, 0);
+        }
+
+        const year = minD.getFullYear();
+        const month = String(minD.getMonth() + 1).padStart(2, '0');
+        const day = String(minD.getDate()).padStart(2, '0');
+        const hours = String(minD.getHours()).padStart(2, '0');
+        const minutes = String(minD.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+
     React.useEffect(() => {
         const checkProfile = async () => {
             try {
@@ -110,6 +130,24 @@ const Outpass: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
+
+        if (!isEmergency && !isPortalOpen) {
+            toast.error("Portal is open from 6:00 AM to 10:00 AM only.");
+            setIsSubmitting(false);
+            return;
+        }
+
+        if (!isEmergency && formData.fromDate) {
+            const selectedDate = new Date(formData.fromDate);
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(0, 0, 0, 0);
+            if (selectedDate < tomorrow) {
+                toast.error("Non-emergency outpass must be applied at least one day in advance.");
+                setIsSubmitting(false);
+                return;
+            }
+        }
 
         try {
             const token = localStorage.getItem('token');
@@ -316,6 +354,7 @@ const Outpass: React.FC = () => {
                                     name="fromDate"
                                     value={formData.fromDate}
                                     onChange={handleChange}
+                                    min={getMinFromDateTime()}
                                     required
                                     className="form-input"
                                 />
@@ -327,6 +366,7 @@ const Outpass: React.FC = () => {
                                     name="toDate"
                                     value={formData.toDate}
                                     onChange={handleChange}
+                                    min={formData.fromDate || getMinFromDateTime()}
                                     required
                                     className="form-input"
                                 />
@@ -374,9 +414,22 @@ const Outpass: React.FC = () => {
                                 ⚠️ You already have a pending outpass application. You must wait for it to be approved or rejected before applying for a new one.
                             </div>
                         )}
+                        {!isEmergency && !isPortalOpen && (
+                            <div style={{
+                                padding: '12px',
+                                backgroundColor: '#f8d7da',
+                                color: '#721c24',
+                                border: '1px solid #f5c6cb',
+                                borderRadius: '8px',
+                                marginBottom: '20px',
+                                fontSize: '0.9rem'
+                            }}>
+                                ⚠️ Portal is open only from 6:00 AM to 10:00 AM. Please apply next day only.
+                            </div>
+                        )}
                         <div className="form-actions">
-                            <button type="submit" className="btn btn-primary submit-btn" disabled={isSubmitting || hasPendingOutpass}>
-                                {isSubmitting ? 'Submitting...' : (hasPendingOutpass ? 'Pending Application Exists' : 'Submit Application')}
+                            <button type="submit" className="btn btn-primary submit-btn" disabled={isSubmitting || hasPendingOutpass || (!isEmergency && !isPortalOpen)}>
+                                {isSubmitting ? 'Submitting...' : (hasPendingOutpass ? 'Pending Application Exists' : (!isEmergency && !isPortalOpen ? 'Portal Closed' : 'Submit Application'))}
                             </button>
                             {/* <button
                                 type="button"
