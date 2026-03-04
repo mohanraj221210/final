@@ -245,6 +245,12 @@ const YearInchargeStudentView: React.FC = () => {
                                 <div className="step-content">
                                     <h4>Staff Approval</h4>
                                     <p>Status: {outpass.staffapprovalstatus}</p>
+                                    {outpass.staffid?.name && (
+                                        <p className="step-person">By: {outpass.staffid.name}</p>
+                                    )}
+                                    {outpass.staffapprovedAt && (
+                                        <p className="step-time">{new Date(outpass.staffapprovedAt).toLocaleDateString()}</p>
+                                    )}
                                 </div>
                             </div>
                             <div className={`status-step ${outpass.yearinchargeapprovalstatus === 'approved' ? 'completed' : outpass.yearinchargeapprovalstatus === 'rejected' ? 'rejected' : 'active'}`}>
@@ -255,6 +261,9 @@ const YearInchargeStudentView: React.FC = () => {
                                 <div className="step-content">
                                     <h4>Year Incharge</h4>
                                     <p>{outpass.yearinchargeapprovalstatus === 'pending' ? 'Pending Decision' : `Status: ${outpass.yearinchargeapprovalstatus}`}</p>
+                                    {outpass.yearinchargeapprovedAt && (
+                                        <p className="step-time">{new Date(outpass.yearinchargeapprovedAt).toLocaleDateString()}</p>
+                                    )}
                                 </div>
                             </div>
                             {/* Check for day scholar (case insensitive, ignoring spaces) */}
@@ -695,6 +704,18 @@ const YearInchargeStudentView: React.FC = () => {
                 .step-content p {
                     font-size: 0.75rem;
                     color: #64748b;
+                }
+
+                .step-person {
+                    font-weight: 600;
+                    color: #1e293b;
+                    margin-top: 4px;
+                }
+
+                .step-time {
+                    font-size: 0.7rem;
+                    color: #94a3b8;
+                    margin-top: 2px;
                 }
 
                 .request-details {
