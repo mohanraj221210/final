@@ -62,6 +62,8 @@ const PassApproval: React.FC = () => {
     const [filterStatus, setFilterStatus] = useState<'all' | ApprovalStatus>(
         (location.state as any)?.filter || 'all'
     );
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
     const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'yesterday' | 'this_week' | 'this_month'>('all');
     const [showActionModal, setShowActionModal] = useState(false);
     const [actionType, setActionType] = useState<'approve' | 'reject'>('approve');
@@ -124,10 +126,10 @@ const PassApproval: React.FC = () => {
                     reason: data.reason,
                     fromDate: data.fromDate,
                     toDate: data.toDate,
-                    staffApproval: data.staffapprovalstatus || 'pending',
+                    staffApproval: data.staff?.status || data.staffapprovalstatus || 'pending',
                     staffApprovedBy: data.staffApprovedBy,
-                    yearInchargeApproval: data.yearinchargeapprovalstatus || 'pending',
-                    wardenApproval: data.wardenapprovalstatus || 'pending',
+                    yearInchargeApproval: data.yearincharge?.status || data.yearinchargeapprovalstatus || 'pending',
+                    wardenApproval: data.warden?.status || data.wardenapprovalstatus || 'pending',
                     lastOutpassFrom: data.lastOutpassFrom,
                     lastOutpassTo: data.lastOutpassTo,
                     lastOutpassReason: data.lastOutpassReason,
@@ -154,14 +156,27 @@ const PassApproval: React.FC = () => {
     useEffect(() => {
         const fetchRequests = async () => {
             try {
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}/staff/outpass/list`, {
+                // Use specific pending endpoint if filtered to pending
+                const endpoint = filterStatus === 'pending'
+                    ? `/staff/pending/outpass/list?page=${currentPage}`
+                    : `/staff/outpass/list?page=${currentPage}`;
+
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}${endpoint}`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
                 });
 
                 if (response.status === 200) {
-                    const outpassList = response.data.outpasses || response.data.filterOutpass || [];
+                    const data = response.data;
+                    const outpassList = data.outpasses || data.filterOutpass || data.data || [];
+                    
+                    if (data.totalPages) {
+                        setTotalPages(data.totalPages);
+                    } else {
+                        setTotalPages(1);
+                    }
+
                     const mappedStudents = outpassList
                         .map((item: any) => {
                             const studentDetails = item.studentid || {};
@@ -182,9 +197,9 @@ const PassApproval: React.FC = () => {
                                 reason: item.reason,
                                 fromDate: item.fromDate,
                                 toDate: item.toDate,
-                                staffApproval: item.staffapprovalstatus || 'pending',
-                                yearInchargeApproval: item.yearinchargeapprovalstatus || 'pending',
-                                wardenApproval: item.wardenapprovalstatus || 'pending',
+                                staffApproval: item.staff?.status || item.staffapprovalstatus || 'pending',
+                                yearInchargeApproval: item.yearincharge?.status || item.yearinchargeapprovalstatus || 'pending',
+                                wardenApproval: item.warden?.status || item.wardenapprovalstatus || 'pending',
                                 outpasstype: item.outpasstype,
                                 residencetype: studentDetails.residencetype || 'dayScholar',
                                 document: item.proof || item.document || item.file || null
@@ -207,7 +222,7 @@ const PassApproval: React.FC = () => {
         };
 
         fetchRequests();
-    }, []);
+    }, [currentPage, filterStatus]);
 
 
     // Filter and search logic
@@ -305,19 +320,30 @@ const PassApproval: React.FC = () => {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.put(
-                `${import.meta.env.VITE_API_URL}/staff/outpass/approval`,
-                {
-                    outpassId: selectedStudent.id,
-                    staffapprovalstatus: actionType === 'approve' ? 'approved' : 'rejected',
-                    staffremarks: actionRemarks
-                },
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
+            let response;
+            
+            if (actionType === 'approve') {
+                // Outpass approve api - GET
+                response = await axios.get(
+                    `${import.meta.env.VITE_API_URL}/staff/outpass/approve/${selectedStudent.id}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
                     }
-                }
-            );
+                );
+            } else {
+                // Outpass reject api - PUT with remarks
+                response = await axios.put(
+                    `${import.meta.env.VITE_API_URL}/staff/outpass/reject/${selectedStudent.id}`,
+                    { remarks: actionRemarks },
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    }
+                );
+            }
 
             if (response.status === 200) {
                 toast.success(response.data.message || `Outpass ${actionType}d successfully`);
@@ -401,7 +427,10 @@ const PassApproval: React.FC = () => {
                                     <select
                                         className="date-filter-select"
                                         value={dateFilter}
-                                        onChange={(e) => setDateFilter(e.target.value as any)}
+                                        onChange={(e) => {
+                                            setDateFilter(e.target.value as any);
+                                            setCurrentPage(1);
+                                        }}
                                         style={{
                                             padding: '10px 32px 10px 36px',
                                             borderRadius: '12px',
@@ -429,25 +458,25 @@ const PassApproval: React.FC = () => {
                                 </div>
                                 <button
                                     className={`filter-btn ${filterStatus === 'all' ? 'active' : ''}`}
-                                    onClick={() => setFilterStatus('all')}
+                                    onClick={() => { setFilterStatus('all'); setCurrentPage(1); }}
                                 >
                                     All
                                 </button>
                                 <button
                                     className={`filter-btn pending ${filterStatus === 'pending' ? 'active' : ''}`}
-                                    onClick={() => setFilterStatus('pending')}
+                                    onClick={() => { setFilterStatus('pending'); setCurrentPage(1); }}
                                 >
                                     Pending
                                 </button>
                                 <button
                                     className={`filter-btn approved ${filterStatus === 'approved' ? 'active' : ''}`}
-                                    onClick={() => setFilterStatus('approved')}
+                                    onClick={() => { setFilterStatus('approved'); setCurrentPage(1); }}
                                 >
                                     Approved
                                 </button>
                                 <button
                                     className={`filter-btn rejected ${filterStatus === 'rejected' ? 'active' : ''}`}
-                                    onClick={() => setFilterStatus('rejected')}
+                                    onClick={() => { setFilterStatus('rejected'); setCurrentPage(1); }}
                                 >
                                     Rejected
                                 </button>
@@ -514,6 +543,26 @@ const PassApproval: React.FC = () => {
                                 );
                             })}
                         </div>
+
+                        {students.length > 0 && totalPages > 1 && (
+                            <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '24px', alignItems: 'center' }}>
+                                <button 
+                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+                                    disabled={currentPage === 1}
+                                    style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: currentPage === 1 ? '#f1f5f9' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                                >
+                                    &lt; Previous
+                                </button>
+                                <span style={{ fontWeight: '600', color: '#64748b' }}>Page {currentPage} of {totalPages}</span>
+                                <button 
+                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
+                                    disabled={currentPage === totalPages}
+                                    style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: currentPage === totalPages ? '#f1f5f9' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+                                >
+                                    Next &gt;
+                                </button>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     /* Detail View */

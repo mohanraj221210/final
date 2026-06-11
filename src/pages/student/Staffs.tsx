@@ -3,16 +3,17 @@ import StaffCard from '../../components/StaffCard';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import StudentHeader from '../../components/StudentHeader';
+import StudentBottomNav from '../../components/StudentBottomNav';
 
 const Staffs: React.FC = () => {
-    const [Loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
     const [staffData, setStaffData] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState('All');
     const navigate = useNavigate();
 
     useEffect(() => {
-        const staff = async () => {
+        const fetchStaffList = async () => {
             try {
                 const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/staff/list`, {
                     headers: {
@@ -21,64 +22,71 @@ const Staffs: React.FC = () => {
                     }
                 });
                 if (response.status === 200) {
-                    setStaffData(response.data.staff);
-                    console.log("staff data", response.data);
+                    setStaffData(response.data.staff || []);
                 }
             } catch (error: any) {
                 console.error("Error fetching staff data:", error.message);
             } finally {
-                setLoading(false)
+                setLoading(false);
             }
-        }
+        };
 
-        staff();
+        fetchStaffList();
     }, []);
 
     const filteredStaff = staffData.filter(staff => {
-        const matchesSearch = staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            staff.subjects.some((sub: String) => sub.toLowerCase().includes(searchTerm.toLowerCase()));
+        const nameMatches = staff.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
+        const subjectMatches = staff.subjects?.some((sub: string) => 
+            sub.toLowerCase().includes(searchTerm.toLowerCase())
+        ) || false;
 
-        const matchesFilter = filter === 'All' || staff.designation.includes(filter);
+        const matchesSearch = nameMatches || subjectMatches;
+        const matchesFilter = filter === 'All' || (staff.designation && staff.designation.includes(filter));
 
         return matchesSearch && matchesFilter;
     });
 
-    const designations = ['All', ...new Set(staffData.map(s => s.designation))];
-
-    if (Loading) {
-        return <div className="card staff-card">Loading...</div>;
-    }
+    const designations = ['All', ...new Set(staffData.map(s => s.designation).filter(Boolean))];
 
     return (
-        <div className="page-container staff-page">
+        <div className="student-page staffs-directory-page animate-page-enter">
 
+            {/* ── DESKTOP VIEW ── */}
+            <div className="lux-desktop-view">
             <StudentHeader />
 
             <div className="content-wrapper">
-                <div className="page-header">
-                    <div>
-                        <div className="back-nav" onClick={() => navigate('/dashboard')}>
-                            <span>←</span> Back to Dashboard
-                        </div>
-                        <h1 className="page-title">Our Faculty</h1>
-                        <p className="text-muted">Meet the dedicated professors shaping your future.</p>
+                {/* Back Link & Header */}
+                <div className="back-link-wrapper" style={{ marginBottom: '24px' }}>
+                    <button className="btn-back" onClick={() => navigate('/dashboard')}>
+                        <span className="icon">←</span> Back to Dashboard
+                    </button>
+                </div>
+
+                <div className="directory-header-row">
+                    <div className="header-text">
+                        <h1>Faculty Directory</h1>
+                        <p className="subtitle">Search and connect with the professors and instructors of JIT</p>
                     </div>
 
-                    <div className="controls">
-                        <div className="search-box">
-                            <span className="search-icon"></span>
+                    {/* Filter controls */}
+                    <div className="controls-group">
+                        <div className="search-bar" style={{ flex: 1, minWidth: '220px' }}>
+                            <span className="search-icon">🔍</span>
                             <input
                                 type="text"
-                                placeholder="Search staff..."
+                                placeholder="Search by name or subject..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="input search-input"
+                                className="search-input"
                             />
                         </div>
+
                         <select
                             value={filter}
                             onChange={(e) => setFilter(e.target.value)}
-                            className="input filter-select"
+                            className="input designation-select"
+                            style={{ maxWidth: '200px' }}
                         >
                             {designations.map(d => (
                                 <option key={d} value={d}>{d}</option>
@@ -87,263 +95,179 @@ const Staffs: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="staff-grid">
-                    {filteredStaff.map(staff => (
-                        <StaffCard key={staff._id} staff={staff} />
-                    ))}
-                </div>
-
-                {filteredStaff.length === 0 && (
-                    <div className="empty-state">
-                        <span className="empty-icon">🔍</span>
-                        <h3>No staff found</h3>
-                        <p>Try adjusting your search or filter.</p>
+                {loading ? (
+                    <div className="staffs-grid-layout">
+                        {[1, 2, 3, 4, 5, 6].map(i => (
+                            <div key={i} className="card lux-skeleton" style={{ height: '240px', borderRadius: '16px' }}></div>
+                        ))}
+                    </div>
+                ) : filteredStaff.length === 0 ? (
+                    <div className="empty-state-card card">
+                        <span className="empty-state-icon">👥</span>
+                        <h3>No faculty found</h3>
+                        <p>No staff matches your search query or designation filter. Try another keyword.</p>
+                        <button className="btn btn-secondary" onClick={() => { setSearchTerm(''); setFilter('All'); }}>
+                            Clear Filters
+                        </button>
+                    </div>
+                ) : (
+                    <div className="staffs-grid-layout">
+                        {filteredStaff.map((staff, index) => {
+                            const staggerIndex = (index % 6) + 1;
+                            return (
+                                <div key={staff._id} className={`animate-stagger-${staggerIndex}`}>
+                                    <StaffCard staff={staff} />
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
             </div>
+            </div>{/* end desktop */}
+
+            {/* ── MOBILE VIEW ── */}
+            <div className="lux-mobile-view cred-page-bg">
+                {/* Mobile Header */}
+                <div className="mob-page-header">
+                    <button className="mob-back-btn" onClick={() => navigate('/dashboard')}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <div className="mob-header-text">
+                        <span className="cred-h2" style={{fontSize: '18px'}}>Faculty Directory</span>
+                        <span className="cred-p" style={{fontSize: '12px'}}>{staffData.length} staff members</span>
+                    </div>
+                    <div style={{width:36}} />
+                </div>
+
+                {/* Search */}
+                <div className="mob-search-bar animate-cred-enter cred-stagger-1">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--cred-text-2)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input
+                        type="text"
+                        placeholder="Search by name or subject..."
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        className="mob-search-input"
+                    />
+                    {searchTerm && <button onClick={() => setSearchTerm('')} className="mob-search-clear">✕</button>}
+                </div>
+
+                <div className="mob-scroll-body">
+                    {/* Designation Chips */}
+                    <div className="mob-chip-scroll animate-cred-enter cred-stagger-2">
+                        {designations.map(d => (
+                            <button
+                                key={d}
+                                className={`mob-chip ${filter === d ? 'mob-chip-active' : ''}`}
+                                onClick={() => setFilter(d)}
+                            >{d}</button>
+                        ))}
+                    </div>
+
+                    {loading ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            {[1, 2, 3, 4, 5].map(i => (
+                                <div key={i} className="cred-card" style={{ height: '80px', borderRadius: '16px' }}></div>
+                            ))}
+                        </div>
+                    ) : filteredStaff.length === 0 ? (
+                        <div className="cred-card mob-empty-card animate-cred-enter cred-stagger-3">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--cred-text-2)" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                            <span className="cred-p">No faculty found</span>
+                            <button className="mob-btn-secondary" onClick={() => {setSearchTerm(''); setFilter('All');}}>Clear Filters</button>
+                        </div>
+                    ) : (
+                        filteredStaff.map((staff, index) => {
+                            const staggerIndex = (index % 5) + 1;
+                            const photoUrl = staff.photo ? (staff.photo.startsWith('http') ? staff.photo : `${import.meta.env.VITE_CDN_URL || ''}${staff.photo}`) : null;
+                            return (
+                                <div key={staff._id} className={`cred-card mob-staff-card animate-cred-enter cred-stagger-${staggerIndex}`} onClick={() => navigate(`/staffs/${staff._id}`)  }>
+                                    <div className="mob-staff-avatar">
+                                        {photoUrl ? (
+                                            <img src={photoUrl} alt={staff.name} onError={e => { e.currentTarget.style.display='none'; }} />
+                                        ) : (
+                                            <span>{staff.name ? staff.name.charAt(0).toUpperCase() : 'S'}</span>
+                                        )}
+                                    </div>
+                                    <div className="mob-staff-info">
+                                        <span className="cred-h2" style={{fontSize: '15px'}}>{staff.name}</span>
+                                        <span className="cred-gold-text" style={{fontSize: '12px', fontWeight: '600'}}>{staff.designation}</span>
+                                        <span className="cred-p" style={{fontSize: '12px'}}>{staff.department}</span>
+                                    </div>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--cred-text-2)" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
+
+                {/* Bottom Nav */}
+                <StudentBottomNav activeTab="staff" />
+            </div>{/* end mobile */}
 
             <style>{`
-                /* Custom Dashboard Header */
-                .dashboard-header-custom {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    height: 70px;
-                    background: white;
-                    border-bottom: 1px solid #e2e8f0;
-                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-                    z-index: 1000;
-                }
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-                .mobile-menu-btn {
-                    display: none;
-                    background: none;
-                    border: none;
-                    font-size: 24px;
-                    cursor: pointer;
-                    color: #1e293b;
-                    padding: 8px;
-                    z-index: 1001;
-                }
+                /* ── DESKTOP VIEWS (RETAINED) ── */
+                .staffs-directory-page { background: var(--bg); }
+                .btn-back { background: none; border: none; color: var(--primary); font-size: 0.9rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: var(--radius-sm); transition: var(--transition-fast); }
+                .btn-back:hover { background: var(--primary-light); color: var(--primary-dark); }
+                .directory-header-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 32px; flex-wrap: wrap; gap: 20px; }
+                .directory-header-row h1 { font-size: 1.8rem; color: var(--text-1); margin: 0 0 6px 0; }
+                .directory-header-row .subtitle { font-size: 0.95rem; color: var(--text-3); margin: 0; }
+                .controls-group { display: flex; gap: 12px; flex-wrap: wrap; width: 100%; max-width: 550px; }
+                .designation-select { height: 48px; border-radius: var(--radius-full); background-position: right 16px center; }
+                .staffs-grid-layout { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
+                .empty-state-card { text-align: center; padding: var(--space-12) var(--space-6) !important; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; max-width: 480px; margin: 40px auto; }
+                .empty-state-icon { font-size: 3rem; }
+                .empty-state-card p { color: var(--text-3); font-size: 0.9rem; margin-bottom: 8px; }
 
-                .header-container-custom {
-                    max-width: 1400px;
-                    margin: 0 auto;
-                    height: 100%;
-                    padding: 0 24px;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                }
-
-                .header-left-custom {
-                    display: flex;
-                    align-items: center;
-                }
-
-                .brand-custom {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                }
-
-                .brand-icon-custom {
-                    font-size: 28px;
-                }
-
-                .brand-text-custom {
-                    font-size: 1.3rem;
-                    font-weight: 700;
-                    background: linear-gradient(135deg, #0047AB, #2563eb);
-                    -webkit-background-clip: text;
-                    -webkit-text-fill-color: transparent;
-                }
-
-                .header-nav-custom {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                }
-
-                .nav-item-custom {
-                    padding: 10px 20px;
-                    border: none;
-                    background: transparent;
-                    color: #64748b;
-                    font-weight: 600;
-                    font-size: 0.95rem;
-                    cursor: pointer;
-                    border-radius: 10px;
-                    transition: all 0.3s;
-                }
-
-                .nav-item-custom:hover {
-                    background: #f1f5f9;
-                    color: #0047AB;
-                }
-
-                .logout-btn-custom {
-                    padding: 10px 24px;
-                    border: 2px solid #ef4444;
-                    background: white;
-                    color: #ef4444;
-                    font-weight: 600;
-                    font-size: 0.95rem;
-                    cursor: pointer;
-                    border-radius: 10px;
-                    transition: all 0.3s;
-                    margin-left: 12px;
-                }
-
-                .logout-btn-custom:hover {
-                    background: #ef4444;
-                    color: white;
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-                }
-
-                .content-wrapper-custom {
-                    margin-top: 70px;
-                    padding: 0;
-                }
-
-                .page-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: flex-start;
-                    margin-bottom: 32px;
-                    flex-wrap: wrap;
-                    gap: 20px;
-                }
-
-                .back-nav {
-                    font-size: 0.9rem;
-                    color: #64748b;
-                    cursor: pointer;
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 8px;
-                    margin-bottom: 12px;
-                    font-weight: 600;
-                    padding: 8px 16px;
-                    background: #f1f5f9;
-                    border-radius: 8px;
-                    transition: all 0.2s;
-                }
-                .back-nav:hover {
-                    color: #0047AB;
-                    background: #e2e8f0;
-                    transform: translateX(-4px);
-                }
-
-                .controls {
-                    display: flex;
-                    gap: 16px;
-                }
-
-                .search-box {
-                    position: relative;
-                    width: 300px;
-                }
-
-                .search-icon {
-                    position: absolute;
-                    left: 12px;
-                    top: 50%;
-                    transform: translateY(-50%);
-                    opacity: 0.5;
-                }
-
-                .search-input {
-                    padding-left: 40px;
-                }
-
-                .filter-select {
-                    width: 150px;
-                    cursor: pointer;
-                }
-
-                .staff-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-                    gap: 24px;
-                }
-
-                .empty-state {
-                    text-align: center;
-                    padding: 60px;
-                    color: var(--text-muted);
-                }
-
-                .empty-icon {
-                    font-size: 48px;
-                    margin-bottom: 16px;
-                    display: block;
-                    opacity: 0.5;
-                }
-
+                /* ── DESKTOP / MOBILE SPLIT ── */
+                .lux-desktop-view { display: block; }
+                .lux-mobile-view  { display: none; }
                 @media (max-width: 768px) {
-                    .page-header {
-                        flex-direction: column;
-                        align-items: flex-start;
-                    }
-                    
-                    .controls {
-                        width: 100%;
-                        flex-direction: column;
-                    }
-
-                    .search-box, .filter-select {
-                        width: 100%;
-                    }
+                    .lux-desktop-view { display: none !important; }
+                    .lux-mobile-view  { display: flex !important; flex-direction: column; min-height: 100vh; background: linear-gradient(135deg, #F7F3E6 0%, #E8EEF5 45%, #C8D9F2 100%); font-family: 'Inter', -apple-system, sans-serif; }
                 }
 
-                 @media (max-width: 768px) {
-                    .mobile-menu-btn {
-                        display: block;
-                    }
+                /* ==========================================
+                   CRED PREMIUM MOBILE STYLES (STAFFS)
+                   ========================================== */
+                .mob-page-header { display:flex; align-items:center; gap:12px; padding:16px 16px 12px; background:rgba(255,255,255,0.85); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); position:sticky; top:0; z-index:50; border-bottom: 1px solid rgba(226,232,240,0.6); }
+                .mob-back-btn { width:36px; height:36px; border-radius:10px; background:#FFFFFF; border:1px solid #E2E8F0; color:#1E293B; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; transition:transform 0.2s; }
+                .mob-back-btn:active { transform:scale(0.9); }
+                .mob-header-text { flex:1; display: flex; flex-direction: column; }
 
-                    .header-nav-custom {
-                        position: absolute;
-                        top: 70px;
-                        left: 0;
-                        right: 0;
-                        background: white;
-                        flex-direction: column;
-                        padding: 0;
-                        border-bottom: 1px solid #e2e8f0;
-                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                        overflow: hidden;
-                        max-height: 0;
-                        transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
-                        gap: 0;
-                    }
+                /* Search */
+                .mob-search-bar { display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.85); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); margin:16px 16px 0; border-radius:16px; padding:12px 14px; border:1px solid rgba(226,232,240,0.8); position:sticky; top:76px; z-index:40; box-shadow: 0 4px 16px rgba(15,23,42,0.08); }
+                .mob-search-input { flex:1; border:none; background:none; font-size:15px; color:#0F172A; outline:none; font-family:inherit; }
+                .mob-search-input::placeholder { color:#94A3B8; }
+                .mob-search-clear { background:none; border:none; color:#94A3B8; cursor:pointer; font-size:14px; padding:0; }
 
-                    .header-nav-custom.mobile-open {
-                        max-height: 500px;
-                        padding: 16px 0;
-                    }
+                .mob-scroll-body { flex:1; overflow-y:auto; padding:16px 16px 100px; display:flex; flex-direction:column; gap:16px; }
 
-                    .nav-item-custom, .logout-btn-custom {
-                        width: 100%;
-                        text-align: left;
-                        padding: 12px 24px;
-                        border-radius: 0;
-                        margin: 0;
-                    }
+                /* Chips */
+                .mob-chip-scroll { display:flex; gap:12px; overflow-x:auto; padding-bottom:4px; margin-bottom: 8px; }
+                .mob-chip { background:rgba(255,255,255,0.7); border:1px solid rgba(226,232,240,0.8); border-radius:24px; padding:8px 20px; font-size:13px; font-weight:600; color:#64748B; cursor:pointer; white-space:nowrap; flex-shrink:0; transition:all 0.2s; }
+                .mob-chip-active { background:#FFFFFF; border-color:var(--cred-gold); color:var(--cred-gold); box-shadow: 0 4px 12px rgba(184,134,11,0.15); }
 
-                    .logout-btn-custom {
-                        border: none;
-                        border-top: 1px solid #fee2e2;
-                        color: #ef4444;
-                        margin-top: 8px;
-                    }
+                /* Empty state */
+                .mob-empty-card { padding:40px 20px; display:flex; flex-direction:column; align-items:center; gap:16px; }
+                .mob-btn-secondary { background:var(--cred-surface-2); color:var(--cred-text); border:1px solid var(--cred-border); border-radius:12px; padding:12px 16px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; transition:background 0.2s; display:flex; align-items:center; justify-content:center; gap:6px; flex:1; text-decoration:none; }
+                
+                .mob-staff-card { padding:16px; display:flex; align-items:center; gap:16px; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:transform 0.15s; }
+                .mob-staff-card:active { transform:scale(0.98); }
+                .mob-staff-avatar { width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg, #1E3A8A, #0F172A); padding:2px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+                .mob-staff-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; border:2px solid #FFFFFF; }
+                .mob-staff-avatar span { color:white; font-size:20px; font-weight:800; display:flex; align-items:center; justify-content:center; width:100%; height:100%; border-radius:50%; border:2px solid #FFFFFF; background:#1E3A8A; }
+                .mob-staff-info { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+                .cred-gold-text { color: var(--cred-gold); }
 
-                    .content-wrapper-custom {
-                        margin-top: 70px;
-                    }
-                }
+                .mob-bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px) saturate(150%); -webkit-backdrop-filter: blur(20px) saturate(150%); display: flex; justify-content: space-around; padding: 12px 8px calc(12px + env(safe-area-inset-bottom, 16px)); border-top: 1px solid rgba(226, 232, 240, 0.8); box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.08); z-index: 1000; }
+                .mob-nav-item { display:flex; flex-direction:column; align-items:center; gap:4px; color:#94A3B8; background:none; border:none; padding:4px 8px; min-width:56px; cursor:pointer; -webkit-tap-highlight-color:transparent; position:relative; transition:color 0.2s; }
+                .mob-nav-active { color:#0F172A !important; }
+                .mob-nav-active-bar { position:absolute; top:-10px; left:50%; transform:translateX(-50%); width:28px; height:3px; background:linear-gradient(90deg,#D4A017,#FBBF24); border-radius:0 0 4px 4px; }
+                .mob-nav-lbl { font-size:11px; font-weight:600; }
             `}</style>
         </div>
     );

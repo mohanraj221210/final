@@ -23,6 +23,7 @@ const WardenStudentView: React.FC = () => {
         }
       );
       setStudent(res.data.outpassdetail || (res.data.filterOutpass && res.data.filterOutpass[0]) || null);
+      setImageError(false);
     } catch (error) {
       console.error("Failed to fetch student details:", error);
       toast.error("Failed to load student details");
@@ -31,6 +32,7 @@ const WardenStudentView: React.FC = () => {
 
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<'approved' | 'rejected' | null>(null);
+  const [imageError, setImageError] = useState(false);
   const [remarks, setRemarks] = useState("");
   const [showDocumentModal, setShowDocumentModal] = useState(false);
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
@@ -155,7 +157,7 @@ const WardenStudentView: React.FC = () => {
           </div>
           <div className="section-body info-grid-with-avatar">
             <div className="avatar-box">
-              {s.photo ? (
+              {s.photo && !imageError ? (
                 <img
                   src={
                     s.photo.startsWith('http') || s.photo.startsWith('data:')
@@ -165,6 +167,7 @@ const WardenStudentView: React.FC = () => {
                   alt="Student"
                   className="initials-avatar"
                   style={{ objectFit: 'cover' }}
+                  onError={() => setImageError(true)}
                 />
               ) : (
                 <div className="initials-avatar">

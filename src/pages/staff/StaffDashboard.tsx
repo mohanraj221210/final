@@ -7,42 +7,42 @@ import StaffHeader from '../../components/StaffHeader';
 
 const StaffDashboard: React.FC = () => {
     const [staff, setStaff] = useState<Staff | null>(null);
+    const [outpassStats, setOutpassStats] = useState<any>(null);
+    const [studentStats, setStudentStats] = useState<any>(null);
+    const [recentPasses, setRecentPasses] = useState<any[]>([]);
     const navigate = useNavigate();
 
     useEffect(() => {
-        const fetchStaffData = async () => {
+        const fetchDashboardData = async () => {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
             try {
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}/staff/profile`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                const [profileRes, outpassStatsRes, studentStatsRes] = await Promise.all([
+                    axios.get(`${import.meta.env.VITE_API_URL}/staff/profile`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null),
+                    axios.get(`${import.meta.env.VITE_API_URL}/staff/outpass/stats`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null),
+                    axios.get(`${import.meta.env.VITE_API_URL}/staff/student/stats`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null)
+                ]);
+
+                if (profileRes?.status === 200) {
+                    setStaff(profileRes.data.staff);
+                }
+
+                if (outpassStatsRes?.status === 200) {
+                    // Support both nested structure and flat structure
+                    const statsArray = outpassStatsRes.data.stats || [];
+                    const parsedStats = statsArray.length > 0 && statsArray[0].stats && statsArray[0].stats.length > 0 
+                                      ? statsArray[0].stats[0] 
+                                      : outpassStatsRes.data; 
+                    setOutpassStats(parsedStats);
+                    
+                    if (statsArray.length > 0 && statsArray[0].recentpasses) {
+                        setRecentPasses(statsArray[0].recentpasses);
                     }
-                });
-                if (response.status === 200) {
-                    setStaff(response.data.staff);
-                };
-            } catch (error: any) {
-                toast.error("Failed to fetch staff data");
-            }
-        }
 
-        const checkEmergencyRequests = async () => {
-            try {
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}/staff/outpass/list`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
-
-                if (response.status === 200) {
-                    const outpasses = response.data.outpasses || [];
-                    const emergencyRequests = outpasses.filter((o: any) => {
-                        const type = (o.outpasstype || o.outpassType || '').toLowerCase();
-                        const status = (o.staffapprovalstatus || '').toLowerCase();
-                        return type === 'emergency' && status === 'pending';
-                    });
-
-                    if (emergencyRequests.length > 0) {
-                        toast.error(`⚠️ ${emergencyRequests.length} Emergency Request(s) Pending!`, {
+                    const emergencyCount = parsedStats.Emergency || parsedStats.emergency || 0;
+                    if (emergencyCount > 0) {
+                        toast.error(`⚠️ ${emergencyCount} Emergency Request(s) Pending!`, {
                             position: "top-center",
                             autoClose: false,
                             hideProgressBar: false,
@@ -54,15 +54,19 @@ const StaffDashboard: React.FC = () => {
                         });
                     }
                 }
+
+                if (studentStatsRes?.status === 200) {
+                    setStudentStats(studentStatsRes.data);
+                }
+
             } catch (error) {
-                console.error("Failed to check emergency requests", error);
+                console.error("Failed to fetch dashboard data", error);
+                toast.error("Failed to load dashboard statistics");
             }
         };
 
-        fetchStaffData();
-        checkEmergencyRequests();
+        fetchDashboardData();
     }, []);
-
 
     if (!staff) return <div className="loading-screen">Loading...</div>;
 
@@ -84,14 +88,14 @@ const StaffDashboard: React.FC = () => {
                             <div className="stat-mini">
                                 <span className="stat-mini-icon">📚</span>
                                 <div>
-                                    <div className="stat-mini-value">{staff.subjects.length}</div>
+                                    <div className="stat-mini-value">{staff?.subjects?.length || 0}</div>
                                     <div className="stat-mini-label">Subjects</div>
                                 </div>
                             </div>
                             <div className="stat-mini">
                                 <span className="stat-mini-icon">🎓</span>
                                 <div>
-                                    <div className="stat-mini-value">120</div>
+                                    <div className="stat-mini-value">{studentStats?.total || studentStats?.totalStudents || studentStats?.students || 0}</div>
                                     <div className="stat-mini-label">Students</div>
                                 </div>
                             </div>
@@ -140,6 +144,85 @@ const StaffDashboard: React.FC = () => {
                         </div>
                     </section>
 
+                    {/* Outpass Statistics */}
+                    <section className="stats-section" style={{ marginBottom: '32px' }}>
+                        <h2 className="section-title">Outpass Overview</h2>
+                        <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px' }}>
+                            <div className="stat-card" style={{ background: 'white', padding: '24px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '16px', borderLeft: '4px solid #10b981' }}>
+                                <div style={{ fontSize: '2rem', background: '#d1fae5', padding: '12px', borderRadius: '12px', color: '#10b981' }}>✓</div>
+                                <div>
+                                    <div style={{ fontSize: '1.8rem', fontWeight: '700', color: '#1e293b' }}>{outpassStats?.approved || 0}</div>
+                                    <div style={{ color: '#64748b', fontSize: '0.9rem', fontWeight: '600' }}>Approved</div>
+                                </div>
+                            </div>
+                            <div className="stat-card" style={{ background: 'white', padding: '24px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '16px', borderLeft: '4px solid #f59e0b' }}>
+                                <div style={{ fontSize: '2rem', background: '#fef3c7', padding: '12px', borderRadius: '12px', color: '#f59e0b' }}>⏳</div>
+                                <div>
+                                    <div style={{ fontSize: '1.8rem', fontWeight: '700', color: '#1e293b' }}>{outpassStats?.pending || 0}</div>
+                                    <div style={{ color: '#64748b', fontSize: '0.9rem', fontWeight: '600' }}>Pending</div>
+                                </div>
+                            </div>
+                            <div className="stat-card" style={{ background: 'white', padding: '24px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '16px', borderLeft: '4px solid #ef4444' }}>
+                                <div style={{ fontSize: '2rem', background: '#fee2e2', padding: '12px', borderRadius: '12px', color: '#ef4444' }}>✕</div>
+                                <div>
+                                    <div style={{ fontSize: '1.8rem', fontWeight: '700', color: '#1e293b' }}>{outpassStats?.rejected || 0}</div>
+                                    <div style={{ color: '#64748b', fontSize: '0.9rem', fontWeight: '600' }}>Rejected</div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Recent Passes */}
+                    <section className="recent-activity-section" style={{ marginBottom: '32px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                            <h2 className="section-title" style={{ margin: 0 }}>Recent Outpass Requests</h2>
+                            <button onClick={() => navigate('/passApproval')} style={{ background: 'none', border: 'none', color: '#0047AB', fontWeight: '600', cursor: 'pointer', fontSize: '0.9rem' }}>View All →</button>
+                        </div>
+                        
+                        <div style={{ background: 'white', borderRadius: '20px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+                            {recentPasses.length > 0 ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                    {recentPasses.map((pass, idx) => (
+                                        <div key={pass._id || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: '#f8fafc', borderRadius: '12px', transition: 'transform 0.2s', border: '1px solid #e2e8f0' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                                <img 
+                                                    src={pass.photo ? (pass.photo.startsWith('http') ? pass.photo : `${import.meta.env.VITE_CDN_URL}${pass.photo}`) : 'https://via.placeholder.com/40'} 
+                                                    alt={pass.name || 'Student'} 
+                                                    style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover' }} 
+                                                />
+                                                <div>
+                                                    <div style={{ fontWeight: '600', color: '#1e293b', fontSize: '1.05rem' }}>{pass.name || 'Student'} <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 'normal' }}>({pass.registerNumber})</span></div>
+                                                    <div style={{ color: '#64748b', fontSize: '0.85rem', marginTop: '4px' }}>{pass.reason}</div>
+                                                </div>
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                                                <span style={{ 
+                                                    padding: '6px 12px', 
+                                                    borderRadius: '20px', 
+                                                    fontSize: '0.75rem', 
+                                                    fontWeight: '700',
+                                                    textTransform: 'uppercase',
+                                                    background: pass.status === 'approved' ? '#d1fae5' : pass.status === 'rejected' ? '#fee2e2' : '#fef3c7',
+                                                    color: pass.status === 'approved' ? '#10b981' : pass.status === 'rejected' ? '#ef4444' : '#f59e0b'
+                                                }}>
+                                                    {pass.status || 'Pending'}
+                                                </span>
+                                                <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                                                    {new Date(pass.createdAt).toLocaleDateString()}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
+                                    <div style={{ fontSize: '3rem', marginBottom: '16px' }}>📭</div>
+                                    <p>No recent outpass requests found</p>
+                                </div>
+                            )}
+                        </div>
+                    </section>
+
                     {/* Department Info */}
                     <section className="info-section">
                         <div className="info-card">
@@ -172,7 +255,7 @@ const StaffDashboard: React.FC = () => {
                                     <span className="info-item-icon">🎓</span>
                                     <div className="info-item-content">
                                         <label>Total Students</label>
-                                        <p>120</p>
+                                        <p>{studentStats?.total || studentStats?.totalStudents || studentStats?.students || 0}</p>
                                     </div>
                                 </div>
                                 <div className="info-item">

@@ -38,12 +38,15 @@ const StudentRegistration: React.FC = () => {
         name: '',
         email: '',
         password: '',
-        department: ''
+        department: '',
+        semester: ''
     });
     const nameInputRef = useRef<HTMLInputElement>(null);
 
     const [studentsList, setStudentsList] = useState<Student[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -90,19 +93,24 @@ const StudentRegistration: React.FC = () => {
         if (activeTab === 'added-students') {
             fetchStudents();
         }
-    }, [activeTab, currentStaffID]);
+    }, [activeTab, currentStaffID, currentPage]);
 
     const fetchStudents = async () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
             // Assuming API filters by staff ID from token
-            const response = await axios.get(`${API_URL}/staff/students/list`, {
+            const response = await axios.get(`${API_URL}/staff/students/list?page=${currentPage}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (response.status === 200) {
                 // Handle the nested { students: [] } structure
-                const allStudents = response.data.students || [];
+                const allStudents = response.data.students || response.data.data || [];
+                if (response.data.totalPages) {
+                    setTotalPages(response.data.totalPages);
+                } else {
+                    setTotalPages(1);
+                }
                 console.log('Fetched All Students:', allStudents);
 
                 // Strict Client-Side Filter
@@ -214,7 +222,7 @@ const StudentRegistration: React.FC = () => {
     const handleSingleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!singleForm.name || !singleForm.email || !singleForm.password || !singleForm.department) {
+        if (!singleForm.name || !singleForm.email || !singleForm.password || !singleForm.department || !singleForm.semester) {
             toast.error("All fields are required");
             return;
         }
@@ -224,6 +232,7 @@ const StudentRegistration: React.FC = () => {
             const token = localStorage.getItem('token');
             const payload = {
                 ...singleForm,
+                semester: parseInt(singleForm.semester as string, 10),
                 createdByStaffID: currentStaffID
             };
             const response = await axios.post(`${API_URL}/staff/student/signup`, payload, {
@@ -234,7 +243,7 @@ const StudentRegistration: React.FC = () => {
 
             if (response.status === 200 || response.status === 201) {
                 toast.success("Student registered successfully");
-                setSingleForm({ name: '', email: '', password: '', department: '' });
+                setSingleForm({ name: '', email: '', password: '', department: '', semester: '' });
                 // Focus back on name input for next entry
                 setTimeout(() => {
                     nameInputRef.current?.focus();
@@ -417,6 +426,21 @@ const StudentRegistration: React.FC = () => {
                                     </select>
                                 </div>
                                 <div className="form-group">
+                                    <label>Semester</label>
+                                    <select
+                                        value={singleForm.semester}
+                                        onChange={(e) => setSingleForm({ ...singleForm, semester: e.target.value })}
+                                        disabled={loading}
+                                        className="input-select"
+                                        style={{ width: '100%', padding: '14px 16px', border: '1px solid #e2e8f0', borderRadius: '12px', fontSize: '1rem', background: '#f8fafc' }}
+                                    >
+                                        <option value="">Select Semester</option>
+                                        {[1, 2, 3, 4, 5, 6, 7, 8].map(num => (
+                                            <option key={num} value={num}>{num}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="form-group">
                                     <label>Password</label>
                                     <input
                                         type="password"
@@ -504,6 +528,26 @@ const StudentRegistration: React.FC = () => {
                                                 </button>
                                             </div>
                                         ))}
+                                    </div>
+                                )}
+
+                                {studentsList.length > 0 && totalPages > 1 && (
+                                    <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '24px', alignItems: 'center' }}>
+                                        <button 
+                                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+                                            disabled={currentPage === 1}
+                                            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: currentPage === 1 ? '#f1f5f9' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                                        >
+                                            &lt; Previous
+                                        </button>
+                                        <span style={{ fontWeight: '600', color: '#64748b' }}>Page {currentPage} of {totalPages}</span>
+                                        <button 
+                                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
+                                            disabled={currentPage === totalPages}
+                                            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: currentPage === totalPages ? '#f1f5f9' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+                                        >
+                                            Next &gt;
+                                        </button>
                                     </div>
                                 )}
                             </div>

@@ -1,34 +1,18 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RECENT_DOWNLOADS, type User } from '../../data/sampleData';
+import { type User } from '../../data/sampleData';
 import axios from 'axios';
-import { useEffect } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import StudentHeader from '../../components/StudentHeader';
+import StudentBottomNav from '../../components/StudentBottomNav';
 import { isProfileComplete } from '../../utils/profileHelper';
 
-// Event types for calendar
-type EventType = 'working' | 'leave' | 'college_event' | 'cia_exam';
-
-interface CalendarEvent {
-    id: string;
-    date: Date;
-    type: EventType;
-    title: string;
-    description?: string;
-    time?: string;
-    leaveReason?: string;
-}
-
 const Dashboard: React.FC = () => {
-    const [Loading, setLoading] = React.useState(true);
-    const [user, setUser] = React.useState<User>({
+    const [Loading, setLoading] = useState(true);
+    const [user, setUser] = useState<User>({
         name: "",
         registerNumber: "",
-        staffid: {
-            id: "",
-            name: "",
-        },
+        staffid: { id: "", name: "" },
         department: "",
         year: "",
         semester: 0,
@@ -44,91 +28,59 @@ const Dashboard: React.FC = () => {
         busno: "",
         boardingpoint: "",
     });
+    const [imageError, setImageError] = useState(false);
+    const [outpassStats, setOutpassStats] = useState({ pending: 0, approved: 0, rejected: 0, checkedOut: 0, checkedIn: 0 });
+    const [recentPasses, setRecentPasses] = useState<any[]>([]);
     const navigate = useNavigate();
-    const [zoomingPath, setZoomingPath] = React.useState<string | null>(null);
-    // Calendar state
-    const [currentDate, setCurrentDate] = React.useState(new Date());
-    const [selectedEvent, setSelectedEvent] = React.useState<CalendarEvent | null>(null);
-
-    // Sample events data
-    const [events] = React.useState<CalendarEvent[]>([
-        { id: '1', date: new Date(2026, 0, 5), type: 'cia_exam', title: 'CIA 1 - AI & ML', description: 'AI & ML', time: '8:45 AM - 9:15 AM' },
-        { id: '2', date: new Date(2026, 0, 6), type: 'cia_exam', title: 'CIA 1 - FDS', description: 'FDS', time: '8:45 AM - 9:15 AM' },
-        { id: '3', date: new Date(2026, 0, 7), type: 'cia_exam', title: 'CIA 1 - oops', description: 'oops', time: '8:45 AM - 9:15 AM' },
-        { id: '4', date: new Date(2026, 0, 8), type: 'cia_exam', title: 'CIA 1 - Data Structures', description: 'Data Structures', time: '8:45 AM - 9:15 AM' },
-        { id: '5', date: new Date(2026, 0, 9), type: 'college_event', title: 'event - DBMS and pongal festival', description: 'DBMS and pongal festival', time: '8:45 AM - 9:15 AM' },
-        { id: '6', date: new Date(2026, 0, 10), type: 'cia_exam', title: 'CIA 1 - tamil', description: 'tamil', time: '8:45 AM - 9:15 AM' },
-        { id: '7', date: new Date(2026, 0, 26), type: 'leave', title: 'Republic Day', leaveReason: 'National Holiday' },
-        { id: '8', date: new Date(2026, 0, 19), type: 'cia_exam', title: 'CIA 1 - english', description: 'english', time: '8:45 AM - 9:15 AM' },
-        { id: '9', date: new Date(2026, 0, 11), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
-        { id: '10', date: new Date(2026, 0, 12), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
-        { id: '11', date: new Date(2026, 0, 13), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
-        { id: '12', date: new Date(2026, 0, 14), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
-        { id: '13', date: new Date(2026, 0, 15), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
-        { id: '14', date: new Date(2026, 0, 16), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
-        { id: '15', date: new Date(2026, 0, 17), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
-        { id: '16', date: new Date(2026, 0, 18), type: 'leave', title: 'holiday', leaveReason: 'pongal festival' },
-        { id: '16', date: new Date(2026, 1, 27), type: 'college_event', title: 'Sports Day', description: 'Sports Day', time: '8:45 AM - 9:15 AM' },
-        { id: '17', date: new Date(2026, 1, 1), type: 'leave', title: 'holiday', leaveReason: 'sunday' },
-        { id: '18', date: new Date(2026, 1, 8), type: 'leave', title: 'holiday', leaveReason: 'sunday' },
-        { id: '19', date: new Date(2026, 1, 15), type: 'leave', title: 'holiday', leaveReason: 'sunday' },
-        { id: '20', date: new Date(2026, 1, 22), type: 'leave', title: 'holiday', leaveReason: 'sunday' },
-        { id: '21', date: new Date(2026, 1, 7), type: 'leave', title: 'holiday', leaveReason: 'saturday' },
-        { id: '23', date: new Date(2026, 1, 21), type: 'leave', title: 'holiday', leaveReason: 'saturday' },
-        { id: '24', date: new Date(2026, 1, 28), type: 'leave', title: 'holiday', leaveReason: 'saturday' },
-        { id: '25', date: new Date(2026, 1, 2), type: 'working', title: 'working', description: 'working day' },
-        { id: '26', date: new Date(2026, 1, 3), type: 'working', title: 'working', description: 'working day' },
-        { id: '27', date: new Date(2026, 1, 4), type: 'working', title: 'working', description: 'working day' },
-        { id: '28', date: new Date(2026, 1, 5), type: 'working', title: 'working', description: 'working day' },
-        { id: '29', date: new Date(2026, 1, 6), type: 'working', title: 'working', description: 'working day' },
-        { id: '30', date: new Date(2026, 1, 9), type: 'working', title: 'working', description: 'working day' },
-        { id: '31', date: new Date(2026, 1, 10), type: 'working', title: 'working', description: 'working day' },
-        { id: '32', date: new Date(2026, 1, 11), type: 'working', title: 'working', description: 'working day' },
-        { id: '33', date: new Date(2026, 1, 12), type: 'working', title: 'working', description: 'working day' },
-        { id: '34', date: new Date(2026, 1, 13), type: 'working', title: 'working', description: 'working day' },
-        { id: '35', date: new Date(2026, 1, 16), type: 'working', title: 'working', description: 'working day' },
-        { id: '36', date: new Date(2026, 1, 17), type: 'working', title: 'working', description: 'working day' },
-        { id: '37', date: new Date(2026, 1, 18), type: 'working', title: 'working', description: 'working day' },
-        { id: '38', date: new Date(2026, 1, 19), type: 'working', title: 'working', description: 'working day' },
-        { id: '39', date: new Date(2026, 1, 20), type: 'working', title: 'working', description: 'working day' },
-        { id: '40', date: new Date(2026, 1, 23), type: 'working', title: 'working', description: 'working day' },
-        { id: '41', date: new Date(2026, 1, 24), type: 'working', title: 'working', description: 'working day' },
-        { id: '42', date: new Date(2026, 1, 25), type: 'working', title: 'working', description: 'working day' },
-        { id: '43', date: new Date(2026, 1, 26), type: 'working', title: 'working', description: 'working day' },
-        { id: '44', date: new Date(2026, 1, 14), type: 'working', title: 'working', description: 'working day' },
-
-    ]);
 
     useEffect(() => {
-        const fetchUserData = async () => {
+        const fetchDashboardData = async () => {
             const token = localStorage.getItem('token');
             if (!token) return;
 
             try {
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/profile`, {
-                    headers: {
-                        authorization: `Bearer ${token}`,
-                    },
-                });
-                if (response.status == 200) {
-                    setUser(response.data.user);
-                    toast.success("User profile fetched successfully");
-                } else {
-                    toast.error("Failed to fetch user profile");
+                const [profileRes, statsRes] = await Promise.all([
+                    axios.get(`${import.meta.env.VITE_API_URL}/api/profile`, {
+                        headers: { authorization: `Bearer ${token}` },
+                    }).catch(e => { console.error('Profile fetch error', e); return null; }),
+                    
+                    axios.get(`${import.meta.env.VITE_API_URL}/api/outpass/stats`, {
+                        headers: { authorization: `Bearer ${token}` },
+                    }).catch(e => { console.error('Stats fetch error', e); return null; })
+                ]);
+                
+                if (profileRes?.status === 200) {
+                    setUser(profileRes.data.user);
+                    setImageError(false);
+                }
+                
+                if (statsRes?.status === 200 && statsRes.data && statsRes.data.stats && statsRes.data.stats.length > 0) {
+                    const statsData = statsRes.data.stats[0].stats && statsRes.data.stats[0].stats.length > 0 
+                                      ? statsRes.data.stats[0].stats[0] 
+                                      : {};
+                    setOutpassStats({
+                        pending: statsData.pending || 0,
+                        approved: statsData.approved || 0,
+                        rejected: statsData.rejected || 0,
+                        checkedOut: 0,
+                        checkedIn: 0,
+                    });
+                    
+                    const passes = statsRes.data.stats[0].recentpasses || [];
+                    setRecentPasses(passes);
                 }
             } catch (error) {
-                toast.error('Failed to fetch user data');
+                console.error('Failed to fetch dashboard data', error);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchUserData();
+        fetchDashboardData();
     }, []);
 
-    const handleQuickAction = (path: string) => {
+    const handleNavigation = (path: string) => {
         const restrictedPaths = ['/staffs', '/student-notice', '/subjects', '/outpass', '/new-outpass'];
-
         if (restrictedPaths.includes(path) && !isProfileComplete(user)) {
             toast.warn("Complete your profile to enable " + path.replace('/', ''), {
                 position: "top-center",
@@ -136,1833 +88,1090 @@ const Dashboard: React.FC = () => {
             });
             return;
         }
-
-        setZoomingPath(path);
-        setTimeout(() => {
-            navigate(path);
-        }, 700); // Wait for animation to finish
+        navigate(path);
     };
 
-    // Calendar utilities
-    const getDaysInMonth = (date: Date) => {
-        return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+    const handleLogout = () => {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userType');
+        localStorage.removeItem('token');
+        navigate('/login');
     };
 
-    const getFirstDayOfMonth = (date: Date) => {
-        return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-    };
-
-    const getEventsForDate = (day: number) => {
-        return events.filter(event => {
-            const eventDate = new Date(event.date);
-            return eventDate.getDate() === day &&
-                eventDate.getMonth() === currentDate.getMonth() &&
-                eventDate.getFullYear() === currentDate.getFullYear();
-        });
-    };
-
-    const isToday = (day: number) => {
-        const today = new Date();
-        return day === today.getDate() &&
-            currentDate.getMonth() === today.getMonth() &&
-            currentDate.getFullYear() === today.getFullYear();
-    };
-
-    const changeMonth = (delta: number) => {
-        setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + delta, 1));
-    };
-
-    const goToToday = () => {
-        setCurrentDate(new Date());
-    };
-
-    const getEventSymbol = (type: EventType) => {
-        switch (type) {
-            case 'working':
-                return <span className="event-symbol working">●</span>;
-            case 'leave':
-                return <span className="event-symbol leave">●</span>;
-            case 'college_event':
-                return <span className="event-symbol college-event">★</span>;
-            case 'cia_exam':
-                return <span className="event-symbol cia-exam">▲</span>;
-        }
-    };
-
-    const renderCalendar = () => {
-        const daysInMonth = getDaysInMonth(currentDate);
-        const firstDay = getFirstDayOfMonth(currentDate);
-        const days = [];
-        const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-        // Week day headers
-        weekDays.forEach(day => {
-            days.push(
-                <div key={`header-${day}`} className="calendar-header-day">
-                    {day}
+    if (Loading) {
+        return (
+            <div className="student-page dashboard-page-view animate-page-enter">
+                <div className="lux-desktop-view">
+                    <StudentHeader />
+                    <div className="content-wrapper">
+                        <div className="lux-hero-card">
+                            <div className="lux-hero-content" style={{ display: 'flex', gap: '20px', alignItems: 'center', padding: '32px' }}>
+                                <div className="lux-skeleton" style={{ width: '80px', height: '80px', borderRadius: '50%' }}></div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    <div className="lux-skeleton" style={{ width: '120px', height: '24px', borderRadius: '12px' }}></div>
+                                    <div className="lux-skeleton" style={{ width: '250px', height: '36px', borderRadius: '8px' }}></div>
+                                    <div className="lux-skeleton" style={{ width: '180px', height: '20px', borderRadius: '4px' }}></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="lux-quick-actions" style={{ marginTop: '32px' }}>
+                            {[1, 2, 3, 4].map((i) => (
+                                <div key={i} className="lux-qa-card lux-skeleton" style={{ height: '110px', borderRadius: '20px' }}></div>
+                            ))}
+                        </div>
+                        <div className="lux-dashboard-grid" style={{ marginTop: '32px' }}>
+                             <div className="lux-grid-col">
+                                 <div className="lux-widget-card lux-skeleton" style={{ height: '200px', borderRadius: '24px' }}></div>
+                             </div>
+                             <div className="lux-grid-col">
+                                 <div className="lux-widget-card lux-skeleton" style={{ height: '250px', borderRadius: '24px' }}></div>
+                             </div>
+                        </div>
+                    </div>
                 </div>
-            );
-        });
-
-        // Empty cells for days before month starts
-        for (let i = 0; i < firstDay; i++) {
-            days.push(<div key={`empty-${i}`} className="calendar-day empty"></div>);
-        }
-
-        // Days of the month
-        for (let day = 1; day <= daysInMonth; day++) {
-            const dayEvents = getEventsForDate(day);
-            const today = isToday(day);
-
-            days.push(
-                <div
-                    key={`day-${day}`}
-                    className={`calendar-day ${today ? 'today' : ''} ${dayEvents.length > 0 ? 'has-events' : ''}`}
-                    onClick={() => {
-                        if (dayEvents.length > 0) {
-                            setSelectedEvent(dayEvents[0]);
-                        }
-                    }}
-                >
-                    <span className="day-number">{day}</span>
-                    <div className="event-symbols">
-                        {dayEvents.map(event => (
-                            <React.Fragment key={event.id}>
-                                {getEventSymbol(event.type)}
-                            </React.Fragment>
+                <div className="lux-mobile-view cred-page-bg" style={{ minHeight: '100vh', padding: '24px 16px' }}>
+                    <div className="cred-card lux-skeleton" style={{ height: '140px', borderRadius: '24px' }}></div>
+                    <div className="mob-quick-actions" style={{ marginTop: '24px' }}>
+                        {[1, 2, 3, 4].map((i) => (
+                            <div key={i} className="cred-card lux-skeleton" style={{ height: '100px', borderRadius: '20px' }}></div>
                         ))}
                     </div>
                 </div>
-            );
-        }
-
-        return days;
-    };
-
-    const monthNames = ["January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"];
-
-    if (Loading) {
-        return <div className="card staff-card">Loading...</div>;
+            </div>
+        );
     }
 
-
-
     return (
-        <div className="page-container dashboard-page">
-            <ToastContainer position="bottom-right" />
-            {/* Custom Dashboard Header */}
-            <StudentHeader user={user} />
+        <div className="student-page dashboard-page-view animate-page-enter">
+            <ToastContainer position="top-center" />
+            
+            <div className="lux-desktop-view">
+                <StudentHeader />
 
-            <div className="content-wrapper-custom">
-                {/* Hero Section */}
-                <div className="dashboard-hero">
-                    <div className="hero-welcome">
-                        <div>
-                            <span className="badge">Welcome Back</span>
+                <div className="content-wrapper">
+                
+                {/* ── HERO SECTION ── */}
+                <div className="lux-hero-card animate-hero">
+                    <div className="lux-hero-bg-glow"></div>
+                    <div className="lux-hero-content">
+                        <div className="lux-avatar-container">
+                            {!imageError && user.photo ? (
+                                <img
+                                    src={user.photo.startsWith("blob:") || user.photo.startsWith("data:") || user.photo.startsWith("http")
+                                        ? user.photo
+                                        : `${import.meta.env.VITE_CDN_URL || ''}${user.photo.startsWith('/') ? user.photo.slice(1) : user.photo}`
+                                    }
+                                    alt="Profile"
+                                    className="lux-avatar-img"
+                                    onError={() => setImageError(true)}
+                                />
+                            ) : (
+                                <div className="lux-avatar-fallback">
+                                    {user.name ? user.name.charAt(0).toUpperCase() : 'S'}
+                                </div>
+                            )}
+                            <div className="lux-status-dot"></div>
                         </div>
-                        <div>
-                            <h1 style={{ color: 'skyblue' }}>Hello, {user.name}! 👋</h1>
-                            <p style={{ color: 'skyblue' }}>
-                                {user.year} • {user.department}
+                        <div className="lux-hero-text">
+                            <span className="lux-badge-gold">Student Portal</span>
+                            <h1 className="lux-hero-name">Welcome back, {user.name || 'Student'}</h1>
+                            <p className="lux-hero-meta">
+                                {user.registerNumber || 'Reg No. N/A'} &nbsp;•&nbsp; {user.department || 'Department N/A'}
                             </p>
                         </div>
                     </div>
-                    <div className="hero-stats-grid">
-                        <div className="stat-card">
-                            <div className="stat-icon blue">📚</div>
-                            <div className="stat-info">
-                                <span className="stat-value">8 </span>
-                                <span className="stat-label">Subjects</span>
-                            </div>
-                        </div>
-                        <div className="stat-card">
-                            <div className="stat-icon orange">⬇️</div>
-                            <div className="stat-info">
-                                <span className="stat-value">12 </span>
-                                <span className="stat-label">Downloads</span>
-                            </div>
-
-                        </div>
-                        {/* <div className="stat-card">
-                            <div className="stat-icon green">✅</div>
-                            <div className="stat-info">
-                                <span className="stat-value">95%</span>
-                                <span className="stat-label">Attendance</span>
-                            </div>
-                        </div> */}
-                    </div>
                 </div>
 
-                <div className="dashboard-layout">
-                    {/* Main Content */}
-                    <div className="main-content">
-                        {/* Quick Actions */}
-                        <section className="section">
-                            <h2 className="section-title">Quick Actions</h2>
-                            <div className="quick-links-grid">
-                                <div
-                                    className={`action-card ${zoomingPath === '/staffs' ? 'zooming' : ''}`}
-                                    onClick={() => handleQuickAction('/staffs')}
-                                >
-                                    <span className="action-icon">👥</span>
-                                    <span className="action-text">Find Staff</span>
+                {/* ── QUICK ACTIONS (Priority 1) ── */}
+                <div className="lux-quick-actions animate-stagger-1">
+                    <button className="lux-qa-card" onClick={() => handleNavigation('/new-outpass')}>
+                        <div className="lux-qa-gloss"></div>
+                        <div className="lux-qa-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                        </div>
+                        <div className="lux-qa-content">
+                            <span className="lux-qa-title">Apply Outpass</span>
+                            <span className="lux-qa-subtitle">Submit a new request</span>
+                        </div>
+                    </button>
+                    <button className="lux-qa-card" onClick={() => handleNavigation('/outpass')}>
+                        <div className="lux-qa-gloss"></div>
+                        <div className="lux-qa-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        </div>
+                        <div className="lux-qa-content">
+                            <span className="lux-qa-title">Track Outpass</span>
+                            <span className="lux-qa-subtitle">View request status</span>
+                        </div>
+                    </button>
+                    <button className="lux-qa-card" onClick={() => handleNavigation('/staffs')}>
+                        <div className="lux-qa-gloss"></div>
+                        <div className="lux-qa-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        </div>
+                        <div className="lux-qa-content">
+                            <span className="lux-qa-title">Staff Directory</span>
+                            <span className="lux-qa-subtitle">Browse faculty members</span>
+                        </div>
+                    </button>
+                    <button className="lux-qa-card" onClick={() => handleNavigation('/profile')}>
+                        <div className="lux-qa-gloss"></div>
+                        <div className="lux-qa-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        </div>
+                        <div className="lux-qa-content">
+                            <span className="lux-qa-title">Profile</span>
+                            <span className="lux-qa-subtitle">Manage personal details</span>
+                        </div>
+                    </button>
+                </div>
+
+                {/* ── DASHBOARD GRID ── */}
+                <div className="lux-dashboard-grid animate-stagger-2">
+                    
+                    {/* LEFT COLUMN */}
+                    <div className="lux-grid-col">
+                        
+                        {/* OUTPASS STATUS WIDGET */}
+                        <div className="lux-widget-card lux-outpass-widget">
+                            <div className="lux-widget-header">
+                                <h2>Current Outpass Status</h2>
+                                <button className="lux-text-btn" onClick={() => handleNavigation('/outpass')}>View All</button>
+                            </div>
+                            <div className="lux-outpass-badges">
+                                <div className="lux-outpass-stat">
+                                    <span className="lux-stat-val text-pending">{outpassStats.pending}</span>
+                                    <span className="lux-stat-lbl">Pending</span>
                                 </div>
-                                {/* <div
-                                    className={`action-card ${zoomingPath === '/student-notice' ? 'zooming' : ''}`}
-                                    onClick={() => handleQuickAction('/student-notice')}
-                                >
-                                    <span className="action-icon">📢</span>
-                                    <span className="action-text">Notices</span>
-                                </div> */}
-                                <div
-                                    className={`action-card ${zoomingPath === '/subjects' ? 'zooming' : ''}`}
-                                    onClick={() => handleQuickAction('/subjects')}
-                                >
-                                    <span className="action-icon">📚</span>
-                                    <span className="action-text">My Subjects</span>
+                                <div className="lux-outpass-stat">
+                                    <span className="lux-stat-val text-approved">{outpassStats.approved}</span>
+                                    <span className="lux-stat-lbl">Approved</span>
                                 </div>
-                                <div
-                                    className={`action-card ${zoomingPath === '/profile' ? 'zooming' : ''}`}
-                                    onClick={() => handleQuickAction('/profile')}
-                                >
-                                    <span className="action-icon">👤</span>
-                                    <span className="action-text">Edit Profile</span>
+                                <div className="lux-outpass-stat">
+                                    <span className="lux-stat-val text-rejected">{outpassStats.rejected}</span>
+                                    <span className="lux-stat-lbl">Rejected</span>
                                 </div>
-                                <div
-                                    className={`action-card ${zoomingPath === '/outpass' ? 'zooming' : ''}`}
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        handleQuickAction('/outpass');
-                                    }}
-                                    style={{
-                                        opacity: !isProfileComplete(user) ? 0.7 : 1,
-                                        cursor: !isProfileComplete(user) ? 'not-allowed' : 'pointer'
-                                    }}
-                                >
-                                    <span className="action-icon">📝</span>
-                                    <span className="action-text">Outpass</span>
+                                <div className="lux-outpass-stat">
+                                    <span className="lux-stat-val text-navy">{outpassStats.checkedOut}</span>
+                                    <span className="lux-stat-lbl">Checked Out</span>
+                                </div>
+                                <div className="lux-outpass-stat">
+                                    <span className="lux-stat-val text-green">{outpassStats.checkedIn}</span>
+                                    <span className="lux-stat-lbl">Checked In</span>
                                 </div>
                             </div>
-                        </section>
+                        </div>
 
-                        {/* Department Info */}
-                        <section className="section">
-                            <div className="card info-card">
-                                <div className="card-header">
-                                    <div className="header-icon">🏛️</div>
-                                    <div>
-                                        <h3>Department of Information Technology</h3>
-                                        <p className="card-subtitle">Academic Overview</p>
+                        {/* ACADEMIC SUMMARY */}
+                        <div className="lux-widget-card">
+                            <div className="lux-widget-header">
+                                <h2>Academic Information</h2>
+                            </div>
+                            <div className="lux-academic-grid">
+                                <div className="lux-metric-card">
+                                    <div className="lux-metric-icon bg-gold-light text-gold">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                                     </div>
-                                    <span className="badge">IT Dept</span>
+                                    <div className="lux-metric-info">
+                                        <span className="lux-metric-val">{user.cgpa || '8.25'}</span>
+                                        <span className="lux-metric-lbl">Current CGPA</span>
+                                    </div>
                                 </div>
-                                <div className="info-grid">
-                                    <div className="info-item">
-                                        <div className="info-icon">👨‍🏫</div>
-                                        <div className="info-content">
-                                            <label>Head of Department</label>
-                                            <p>Dr. Selvam</p>
-                                        </div>
+                                <div className="lux-metric-card">
+                                    <div className="lux-metric-icon bg-blue-light text-blue">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                                     </div>
-                                    <div className="info-item">
-                                        <div className="info-icon">👩‍🏫</div>
-                                        <div className="info-content">
-                                            <label>Class Advisor</label>
-                                            <p>{user.staffid.name}</p>
-                                        </div>
+                                    <div className="lux-metric-info">
+                                        <span className="lux-metric-val">85%</span>
+                                        <span className="lux-metric-lbl">Attendance</span>
                                     </div>
-                                    <div className="info-item">
-                                        <div className="info-icon">🎓</div>
-                                        <div className="info-content">
-                                            <label>Total Students</label>
-                                            <p>120</p>
-                                        </div>
+                                </div>
+                                <div className="lux-metric-card">
+                                    <div className="lux-metric-icon bg-red-light text-red">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                                     </div>
-                                    <div className="info-item">
-                                        <div className="info-icon">📅</div>
-                                        <div className="info-content">
-                                            <label>Semester</label>
-                                            <p>{user.semester}th</p>
-                                        </div>
+                                    <div className="lux-metric-info">
+                                        <span className="lux-metric-val">{user.arrears || '0'}</span>
+                                        <span className="lux-metric-lbl">Standing Arrears</span>
+                                    </div>
+                                </div>
+                                <div className="lux-metric-card">
+                                    <div className="lux-metric-icon bg-navy-light text-navy">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                                    </div>
+                                    <div className="lux-metric-info">
+                                        <span className="lux-metric-val">Sem {user.semester || 'N/A'}</span>
+                                        <span className="lux-metric-lbl">{user.year || 'Year N/A'}</span>
                                     </div>
                                 </div>
                             </div>
-                        </section>
+                        </div>
+                    </div>
 
-                        {/* Monthly Calendar */}
-                        <section className="section">
-                            <div className="calendar-container-main">
-                                <div className="calendar-card">
-                                    <div className="calendar-header">
-                                        <div className="calendar-title">
-                                            <h2>📅 Monthly Calendar</h2>
-                                            <p className="calendar-subtitle">Track your schedule and events</p>
+                    {/* RIGHT COLUMN */}
+                    <div className="lux-grid-col">
+                        
+                        {/* RECENT PASSES WIDGET */}
+                        <div className="lux-widget-card lux-notices-widget">
+                            <div className="lux-widget-header">
+                                <h2>Recent Outpass Activity</h2>
+                                <button className="lux-text-btn" onClick={() => handleNavigation('/outpass')}>View All</button>
+                            </div>
+                            <div className="lux-notices-list">
+                                {recentPasses.length > 0 ? recentPasses.map((pass: any) => (
+                                    <div className="lux-notice-item" key={pass._id}>
+                                        <div className={`lux-notice-badge ${
+                                            pass.status === 'approved' ? 'badge-info' : 
+                                            pass.status === 'rejected' ? 'badge-urgent' : 'badge-event'
+                                        }`}>
+                                            {pass.status}
                                         </div>
-                                        <div className="calendar-controls">
-                                            <button className="btn-nav" onClick={() => changeMonth(-1)}>
-                                                ← Previous
-                                            </button>
-                                            <button className="btn-today" onClick={goToToday}>
-                                                Today
-                                            </button>
-                                            <button className="btn-nav" onClick={() => changeMonth(1)}>
-                                                Next →
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="calendar-month-year">
-                                        <h3>{monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}</h3>
-                                    </div>
-
-                                    <div className="calendar-grid">
-                                        {renderCalendar()}
-                                    </div>
-
-                                    {/* Legend */}
-                                    <div className="calendar-legend">
-                                        <h4>Legend</h4>
-                                        <div className="legend-items">
-                                            <div className="legend-item">
-                                                <span className="event-symbol working">●</span>
-                                                <span>Working Day</span>
-                                            </div>
-                                            <div className="legend-item">
-                                                <span className="event-symbol leave">●</span>
-                                                <span>Leave / Holiday</span>
-                                            </div>
-                                            <div className="legend-item">
-                                                <span className="event-symbol college-event">★</span>
-                                                <span>College Events</span>
-                                            </div>
-                                            <div className="legend-item">
-                                                <span className="event-symbol cia-exam">▲</span>
-                                                <span>CIA Exams</span>
-                                            </div>
+                                        <div className="lux-notice-content">
+                                            <h4 style={{ textTransform: 'capitalize' }}>{pass.reason}</h4>
+                                            <p>From: {new Date(pass.fromDate).toLocaleDateString()} To: {new Date(pass.toDate).toLocaleDateString()}</p>
+                                            <span className="lux-notice-date">Applied: {new Date(pass.createdAt).toLocaleDateString()}</span>
                                         </div>
                                     </div>
-                                </div>
-
-                                {/* Event Details Panel */}
-                                {selectedEvent && (
-                                    <div className="event-details-panel">
-                                        <div className="panel-header">
-                                            <h3>Event Details</h3>
-                                            <button className="btn-close" onClick={() => setSelectedEvent(null)}>
-                                                ✕
-                                            </button>
-                                        </div>
-                                        <div className="panel-content">
-                                            <div className="event-type-badge">
-                                                {getEventSymbol(selectedEvent.type)}
-                                                <span className="type-label">
-                                                    {selectedEvent.type === 'working' && 'Working Day'}
-                                                    {selectedEvent.type === 'leave' && 'Leave / Holiday'}
-                                                    {selectedEvent.type === 'college_event' && 'College Event'}
-                                                    {selectedEvent.type === 'cia_exam' && 'CIA Exam'}
-                                                </span>
-                                            </div>
-                                            <h4 className="event-title">{selectedEvent.title}</h4>
-                                            <div className="event-info">
-                                                <div className="info-row">
-                                                    <span className="info-label">📅 Date:</span>
-                                                    <span className="info-value">
-                                                        {selectedEvent.date.toLocaleDateString('en-US', {
-                                                            weekday: 'long',
-                                                            year: 'numeric',
-                                                            month: 'long',
-                                                            day: 'numeric'
-                                                        })}
-                                                    </span>
-                                                </div>
-                                                {selectedEvent.time && (
-                                                    <div className="info-row">
-                                                        <span className="info-label">🕐 Time:</span>
-                                                        <span className="info-value">{selectedEvent.time}</span>
-                                                    </div>
-                                                )}
-                                                {selectedEvent.description && (
-                                                    <div className="info-row">
-                                                        <span className="info-label">📝 Description:</span>
-                                                        <span className="info-value">{selectedEvent.description}</span>
-                                                    </div>
-                                                )}
-                                                {selectedEvent.leaveReason && (
-                                                    <div className="info-row">
-                                                        <span className="info-label">ℹ️ Reason:</span>
-                                                        <span className="info-value">{selectedEvent.leaveReason}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
+                                )) : (
+                                    <p style={{fontSize: '13px', color: 'var(--text-3)'}}>No recent activity found.</p>
                                 )}
                             </div>
-                        </section>
+                        </div>
 
-                        {/* Vision & Mission */}
-                        <section className="section">
-                            <div className="card vision-card">
-                                <div className="card-header">
-                                    <div className="header-icon">🚀</div>
-                                    <h3 className="text-white">Vision & Mission</h3>
-                                </div>
-                                <div className="vision-content">
-                                    <div className="vision-block">
-                                        <h4>Vision</h4>
-                                        <p>Jeppiaar Institute of Technology aspires to provide technical education in futuristic technologies with the perspective of innovative, industrial, and social applications for the betterment of humanity.</p>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            {/* ── MOBILE VIEW ── */}
+            <div className="lux-mobile-view cred-page-bg">
+                <div className="mob-container">
+                    {/* ── TOP SECTION (CRED ID CARD) ── */}
+                    <div className="cred-card cred-hero animate-cred-enter cred-stagger-1">
+                        <div className="cred-hero-bg"></div>
+                        <div className="cred-hero-content">
+                            <div className="cred-avatar-wrap">
+                                {!imageError && user.photo ? (
+                                    <img
+                                        src={user.photo.startsWith("blob:") || user.photo.startsWith("data:") || user.photo.startsWith("http")
+                                            ? user.photo
+                                            : `${import.meta.env.VITE_CDN_URL || ''}${user.photo.startsWith('/') ? user.photo.slice(1) : user.photo}`
+                                        }
+                                        alt="Profile"
+                                        className="cred-avatar"
+                                        onError={() => setImageError(true)}
+                                    />
+                                ) : (
+                                    <div className="cred-avatar cred-avatar-fallback">
+                                        {user.name ? user.name.charAt(0).toUpperCase() : 'S'}
                                     </div>
-                                    <div className="vision-divider"></div>
-                                    <div className="vision-block">
-                                        <h4>Mission</h4>
-                                        <ul>
-                                            <li style={{ color: '#d0c9c9ff' }}>To produce competent and disciplined high-quality professionals.</li>
-                                            <li style={{ color: '#d0c9c9ff' }}>To improve the quality of education through excellence in teaching.</li>
-                                            <li style={{ color: '#d0c9c9ff' }}>To provide excellent infrastructure and stimulating environment.</li>
-                                        </ul>
-                                    </div>
-                                </div>
+                                )}
+                                <div className="cred-status-dot"></div>
                             </div>
-                        </section>
+                            <div className="cred-hero-text">
+                                <span className="cred-badge-gold">Student Portal</span>
+                                <span className="cred-h2" style={{marginTop: '4px', color: 'var(--cred-gold)'}}>{user.name || 'Student'}</span>
+                                <span className="cred-p" style={{fontSize: '13px'}}>{user.department || 'Dept'} • Sem {user.semester || 'N/A'}</span>
+                            </div>
+                        </div>
+                        <button className="mob-logout-btn" onClick={handleLogout} aria-label="Log Out">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                <polyline points="16 17 21 12 16 7" />
+                                <line x1="21" y1="12" x2="9" y2="12" />
+                            </svg>
+                        </button>
                     </div>
 
-                    {/* Sidebar */}
-                    <aside className="sidebar">
-                        {/* Events
-                        <div className="card sidebar-card">
-                            <h3>Upcoming Events</h3>
-                            <div className="events-list">
-                                {EVENTS_DATA.map(event => (
-                                    <div key={event.id} className="event-item">
-                                        <div className={`event-date ${event.type}`}>
-                                            <span>{event.date.split(' ')[0]}</span>
-                                            <strong>{event.date.split(' ')[1].replace(',', '')}</strong>
-                                        </div>
-                                        <div className="event-details">
-                                            <p className="event-title">{event.title}</p>
-                                            <span className="event-type">{event.type}</span>
-                                        </div>
-                                    </div>
-                                ))}
+                    {/* ── QUICK ACTIONS ── */}
+                    <div className="mob-quick-actions animate-cred-enter cred-stagger-2">
+                        <button className="cred-card cred-qa-card" onClick={() => handleNavigation('/new-outpass')}>
+                            <div className="cred-qa-icon" style={{background: 'rgba(212, 158, 23, 0.39)', color: '#D4A017'}}>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                             </div>
-                        </div> */}
+                            <span>Apply Outpass</span>
+                        </button>
+                        <button className="cred-card cred-qa-card" onClick={() => handleNavigation('/outpass')}>
+                            <div className="cred-qa-icon" style={{background: 'rgba(37, 99, 235, 0.15)', color: '#3B82F6'}}>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            </div>
+                            <span>Track Outpass</span>
+                        </button>
+                        <button className="cred-card cred-qa-card" onClick={() => handleNavigation('/staffs')}>
+                            <div className="cred-qa-icon" style={{background: 'rgba(16, 185, 129, 0.15)', color: '#10B981'}}>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            </div>
+                            <span>Staff Directory</span>
+                        </button>
+                        <button className="cred-card cred-qa-card" onClick={() => handleNavigation('/profile')}>
+                            <div className="cred-qa-icon" style={{background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444'}}>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
+                            <span>Profile</span>
+                        </button>
+                    </div>
 
-                        {/* Recent Downloads */}
-                        <div className="card sidebar-card">
-                            <h3>Recent Downloads</h3>
-                            <div className="downloads-list">
-                                {RECENT_DOWNLOADS.map(download => (
-                                    <div key={download.id} className="download-item">
-                                        <div className="download-icon">📄</div>
-                                        <div className="download-info">
-                                            <p className="download-title">{download.title}</p>
-                                            <span className="download-meta">{download.subject} • {download.date}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                            <button className="btn btn-ghost btn-sm w-full mt-4">View All Downloads</button>
+                    {/* ── OUTPASS STATUS ── */}
+                    <div className="mob-section animate-cred-enter cred-stagger-3">
+                        <div className="mob-section-header">
+                            <span className="cred-h2" style={{fontSize: '18px'}}>Outpass Status</span>
                         </div>
-                    </aside>
+                        <div className="mob-status-chips">
+                            <div className="cred-card cred-status-chip">
+                                <span className="val" style={{color: 'var(--cred-warning)'}}>{outpassStats.pending}</span>
+                                <span className="cred-label">Pending</span>
+                            </div>
+                            <div className="cred-card cred-status-chip">
+                                <span className="val" style={{color: 'var(--cred-success)'}}>{outpassStats.approved}</span>
+                                <span className="cred-label">Approved</span>
+                            </div>
+                            <div className="cred-card cred-status-chip">
+                                <span className="val" style={{color: 'var(--cred-blue)'}}>{outpassStats.checkedOut}</span>
+                                <span className="cred-label">Checked Out</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ── ACADEMIC SUMMARY ── */}
+                    <div className="mob-section animate-cred-enter cred-stagger-4">
+                        <div className="mob-section-header">
+                            <span className="cred-h2" style={{fontSize: '18px'}}>Academic Summary</span>
+                        </div>
+                        <div className="mob-academic-grid">
+                            <div className="cred-card cred-metric">
+                                <span className="val">{user.cgpa || '8.25'}</span>
+                                <span className="cred-label">CGPA</span>
+                            </div>
+                            <div className="cred-card cred-metric">
+                                <span className="val">85%</span>
+                                <span className="cred-label">Attendance</span>
+                            </div>
+                            <div className="cred-card cred-metric">
+                                <span className="val">{user.arrears || '0'}</span>
+                                <span className="cred-label">Arrears</span>
+                            </div>
+                            <div className="cred-card cred-metric">
+                                <span className="val">Sem {user.semester || 'N/A'}</span>
+                                <span className="cred-label">Semester</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ── RECENT PASSES ── */}
+                    <div className="mob-section animate-cred-enter cred-stagger-5" style={{marginBottom: '40px'}}>
+                        <div className="mob-section-header">
+                            <span className="cred-h2" style={{fontSize: '18px'}}>Recent Activity</span>
+                            <button className="mob-btn-text" onClick={() => handleNavigation('/outpass')}>View All</button>
+                        </div>
+                        {recentPasses.length > 0 ? recentPasses.map((pass: any) => (
+                            <div className="cred-card cred-notice-card" key={pass._id}>
+                                <div className="cred-notice-icon" style={{background: pass.status === 'approved' ? 'rgba(16, 185, 129, 0.1)' : pass.status === 'rejected' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)', color: pass.status === 'approved' ? '#10B981' : pass.status === 'rejected' ? '#EF4444' : '#F59E0B'}}>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                                </div>
+                                <div className="cred-notice-content">
+                                    <span className="cred-h2" style={{fontSize: '15px', textTransform: 'capitalize'}}>{pass.reason}</span>
+                                    <span className="cred-p" style={{fontSize: '13px'}}>{new Date(pass.fromDate).toLocaleDateString()} &bull; <span style={{ textTransform: 'capitalize' }}>{pass.status}</span></span>
+                                </div>
+                            </div>
+                        )) : (
+                            <div className="cred-card cred-notice-card">
+                                <div className="cred-notice-content">
+                                    <span className="cred-p" style={{fontSize: '13px'}}>No recent outpass activity.</span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
+
+                {/* ── BOTTOM NAVIGATION ── */}
+                <StudentBottomNav activeTab="home" />
             </div>
 
             <style>{`
-                /* Custom Dashboard Header */
-                .dashboard-header-custom {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    height: 70px;
-                    background: white;
-                    border-bottom: 1px solid #e2e8f0;
-                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-                    z-index: 1000;
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+                .dashboard-page-view {
+                    font-family: 'Inter', -apple-system, sans-serif;
+                    -webkit-font-smoothing: antialiased;
                 }
 
-                .mobile-menu-btn {
-                    display: none;
-                    background: none;
-                    border: none;
-                    font-size: 24px;
-                    cursor: pointer;
-                    color: #1e293b;
-                    padding: 8px;
-                    z-index: 1001;
-                }
-
-                .header-container-custom {
+                .dashboard-page-view .content-wrapper {
                     max-width: 1400px;
                     margin: 0 auto;
-                    height: 100%;
-                    padding: 0 24px;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                }
-
-                .header-left-custom {
-                    display: flex;
-                    align-items: center;
-                }
-
-                .brand-custom {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                }
-
-                .brand-icon-custom {
-                    font-size: 28px;
-                }
-
-                .brand-text-custom {
-                    font-size: 1.3rem;
-                    font-weight: 700;
-                    background: linear-gradient(135deg, #0047AB, #2563eb);
-                    -webkit-background-clip: text;
-                    -webkit-text-fill-color: transparent;
-                }
-
-                .header-nav-custom {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                }
-
-                .nav-item-custom {
-                    padding: 10px 20px;
-                    border: none;
-                    background: transparent;
-                    color: #64748b;
-                    font-weight: 600;
-                    font-size: 0.95rem;
-                    cursor: pointer;
-                    border-radius: 10px;
-                    transition: all 0.3s;
-                }
-
-                .nav-item-custom:hover {
-                    background: #f1f5f9;
-                    color: #0047AB;
-                }
-
-                .logout-btn-custom {
-                    padding: 10px 24px;
-                    border: 2px solid #ef4444;
-                    background: white;
-                    color: #ef4444;
-                    font-weight: 600;
-                    font-size: 0.95rem;
-                    cursor: pointer;
-                    border-radius: 10px;
-                    transition: all 0.3s;
-                    margin-left: 12px;
-                }
-
-                .logout-btn-custom:hover {
-                    background: #ef4444;
-                    color: white;
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-                }
-
-                .content-wrapper-custom {
-                    margin-top: 70px;
-                    margin-right: 20px;
-                    margin-left: 20px;
-                    padding: 0;
-                }
-
-                /* Calendar Styles */
-                .calendar-container-main {
-                    display: grid;
-                    grid-template-columns: 1fr 350px;
-                    gap: 24px;
-                }
-
-                .calendar-card {
-                    background: white;
-                    border-radius: 24px;
                     padding: 32px;
-                    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
-                    border: 1px solid rgba(0, 0, 0, 0.05);
-                    animation: fadeInUp 0.6s ease-out;
-                }
-
-                .calendar-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 24px;
-                    padding-bottom: 20px;
-                    border-bottom: 2px solid #f1f5f9;
-                }
-
-                .calendar-title h2 {
-                    font-size: 1.5rem;
-                    font-weight: 700;
-                    color: #1e293b;
-                    margin: 0 0 4px 0;
-                }
-
-                .calendar-subtitle {
-                    color: #64748b;
-                    font-size: 0.9rem;
-                    margin: 0;
-                }
-
-                .calendar-controls {
-                    display: flex;
-                    gap: 12px;
-                }
-
-                .btn-nav, .btn-today {
-                    padding: 10px 20px;
-                    border-radius: 12px;
-                    border: none;
-                    font-weight: 600;
-                    font-size: 0.9rem;
-                    cursor: pointer;
-                    transition: all 0.3s ease;
-                }
-
-                .btn-nav {
-                    background: #f1f5f9;
-                    color: #475569;
-                }
-
-                .btn-nav:hover {
-                    background: #0047AB;
-                    color: white;
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 12px rgba(0, 71, 171, 0.3);
-                }
-
-                .btn-today {
-                    background: linear-gradient(135deg, #0047AB, #1e3a8a);
-                    color: white;
-                }
-
-                .btn-today:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 6px 20px rgba(0, 71, 171, 0.4);
-                }
-
-                .calendar-month-year {
-                    text-align: center;
-                    margin-bottom: 24px;
-                }
-
-                .calendar-month-year h3 {
-                    font-size: 1.75rem;
-                    font-weight: 700;
-                    color: #0f172a;
-                    margin: 0;
-                    background: linear-gradient(135deg, #0047AB, #60a5fa);
-                    -webkit-background-clip: text;
-                    -webkit-text-fill-color: transparent;
-                    background-clip: text;
-                }
-
-                .calendar-grid {
-                    display: grid;
-                    grid-template-columns: repeat(7, 1fr);
-                    gap: 8px;
-                    margin-bottom: 24px;
-                    overflow: visible;
-                }
-
-                .calendar-header-day {
-                    text-align: center;
-                    font-weight: 700;
-                    color: #64748b;
-                    padding: 12px;
-                    font-size: 0.85rem;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                }
-
-                .calendar-day {
-                    aspect-ratio: 1;
-                    border-radius: 16px;
-                    padding: 12px;
                     display: flex;
                     flex-direction: column;
-                    align-items: center;
-                    justify-content: flex-start;
-                    gap: 8px;
-                    background: #f8fafc;
-                    border: 2px solid transparent;
-                    cursor: pointer;
-                    cursor: pointer;
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                    position: relative;
-                    overflow: visible;
+                    gap: 32px;
                 }
 
-                @media (max-width: 768px) {
-                    .mobile-menu-btn {
-                        display: block;
+                @media (max-width: 1024px) {
+                    .dashboard-page-view .content-wrapper {
+                        gap: 24px;
                     }
-
-                    .header-nav-custom {
-                        position: absolute;
-                        top: 70px;
-                        left: 0;
-                        right: 0;
-                        background: white;
-                        flex-direction: column;
-                        padding: 0;
-                        border-bottom: 1px solid #e2e8f0;
-                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                        overflow: hidden;
-                        max-height: 0;
-                        transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
-                        gap: 0;
-                    }
-
-                    .header-nav-custom.mobile-open {
-                        max-height: 500px;
-                        padding: 16px 0;
-                    }
-
-                    .nav-item-custom, .logout-btn-custom {
-                        width: 100%;
-                        text-align: left;
-                        padding: 12px 24px;
-                        border-radius: 0;
-                        margin: 0;
-                    }
-
-                    .logout-btn-custom {
-                        border: none;
-                        border-top: 1px solid #fee2e2;
-                        color: #ef4444;
-                        margin-top: 8px;
-                    }
-
-                    .content-wrapper-custom {
-                        margin-top: 70px;
+                    .lux-quick-actions {
+                        grid-template-columns: repeat(2, 1fr);
+                        gap: 24px;
                     }
                 }
 
-                .calendar-day.empty {
-                    background: transparent;
-                    cursor: default;
-                }
-
-                .calendar-day:not(.empty):hover {
-                    background: #eff6ff;
-                    border-color: #93c5fd;
-                    transform: translateY(-4px) scale(1.05);
-                    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2);
-                    z-index: 500;
-                }
-
-                .calendar-day.today {
-                    background: linear-gradient(135deg, #0047AB, #1e3a8a);
-                    color: white;
-                    border-color: #0047AB;
-                    box-shadow: 0 4px 16px rgba(0, 71, 171, 0.3);
-                }
-
-                .calendar-day.today .day-number {
-                    color: green;
-                    font-weight: 800;
-                }
-
-                .calendar-day.has-events {
-                    background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
-                }
-
-                .day-number {
-                    font-size: 1rem;
-                    font-weight: 600;
-                    color: #1e293b;
-                    position: relative;
-                    z-index: 10;
-                }
-
-                .event-symbols {
-                    display: flex;
-                    gap: 4px;
-                    flex-wrap: wrap;
-                    justify-content: center;
-                    position: relative;
-                    z-index: 5;
-                }
-
-                .event-symbol {
-                    font-size: 1.2rem;
-                    line-height: 1;
-                    animation: popIn 0.3s ease-out;
-                }
-
-                .event-symbol.working {
-                    color: #10b981;
-                    filter: drop-shadow(0 2px 4px rgba(16, 185, 129, 0.3));
-                }
-
-                .event-symbol.leave {
-                    color: #ef4444;
-                    filter: drop-shadow(0 2px 4px rgba(239, 68, 68, 0.3));
-                }
-
-                .event-symbol.college-event {
-                    color: #3b82f6;
-                    filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
-                }
-
-                .event-symbol.cia-exam {
-                    color: #f59e0b;
-                    filter: drop-shadow(0 2px 4px rgba(245, 158, 11, 0.3));
-                }
-
-                .event-tooltip {
-                    position: absolute;
-                    top: 100%;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    margin-top: 8px;
-                    background: rgba(15, 23, 42, 0.95);
-                    backdrop-filter: blur(12px);
-                    color: white;
-                    padding: 12px 16px;
-                    border-radius: 12px;
-                    font-size: 0.85rem;
-                    white-space: nowrap;
-                    z-index: 1000;
-                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-                    animation: tooltipFadeIn 0.2s ease-out;
-                    pointer-events: none;
-                }
-
-                .event-tooltip::before {
-                    content: '';
-                    position: absolute;
-                    bottom: 100%;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    border: 6px solid transparent;
-                    border-bottom-color: rgba(15, 23, 42, 0.95);
-                }
-
-                .tooltip-event {
-                    margin: 4px 0;
-                }
-
-                .calendar-legend {
-                    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-                    border-radius: 16px;
-                    padding: 20px;
-                    border: 1px solid #e2e8f0;
-                }
-
-                .calendar-legend h4 {
-                    font-size: 1rem;
-                    font-weight: 700;
-                    color: #1e293b;
-                    margin: 0 0 16px 0;
-                }
-
-                .legend-items {
-                    display: grid;
-                    grid-template-columns: repeat(2, 1fr);
-                    gap: 12px;
-                }
-
-                .legend-item {
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    font-size: 0.9rem;
-                    color: #475569;
-                    font-weight: 500;
-                }
-
-                .event-details-panel {
-                    background: white;
-                    border-radius: 24px;
-                    padding: 0;
-                    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-                    border: 1px solid rgba(0, 0, 0, 0.05);
-                    animation: slideInRight 0.4s ease-out;
-                    overflow: hidden;
-                    max-height: fit-content;
-                }
-
-                .panel-header {
-                    background: linear-gradient(135deg, #0047AB, #1e3a8a);
-                    color: white;
-                    padding: 24px;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                }
-
-                .panel-header h3 {
-                    margin: 0;
-                    color: white;
-                    font-size: 1.25rem;
-                    font-weight: 700;
-                }
-
-                .btn-close {
-                    background: rgba(255, 255, 255, 0.2);
-                    border: none;
-                    color: white;
-                    width: 32px;
-                    height: 32px;
-                    border-radius: 8px;
-                    font-size: 1.2rem;
-                    cursor: pointer;
-                    transition: all 0.3s ease;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                }
-
-                .btn-close:hover {
-                    background: rgba(255, 255, 255, 0.3);
-                    transform: rotate(90deg);
-                }
-
-                .panel-content {
-                    padding: 24px;
-                }
-
-                .event-type-badge {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 8px;
-                    padding: 8px 16px;
-                    border-radius: 12px;
-                    background: #f1f5f9;
-                    margin-bottom: 16px;
-                    font-weight: 600;
-                    font-size: 0.9rem;
-                    color: #475569;
-                }
-
-                .event-title {
-                    font-size: 1.5rem;
-                    font-weight: 700;
-                    color: #0f172a;
-                    margin: 0 0 20px 0;
-                }
-
-                .event-info {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 16px;
-                }
-
-                .info-row {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 6px;
-                    padding: 16px;
-                    background: #f8fafc;
-                    border-radius: 12px;
-                    border-left: 4px solid #0047AB;
-                }
-
-                .info-label {
-                    font-size: 0.85rem;
-                    font-weight: 600;
-                    color: #64748b;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                }
-
-                .info-value {
-                    font-size: 1rem;
-                    color: #1e293b;
-                    font-weight: 500;
-                }
-
-                @keyframes popIn {
-                    0% {
-                        transform: scale(0);
-                        opacity: 0;
-                    }
-                    50% {
-                        transform: scale(1.2);
-                    }
-                    100% {
-                        transform: scale(1);
-                        opacity: 1;
-                    }
-                }
-
-                @keyframes tooltipFadeIn {
-                    from {
-                        opacity: 0;
-                        transform: translateX(-50%) translateY(-5px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateX(-50%) translateY(0);
-                    }
-                }
-
-                @media (max-width: 1200px) {
-                    .calendar-container-main {
-                        grid-template-columns: 1fr;
-                    }
-
-                    .event-details-panel {
-                        position: fixed;
-                        top: 50%;
-                        left: 50%;
-                        transform: translate(-50%, -50%);
-                        width: 90%;
-                        max-width: 500px;
-                        z-index: 1000;
-                        animation: scaleIn 0.3s ease-out;
-                    }
-                }
-
-                @media (max-width: 768px) {
-                    .calendar-grid {
-                        gap: 3px;
-                    }
-
-                    .calendar-day {
-                        padding: 6px 4px;
-                        border-radius: 8px;
-                    }
-
-                    .day-number {
-                        font-size: 0.8rem;
-                    }
-
-                    .event-symbol {
-                        font-size: 0.8rem;
-                    }
-
-                    .calendar-controls {
-                        flex-direction: row;
-                        width: 100%;
-                        gap: 8px;
-                    }
-
-                    .btn-nav, .btn-today {
-                        width: auto;
-                        flex: 1;
-                        padding: 8px 12px;
-                        font-size: 0.75rem;
-                    }
-
-                    .legend-items {
-                        grid-template-columns: 1fr;
-                        gap: 8px;
-                    }
-                    
-                    .calendar-card {
-                        padding: 16px;
-                    }
-                    
-                    .calendar-header-day {
-                        padding: 6px 4px;
-                        font-size: 0.7rem;
-                    }
-                }
-
-                @media (max-width: 480px) {
-                    /* Department Card - Extra Small Screens */
-                    .info-card {
-                        padding: 16px;
-                    }
-                    
-                    .card-header h3 {
-                        font-size: 1rem;
-                    }
-                    
-                    .card-subtitle {
-                        font-size: 0.75rem;
-                    }
-                    
-                    .header-icon {
-                        font-size: 28px;
-                        padding: 8px;
-                    }
-                    
-                    .info-item {
-                        padding: 12px;
-                        gap: 10px;
-                    }
-                    
-                    .info-icon {
-                        font-size: 18px;
-                        padding: 7px;
-                    }
-                    
-                    .info-content label {
-                        font-size: 0.65rem;
-                    }
-                    
-                    .info-content p {
-                        font-size: 0.85rem;
-                    }
-                    
-                    /* Calendar - Extra Small Screens */
-                    .calendar-card {
-                        padding: 12px;
-                    }
-                    
-                    .calendar-header-day {
-                        padding: 4px 2px;
-                        font-size: 0.6rem;
-                    }
-                    
-                    .calendar-day {
-                        padding: 4px 2px;
-                        gap: 1px;
-                    }
-                    
-                    .day-number {
-                        font-size: 0.7rem;
-                    }
-                    
-                    .event-symbol {
-                        font-size: 0.65rem;
-                    }
-                    
-                    .calendar-month-year h3 {
-                        font-size: 1.1rem;
-                    }
-                    
-                    .btn-nav, .btn-today {
-                        padding: 6px 8px;
-                        font-size: 0.7rem;
-                    }
-                    
-                    .calendar-title h2 {
-                        font-size: 1.2rem;
-                    }
-                    
-                    .calendar-subtitle {
-                        font-size: 0.75rem;
-                    }
-                }
-
-                @keyframes scaleIn {
-                    from {
-                        transform: translate(-50%, -50%) scale(0.9);
-                        opacity: 0;
-                    }
-                    to {
-                        transform: translate(-50%, -50%) scale(1);
-                        opacity: 1;
-                    }
-                }
-
-                .dashboard-hero {
-                    background: linear-gradient(-45deg, #0047AB, #00214D, #1e3a8a, #0f172a);
-                    background-size: 400% 400%;
-                    animation: aurora 15s ease infinite;
-                    border-radius: 24px;
-                    padding: 40px;
-                    margin-bottom: 32px;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4);
-                    position: relative;
-                    overflow: hidden;
-                    color: white;
-                }
-
-                .dashboard-hero::before {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    background: 
-                        radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 80%, rgba(255,255,255,0.05) 0%, transparent 40%);
-                    animation: pulse-glow 8s ease-in-out infinite alternate;
-                    z-index: 0;
-                }
-
-                /* 3D Stat Card Effect */
-                .hero-stats-grid {
-                    display: flex;
-                    gap: 24px;
-                    position: relative;
-                    z-index: 1;
-                    perspective: 1000px;
-                }
-
-                .stat-card {
-                    background: rgba(255, 255, 255, 0.1);
-                    backdrop-filter: blur(12px);
-                    padding: 20px 28px;
+                /* ── DESKTOP VIEWS (RETAINED) ── */
+                .lux-hero-card {
+                    background: linear-gradient(135deg, #051d41c0 0%, #0d1b3d96 30%, #1a306bab 65%, #2b5cc7bd 100%);
                     border-radius: 20px;
-                    display: flex;
-                    align-items: center;
-                    gap: 20px;
-                    min-width: 180px;
-                    border: 1px solid rgba(255, 255, 255, 0.2);
-                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                    transform-style: preserve-3d;
-                }
-
-                .stat-card:hover {
-                    transform: translateY(-5px) rotateX(5deg) scale(1.05);
-                    background: rgba(255, 255, 255, 0.2);
-                    box-shadow: 
-                        0 20px 40px rgba(0,0,0,0.3),
-                        0 0 20px rgba(255,255,255,0.2) inset;
-                    border-color: rgba(255,255,255,0.6);
-                }
-
-                /* Section Spacing */
-                .section {
-                    margin-bottom: 32px;
-                }
-
-                .section-title {
-                    font-size: 1.25rem;
-                    font-weight: 600;
-                    color: #1e293b;
-                    margin-bottom: 20px;
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                }
-
-                /* Quick Actions Grid with 3D Perspective */
-                .quick-links-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-                    gap: 20px;
-                    perspective: 1000px;
-                    padding-bottom: 20px;
-                }
-
-                .action-card {
-                    background: white;
-                    padding: 24px;
-                    border-radius: 20px;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 16px;
-                    text-align: center;
-                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                    border: 1px solid rgba(0, 0, 0, 0.05);
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+                    padding: 32px 40px;
                     position: relative;
                     overflow: hidden;
-                    z-index: 1;
-                    cursor: pointer;
-                }
-
-                /* Zoom Effect */
-                .action-card.zooming {
-                    animation: zoom-in-nav 0.6s cubic-bezier(0.7, 0, 0.3, 1) forwards;
-                    z-index: 100;
-                    pointer-events: none;
-                }
-
-                @keyframes zoom-in-nav {
-                    0% {
-                        transform: scale(1);
-                        opacity: 1;
-                    }
-                    50% {
-                        opacity: 0.8;
-                    }
-                    100% {
-                        transform: scale(20);
-                        opacity: 0;
-                    }
-                }
-
-                .action-card:hover {
-                    transform: translateY(-8px) scale(1.02);
-                    box-shadow: 0 20px 50px rgba(255, 255, 255, 0.17);
+                    box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+                    border: 1px solid rgba(212, 175, 55, 0.3);
+                    display: flex;
+                    align-items: center;
+                    backdrop-filter: blur(12px);
+                    -webkit-backdrop-filter: blur(12px);
                 }
                 
-                .action-icon {
-                    font-size: 36px;
-                    background: linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%);
-                    width: 72px;
-                    height: 72px;
-                    border-radius: 20px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-                    color: var(--primary);
-                    border: 1px solid rgba(0, 0, 0, 0.03);
-                    position: relative;
+                .lux-hero-card::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: -150%;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(
+                        90deg,
+                        transparent,
+                        rgba(255,255,255,0.12),
+                        transparent
+                    );
+                    transform: skewX(-20deg);
+                    animation: shineSweep 6s infinite ease-in-out;
+                    pointer-events: none;
                     z-index: 2;
                 }
 
-                .action-card:hover .action-icon {
-                    background: #8eb7f0ff;
-                    color: white;
-                    transform: scale(1.15) rotate(10deg);
-                    box-shadow: 0 15px 30px rgba(0, 70, 168, 0.78);
-                }
-
-                /* Enhanced Info Card */
-                .info-card {
-                    background: white;
-                    border-radius: 24px;
-                    padding: 32px;
-                    border: 1px solid rgba(0, 0, 0, 0.05);
-                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
-                    position: relative;
-                    overflow: hidden;
-                }
-                
-                .info-card::before {
-                    content: '';
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 6px;
-                    background: linear-gradient(90deg, #0047AB, #60a5fa);
-                }
-                
-                .card-header {
-                    display: flex;
-                    align-items: flex-start;
-                    gap: 16px;
-                    margin-bottom: 32px;
-                    border-bottom: 1px solid #f1e4e4ff;
-                    padding-bottom: 24px;
-                }
-
-                .header-icon {
-                    font-size: 28px;
-                    background: #eff6ff;
-                    padding: 12px;
-                    border-radius: 12px;
-                }
-
-                .card-subtitle {
-                    color: #64748b;
-                    font-size: 0.9rem;
-                    margin-top: 4px;
-                }
-
-                .info-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 24px;
-                }
-
-                .info-item {
-                    display: flex;
-                    align-items: flex-start;
-                    gap: 16px;
-                    padding: 16px;
-                    background: #f8fafc;
-                    border-radius: 16px;
-                    transition: all 0.3s ease;
-                }
-
-                .info-item:hover {
-                    background: #eff6ff;
-                    transform: translateY(-2px);
-                }
-
-                .info-icon {
-                    font-size: 24px;
-                    background: white;
-                    padding: 10px;
-                    border-radius: 12px;
-                    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
-                }
-
-                .info-content label {
-                    display: block;
-                    color: #64748b;
-                    font-size: 0.8rem;
-                    font-weight: 500;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                    margin-bottom: 4px;
-                }
-
-                .info-content p {
-                    color: #0f172a;
-                    font-weight: 600;
-                    font-size: 1rem;
-                    margin: 0;
-                }
-
-                /* Vision Card Enhancements */
-                .vision-card {
-                    background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
-                    color: white;
-                    border-radius: 24px;
-                    padding: 32px;
-                    position: relative;
-                    overflow: hidden;
-                    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-                }
-
-                /* Shimmer Glow Border */
-                .vision-card::before {
+                .lux-hero-card::after {
                     content: '';
                     position: absolute;
                     inset: 0;
-                    border-radius: 24px; 
-                    padding: 2px; 
-                    background: linear-gradient(45deg, transparent, rgba(96, 165, 250, 0.8), rgba(251, 191, 36, 0.8), transparent); 
-                    background-size: 200% 200%; 
+                    border-radius: 20px;
+                    padding: 1px;
+                    background: linear-gradient(to bottom, rgba(212, 175, 55, 0.4), rgba(212, 175, 55, 0.05));
                     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
                     -webkit-mask-composite: xor;
                     mask-composite: exclude;
-                    animation: shimmer-border 3s linear infinite;
                     pointer-events: none;
+                    z-index: 3;
                 }
 
-                /* Background Blur/Glow behind */
-                .vision-card::after {
-                    content: '';
-                    position: absolute;
-                    top: -50%;
-                    left: -50%;
-                    width: 200%;
-                    height: 200%;
-                    background: radial-gradient(circle at 50% 50%, rgba(96, 165, 250, 0.1), transparent 60%);
-                    animation: rotate-glow 10s linear infinite;
-                    pointer-events: none;
-                    z-index: 0;
-                }
-
-                .vision-card .card-header {
-                    border-bottom-color: rgba(255,255,255,0.1);
-                    align-items: center;
-                    position: relative;
+                .lux-hero-bg-glow { 
+                    position: absolute; 
+                    top: -50%; right: -20%; 
+                    width: 70%; height: 200%; 
+                    background: radial-gradient(circle, rgba(37,99,235,0.25) 0%, transparent 60%); 
+                    pointer-events: none; 
                     z-index: 1;
+                }
+                .lux-hero-content { position: relative; z-index: 4; display: flex; align-items: center; gap: 24px; }
+                
+                .lux-avatar-container {
+                    position: relative;
+                    width: 84px;
+                    height: 84px;
+                    border-radius: 50%;
+                    padding: 3px;
+                    background: linear-gradient(135deg, #D4A017, #FBBF24);
+                    animation: avatarPulse 6s infinite ease-in-out;
                 }
                 
-                .vision-card .header-icon {
-                    background: rgba(255, 255, 255, 0.1);
+                .lux-avatar-img, .lux-avatar-fallback { width: 100%; height: 100%; border-radius: 50%; border: 3px solid #0B1120; background: #1E293B; object-fit: cover; }
+                .lux-avatar-fallback { display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; font-weight: 700; }
+                
+                .lux-status-dot {
+                    position: absolute;
+                    bottom: 4px;
+                    right: 4px;
+                    width: 14px;
+                    height: 14px;
+                    background: #10B981;
+                    border: 2px solid #0F172A;
+                    border-radius: 50%;
+                    box-shadow: 0 0 6px #10B981, 0 0 12px rgba(16, 185, 129, 0.4) !important;
                 }
-
-                .vision-card h3 {
-                    color: white;
+                
+                .lux-hero-text { display: flex; flex-direction: column; gap: 8px; }
+                
+                .lux-badge-gold {
+                    align-self: flex-start;
+                    background: rgba(212,160,23,0.15);
+                    color: #ffaf0c;
+                    padding: 4px 10px;
+                    border-radius: 6px;
+                    font-size: 11px;
+                    font-weight: 700;
+                    letter-spacing: 0.5px;
+                    text-transform: uppercase;
+                    border: 1px solid rgba(212,160,23,0.3);
+                    box-shadow: 0 0 12px rgba(212, 160, 23, 0.25);
                 }
-
-                .vision-content {
+                
+                .lux-hero-name { color: white; font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+                .lux-hero-meta { color: #edeff1ff; font-size: 14px; font-weight: 500; }
+                
+                .lux-quick-actions {
                     display: grid;
-                    grid-template-columns: 1fr auto 1fr;
-                    gap: 32px;
-                    align-items: start;
+                    grid-template-columns: repeat(4, 1fr);
+                    gap: 24px;
+                }
+                
+                .lux-qa-card {
                     position: relative;
-                    z-index: 1;
+                    border-radius: 24px !important;
+                    height: 140px;
+                    padding: 24px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: flex-start;
+                    justify-content: space-between;
+                    cursor: pointer;
+                    overflow: hidden;
+                    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                    outline: none;
+                    font-family: inherit;
+                    backdrop-filter: blur(16px);
+                    -webkit-backdrop-filter: blur(16px);
+                }
+                
+                .lux-qa-gloss {
+                    position: absolute;
+                    top: 0; left: 0; right: 0; height: 50%;
+                    background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 100%);
+                    pointer-events: none;
+                    border-radius: 24px 24px 0 0;
                 }
 
-                .vision-divider {
-                    width: 1px;
-                    height: 100%;
-                    background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.2), transparent);
+                .lux-qa-content {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                    text-align: left;
+                }
+                
+                .lux-qa-title {
+                    font-size: 18px !important;
+                    font-weight: 700 !important;
+                    color: #FFFFFF !important;
+                    letter-spacing: 0.2px;
                 }
 
-                .vision-block h4 {
-                    color: #60a5fa; /* Light Blue */
-                    font-size: 1.1rem;
-                    margin-bottom: 16px;
-                    font-weight: 600;
+                .lux-qa-subtitle {
+                    font-size: 13px !important;
+                    font-weight: 500 !important;
+                    color: rgba(255,255,255,0.7) !important;
+                    transition: color 0.3s ease;
+                }
+                
+                .lux-qa-icon { 
+                    width: 44px; height: 44px; 
+                    border-radius: 12px; 
+                    display: flex; align-items: center; justify-content: center; 
+                    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+                }
+                
+                .lux-qa-card:hover {
+                    transform: translateY(-8px) !important;
+                }
+                
+                .lux-qa-card:hover .lux-qa-icon {
+                    transform: scale(1.1) translateY(-2px) !important;
+                }
+
+                .lux-qa-card:hover .lux-qa-subtitle {
+                    color: #FFFFFF !important;
+                }
+                
+                /* Apply Outpass - Gold */
+                .lux-qa-card:nth-child(1) {
+                    background: linear-gradient(135deg, rgba(15, 23, 42, 0.3) 0%, rgba(198, 166, 87, 0.6) 100%) !important;
+                    border: 1px solid rgba(212,160,23,0.2) !important;
+                    box-shadow: 0 12px 32px rgba(0,0,0,0.3) !important;
+                }
+                .lux-qa-card:nth-child(1) .lux-qa-icon { background: rgba(212,160,23,0.15) !important; color: #D4A017 !important; }
+                .lux-qa-card:nth-child(1):hover { 
+                    border-color: rgba(212,160,23,0.5) !important; 
+                    box-shadow: 0 20px 40px rgba(212, 160, 23, 0.2), 0 0 24px rgba(212, 160, 23, 0.15) !important;
+                }
+
+                /* Track Outpass - Royal Blue */
+                .lux-qa-card:nth-child(2) {
+                    background: linear-gradient(135deg, rgba(15, 23, 42, 0.64) 0%, rgba(37, 100, 235, 0.27) 100%) !important;
+                    border: 1px solid rgba(37,99,235,0.2) !important;
+                    box-shadow: 0 12px 32px rgba(0,0,0,0.3) !important;
+                }
+                .lux-qa-card:nth-child(2) .lux-qa-icon { background: rgba(37,99,235,0.15) !important; color: #3B82F6 !important; }
+                .lux-qa-card:nth-child(2):hover { 
+                    border-color: rgba(37,99,235,0.5) !important; 
+                    box-shadow: 0 20px 40px rgba(37,99,235,0.2), 0 0 24px rgba(37,99,235,0.15) !important;
+                }
+
+                /* Staff Directory - Emerald */
+                .lux-qa-card:nth-child(3) {
+                    background: linear-gradient(135deg, rgba(21, 31, 55, 0.49) 0%, rgba(16, 185, 129, 0.26) 100%) !important;
+                    border: 1px solid rgba(16,185,129,0.2) !important;
+                    box-shadow: 0 12px 32px rgba(0,0,0,0.3) !important;
+                }
+                .lux-qa-card:nth-child(3) .lux-qa-icon { background: rgba(16,185,129,0.15) !important; color: #10B981 !important; }
+                .lux-qa-card:nth-child(3):hover { 
+                    border-color: rgba(16,185,129,0.5) !important; 
+                    box-shadow: 0 20px 40px rgba(16,185,129,0.2), 0 0 24px rgba(16,185,129,0.15) !important;
+                }
+
+                /* Profile - Burgundy */
+                .lux-qa-card:nth-child(4) {
+                    background: linear-gradient(135deg, rgba(15, 23, 42, 0.4) 0%, rgba(159, 18, 58, 0.35) 100%) !important;
+                    border: 1px solid rgba(159,18,57,0.2) !important;
+                    box-shadow: 0 12px 32px rgba(0,0,0,0.3) !important;
+                }
+                .lux-qa-card:nth-child(4) .lux-qa-icon { background: rgba(159,18,57,0.15) !important; color: #F43F5E !important; }
+                .lux-qa-card:nth-child(4):hover { 
+                    border-color: rgba(159,18,57,0.5) !important; 
+                    box-shadow: 0 20px 40px rgba(159,18,57,0.2), 0 0 24px rgba(159,18,57,0.15) !important;
+                }
+
+                .lux-dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+                .lux-grid-col { display: flex; flex-direction: column; gap: 24px; }
+                .lux-widget-card { background: #FFFFFF; border-radius: 20px; border: 1px solid #E2E8F0; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
+                .lux-widget-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+                .lux-widget-header h2 { font-size: 17px; font-weight: 700; color: #0F172A; }
+                .lux-text-btn { background: none; border: none; color: #2563EB; font-size: 13px; font-weight: 600; cursor: pointer; transition: color 0.2s; }
+                .lux-text-btn:hover { color: #1D4ED8; text-decoration: underline; }
+                .lux-outpass-badges { display: flex; justify-content: space-between; gap: 12px; }
+                
+                .lux-outpass-stat {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 6px;
+                    padding: 16px 8px;
+                    border-radius: 12px;
+                    transition: all 0.3s ease !important;
+                }
+                
+                .lux-outpass-stat:nth-child(1) {
+                    background: rgba(255, 255, 255, 0.26) !important;
+                    backdrop-filter: blur(10px);
+                    -webkit-backdrop-filter: blur(10px);
+                    border: 1px solid rgba(245, 158, 11, 0.2) !important;
+                    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.08) !important;
+                }
+                .lux-outpass-stat:nth-child(2) {
+                    background: rgba(255, 255, 255, 0.4) !important;
+                    backdrop-filter: blur(10px);
+                    -webkit-backdrop-filter: blur(10px);
+                    border: 1px solid rgba(16, 185, 129, 0.2) !important;
+                    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08) !important;
+                }
+                .lux-outpass-stat:nth-child(3) {
+                    background: rgba(255, 255, 255, 0.4) !important;
+                    backdrop-filter: blur(10px);
+                    -webkit-backdrop-filter: blur(10px);
+                    border: 1px solid rgba(239, 68, 68, 0.2) !important;
+                    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.08) !important;
+                }
+                .lux-outpass-stat:nth-child(4) {
+                    background: rgba(255, 255, 255, 0.4) !important;
+                    backdrop-filter: blur(10px);
+                    -webkit-backdrop-filter: blur(10px);
+                    border: 1px solid rgba(212, 160, 23, 0.2) !important;
+                    box-shadow: 0 4px 12px rgba(212, 160, 23, 0.08) !important;
+                }
+                .lux-outpass-stat:nth-child(5) {
+                    background: rgba(255, 255, 255, 0.4) !important;
+                    backdrop-filter: blur(10px);
+                    -webkit-backdrop-filter: blur(10px);
+                    border: 1px solid rgba(37, 99, 235, 0.2) !important;
+                    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08) !important;
+                }
+
+                .lux-stat-val { font-size: 24px; font-weight: 800; line-height: 1; }
+                .lux-stat-lbl { font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.3px; }
+                
+                .lux-outpass-stat:nth-child(1) .lux-stat-val { color: #f59e0b !important; }
+                .lux-outpass-stat:nth-child(2) .lux-stat-val { color: #10B981 !important; }
+                .lux-outpass-stat:nth-child(3) .lux-stat-val { color: #ef4444 !important; }
+                .lux-outpass-stat:nth-child(4) .lux-stat-val { color: #D4A017 !important; }
+                .lux-outpass-stat:nth-child(5) .lux-stat-val { color: #3B82F6 !important; }
+
+                .lux-academic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+                .lux-metric-card { display: flex; align-items: center; gap: 16px; padding: 16px; background: #F8FAFC; border: 1px solid #F1F5F9; border-radius: 14px; transition: background 0.2s; }
+                .lux-metric-card:hover { background: #F1F5F9; }
+                .lux-metric-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+                .bg-gold-light { background: #FEF3C7; } .text-gold { color: #D97706; } .bg-blue-light { background: #DBEAFE; } .text-blue { color: #2563EB; } .bg-red-light { background: #FEE2E2; } .text-red { color: #DC2626; } .bg-navy-light { background: #E2E8F0; } .text-navy { color: #0F172A; }
+                .lux-metric-info { display: flex; flex-direction: column; gap: 2px; }
+                .lux-metric-val { font-size: 18px; font-weight: 800; color: #0F172A; }
+                .lux-metric-lbl { font-size: 12px; font-weight: 500; color: #64748B; }
+                .lux-notices-list { display: flex; flex-direction: column; gap: 16px; }
+                .lux-notice-item { display: flex; gap: 16px; padding-bottom: 16px; border-bottom: 1px solid #F1F5F9; }
+                .lux-notice-item:last-child { border-bottom: none; padding-bottom: 0; }
+                .lux-notice-badge { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; height: fit-content; }
+                .badge-urgent { background: #FEE2E2; color: #DC2626; } .badge-info { background: #DBEAFE; color: #2563EB; } .badge-event { background: #FEF3C7; color: #D97706; }
+                .lux-notice-content { display: flex; flex-direction: column; gap: 4px; }
+                .lux-notice-content h4 { font-size: 14px; font-weight: 700; color: #0F172A; }
+                .lux-notice-content p { font-size: 13px; color: #475569; line-height: 1.5; }
+                .lux-notice-date { font-size: 11px; font-weight: 500; color: #94A3B8; margin-top: 4px; }
+                
+                .lux-mobile-view { display: none; }
+                .lux-desktop-view { display: block; }
+
+                @media (max-width: 900px) { .lux-dashboard-grid { grid-template-columns: 1fr; } }
+                @media (max-width: 768px) {
+                    .lux-desktop-view { display: none !important; }
+                    .lux-mobile-view { display: block !important; }
+                    .student-page.dashboard-page-view { 
+                        padding-bottom: calc(90px + env(safe-area-inset-bottom, 16px)); 
+                    }
+                }
+
+                /* ==========================================
+                   CRED PREMIUM MOBILE STYLES (DASHBOARD)
+                   ========================================== */
+                .mob-container {
+                    padding: 24px 16px 16px 16px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 24px;
+                }
+
+                /* Hero Card */
+                .cred-hero {
+                    background: linear-gradient(-45deg, #0e0c0cff, #22262aff, #1E3A8A, #0B1120) !important;
+                    background-size: 300% 300% !important;
+                    padding: 24px;
                     display: flex;
                     align-items: center;
-                    gap: 8px;
-                }
-
-                .vision-block p, .vision-block li {
-                    color: #cbd5e1; /* Slate 300 - readable on dark */
-                    line-height: 1.6;
-                    font-size: 0.95rem;
-                }
-
-                .vision-block ul {
-                    padding-left: 20px;
-                }
-
-                .vision-block li {
-                    margin-bottom: 8px;
-                }
-
-                @media (max-width: 768px) {
-                    /* Department Info Card Mobile Styles */
-                    .info-card {
-                        padding: 20px;
-                        border-radius: 16px;
-                    }
-                    
-                    
-                    .card-header {
-                        flex-direction: row;
-                        flex-wrap: wrap;
-                        gap: 12px;
-                        margin-bottom: 16px;
-                        padding-bottom: 12px;
-                        align-items: center;
-                    }
-                    
-                    .header-icon {
-                        font-size: 28px;
-                        padding: 8px;
-                        flex-shrink: 0;
-                    }
-                    
-                    .card-header > div:nth-child(2) {
-                        flex: 1;
-                        min-width: 0;
-                    }
-                    
-                    .card-header h3 {
-                        font-size: 1rem;
-                        line-height: 1.3;
-                        margin: 0 0 2px 0;
-                    }
-                    
-                    .card-subtitle {
-                        font-size: 0.75rem;
-                        margin-top: 0;
-                    }
-                    
-                    .card-header .badge {
-                        font-size: 0.7rem;
-                        padding: 4px 10px;
-                        white-space: nowrap;
-                    }
-                    
-                    .info-grid {
-                        grid-template-columns: 1fr;
-                        gap: 12px;
-                    }
-                    
-                    .info-item {
-                        padding: 14px;
-                        gap: 12px;
-                    }
-                    
-                    .info-icon {
-                        font-size: 20px;
-                        padding: 8px;
-                        flex-shrink: 0;
-                    }
-                    
-                    .info-content label {
-                        font-size: 0.7rem;
-                    }
-                    
-                    .info-content p {
-                        font-size: 0.9rem;
-                    }
-                    
-                    .vision-content {
-                        grid-template-columns: 1fr;
-                    }
-                    .vision-divider {
-                        display: none;
-                    }
+                    gap: 16px;
+                    min-height: 140px;
+                    position: relative;
+                    overflow: hidden;
+                    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
                 }
                 
-                @keyframes shimmer-border {
-                    0% { background-position: 0% 50%; }
-                    100% { background-position: 200% 50%; }
+                .cred-hero::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: -150%;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(
+                        90deg,
+                        transparent,
+                        rgba(255,255,255,0.08),
+                        transparent
+                    );
+                    transform: skewX(-20deg);
+                    animation: shineSweep 8s infinite ease-in-out;
+                    pointer-events: none;
+                    z-index: 2;
                 }
 
-                @keyframes rotate-glow {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
+                .cred-hero::after {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    border-radius: 24px;
+                    padding: 1px;
+                    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0));
+                    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+                    -webkit-mask-composite: xor;
+                    mask-composite: exclude;
+                    pointer-events: none;
+                    z-index: 3;
                 }
 
+                .cred-hero.animate-cred-enter {
+                    animation: heroEntrance 500ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
+                    animation-delay: 50ms !important;
+                }
 
-                /* Keyframes */
-                @keyframes aurora {
+                .mob-logout-btn {
+                    position: absolute;
+                    top: 16px;
+                    right: 16px;
+                    width: 36px;
+                    height: 36px;
+                    border-radius: 10px;
+                    background: rgba(239, 68, 68, 0.1);
+                    border: 1px solid rgba(239, 68, 68, 0.2);
+                    color: #EF4444;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    z-index: 10;
+                    transition: all 0.2s ease;
+                }
+                .mob-logout-btn:active {
+                    transform: scale(0.9);
+                    background: rgba(239, 68, 68, 0.2);
+                }
+                .cred-hero-bg {
+                    position: absolute;
+                    top: -50%; right: -20%;
+                    width: 150%; height: 200%;
+                    background: radial-gradient(circle, rgba(212,160,23,0.08) 0%, transparent 50%);
+                    pointer-events: none;
+                    z-index: 1;
+                }
+                .cred-avatar-wrap {
+                    position: relative;
+                    width: 72px;
+                    height: 72px;
+                    border-radius: 50%;
+                    padding: 3px;
+                    background: linear-gradient(135deg, #D4A017, #FBBF24) !important;
+                    flex-shrink: 0;
+                    z-index: 1;
+                    animation: avatarPulse 6s infinite ease-in-out;
+                }
+                .cred-avatar {
+                    width: 100%; height: 100%;
+                    border-radius: 50%;
+                    border: 3px solid #0B1120;
+                    object-fit: cover;
+                }
+                .cred-avatar-fallback {
+                    background: #1d377aff;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                    font-size: 24px;
+                    font-weight: 700;
+                }
+                .cred-status-dot {
+                    position: absolute;
+                    bottom: 2px; right: 2px;
+                    width: 14px; height: 14px;
+                    background: #10B981;
+                    border: 2px solid #0B1120;
+                    border-radius: 50%;
+                    box-shadow: 0 0 6px #10B981, 0 0 12px rgba(16, 185, 129, 0.4) !important;
+                }
+                .cred-hero-text {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                    z-index: 1;
+                }
+                
+                .cred-badge-gold {
+                    background: rgba(212,160,23,0.15) !important;
+                    color: #FBBF24 !important;
+                    padding: 4px 10px;
+                    border-radius: 6px;
+                    font-size: 11px;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    border: 1px solid rgba(212,160,23,0.2) !important;
+                    display: inline-block;
+                    box-shadow: 0 0 12px rgba(212, 160, 23, 0.25);
+                }
+
+                /* Quick Actions */
+                .mob-quick-actions {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 16px;
+                }
+                
+                .cred-qa-card {
+                    color: #FFFFFF !important;
+                    font-weight: 600 !important;
+                }
+                
+                .cred-qa-card span {
+                    font-size: 14px;
+                    font-weight: 700;
+                    color: #0F172A !important;
+                }
+                
+                .cred-qa-card {
+                    background: rgba(255, 255, 255, 0.85) !important;
+                    backdrop-filter: blur(12px);
+                    -webkit-backdrop-filter: blur(12px);
+                    border: 1px solid rgba(255, 255, 255, 0.60) !important;
+                    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.10) !important;
+                    padding: 16px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 12px;
+                    cursor: pointer;
+                    transition: transform 100ms ease, box-shadow 0.2s !important;
+                }
+                
+                .cred-qa-card:active {
+                    transform: scale(0.97) !important;
+                }
+                .cred-qa-icon {
+                    width: 44px; height: 44px;
+                    border-radius: 12px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                /* Sections */
+                .mob-section {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                }
+                .mob-section-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 0 4px;
+                }
+                .mob-btn-text {
+                    color: var(--cred-gold);
+                    font-size: 13px;
+                    font-weight: 700;
+                    background: none;
+                    border: none;
+                    padding: 0;
+                    cursor: pointer;
+                }
+
+                /* Status Chips */
+                .mob-status-chips {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 12px;
+                }
+                
+                .cred-status-chip {
+                    padding: 12px 16px;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    flex: 1;
+                    min-width: 140px;
+                    border-radius: 16px;
+                    transition: all 0.2s ease !important;
+                }
+                
+                .cred-status-chip:nth-child(1) {
+                    background: rgba(245, 158, 11, 0.08) !important;
+                    border: 1px solid rgba(245, 158, 11, 0.20) !important;
+                    box-shadow: none !important;
+                }
+                .cred-status-chip:nth-child(1) .val { color: #D97706 !important; }
+
+                .cred-status-chip:nth-child(2) {
+                    background: rgba(5, 150, 105, 0.08) !important;
+                    border: 1px solid rgba(5, 150, 105, 0.20) !important;
+                    box-shadow: none !important;
+                }
+                .cred-status-chip:nth-child(2) .val { color: #059669 !important; }
+
+                .cred-status-chip:nth-child(3) {
+                    background: rgba(184, 134, 11, 0.08) !important;
+                    border: 1px solid rgba(184, 134, 11, 0.20) !important;
+                    box-shadow: none !important;
+                }
+                .cred-status-chip:nth-child(3) .val { color: #B8860B !important; }
+
+                .cred-status-chip .val {
+                    font-size: 24px;
+                    font-weight: 800;
+                    line-height: 1;
+                }
+
+                /* Academic Grid */
+                .mob-academic-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 12px;
+                }
+                .cred-metric {
+                    padding: 16px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                    border-radius: 16px;
+                }
+                .cred-metric .val {
+                    font-size: 24px;
+                    font-weight: 800;
+                    color: #0F172A;
+                }
+
+                /* Notice Card */
+                .cred-notice-card {
+                    padding: 16px;
+                    display: flex;
+                    gap: 16px;
+                    border-radius: 16px;
+                }
+                .cred-notice-icon {
+                    width: 44px; height: 44px;
+                    border-radius: 12px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                }
+                .cred-notice-content {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                }
+
+                /* Keyframes & Extra Utilities */
+                @keyframes meshGradient {
                     0% { background-position: 0% 50%; }
                     50% { background-position: 100% 50%; }
                     100% { background-position: 0% 50%; }
                 }
 
-                @keyframes float {
-                    0%, 100% { transform: translateY(0); }
-                    50% { transform: translateY(-10px); }
+                @keyframes shineSweep {
+                    0% { left: -150%; }
+                    30% { left: 150%; }
+                    100% { left: 150%; }
                 }
 
-                @keyframes fadeIn {
-                    from { opacity: 0; }
-                    to { opacity: 1; }
-                }
-
-                @keyframes fadeInUp {
-                    from { opacity: 0; transform: translateY(20px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-
-                @keyframes fadeInRight {
-                    from { opacity: 0; transform: translateX(-20px); }
-                    to { opacity: 1; transform: translateX(0); }
-                }
-
-                @keyframes slideInRight {
-                    from { opacity: 0; transform: translateX(30px); }
-                    to { opacity: 1; transform: translateX(0); }
-                }
-                
-                @keyframes pulse-glow {
-                    0%, 100% { opacity: 0.5; transform: scale(1); }
-                    50% { opacity: 0.8; transform: scale(1.1); }
-                }
-
-                @keyframes typing {
-                    from { width: 0 }
-                    to { width: 100% }
-                }
-                
-                @keyframes blink-caret {
-                    from, to { border-color: transparent }
-                    50% { border-color: white; }
-                }
-
-                .hero-welcome .badge {
-                    animation: pulse-glow 3s infinite;
-                    margin-bottom: 5px;
-                }
-                
-                /* Typing effect for H1 */
-                .hero-welcome h1 {
-                    display: inline-block;
-                    overflow: hidden;
-                    white-space: nowrap;
-                    border-right: 3px solid white;
-                    animation: 
-                        fadeInUp 0.8s ease-out 0.2s backwards,
-                        typing 2s steps(30, end) 0.5s both,
-                        blink-caret 0.75s step-end infinite;
-                    max-width: fit-content;
-                    padding-top: 15px 
-                }
-
-                /* Staggered Action Cards */
-                .action-card {
-                    animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
-                }
-                .action-card:nth-child(1) { animation-delay: 0.3s; }
-                .action-card:nth-child(2) { animation-delay: 0.4s; }
-                .action-card:nth-child(3) { animation-delay: 0.5s; }
-                .action-card:nth-child(4) { animation-delay: 0.6s; }
-
-                /* Tablet and below */
-                @media (max-width: 968px) {
-                    .dashboard-layout { grid-template-columns: 1fr; }
-                    .dashboard-hero { flex-direction: column; align-items: flex-start; gap: 24px; padding: 24px; }
-                    .hero-stats-grid { 
-                        display: flex;
-                        flex-direction: column;
-                        width: 100%; 
-                        overflow-x: auto; 
-                        padding-bottom: 12px; 
-                        justify-content: flex-start;
-                        gap: 16px;
+                @keyframes avatarPulse {
+                    0% {
+                        box-shadow: 0 0 0 0 rgba(212, 160, 23, 0.4), 0 8px 16px rgba(0,0,0,0.25);
                     }
-                    .stat-card {
-                        min-width: 160px;
-                        flex: 0 0 auto;
+                    50% {
+                        box-shadow: 0 0 0 8px rgba(212, 160, 23, 0), 0 8px 16px rgba(0,0,0,0.25);
                     }
-                    .sidebar { animation: fadeInUp 0.8s ease-out 0.4s backwards; }
-                }
-
-                @media (max-width: 768px) {
-                    .quick-links-grid {
-                         grid-template-columns: repeat(2, 1fr);
-                         gap: 16px;
-                    }
-                    h3{
-                      font-size:
-                    }
-                    .action-card {
-                         padding: 16px;
-                    }
-                    .action-icon {
-                         width: 56px;
-                         height: 56px;
-                         font-size: 28px;
-                    }
-                    .calendar-header {
-                        flex-direction: column;
-                        align-items: flex-start;
-                        gap: 16px;
-                    }
-                    .calendar-card {
-                        padding: 16px;
-                        border-radius: 16px;
-                    }
-                    .calendar-header-day{
-                        padding: 4px 2px;
-                        font-size: 0.65rem;
-                    }
-                    .calendar-controls {
-                        width: 100%;
-                        justify-content: space-between;
-                        flex-direction: row;
-                        gap: 8px;
-                    }
-                    .btn-nav, .btn-today {
-                        padding: 8px 12px;
-                        font-size: 0.75rem;
-                        flex: 1;
-                    }
-                    .calendar-month-year h3 {
-                        font-size: 1.25rem;
-                    }
-                    .calendar-grid {
-                        gap: 4px;
-                    }
-                    .calendar-day {
-                        padding: 4px;
-                        border-radius: 8px;
-                        gap: 2px;
-                    }
-                    .day-number {
-                        font-size: 0.75rem;
-                    }
-                    .event-symbol {
-                        font-size: 0.7rem;
-                    }
-                    .calendar-legend {
-                        padding: 12px;
-                    }
-                    .calendar-legend h4 {
-                        font-size: 0.85rem;
-                        margin-bottom: 8px;
-                    }
-                    .legend-item {
-                        font-size: 0.75rem;
-                        gap: 6px;
-                    }
-                    .vision-content {
-                        grid-template-columns: 1fr;
-                        gap: 24px;
-                    }
-                    .vision-divider {
-                         display: none;
-                    }
-                    .dashboard-hero h1 {
-                        font-size: 1.5rem;
+                    100% {
+                        box-shadow: 0 0 0 0 rgba(212, 160, 23, 0), 0 8px 16px rgba(0,0,0,0.25);
                     }
                 }
 
-                /* Recent Downloads Premium Styles */
-                .sidebar-card {
-                    background: white;
-                    border-radius: 24px;
-                    padding: 24px;
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.02);
-                    border: 1px solid rgba(0,0,0,0.05);
-                    transition: transform 0.3s ease, box-shadow 0.3s ease;
-                    margin-bottom: 24px;
+                @keyframes heroEntrance {
+                    from {
+                        opacity: 0;
+                        transform: translateY(12px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
                 }
 
-                .sidebar-card:hover {
-                    transform: translateY(-5px);
-                    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
-                }
-
-                .sidebar-card h3 {
-                    font-size: 1.1rem;
-                    font-weight: 600;
-                    color: #1e293b;
-                    margin-bottom: 20px;
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                }
-
-                .downloads-list {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 12px;
-                }
-
-                .download-item {
-                    display: flex;
-                    align-items: center;
-                    gap: 16px;
-                    padding: 12px;
-                    border-radius: 16px;
-                    background: #f8fafc;
-                    border: 1px solid transparent;
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                    cursor: pointer;
-                    animation: slideInRight 0.5s ease backwards;
-                }
-
-                .download-item:nth-child(1) { animation-delay: 0.1s; }
-                .download-item:nth-child(2) { animation-delay: 0.2s; }
-                .download-item:nth-child(3) { animation-delay: 0.3s; }
-                .download-item:nth-child(4) { animation-delay: 0.4s; }
-                .download-item:nth-child(5) { animation-delay: 0.5s; }
-
-                .download-item:hover {
-                    background: #eff6ff;
-                    border-color: rgba(59, 130, 246, 0.3);
-                    transform: translateX(5px) scale(1.02);
-                    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.1);
-                }
-
-                .download-icon {
-                    width: 42px;
-                    height: 42px;
-                    background: white;
-                    border-radius: 12px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 20px;
-                    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-                    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease, color 0.3s ease;
-                    color: #64748b;
-                }
-
-                .download-item:hover .download-icon {
-                    transform: scale(1.15) rotate(-8deg);
-                    background: #3b82f6;
-                    color: white;
-                }
-
-                .download-info {
-                    flex: 1;
-                    min-width: 0;
-                }
-
-                .download-title {
-                    font-weight: 600;
-                    color: #334155;
-                    font-size: 0.9rem;
-                    margin-bottom: 2px;
-                    transition: color 0.2s ease;
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                }
-
-                .download-item:hover .download-title {
-                    color: #1d4ed8;
-                }
-
-                .download-meta {
-                    font-size: 0.75rem;
-                    color: #94a3b8;
-                    display: block;
+                .animate-hero {
+                    animation: heroEntrance 500ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
                 }
             `}</style>
-
         </div>
     );
 };

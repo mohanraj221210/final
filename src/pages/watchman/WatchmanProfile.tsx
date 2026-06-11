@@ -188,6 +188,10 @@ const WatchmanProfile: React.FC = () => {
                                         src={previewUrl || `${import.meta.env.VITE_CDN_URL}${watchman.photo}` || watchmanProfile}
                                         alt="Profile"
                                         className="profile-avatar"
+                                        onError={(e) => {
+                                            e.currentTarget.onerror = null;
+                                            e.currentTarget.src = watchmanProfile;
+                                        }}
                                     />
                                     {isEditing && (
                                         <label className="avatar-upload">

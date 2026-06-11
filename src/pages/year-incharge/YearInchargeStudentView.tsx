@@ -15,6 +15,7 @@ const YearInchargeStudentView: React.FC = () => {
     const [showDocumentModal, setShowDocumentModal] = useState(false);
     const [documentUrl, setDocumentUrl] = useState<string | null>(null);
     const [documentType, setDocumentType] = useState<'image' | 'pdf'>('image');
+    const [imageError, setImageError] = useState(false);
 
     useEffect(() => {
         const fetchOutpassDetails = async () => {
@@ -36,6 +37,7 @@ const YearInchargeStudentView: React.FC = () => {
                     const found = list.find((o: any) => o._id === id);
                     if (found) {
                         setOutpass(found);
+                        setImageError(false);
                     } else {
                         toast.error("Outpass record not found");
                         navigate('/year-incharge/pending-outpass');
@@ -137,13 +139,14 @@ const YearInchargeStudentView: React.FC = () => {
                     <div className="student-card-modern">
                         <div className="card-header-gradient">
                             <div className="avatar-large">
-                                {outpass.studentid?.photo ? (
+                                {outpass.studentid?.photo && !imageError ? (
                                     <img
                                         src={outpass.studentid.photo.startsWith('http') || outpass.studentid.photo.startsWith('data:')
                                             ? outpass.studentid.photo
                                             : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${outpass.studentid.photo.replace(/^\//, '')}`}
                                         alt="Student"
                                         style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                                        onError={() => setImageError(true)}
                                     />
                                 ) : (
                                     typeof outpass.studentid?.name === 'string' ? outpass.studentid.name.charAt(0) : 'S'
