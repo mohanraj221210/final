@@ -1,217 +1,168 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Staff } from '../data/sampleData';
-import axios from 'axios';
-import { toast } from 'react-toastify';
 
 interface StaffCardProps {
     staff: Staff;
 }
 
 const StaffCard: React.FC<StaffCardProps> = ({ staff }) => {
-    const [Loading, setLoading] = React.useState(true);
-    const [staffData, setStaffData] = React.useState<Staff | null>(null);
     const navigate = useNavigate();
-
-    useEffect(() => {
-        const Staff = async () => {
-            try {
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/staff/list`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                if (response.status === 200) {
-                    const staffs = response.data.staff;
-                    const staffinfo = Array.isArray(staffs) ? staffs.find((s: Staff) => s._id === staff._id) : null;
-                    setStaffData(staffinfo);
-                }
-            } catch (error: any) {
-                toast.error("An error occurred while fetching staff data");
-                console.error("Error fetching staff data:", error.message);
-            } finally {
-                setLoading(false);
-            }
-        }
-        Staff();
-    }, []);
 
     const handleViewProfile = () => {
         navigate(`/staffs/${staff._id}`);
     };
 
-    if (Loading) {
-        return <div className="card staff-card">Loading...</div>;
-    }
+    const photoUrl = staff.photo
+        ? staff.photo.startsWith('http')
+            ? staff.photo
+            : `${import.meta.env.VITE_CDN_URL}${staff.photo}`
+        : `https://ui-avatars.com/api/?name=${staff.name}&background=2563EB&color=fff&size=200`;
 
     return (
-        <div className="card staff-card">
-            <div className="staff-header">
-                <div className="staff-img-wrapper">
+        <div className="card staff-card card-hover">
+            <div className="staff-header-band">
+                <div className="staff-avatar-wrapper">
                     <img
-                        src={
-                            (staffData?.photo || staff.photo)
-                                ? (staffData?.photo || staff.photo)?.startsWith('http')
-                                    ? (staffData?.photo || staff.photo)
-                                    : `${import.meta.env.VITE_CDN_URL}${staffData?.photo || staff.photo}`
-                                : `https://ui-avatars.com/api/?name=${staffData?.name || staff.name}&background=0047AB&color=fff&size=200`
-                        }
-                        alt={staffData?.name}
-                        onError={(e) => { e.currentTarget.src = 'https://ui-avatars.com/api/?name=' + staff.name + '&background=random'; }}
-                        className="staff-img"
+                        src={photoUrl}
+                        alt={staff.name}
+                        onError={(e) => {
+                            e.currentTarget.src = `https://ui-avatars.com/api/?name=${staff.name}&background=2563EB&color=fff&size=200`;
+                        }}
+                        className="staff-avatar-img"
                     />
                 </div>
-                <div className="staff-identity">
-                    <h3>{staffData?.name}</h3>
-                    <p className="designation">{staffData?.designation}</p>
+                <div className="staff-identity-group">
+                    <h3 className="staff-name-title">{staff.name}</h3>
+                    <span className="badge badge-blue">{staff.designation}</span>
                 </div>
             </div>
 
-            <div className="staff-body">
-                <p className="qualification">{staffData?.qualification}</p>
-                <div className="subjects-list">
-                    {staffData?.subjects?.map((sub, idx) => (
-                        <span key={idx} className="subject-tag">{sub}</span>
+            <div className="staff-body-content">
+                <p className="staff-qual-text">{staff.qualification || 'Professor'}</p>
+                <div className="staff-subjects-tags">
+                    {staff.subjects?.slice(0, 3).map((sub, idx) => (
+                        <span key={idx} className="subject-pill-tag">{sub}</span>
                     ))}
+                    {staff.subjects && staff.subjects.length > 3 && (
+                        <span className="subject-pill-tag more-tag">+{staff.subjects.length - 3} more</span>
+                    )}
                 </div>
             </div>
 
-            <div className="staff-overlay">
-                <div className="overlay-content">
-                    <button className="btn btn-primary btn-sm" onClick={handleViewProfile}>View Profile</button>
-                    <div className="contact-icons">
-                        <span className="icon-btn" title="Email">📧</span>
-                        <span className="icon-btn" title="Call">📞</span>
-                    </div>
+            <div className="staff-card-actions">
+                <button className="btn btn-secondary btn-sm flex-1" onClick={handleViewProfile}>
+                    View Profile
+                </button>
+                <div className="staff-quick-contacts">
+                    {staff.email && (
+                        <a href={`mailto:${staff.email}`} className="contact-btn-link" title="Send Email">
+                            📧
+                        </a>
+                    )}
+                    {staff.contactNumber && (
+                        <a href={`tel:${staff.contactNumber}`} className="contact-btn-link" title="Call">
+                            📞
+                        </a>
+                    )}
                 </div>
             </div>
 
             <style>{`
                 .staff-card {
-                    position: relative;
-                    overflow: hidden;
-                    padding: 0;
-                    border: 1px solid var(--border);
-                    transition: all 0.3s ease;
-                }
-
-                .staff-card:hover {
-                    transform: translateY(-5px);
-                    box-shadow: var(--shadow-lg);
-                }
-
-                .staff-header {
-                    padding: 24px;
-                    text-align: center;
-                    background: linear-gradient(to bottom, var(--primary-light) 50%, white 50%);
-                }
-
-                .staff-img-wrapper {
-                    width: 100px;
-                    height: 100px;
-                    margin: 0 auto 16px;
-                    border-radius: 50%;
-                    padding: 4px;
-                    background: white;
-                    box-shadow: var(--shadow-sm);
-                }
-
-                .staff-img {
-                    width: 100%;
-                    height: 100%;
-                    border-radius: 50%;
-                    object-fit: cover;
-                }
-
-                .staff-identity h3 {
-                    font-size: 18px;
-                    margin-bottom: 4px;
-                }
-
-                .designation {
-                    font-size: 13px;
-                    color: var(--primary);
-                    font-weight: 500;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                }
-
-                .staff-body {
-                    padding: 0 24px 24px;
-                    text-align: center;
-                }
-
-                .qualification {
-                    font-size: 14px;
-                    color: var(--text-muted);
-                    margin-bottom: 16px;
-                }
-
-                .subjects-list {
-                    display: flex;
-                    flex-wrap: wrap;
-                    justify-content: center;
-                    gap: 8px;
-                }
-
-                .subject-tag {
-                    font-size: 11px;
-                    padding: 4px 10px;
-                    background: var(--bg);
-                    border-radius: 12px;
-                    color: var(--text-muted);
-                }
-
-                .staff-overlay {
-                    position: absolute;
-                    inset: 0;
-                    background: rgba(255, 255, 255, 0.95);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    opacity: 0;
-                    transition: all 0.3s ease;
-                    backdrop-filter: blur(2px);
-                }
-
-                .staff-card:hover .staff-overlay {
-                    opacity: 1;
-                }
-
-                .overlay-content {
                     display: flex;
                     flex-direction: column;
+                    gap: 16px;
+                    justify-content: space-between;
+                    min-height: 280px;
+                }
+                .staff-header-band {
+                    display: flex;
                     align-items: center;
                     gap: 16px;
-                    transform: translateY(20px);
-                    transition: all 0.3s ease;
                 }
-
-                .staff-card:hover .overlay-content {
-                    transform: translateY(0);
-                }
-
-                .contact-icons {
-                    display: flex;
-                    gap: 12px;
-                }
-
-                .icon-btn {
-                    width: 36px;
-                    height: 36px;
+                .staff-avatar-wrapper {
+                    width: 60px;
+                    height: 60px;
                     border-radius: 50%;
-                    background: var(--bg);
+                    overflow: hidden;
+                    border: 2px solid var(--border);
+                    background: var(--bg-elevated);
+                    flex-shrink: 0;
+                }
+                .staff-avatar-img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+                .staff-identity-group {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 4px;
+                }
+                .staff-name-title {
+                    font-size: 1rem;
+                    font-weight: 700;
+                    color: var(--text-1);
+                    margin: 0;
+                }
+                
+                .staff-body-content {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                }
+                .staff-qual-text {
+                    font-size: 0.82rem;
+                    color: var(--text-3);
+                    margin: 0;
+                }
+                .staff-subjects-tags {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 6px;
+                }
+                .subject-pill-tag {
+                    font-size: 0.72rem;
+                    font-weight: 600;
+                    background: var(--bg-elevated);
+                    color: var(--text-2);
+                    padding: 2px 8px;
+                    border-radius: var(--radius-sm);
+                }
+                .subject-pill-tag.more-tag {
+                    background: var(--primary-light);
+                    color: var(--primary);
+                }
+
+                .staff-card-actions {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    border-top: 1px solid var(--border);
+                    padding-top: 12px;
+                }
+                .staff-quick-contacts {
+                    display: flex;
+                    gap: 8px;
+                }
+                .contact-btn-link {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    background: var(--bg-elevated);
                     display: flex;
                     align-items: center;
                     justify-content: center;
+                    font-size: 0.9rem;
                     cursor: pointer;
-                    transition: 0.2s;
+                    transition: var(--transition-fast);
                 }
-
-                .icon-btn:hover {
+                .contact-btn-link:hover {
                     background: var(--primary-light);
-                    transform: scale(1.1);
+                    transform: scale(1.08);
                 }
             `}</style>
         </div>

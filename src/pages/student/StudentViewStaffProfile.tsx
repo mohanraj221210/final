@@ -1,20 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import StudentHeader from '../../components/StudentHeader';
+import StudentBottomNav from '../../components/StudentBottomNav';
 
 const StudentViewStaffProfile: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [staff, setStaff] = useState<any>(null);
     const { id } = useParams<{ id: string }>();
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
     const navigate = useNavigate();
-
-    const handleLogout = () => {
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('userType');
-        localStorage.removeItem('token');
-        navigate('/login');
-    };
 
     useEffect(() => {
         const fetchStaffById = async () => {
@@ -30,7 +24,7 @@ const StudentViewStaffProfile: React.FC = () => {
                     setStaff(response.data.staff);
                 }
             } catch (error) {
-                console.error("Error valid fetching staff data by ID, falling back to list:", error);
+                console.error("Error fetching staff data by ID, falling back to list:", error);
 
                 // Fallback to searching the list if direct endpoint fails (robustness)
                 try {
@@ -56,803 +50,371 @@ const StudentViewStaffProfile: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="loading-container">
-                <div className="spinner"></div>
-                <p style={{ color: '#333' }}>Loading profile...</p>
+            <div className="student-page loading-screen-staff animate-page-enter">
+                <div className="lux-desktop-view">
+                    <div className="content-wrapper" style={{ paddingTop: '100px' }}>
+                        <div className="staff-profile-layout">
+                            <div className="staff-summary-col">
+                                <div className="card lux-skeleton" style={{ height: '400px' }}></div>
+                            </div>
+                            <div className="staff-details-col">
+                                <div className="card lux-skeleton" style={{ height: '300px', marginBottom: '24px' }}></div>
+                                <div className="card lux-skeleton" style={{ height: '200px' }}></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="lux-mobile-view">
+                    <div style={{ padding: '24px', paddingTop: '100px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <div className="lux-skeleton" style={{ height: '250px', borderRadius: '16px' }}></div>
+                        <div className="lux-skeleton" style={{ height: '200px', borderRadius: '16px' }}></div>
+                    </div>
+                </div>
             </div>
         );
     }
 
     if (!staff) {
         return (
-            <>
-
-                <header className="dashboard-header-custom">
-                    <div className="header-container-custom">
-                        <div className="header-left-custom">
-                            <div className="brand-custom">
-                                <span className="brand-icon-custom">🎓</span>
-                                <span className="brand-text-custom">JIT Student Portal</span>
-                            </div>
-                        </div>
-
-                        <button
-                            className="mobile-menu-btn"
-                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                            aria-label="Toggle menu"
-                        >
-                            {isMobileMenuOpen ? '✕' : '☰'}
-                        </button>
-
-                        <nav className={`header-nav-custom ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
-                            <button
-                                className="nav-item-custom"
-                                onClick={() => navigate('/dashboard')}
-                            >
-                                Dashboard
-                            </button>
-                            <button
-                                className="nav-item-custom"
-                                onClick={() => navigate('/staffs')}
-                            >
-                                Staffs
-                            </button>
-
-                            <button
-                                className="nav-item-custom"
-                                onClick={() => navigate('/outpass')}
-                            >
-                                Outpass
-                            </button>
-                            <button
-                                className="nav-item-custom"
-                                onClick={() => navigate('/subjects')}
-                            >
-                                Subjects
-                            </button>
-                            <button
-                                className="nav-item-custom"
-                                onClick={() => navigate('/profile')}
-                            >
-                                Profile
-                            </button>
-                            <button className="logout-btn-custom" onClick={handleLogout}>
-                                Logout
-                            </button>
-                        </nav>
-                    </div>
-                </header>
-
-                <div className="page-container" style={{ background: 'white', minHeight: '100vh', padding: '20px' }}>
-                    <div className="error-message">
-                        <h2 style={{ color: '#333' }}>Staff member not found</h2>
-                        <button className="back-btn" onClick={() => navigate('/staffs')}>
+            <div className="student-page staff-not-found-page">
+                <StudentHeader />
+                <div className="content-wrapper">
+                    <div className="empty-state-card card" style={{ marginTop: '40px' }}>
+                        <span className="empty-state-icon">🔍</span>
+                        <h3>Staff member not found</h3>
+                        <p>The requested faculty profile could not be loaded. It may have been removed or updated.</p>
+                        <button className="btn btn-primary" onClick={() => navigate('/staffs')}>
                             ← Back to Faculty List
                         </button>
                     </div>
                 </div>
-            </>
+            </div>
         );
     }
 
-    // Determine photo URL (handling user inconsistency)
     const photoUrl = staff.photo || staff.profilePhoto;
+    const finalPhotoUrl = photoUrl
+        ? photoUrl.startsWith('http')
+            ? photoUrl
+            : `${import.meta.env.VITE_CDN_URL}${photoUrl}`
+        : `https://ui-avatars.com/api/?name=${staff.name}&background=2563EB&color=fff&size=200`;
 
     return (
-        <>
-            <header className="dashboard-header-custom">
-                <div className="header-container-custom">
-                    <div className="header-left-custom">
-                        <div className="brand-custom">
-                            <span className="brand-icon-custom">🎓</span>
-                            <span className="brand-text-custom">JIT Student Portal</span>
-                        </div>
-                    </div>
+        <div className="student-page staff-profile-view-page animate-page-enter">
 
-                    <button
-                        className="mobile-menu-btn"
-                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        aria-label="Toggle menu"
-                    >
-                        {isMobileMenuOpen ? '✕' : '☰'}
+            {/* ── DESKTOP VIEW ── */}
+            <div className="lux-desktop-view">
+            <StudentHeader />
+
+            <div className="content-wrapper">
+                {/* Back navigation */}
+                <div className="back-link-wrapper" style={{ marginBottom: '24px' }}>
+                    <button className="btn-back" onClick={() => navigate('/staffs')}>
+                        <span className="icon">←</span> Back to Faculty List
                     </button>
-
-                    <nav className={`header-nav-custom ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/dashboard')}
-                        >
-                            Dashboard
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/staffs')}
-                        >
-                            Staffs
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/outpass')}
-                        >
-                            Outpass
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/subjects')}
-                        >
-                            Subjects
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/profile')}
-                        >
-                            Profile
-                        </button>
-                        <button className="logout-btn-custom" onClick={handleLogout}>
-                            Logout
-                        </button>
-                    </nav>
                 </div>
-            </header>
 
-            <div className="page-container staff-profile-page">
-                <div className="content-wrapper">
-                    {/* Profile Header */}
-                    <div className="profile-header">
-                        <div className="header-top">
-                            <button className="back-btn" onClick={() => navigate('/staffs')}>
-                                ← Back to Faculty List
-                            </button>
-                        </div>
-
-                        <div className="header-content-inner">
-                            <div className="profile-image-wrapper">
-                                <img
-                                    src={photoUrl
-                                        ? photoUrl.startsWith('http')
-                                            ? photoUrl
-                                            : `${import.meta.env.VITE_CDN_URL}${photoUrl}`
-                                        : `https://ui-avatars.com/api/?name=${staff.name}&background=0047AB&color=fff&size=200`}
-                                    alt={staff.name}
-                                    onError={(e) => {
-                                        e.currentTarget.src = `https://ui-avatars.com/api/?name=${staff.name}&background=0047AB&color=fff&size=200`;
-                                    }}
-                                    className="profile-image"
-                                />
-                            </div>
-                            <div className="profile-header-info">
-                                <h1 className="profile-name">{staff.name}</h1>
-                                <div className="profile-badges">
-                                    <span className="badge badge-primary">{staff.designation}</span>
-                                    <span className="badge badge-secondary">{staff.department}</span>
+                <div className="staff-profile-layout">
+                    {/* Left Column: Avatar & Summary Card */}
+                    <div className="staff-summary-col animate-stagger-1">
+                        <div className="card staff-summary-card">
+                            <div className="avatar-section">
+                                <div className="avatar-frame">
+                                    <img
+                                        src={finalPhotoUrl}
+                                        alt={staff.name}
+                                        onError={(e) => {
+                                            e.currentTarget.src = `https://ui-avatars.com/api/?name=${staff.name}&background=2563EB&color=fff&size=200`;
+                                        }}
+                                        className="avatar-image-actual"
+                                    />
                                 </div>
-                                <p className="profile-qualification">{staff.qualification}</p>
+                                <h2 className="staff-full-name">{staff.name}</h2>
+                                <span className="badge badge-blue">{staff.designation}</span>
+                                <span className="badge badge-purple" style={{ marginTop: '4px' }}>{staff.department}</span>
+                            </div>
+
+                            {/* Contact Box */}
+                            <div className="quick-contact-panel">
+                                <h3>Quick Connect</h3>
+                                <div className="quick-connect-links">
+                                    {staff.email && (
+                                        <a href={`mailto:${staff.email}`} className="connect-item-card card card-hover">
+                                            <span className="icon">📧</span>
+                                            <div className="connect-label-text">
+                                                <span className="label">EMAIL</span>
+                                                <span className="val">{staff.email}</span>
+                                            </div>
+                                        </a>
+                                    )}
+                                    {staff.contactNumber && (
+                                        <a href={`tel:${staff.contactNumber}`} className="connect-item-card card card-hover">
+                                            <span className="icon">📱</span>
+                                            <div className="connect-label-text">
+                                                <span className="label">PHONE</span>
+                                                <span className="val">{staff.contactNumber}</span>
+                                            </div>
+                                        </a>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Profile Content - Single Continuous Layout */}
-                    <div className="profile-content">
-                        {/* Basic Information Section */}
-                        <div className="section">
-                            <h2 className="section-heading">
-                                <span className="heading-icon">📋</span>
-                                Basic Information
-                            </h2>
-                            <div className="info-list">
-                                <div className="info-item">
-                                    <span className="info-label">Experience</span>
-                                    <span className="info-value">{staff.experience} Years</span>
+                    {/* Right Column: Detailed Info Sections */}
+                    <div className="staff-details-col animate-stagger-2">
+                        <div className="card staff-details-card">
+                            
+                            {/* Basic stats row */}
+                            <div className="stats-row">
+                                <div className="stat-box">
+                                    <span className="stat-num">{staff.experience || '0'}</span>
+                                    <span className="stat-label">Years Experience</span>
                                 </div>
-                                <div className="info-item">
-                                    <span className="info-label">Designation</span>
-                                    <span className="info-value">{staff.designation}</span>
-                                </div>
-                                <div className="info-item">
-                                    <span className="info-label">Qualification</span>
-                                    <span className="info-value">{staff.qualification}</span>
-                                </div>
-                                <div className="info-item">
-                                    <span className="info-label">Department</span>
-                                    <span className="info-value">{staff.department}</span>
+                                <div className="stat-divider"></div>
+                                <div className="stat-box">
+                                    <span className="stat-num">{staff.qualification || 'Ph.D.'}</span>
+                                    <span className="stat-label">Qualification</span>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Contact Information Section */}
-                        <div className="section">
-                            <h2 className="section-heading">
-                                <span className="heading-icon">📞</span>
-                                Contact Information
-                            </h2>
-                            <div className="contact-list">
-                                <div className="contact-item-new">
-                                    <span className="contact-icon-new">📧</span>
-                                    <div className="contact-info">
-                                        <span className="contact-label-new">EMAIL</span>
-                                        <a href={`mailto:${staff.email}`} className="contact-value">
-                                            {staff.email}
-                                        </a>
+                            {/* Subjects section */}
+                            {staff.subjects && staff.subjects.length > 0 && (
+                                <fieldset className="fieldset-section" style={{ marginTop: '24px' }}>
+                                    <legend className="fieldset-legend">📖 Handling Subjects</legend>
+                                    <div className="subjects-grid">
+                                        {staff.subjects.map((subject: string, idx: number) => (
+                                            <div key={idx} className="subject-box-item">
+                                                <span className="icon">📘</span>
+                                                <span className="text">{subject}</span>
+                                            </div>
+                                        ))}
                                     </div>
-                                </div>
-                                <div className="contact-item-new">
-                                    <span className="contact-icon-new">📱</span>
-                                    <div className="contact-info">
-                                        <span className="contact-label-new">PHONE</span>
-                                        <a href={`tel:${staff.contactNumber}`} className="contact-value">
-                                            {staff.contactNumber}
-                                        </a>
+                                </fieldset>
+                            )}
+
+                            {/* Skills Section */}
+                            {staff.skills && staff.skills.length > 0 && (
+                                <fieldset className="fieldset-section" style={{ marginTop: '32px' }}>
+                                    <legend className="fieldset-legend">💡 Areas of Expertise</legend>
+                                    <div className="skills-badge-wrap">
+                                        {staff.skills.map((skill: string, idx: number) => (
+                                            <span key={idx} className="badge badge-purple skill-badge-item">
+                                                {skill}
+                                            </span>
+                                        ))}
                                     </div>
-                                </div>
-                            </div>
-                        </div>
+                                </fieldset>
+                            )}
 
-                        {/* Handling Subjects Section */}
-                        <div className="section">
-                            <h2 className="section-heading">
-                                <span className="heading-icon">📚</span>
-                                Handling Subjects
-                            </h2>
-                            <div className="subjects-list-new">
-                                {staff.subjects?.map((subject: string, idx: number) => (
-                                    <div key={idx} className="subject-item-new">
-                                        <span className="subject-bullet">📖</span>
-                                        <span className="subject-text">{subject}</span>
+                            {/* Achievements Section */}
+                            {staff.achievements && staff.achievements.length > 0 && (
+                                <fieldset className="fieldset-section" style={{ marginTop: '32px' }}>
+                                    <legend className="fieldset-legend">🏆 Key Achievements</legend>
+                                    <div className="achievements-wrap">
+                                        {staff.achievements.map((achievement: string, idx: number) => (
+                                            <div key={idx} className="achievement-bullet-row">
+                                                <span className="bullet">★</span>
+                                                <span className="content">{achievement}</span>
+                                            </div>
+                                        ))}
                                     </div>
-                                ))}
-                            </div>
-                        </div>
+                                </fieldset>
+                            )}
 
-                        {/* Knowledge & Skills Section */}
-                        <div className="section">
-                            <h2 className="section-heading">
-                                <span className="heading-icon">💡</span>
-                                Knowledge & Skills
-                            </h2>
-                            <div className="skills-list">
-                                {staff.skills?.map((skill: string, idx: number) => (
-                                    <span key={idx} className="skill-badge">
-                                        {skill}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Achievements Section */}
-                        <div className="section">
-                            <h2 className="section-heading">
-                                <span className="heading-icon">🏆</span>
-                                Achievements
-                            </h2>
-                            <ul className="achievements-list-new">
-                                {staff.achievements?.map((achievement: string, idx: number) => (
-                                    <li key={idx} className="achievement-item-new">
-                                        <span className="achievement-check">✓</span>
-                                        <span className="achievement-content">{achievement}</span>
-                                    </li>
-                                ))}
-                            </ul>
                         </div>
                     </div>
                 </div>
             </div>
+            </div>{/* end desktop */}
+
+            {/* ── MOBILE VIEW ── */}
+            <div className="lux-mobile-view cred-page-bg">
+                {/* Hero Header */}
+                <div className="mob-staff-hero animate-cred-enter cred-stagger-1">
+                    <button className="mob-back-btn" onClick={() => navigate('/staffs')}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <div className="mob-hero-avatar">
+                        <img
+                            src={finalPhotoUrl}
+                            alt={staff.name}
+                            onError={e => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${staff.name}&background=2563EB&color=fff&size=200`; }}
+                        />
+                    </div>
+                    <h1 className="cred-h2" style={{color: 'white', marginTop: '12px'}}>{staff.name}</h1>
+                    <p className="cred-gold-text" style={{fontSize: '13px', fontWeight: '600', margin: '4px 0'}}>{staff.designation}</p>
+                    <span className="mob-hero-dept-badge">{staff.department}</span>
+                </div>
+
+                <div className="mob-scroll-body">
+                    {/* Stats row */}
+                    <div className="cred-card mob-stats-row animate-cred-enter cred-stagger-2">
+                        <div className="mob-stat-box">
+                            <span className="cred-h1" style={{fontSize: '20px'}}>{staff.experience || '0'}</span>
+                            <span className="cred-p" style={{fontSize: '11px', textAlign: 'center'}}>Yrs Experience</span>
+                        </div>
+                        <div className="mob-stat-div" />
+                        <div className="mob-stat-box">
+                            <span className="cred-h1" style={{fontSize: '20px'}}>{staff.qualification || 'Ph.D.'}</span>
+                            <span className="cred-p" style={{fontSize: '11px', textAlign: 'center'}}>Qualification</span>
+                        </div>
+                    </div>
+
+                    {/* Contact CTAs */}
+                    <div className="mob-contact-row animate-cred-enter cred-stagger-2">
+                        {staff.email && (
+                            <a href={`mailto:${staff.email}`} className="mob-contact-btn mob-contact-email">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                                Email Faculty
+                            </a>
+                        )}
+                        {staff.contactNumber && (
+                            <a href={`tel:${staff.contactNumber}`} className="mob-contact-btn mob-contact-phone">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.69a16 16 0 0 0 6.37 6.37l1.06-.94a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                Call
+                            </a>
+                        )}
+                    </div>
+
+                    {/* Subjects */}
+                    {staff.subjects && staff.subjects.length > 0 && (
+                        <div className="cred-card mob-section-card animate-cred-enter cred-stagger-3">
+                            <h3 className="mob-section-head">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cred-gold)" strokeWidth="2.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                                Handling Subjects
+                            </h3>
+                            {staff.subjects.map((sub: string, i: number) => (
+                                <div key={i} className="mob-subject-row">
+                                    <div className="mob-subject-dot" />
+                                    <span className="cred-h2" style={{fontSize: '14px'}}>{sub}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Skills */}
+                    {staff.skills && staff.skills.length > 0 && (
+                        <div className="cred-card mob-section-card animate-cred-enter cred-stagger-4">
+                            <h3 className="mob-section-head">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cred-gold)" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                                Areas of Expertise
+                            </h3>
+                            <div className="mob-skills-wrap">
+                                {staff.skills.map((skill: string, i: number) => (
+                                    <span key={i} className="mob-skill-badge">{skill}</span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Achievements */}
+                    {staff.achievements && staff.achievements.length > 0 && (
+                        <div className="cred-card mob-section-card animate-cred-enter cred-stagger-5">
+                            <h3 className="mob-section-head">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cred-gold)" strokeWidth="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                Key Achievements
+                            </h3>
+                            {staff.achievements.map((ach: string, i: number) => (
+                                <div key={i} className="mob-achievement-row">
+                                    <span className="mob-achievement-star">★</span>
+                                    <span className="cred-p" style={{fontSize: '13px'}}>{ach}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Bottom Nav */}
+                <StudentBottomNav activeTab="staff" />
+            </div>{/* end mobile */}
 
             <style>{`
-            /* Custom Dashboard Header */
-                .dashboard-header-custom {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    height: 70px;
-                    background: white;
-                    border-bottom: 1px solid #e2e8f0;
-                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-                    z-index: 1000;
-                }
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-                .mobile-menu-btn {
-                    display: none;
-                    background: none;
-                    border: none;
-                    font-size: 24px;
-                    cursor: pointer;
-                    color: #1e293b;
-                    padding: 8px;
-                    z-index: 1001;
-                }
+                /* ── DESKTOP VIEWS (RETAINED) ── */
+                .staff-profile-view-page { background: var(--bg); }
+                .loading-screen-staff { background: var(--bg); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+                .btn-back { background: none; border: none; color: var(--primary); font-size: 0.9rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: var(--radius-sm); transition: var(--transition-fast); }
+                .btn-back:hover { background: var(--primary-light); color: var(--primary-dark); }
+                .staff-profile-layout { display: grid; grid-template-columns: 320px 1fr; gap: 24px; align-items: start; }
+                .staff-summary-card { display: flex; flex-direction: column; gap: 24px; align-items: center; text-align: center; }
+                .avatar-section { display: flex; flex-direction: column; align-items: center; width: 100%; }
+                .avatar-frame { width: 130px; height: 130px; border-radius: 50%; border: 4px solid var(--surface); box-shadow: var(--shadow-md); margin-bottom: 12px; overflow: hidden; background: var(--bg-elevated); }
+                .avatar-image-actual { width: 100%; height: 100%; object-fit: cover; }
+                .staff-full-name { font-size: 1.25rem; font-weight: 800; color: var(--text-1); margin: 0 0 6px 0; }
+                .quick-contact-panel { width: 100%; border-top: 1px solid var(--border); padding-top: 16px; text-align: left; }
+                .quick-contact-panel h3 { font-size: 0.9rem; font-weight: 700; color: var(--text-1); margin-bottom: 12px; }
+                .quick-connect-links { display: flex; flex-direction: column; gap: 10px; }
+                .connect-item-card { display: flex; align-items: center; gap: 12px; padding: 10px var(--space-4) !important; background: var(--bg); border: 1px solid var(--border); }
+                .connect-item-card .icon { font-size: 1.3rem; padding: 6px; background: var(--surface); border-radius: var(--radius-sm); box-shadow: var(--shadow-xs); }
+                .connect-label-text { display: flex; flex-direction: column; min-width: 0; }
+                .connect-label-text .label { font-size: 0.65rem; font-weight: 800; color: var(--text-4); }
+                .connect-label-text .val { font-size: 0.82rem; font-weight: 600; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                .staff-details-card { padding: var(--space-8) var(--space-6) !important; }
+                .stats-row { display: flex; align-items: center; background: var(--bg-elevated); border-radius: var(--radius-md); padding: 16px; }
+                .stat-box { flex: 1; display: flex; flex-direction: column; align-items: center; }
+                .stat-num { font-size: 1.4rem; font-weight: 800; color: var(--primary-dark); }
+                .stat-label { font-size: 0.75rem; color: var(--text-3); font-weight: 600; }
+                .stat-divider { width: 1px; height: 32px; background: var(--border-strong); }
+                .fieldset-section { border: none; margin: 0; padding: 0; }
+                .fieldset-legend { font-size: 1.05rem; font-weight: 800; color: var(--text-1); margin-bottom: 16px; border-bottom: 2px solid var(--bg-elevated); padding-bottom: 8px; width: 100%; }
+                .subjects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+                .subject-box-item { display: flex; align-items: center; gap: 8px; background: var(--bg); padding: 10px 14px; border-radius: var(--radius-sm); border-left: 3px solid var(--primary); }
+                .subject-box-item .text { font-size: 0.88rem; font-weight: 600; color: var(--text-2); }
+                .skills-badge-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+                .skill-badge-item { font-size: 0.82rem; padding: 6px 14px; border-radius: var(--radius-full); }
+                .achievements-wrap { display: flex; flex-direction: column; gap: 12px; }
+                .achievement-bullet-row { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; background: var(--warning-light); border: 1px solid var(--warning-mid); border-radius: var(--radius-md); }
+                .achievement-bullet-row .bullet { color: var(--warning); font-size: 1.1rem; line-height: 1; }
+                .achievement-bullet-row .content { font-size: 0.88rem; color: var(--text-2); line-height: 1.4; }
 
-                .header-container-custom {
-                    max-width: 1400px;
-                    margin: 0 auto;
-                    height: 100%;
-                    padding: 0 24px;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                }
-
-                .header-left-custom {
-                    display: flex;
-                    align-items: center;
-                }
-
-                .brand-custom {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                }
-
-                .brand-icon-custom {
-                    font-size: 28px;
-                }
-
-                .brand-text-custom {
-                    font-size: 1.3rem;
-                    font-weight: 700;
-                    background: linear-gradient(135deg, #0047AB, #2563eb);
-                    -webkit-background-clip: text;
-                    -webkit-text-fill-color: transparent;
-                }
-
-                .header-nav-custom {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                }
-
-                .nav-item-custom {
-                    padding: 10px 20px;
-                    border: none;
-                    background: transparent;
-                    color: #64748b;
-                    font-weight: 600;
-                    font-size: 0.95rem;
-                    cursor: pointer;
-                    border-radius: 10px;
-                    transition: all 0.3s;
-                }
-
-                .nav-item-custom:hover {
-                    background: #f1f5f9;
-                    color: #0047AB;
-                }
-
-                .logout-btn-custom {
-                    padding: 10px 24px;
-                    border: 2px solid #ef4444;
-                    background: white;
-                    color: #ef4444;
-                    font-weight: 600;
-                    font-size: 0.95rem;
-                    cursor: pointer;
-                    border-radius: 10px;
-                    transition: all 0.3s;
-                    margin-left: 12px;
-                }
-
-                .logout-btn-custom:hover {
-                    background: #ef4444;
-                    color: white;
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-                }
-
-                .content-wrapper-custom {
-                    margin-top: 70px;
-                    padding: 0;
-                }
-
-                :root {
-                    --bg-white: #ffffff;
-                    --text-main: #1e293b;
-                    --text-muted: #64748b;
-                    --primary: #0047AB;
-                    --primary-dark: #1e3a8a;
-                    --primary-light: #f0f9ff;
-                    --accent: #FFD700;
-                    --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
-                    --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-                    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-                    --radius-sm: 0.5rem;
-                    --radius-lg: 1rem;
-                    --radius-full: 9999px;
-                    --transition: all 0.2s ease-in-out;
-                }
-
-                 @media (max-width: 768px) {
-                    .mobile-menu-btn {
-                        display: block;
-                    }
-
-                    .header-nav-custom {
-                        position: absolute;
-                        top: 70px;
-                        left: 0;
-                        right: 0;
-                        background: white;
-                        flex-direction: column;
-                        padding: 0;
-                        border-bottom: 1px solid #e2e8f0;
-                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                        overflow: hidden;
-                        max-height: 0;
-                        transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
-                        gap: 0;
-                    }
-
-                    .header-nav-custom.mobile-open {
-                        max-height: 500px;
-                        padding: 16px 0;
-                    }
-
-                    .nav-item-custom, .logout-btn-custom {
-                        width: 100%;
-                        text-align: left;
-                        padding: 12px 24px;
-                        border-radius: 0;
-                        margin: 0;
-                    }
-
-                    .logout-btn-custom {
-                        border: none;
-                        border-top: 1px solid #fee2e2;
-                        color: #ef4444;
-                        margin-top: 8px;
-                    }
-
-                    .content-wrapper-custom {
-                        margin-top: 70px;
-                    }
-                }
-
-                /* Layout */
-                .staff-profile-page {
-                    min-height: 100vh;
-                    background: #ffffff; /* FORCE WHITE BACKGROUND */
-                    padding: 20px 0;
-                    color: var(--text-main);
-                }
-
-                .content-wrapper {
-                    max-width: 1000px;
-                    margin: 0 auto;
-                    padding: 0 20px;
-                }
-
-                .page-container {
-                    padding-top: 80px;
-                }
-                
-                /* Loading */
-                 .loading-container {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    min-height: 100vh;
-                    background: white;
-                }
-                .spinner {
-                    width: 40px; 
-                    height: 40px; 
-                    border: 4px solid #f3f3f3; 
-                    border-top: 4px solid var(--primary); 
-                    border-radius: 50%; 
-                    animation: spin 1s linear infinite;
-                    margin-bottom: 20px;
-                }
-                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-
-                /* Back Button */
-                .back-btn {
-                    background: rgba(255, 255, 255, 0.2);
-                    border: 1px solid rgba(255, 255, 255, 0.3);
-                    color: white;
-                    font-size: 14px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    padding: 8px 16px;
-                    border-radius: var(--radius-sm);
-                    transition: var(--transition);
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 8px;
-                    backdrop-filter: blur(4px);
-                    margin-top: 15px; /* Added spacing from top */
-                    margin-bottom: 24px;
-                }
-
-                .back-btn:hover {
-                    background: rgba(255, 255, 255, 0.3);
-                    transform: translateX(-4px);
-                }
-
-                /* Profile Header (Blue Card) */
-                .profile-header {
-                    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-                    border-radius: var(--radius-lg);
-                    padding: 32px;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 24px;
-                    margin-bottom: 32px;
-                    box-shadow: var(--shadow-lg);
-                    position: relative;
-                    overflow: hidden;
-                    color: white;
-                }
-                
-                .header-top {
-                    width: 100%;
-                    display: flex;
-                    justify-content: flex-start;
-                    z-index: 2;
-                }
-
-                .header-content-inner {
-                    display: flex;
-                    align-items: center;
-                    gap: 32px;
-                    z-index: 2;
-                }
-                
-                /* Abstract bg decoration */
-                .profile-header::before {
-                    content: '';
-                    position: absolute;
-                    top: -50%;
-                    right: -10%;
-                    width: 300px;
-                    height: 300px;
-                    background: rgba(255, 255, 255, 0.1);
-                    border-radius: 50%;
-                    z-index: 1;
-                }
-
-                .profile-image-wrapper {
-                    flex-shrink: 0;
-                    width: 160px;
-                    height: 160px;
-                    border-radius: 50%;
-                    padding: 4px;
-                    background: rgba(255,255,255,0.2);
-                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-                }
-
-                .profile-image {
-                    width: 100%;
-                    height: 100%;
-                    border-radius: 50%;
-                    object-fit: cover;
-                    border: 4px solid white;
-                    background: white;
-                }
-
-                .profile-header-info {
-                    flex: 1;
-                    z-index: 1;
-                }
-
-                .profile-name {
-                    font-size: 32px;
-                    font-weight: 800;
-                    margin-bottom: 12px;
-                    color: white;
-                }
-
-                .profile-badges {
-                    display: flex;
-                    gap: 10px;
-                    margin-bottom: 12px;
-                    flex-wrap: wrap;
-                }
-
-                .badge {
-                    padding: 4px 12px;
-                    border-radius: 20px;
-                    font-size: 13px;
-                    font-weight: 600;
-                    letter-spacing: 0.5px;
-                }
-
-                .badge-primary {
-                    background: rgba(255, 255, 255, 0.2);
-                    color: white;
-                    border: 1px solid rgba(255,255,255,0.3);
-                }
-
-                .badge-secondary {
-                    background: var(--accent);
-                    color: #000;
-                }
-
-                .profile-qualification {
-                    font-size: 16px;
-                    opacity: 0.9;
-                }
-
-                /* Content Card */
-                .profile-content {
-                    background: white;
-                    border-radius: var(--radius-lg);
-                    padding: 32px;
-                    border: 1px solid #e2e8f0;
-                    box-shadow: var(--shadow-sm);
-                }
-
-                .section {
-                    margin-bottom: 40px;
-                }
-                .section:last-child { margin-bottom: 0; }
-
-                .section-heading {
-                    font-size: 18px;
-                    font-weight: 700;
-                    color: var(--primary-dark);
-                    margin-bottom: 20px;
-                    padding-bottom: 10px;
-                    border-bottom: 2px solid #e2e8f0;
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                }
-
-                /* Info List */
-                .info-list {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 12px;
-                }
-                .info-item {
-                    display: flex;
-                    justify-content: space-between;
-                    padding: 8px 0;
-                    border-bottom: 1px dashed #e2e8f0;
-                }
-                .info-label {
-                    font-weight: 600;
-                    color: var(--text-muted);
-                    font-size: 14px;
-                }
-                .info-value {
-                    font-weight: 500;
-                    color: var(--text-main);
-                    text-align: right;
-                }
-
-                /* Contact List */
-                .contact-list {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-                    gap: 20px;
-                }
-                .contact-item-new {
-                    display: flex;
-                    align-items: center;
-                    gap: 16px;
-                    padding: 16px;
-                    background: #f8fafc;
-                    border-radius: var(--radius-sm);
-                    border: 1px solid #e2e8f0;
-                    transition: all 0.2s;
-                }
-                .contact-item-new:hover {
-                    border-color: var(--primary);
-                    background: #f0f9ff;
-                }
-                .contact-icon-new {
-                    font-size: 24px;
-                    width: 48px;
-                    height: 48px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: white;
-                    border-radius: 50%;
-                    box-shadow: var(--shadow-sm);
-                }
-                .contact-info {
-                    display: flex;
-                    flex-direction: column;
-                }
-                .contact-label-new {
-                    font-size: 11px;
-                    font-weight: 700;
-                    color: var(--text-muted);
-                    text-transform: uppercase;
-                }
-                .contact-value {
-                    color: var(--primary);
-                    font-weight: 600;
-                    font-size: 15px;
-                    text-decoration: none;
-                }
-
-                /* Subjects */
-                .subjects-list-new {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 12px;
-                }
-                .subject-item-new {
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    padding: 12px 16px;
-                    background: #f1f5f9;
-                    border-radius: 8px;
-                    border-left: 3px solid var(--primary);
-                }
-                .subject-text {
-                    font-weight: 500;
-                    font-size: 14px;
-                    color: var(--text-main);
-                }
-
-                /* Skills */
-                .skills-list {
-                    display: flex;
-                    flex-wrap: wrap;
-                    gap: 10px;
-                }
-                .skill-badge {
-                    padding: 8px 16px;
-                    background: white;
-                    color: var(--primary);
-                    border: 1px solid var(--primary);
-                    border-radius: 20px;
-                    font-size: 14px;
-                    font-weight: 600;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-                }
-
-                /* Achievements */
-                .achievements-list-new {
-                    list-style: none;
-                    padding: 0;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 12px;
-                }
-                .achievement-item-new {
-                    display: flex;
-                    gap: 14px;
-                    padding: 16px;
-                    background: #fffbeb; /* Light yellow */
-                    border-radius: 8px;
-                    border: 1px solid #fef3c7;
-                }
-                .achievement-check {
-                    color: #d97706; /* Dark yellow/orange */
-                    font-weight: bold;
-                    font-size: 18px;
-                }
-                .achievement-content {
-                    font-size: 15px;
-                    color: #4b5563;
-                }
-
-                /* Responsive */
+                /* ── DESKTOP / MOBILE SPLIT ── */
+                .lux-desktop-view { display: block; }
+                .lux-mobile-view  { display: none; }
                 @media (max-width: 768px) {
-                    .profile-header {
-                        padding: 24px;
-                    }
-                    .header-content-inner {
-                        flex-direction: column;
-                        text-align: center;
-                        width: 100%;
-                    }
-                    .profile-image-wrapper { width: 140px; height: 140px; }
-                    .profile-badges { justify-content: center; }
-                    .contact-list { grid-template-columns: 1fr; }
-                    .info-item { flex-direction: column; align-items: flex-start; gap: 4px; }
-                    .info-value { text-align: left; }
+                    .lux-desktop-view { display: none !important; }
+                    .lux-mobile-view  { display: flex !important; flex-direction: column; min-height: 100vh; background: linear-gradient(135deg, #F7F3E6 0%, #E8EEF5 45%, #C8D9F2 100%); font-family: 'Inter', -apple-system, sans-serif; }
                 }
 
+                /* ==========================================
+                   CRED PREMIUM MOBILE STYLES (STAFF PROFILE)
+                   ========================================== */
+                /* Staff hero — dark luxury card for identity-card contrast */
+                .mob-staff-hero { background: linear-gradient(180deg, #1E293B 0%, #0F172A 100%); padding:32px 20px 32px; display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center; position:relative; border-bottom: 1px solid rgba(255,255,255,0.08); }
+                .mob-back-btn { position:absolute; top:16px; left:16px; width:36px; height:36px; border-radius:10px; background:rgba(255,255,255,0.10); border:1px solid rgba(255,255,255,0.15); color:white; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:transform 0.2s; }
+                .mob-back-btn:active { transform: scale(0.9); }
+                .mob-hero-avatar { width:100px; height:100px; border-radius:50%; border:3px solid #D4AF37; overflow:hidden; margin-top:8px; box-shadow:0 0 20px rgba(212,175,55,0.3); padding: 4px; }
+                .mob-hero-avatar img { width:100%; height:100%; object-fit:cover; border-radius: 50%; }
+                
+                .mob-hero-dept-badge { background:rgba(255,255,255,0.12); color:rgba(255,255,255,0.85); border: 1px solid rgba(255,255,255,0.15); font-size:12px; font-weight:700; text-transform: uppercase; letter-spacing: 0.5px; padding:4px 12px; border-radius:8px; margin-top: 8px; }
+
+                .mob-scroll-body { flex:1; overflow-y:auto; padding:24px 16px 100px; display:flex; flex-direction:column; gap:16px; }
+
+                .mob-stats-row { padding:16px; display:flex; align-items:center; }
+                .mob-stat-box { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; }
+                .mob-stat-div { width:1px; height:32px; background:var(--cred-border); }
+
+                .mob-contact-row { display:flex; gap:12px; }
+                .mob-contact-btn { flex:1; display:flex; align-items:center; justify-content:center; gap:8px; padding:16px; border-radius:16px; font-size:15px; font-weight:800; text-decoration:none; transition:transform 0.2s; font-family: inherit; }
+                .mob-contact-btn:active { transform: scale(0.96); }
+                .mob-contact-email { background:linear-gradient(135deg, #1E3A8A, #0F172A); color:#FFFFFF; border: none; box-shadow: 0 8px 24px rgba(15,23,42,0.25); }
+                .mob-contact-phone { background:#FFFFFF; color:#0F172A; border: 1px solid rgba(226,232,240,0.8); box-shadow: 0 4px 12px rgba(15,23,42,0.08); }
+
+                .mob-section-card { padding:20px; display:flex; flex-direction:column; gap:12px; }
+                .mob-section-head { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:800; color:#0F172A; margin:0 0 8px; padding-bottom:12px; border-bottom:1px solid rgba(226,232,240,0.8); }
+                
+                .mob-subject-row { display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid rgba(226,232,240,0.6); }
+                .mob-subject-row:last-child { border-bottom: none; }
+                .mob-subject-dot { width:8px; height:8px; border-radius:50%; background:#B8860B; flex-shrink:0; }
+                
+                .mob-skills-wrap { display:flex; flex-wrap:wrap; gap:10px; }
+                .mob-skill-badge { background:rgba(37,99,235,0.08); color:#1D4ED8; border: 1px solid rgba(37,99,235,0.15); font-size:12px; font-weight:700; padding:6px 14px; border-radius:8px; }
+                
+                .mob-achievement-row { display:flex; align-items:flex-start; gap:12px; padding:12px; background:rgba(184,134,11,0.06); border-radius:12px; border:1px solid rgba(184,134,11,0.15); }
+                .mob-achievement-star { color:#B8860B; font-size:16px; flex-shrink:0; margin-top:2px; }
             `}</style>
-        </>
+        </div>
     );
 };
 

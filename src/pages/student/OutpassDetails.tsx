@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
+import { QRCodeSVG } from 'qrcode.react';
+import StudentHeader from '../../components/StudentHeader';
+import StudentBottomNav from '../../components/StudentBottomNav';
 
 // Outpass status types
 type ApprovalStatus = 'pending' | 'approved' | 'rejected';
@@ -46,12 +49,22 @@ const OutpassDetails: React.FC = () => {
 
     const [outpasses, setOutpasses] = useState<OutpassData[]>([]);
     const [loading, setLoading] = useState(true);
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
     const [residenceType, setResidenceType] = useState<string>('');
-    const [user, setUser] = useState<any>(null);
-    const [showDocumentModal, setShowDocumentModal] = useState(false);
     const [documentUrl, setDocumentUrl] = useState<string | null>(null);
-    const [documentType, setDocumentType] = useState<'image' | 'pdf'>('image');
+    const [documentType, setDocumentType] = useState<'pdf' | 'image' | null>(null);
+    const [showDocumentModal, setShowDocumentModal] = useState(false);
+    
+    // For real-time QR code display logic
+    const [currentTime, setCurrentTime] = useState(Date.now());
+    
+    // Filtering state
+    const [activeFilter, setActiveFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+
+    useEffect(() => {
+        // Update current time every minute to refresh QR visibility
+        const timer = setInterval(() => setCurrentTime(Date.now()), 60000);
+        return () => clearInterval(timer);
+    }, []);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -73,13 +86,13 @@ const OutpassDetails: React.FC = () => {
                 if (profileResponse.status === 200) {
                     const userData = profileResponse.data.user;
                     setResidenceType(userData.residencetype?.toLowerCase() || '');
-                    setUser(userData);
-                }
+ 
+               }
 
                 if (outpassResponse.status === 200) {
-                    const mappedOutpasses = (outpassResponse.data.outpasses || []).map((item: any) => ({
+                    const outpassList = outpassResponse.data.outpasses || outpassResponse.data.filterOutpass || [];
+                    const mappedOutpasses = outpassList.map((item: any) => ({
                         id: item._id,
-                        // Fix: valid renderable string is extracted from studentid object
                         studentId: (typeof item.studentid === 'object' && item.studentid !== null)
                             ? (item.studentid.registerNumber || item.studentid.name || 'Unknown')
                             : String(item.studentid || ''),
@@ -115,6 +128,8 @@ const OutpassDetails: React.FC = () => {
                             rejectedAt: item.wardenapprovalstatus === 'rejected' ? item.updatedAt : undefined
                         }
                     }));
+                    // Sort outpasses by creation date descending
+                    mappedOutpasses.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
                     setOutpasses(mappedOutpasses);
                 }
             } catch (error) {
@@ -130,24 +145,12 @@ const OutpassDetails: React.FC = () => {
 
     const getStatusBadge = (status: string) => {
         const normalizedStatus = (status || 'pending').toLowerCase();
-        const statusConfig: Record<string, { dot: string, label: string, color: string, bg: string }> = {
-            pending: { dot: '●', label: 'Pending', color: '#f59e0b', bg: '#fef3c7' },
-            approved: { dot: '●', label: 'Approved', color: '#10b981', bg: '#d1fae5' },
-            rejected: { dot: '●', label: 'Rejected', color: '#ef4444', bg: '#fee2e2' },
-            declined: { dot: '●', label: 'Rejected', color: '#ef4444', bg: '#fee2e2' },
-        };
-
-        const config = statusConfig[normalizedStatus] || statusConfig['pending'];
-
-        return (
-            <span className="status-badge" style={{
-                color: config.color,
-                backgroundColor: config.bg
-            }}>
-                <span className="status-dot">{config.dot}</span>
-                {config.label}
-            </span>
-        );
+        if (normalizedStatus === 'approved') {
+            return <span className="status-pill status-approved">Approved</span>;
+        } else if (normalizedStatus === 'rejected' || normalizedStatus === 'declined') {
+            return <span className="status-pill status-rejected">Rejected</span>;
+        }
+        return <span className="status-pill status-pending">Pending</span>;
     };
 
     const formatDateTime = (dateString: string) => {
@@ -160,21 +163,6 @@ const OutpassDetails: React.FC = () => {
             hour: '2-digit',
             minute: '2-digit',
         });
-    };
-
-    const handleViewDetails = (outpass: OutpassData) => {
-        setSelectedOutpass(outpass);
-    };
-
-    const handleLogout = () => {
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('userType');
-        localStorage.removeItem('token');
-        navigate('/login');
-    };
-
-    const handleBackToList = () => {
-        setSelectedOutpass(null);
     };
 
     const handleViewDocument = (url: string | undefined) => {
@@ -192,1117 +180,658 @@ const OutpassDetails: React.FC = () => {
         setShowDocumentModal(true);
     };
 
-    return (
-        <div className="page-container outpass-details-page">
-            <ToastContainer position="bottom-right" />
-            <header className="dashboard-header-custom">
-                <div className="header-container-custom">
-                    <div className="header-left-custom">
-                        <div className="brand-custom">
-                            <span className="brand-icon-custom">🎓</span>
-                            <span className="brand-text-custom">JIT Student Portal</span>
+    const isWithinTimeWindow = (fromDate: string) => {
+        const fromTime = new Date(fromDate).getTime();
+        const diff = currentTime - fromTime;
+        // Valid from the moment of approval until 30 minutes AFTER the fromDate
+        return diff <= 30 * 60 * 1000;
+    };
+
+    const filteredOutpasses = outpasses.filter(op => {
+        if (activeFilter === 'all') return true;
+        return op.overallStatus === activeFilter;
+    });
+
+    const renderTimeline = (outpass: OutpassData) => {
+        const steps = [
+            {
+                title: 'Staff / Tutor Advisor',
+                status: outpass.staffApproval.status,
+                name: outpass.staffApproval.approverName,
+                time: outpass.staffApproval.approvedAt || outpass.staffApproval.rejectedAt,
+                remarks: outpass.staffApproval.remarks,
+                icon: '👨‍🏫'
+            },
+            {
+                title: 'Year Incharge',
+                status: outpass.yearInchargeApproval.status,
+                name: outpass.yearInchargeApproval.approverName,
+                time: outpass.yearInchargeApproval.approvedAt || outpass.yearInchargeApproval.rejectedAt,
+                remarks: outpass.yearInchargeApproval.remarks,
+                icon: '🧑‍💼'
+            }
+        ];
+
+        if (residenceType === 'hostel') {
+            steps.push({
+                title: 'Hostel Warden',
+                status: outpass.wardenApproval.status,
+                name: outpass.wardenApproval.approverName,
+                time: outpass.wardenApproval.approvedAt || outpass.wardenApproval.rejectedAt,
+                remarks: outpass.wardenApproval.remarks,
+                icon: '👔'
+            });
+        }
+
+        return (
+            <div className="timeline-stepper">
+                {steps.map((step, idx) => {
+                    let statusClass = 'timeline-pending';
+                    if (step.status === 'approved') statusClass = 'timeline-approved';
+                    if (step.status === 'rejected') statusClass = 'timeline-rejected';
+
+                    return (
+                        <div key={idx} className={`timeline-item ${statusClass}`}>
+                            <div className="timeline-indicator">
+                                <span className="timeline-icon">{step.icon}</span>
+                            </div>
+                            {idx < steps.length - 1 && <div className="timeline-connector"></div>}
+                            
+                            <div className="timeline-card card">
+                                <div className="timeline-header-row">
+                                    <h4 className="timeline-title">{step.title}</h4>
+                                    <span className={`badge ${
+                                        step.status === 'approved' ? 'badge-green' : 
+                                        step.status === 'rejected' ? 'badge-red' : 'badge-amber'
+                                    }`}>
+                                        {step.status}
+                                    </span>
+                                </div>
+                                
+                                <div className="timeline-details-list">
+                                    {step.name && (
+                                        <div className="detail-item">
+                                            <span className="label">Approver:</span>
+                                            <span className="val">{step.name}</span>
+                                        </div>
+                                    )}
+                                    {step.time && (
+                                        <div className="detail-item">
+                                            <span className="label">Date/Time:</span>
+                                            <span className="val">{formatDateTime(step.time)}</span>
+                                        </div>
+                                    )}
+                                    {step.remarks && (
+                                        <div className="detail-item remarks-item">
+                                            <span className="label">Remarks:</span>
+                                            <span className="val">"{step.remarks}"</span>
+                                        </div>
+                                    )}
+                                    {!step.name && step.status === 'pending' && (
+                                        <span className="timeline-waiting">Waiting for review...</span>
+                                    )}
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    );
+                })}
+            </div>
+        );
+    };
 
-                    <button
-                        className="mobile-menu-btn"
-                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        aria-label="Toggle menu"
-                    >
-                        {isMobileMenuOpen ? '✕' : '☰'}
-                    </button>
+    return (
+        <div className="student-page outpass-tracking-page animate-page-enter">
+            <ToastContainer position="bottom-right" />
 
-                    <nav className={`header-nav-custom ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/dashboard')}
-                        >
-                            Dashboard
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/staffs')}
-                        >
-                            Staffs
-                        </button>
-                        {/* <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/student-notice')}
-                        >
-                            Notices
-                        </button> */}
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/outpass')}
-                        >
-                            Outpass
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/subjects')}
-                        >
-                            Subjects
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/profile')}
-                        >
-                            Profile
-                        </button>
-                        <button className="logout-btn-custom" onClick={handleLogout}>
-                            Logout
-                        </button>
-                    </nav>
-                </div>
-            </header>
+            {/* ── DESKTOP VIEW ── */}
+            <div className="lux-desktop-view">
+            <StudentHeader />
 
             <div className="content-wrapper">
-                {/* Header */}
-                <div className="page-header">
-                    <h1>{selectedOutpass ? 'Outpass Details' : 'All Outpasses'}</h1>
-                    <button
-                        className="new-outpass-btn"
-                        onClick={() => navigate('/new-outpass')}
-                    >
-                        + New Outpass
-                    </button>
+                {/* Header Section */}
+                <div className="page-header-row">
+                    <div>
+                        <h1 className="page-title" style={{ marginBottom: '4px' }}>
+                            {selectedOutpass ? 'Track Outpass' : 'My Outpasses'}
+                        </h1>
+                        <p className="page-subtitle">
+                            {selectedOutpass ? 'Track the active approval timeline' : 'View and track all campus exit history'}
+                        </p>
+                    </div>
+                    {!selectedOutpass && (
+                        <button
+                            className="btn btn-primary"
+                            onClick={() => navigate('/new-outpass')}
+                            style={{ minWidth: '160px' }}
+                        >
+                            + Apply Outpass
+                        </button>
+                    )}
                 </div>
 
-                {/* Conditional Rendering: List View or Detail View */}
                 {!selectedOutpass ? (
-                    /* List View */
+                    /* LIST VIEW WITH TABS FILTER */
                     <div className="outpass-list-view">
+                        <div className="tab-filters-container">
+                            {(['all', 'pending', 'approved', 'rejected'] as const).map((filter) => (
+                                <button
+                                    key={filter}
+                                    className={`tab-filter-btn capitalize ${activeFilter === filter ? 'active' : ''}`}
+                                    onClick={() => setActiveFilter(filter)}
+                                >
+                                    {filter}
+                                </button>
+                            ))}
+                        </div>
+
                         {loading ? (
-                            <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>Loading outpasses...</div>
-                        ) : outpasses.length === 0 ? (
-                            <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>No outpasses found. APPLY ONE NOW!</div>
+                            <div className="outpass-grid">
+                                {[1,2,3,4].map(i => (
+                                    <div key={i} className="card lux-skeleton" style={{ height: '220px', borderRadius: '20px' }}></div>
+                                ))}
+                            </div>
+                        ) : filteredOutpasses.length === 0 ? (
+                            <div className="empty-state-card card">
+                                <span className="empty-state-icon">📝</span>
+                                <h3>No outpasses found</h3>
+                                <p>There are no outpasses matching the "{activeFilter}" filter state.</p>
+                                <button className="btn btn-secondary" onClick={() => navigate('/new-outpass')}>
+                                    Apply Now
+                                </button>
+                            </div>
                         ) : (
-                            outpasses.map((outpass) => (
-                                <div key={outpass.id} className="outpass-card">
-                                    <div className="outpass-card-header">
-                                        <div className="outpass-duration">
-                                            <span className="calendar-icon">📅</span>
-                                            <span className="duration-text">
-                                                {formatDateTime(outpass.fromDate)} → {formatDateTime(outpass.toDate)}
-                                            </span>
-                                        </div>
-                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                            <span className="outpass-type-badge" style={{
-                                                padding: '4px 12px',
-                                                borderRadius: '20px',
-                                                fontSize: '0.8rem',
-                                                fontWeight: 600,
-                                                backgroundColor: outpass.outpassType.toLowerCase() === 'emergency' ? '#fee2e2' : '#e0f2fe',
-                                                color: outpass.outpassType.toLowerCase() === 'emergency' ? '#ef4444' : '#0ea5e9',
-                                                border: `1px solid ${outpass.outpassType.toLowerCase() === 'emergency' ? '#fca5a5' : '#7dd3fc'}`
-                                            }}>
+                            <div className="outpass-grid">
+                                {filteredOutpasses.map((outpass, index) => {
+                                    const staggerIndex = (index % 6) + 1;
+                                    return (
+                                        <div key={outpass.id} className={`outpass-item-card card card-hover animate-stagger-${staggerIndex}`}>
+                                        <div className="card-top-row">
+                                            <span className={`outpass-type-indicator ${
+                                                outpass.outpassType.toLowerCase() === 'emergency' ? 'emergency' : ''
+                                            }`}>
                                                 {outpass.outpassType}
                                             </span>
                                             {getStatusBadge(outpass.overallStatus)}
                                         </div>
-                                    </div>
-                                    <div className="outpass-card-body">
-                                        <div className="reason-section">
-                                            <strong>Reason:</strong> {outpass.reason}
+
+                                        <div className="card-mid-section">
+                                            <div className="duration-row">
+                                                <span className="icon">📅</span>
+                                                <div className="time-details">
+                                                    <span className="time-label">FROM</span>
+                                                    <span className="time-value">{formatDateTime(outpass.fromDate)}</span>
+                                                    <span className="time-label" style={{ marginTop: '4px' }}>TO</span>
+                                                    <span className="time-value">{formatDateTime(outpass.toDate)}</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="reason-row">
+                                                <strong>Reason:</strong> "{outpass.reason}"
+                                            </div>
                                         </div>
-                                        <div className="applied-section">
-                                            <span className="applied-label">Applied on:</span>
-                                            <span className="applied-date">{formatDateTime(outpass.createdAt)}</span>
+
+                                        <div className="card-bottom-row">
+                                            <span className="applied-on">
+                                                Applied on: {new Date(outpass.createdAt).toLocaleDateString()}
+                                            </span>
+                                            <button
+                                                className="btn btn-secondary btn-sm"
+                                                onClick={() => setSelectedOutpass(outpass)}
+                                            >
+                                                Track Progress →
+                                            </button>
                                         </div>
                                     </div>
-                                    <div className="outpass-card-footer">
-                                        <button
-                                            className="view-details-btn"
-                                            onClick={() => handleViewDetails(outpass)}
-                                        >
-                                            View Details →
-                                        </button>
-                                    </div>
-                                </div>
-                            )))}
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
                 ) : (
-                    /* Detail View */
-                    <div className="outpass-detail-view">
-                        <button className="back-to-list-btn" onClick={handleBackToList}>
-                            ← Back to All Outpasses
-                        </button>
-
-                        {/* Student Details Section */}
-                        {user && (
-                            <div className="detail-section student-info">
-                                <div className="info-grid">
-                                    <div className="info-field">
-                                        <label>NAME</label>
-                                        <div className="info-value">{user.name}</div>
-                                    </div>
-                                    <div className="info-field">
-                                        <label>REGISTER NUMBER</label>
-                                        <div className="info-value">{user.registerNumber}</div>
-                                    </div>
-                                    <div className="info-field">
-                                        <label>DEPARTMENT</label>
-                                        <div className="info-value uppercase">{user.department}</div>
-                                    </div>
-                                    <div className="info-field">
-                                        <label>YEAR</label>
-                                        <div className="info-value">{user.year}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Basic Information Section */}
-                        <div className="detail-section basic-info">
-                            <div className="info-field">
-                                <label>STUDENT ID</label>
-                                <div className="info-value">
-                                    {selectedOutpass.studentId}
-                                </div>
-                            </div>
-                            <div className="info-field">
-                                <label>OUTPASS TYPE</label>
-                                <div className="info-value">
-                                    <span style={{
-                                        padding: '4px 12px',
-                                        borderRadius: '6px',
-                                        fontSize: '0.9rem',
-                                        fontWeight: 600,
-                                        backgroundColor: selectedOutpass.outpassType.toLowerCase() === 'emergency' ? '#fee2e2' : '#e0f2fe',
-                                        color: selectedOutpass.outpassType.toLowerCase() === 'emergency' ? '#ef4444' : '#0ea5e9',
-                                    }}>
-                                        {selectedOutpass.outpassType}
-                                    </span>
-                                </div>
-                            </div>
-                            <div className="info-field">
-                                <label>FROM DATE & TIME</label>
-                                <div className="info-value">
-                                    {formatDateTime(selectedOutpass.fromDate)}
-                                </div>
-                            </div>
-                            <div className="info-field">
-                                <label>TO DATE & TIME</label>
-                                <div className="info-value">
-                                    {formatDateTime(selectedOutpass.toDate)}
-                                </div>
-                            </div>
-                            <div className="info-field">
-                                <label>REASON</label>
-                                <div className="info-value-box">
-                                    {selectedOutpass.reason}
-                                </div>
-                            </div>
-                            <div className="info-field">
-                                <label>APPLIED ON</label>
-                                <div className="info-value">
-                                    {formatDateTime(selectedOutpass.createdAt)}
-                                </div>
-                            </div>
+                    /* TRACKING / DETAIL VIEW */
+                    <div className="outpass-detail-view animate-fade-in">
+                        <div className="back-link-wrapper" style={{ marginBottom: '24px' }}>
+                            <button className="btn-back" onClick={() => setSelectedOutpass(null)}>
+                                <span className="icon">←</span> Back to Outpass History
+                            </button>
                         </div>
 
-                        {/* OD Document Section */}
-                        {/* OD Document Section */}
-                        {selectedOutpass.document && (
-                            <div className="approval-card" style={{ marginBottom: '20px' }}>
-                                <div className="approval-card-header">
-                                    <span className="approval-icon">📄</span>
-                                    <h3>Supporting Document</h3>
-                                </div>
-                                <div className="approval-card-body">
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                                        <div>
-                                            <p style={{ margin: 0, fontWeight: 600, color: '#334155' }}>OD Proof Document</p>
-                                            <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Uploaded by student</p>
+                        <div className="details-layout-grid">
+                            {/* Left Column: Outpass Details */}
+                            <div className="details-left-col">
+                                <div className="card outpass-meta-card">
+                                    <h3 className="section-title">Request Information</h3>
+                                    
+                                    <div className="meta-info-list">
+                                        <div className="meta-info-item">
+                                            <span className="label">Outpass Type</span>
+                                            <span className="val font-semibold">{selectedOutpass.outpassType}</span>
                                         </div>
-                                        <button
-                                            onClick={() => handleViewDocument(selectedOutpass.document)}
-                                            className="view-doc-btn"
-                                        >
-                                            👁️ View Proof
-                                        </button>
+                                        <div className="meta-info-item">
+                                            <span className="label">Status</span>
+                                            <span>{getStatusBadge(selectedOutpass.overallStatus)}</span>
+                                        </div>
+                                        <div className="meta-info-item">
+                                            <span className="label">From</span>
+                                            <span className="val">{formatDateTime(selectedOutpass.fromDate)}</span>
+                                        </div>
+                                        <div className="meta-info-item">
+                                            <span className="label">To</span>
+                                            <span className="val">{formatDateTime(selectedOutpass.toDate)}</span>
+                                        </div>
+                                        <div className="meta-info-item">
+                                            <span className="label">Reason</span>
+                                            <span className="val reason-text">"{selectedOutpass.reason}"</span>
+                                        </div>
+                                        <div className="meta-info-item">
+                                            <span className="label">Applied on</span>
+                                            <span className="val">{formatDateTime(selectedOutpass.createdAt)}</span>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                        )}
 
-                        {/* Approval Status Section */}
-                        <div className="approval-section">
-                            {/* Staff Approval Card */}
-                            <div className="approval-card">
-                                <div className="approval-card-header">
-                                    <span className="approval-icon">👨‍🏫</span>
-                                    <h3>Staff Approval</h3>
+                                    {/* Proof document button */}
+                                    {selectedOutpass.document && (
+                                        <div className="proof-action-box">
+                                            <div className="proof-text-details">
+                                                <strong>Supporting Document</strong>
+                                                <span>OD proof attached</span>
+                                            </div>
+                                            <button
+                                                onClick={() => handleViewDocument(selectedOutpass.document)}
+                                                className="btn btn-outline btn-sm"
+                                            >
+                                                👁️ View Proof
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="approval-card-body">
-                                    <div className="approval-field">
-                                        <label>STATUS</label>
-                                        {getStatusBadge(selectedOutpass.staffApproval.status)}
+
+                                {/* QR Code Card */}
+                                {selectedOutpass.overallStatus === 'approved' && (
+                                    <div className="card outpass-meta-card" style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                        <h3 className="section-title">Exit Pass QR</h3>
+                                        {isWithinTimeWindow(selectedOutpass.fromDate) ? (
+                                            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                                <div style={{ padding: '16px', background: '#fff', borderRadius: '12px', display: 'inline-block' }}>
+                                                    <QRCodeSVG value={selectedOutpass.id} size={180} level="H" />
+                                                </div>
+                                                <p style={{ marginTop: '16px', color: 'var(--text-2)', fontSize: '0.9rem', textAlign: 'center' }}>
+                                                    Show this QR code at the security gate.<br/>
+                                                    <small>Valid up to 30 minutes after departure.</small>
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div style={{ textAlign: 'center', padding: '20px', background: 'var(--bg-elevated)', borderRadius: '8px', width: '100%' }}>
+                                                <span style={{ fontSize: '2rem' }}>🚫</span>
+                                                <p style={{ marginTop: '12px', color: 'var(--text-2)' }}>
+                                                    QR Code has expired.<br/>
+                                                    It was valid up to 30 minutes after your departure time:<br/>
+                                                    <strong>{formatDateTime(selectedOutpass.fromDate)}</strong>
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
-                                    {selectedOutpass.staffApproval.approverName && (
-                                        <div className="approval-field">
-                                            <label>APPROVED BY</label>
-                                            <div className="approval-value">
-                                                {selectedOutpass.staffApproval.approverName}
-                                            </div>
-                                        </div>
-                                    )}
-                                    {selectedOutpass.staffApproval.approvedAt && (
-                                        <div className="approval-field">
-                                            <label>APPROVED AT</label>
-                                            <div className="approval-value">
-                                                {formatDateTime(selectedOutpass.staffApproval.approvedAt)}
-                                            </div>
-                                        </div>
-                                    )}
-                                    {selectedOutpass.staffApproval.rejectedAt && (
-                                        <div className="approval-field">
-                                            <label>REJECTED AT</label>
-                                            <div className="approval-value">
-                                                {formatDateTime(selectedOutpass.staffApproval.rejectedAt)}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {selectedOutpass.staffApproval.remarks && (
-                                        <div className="approval-field">
-                                            <label>STAFF REMARKS</label>
-                                            <div className="approval-value">
-                                                {selectedOutpass.staffApproval.remarks}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Year Incharge Approval Card */}
-                            <div className="approval-card">
-                                <div className="approval-card-header">
-                                    <span className="approval-icon">🧑‍💼</span>
-                                    <h3>Year Incharge Approval</h3>
-                                </div>
-                                <div className="approval-card-body">
-                                    <div className="approval-field">
-                                        <label>STATUS</label>
-                                        {getStatusBadge(selectedOutpass.yearInchargeApproval.status)}
-                                    </div>
-                                    {selectedOutpass.yearInchargeApproval.approverName && (
-                                        <div className="approval-field">
-                                            <label>APPROVED BY</label>
-                                            <div className="approval-value">
-                                                {selectedOutpass.yearInchargeApproval.approverName}
-                                            </div>
-                                        </div>
-                                    )}
-                                    {selectedOutpass.yearInchargeApproval.approvedAt && (
-                                        <div className="approval-field">
-                                            <label>APPROVED AT</label>
-                                            <div className="approval-value">
-                                                {formatDateTime(selectedOutpass.yearInchargeApproval.approvedAt)}
-                                            </div>
-                                        </div>
-                                    )}
-                                    {selectedOutpass.yearInchargeApproval.rejectedAt && (
-                                        <div className="approval-field">
-                                            <label>REJECTED AT</label>
-                                            <div className="approval-value">
-                                                {formatDateTime(selectedOutpass.yearInchargeApproval.rejectedAt)}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {selectedOutpass.yearInchargeApproval.remarks && (
-                                        <div className="approval-field">
-                                            <label>REMARKS</label>
-                                            <div className="approval-value">
-                                                {selectedOutpass.yearInchargeApproval.remarks}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
+                                )}
                             </div>
 
-                            {/* Warden Approval Card - Only for Hostel Students */}
-                            {residenceType === 'hostel' && (
-                                <div className="approval-card">
-                                    <div className="approval-card-header">
-                                        <span className="approval-icon">👔</span>
-                                        <h3>Warden Approval</h3>
-                                    </div>
-                                    <div className="approval-card-body">
-                                        <div className="approval-field">
-                                            <label>STATUS</label>
-                                            {getStatusBadge(selectedOutpass.wardenApproval.status)}
-                                        </div>
-                                        {selectedOutpass.wardenApproval.approverName && (
-                                            <div className="approval-field">
-                                                <label>APPROVED BY</label>
-                                                <div className="approval-value">
-                                                    {selectedOutpass.wardenApproval.approverName}
-                                                </div>
-                                            </div>
-                                        )}
-                                        {selectedOutpass.wardenApproval.approvedAt && (
-                                            <div className="approval-field">
-                                                <label>APPROVED AT</label>
-                                                <div className="approval-value">
-                                                    {formatDateTime(selectedOutpass.wardenApproval.approvedAt)}
-                                                </div>
-                                            </div>
-                                        )}
-                                        {selectedOutpass.wardenApproval.rejectedAt && (
-                                            <div className="approval-field">
-                                                <label>REJECTED AT</label>
-                                                <div className="approval-value">
-                                                    {formatDateTime(selectedOutpass.wardenApproval.rejectedAt)}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {selectedOutpass.wardenApproval.remarks && (
-                                            <div className="approval-field">
-                                                <label>WARDEN REMARKS</label>
-                                                <div className="approval-value">
-                                                    {selectedOutpass.wardenApproval.remarks}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
+                            {/* Right Column: Vertical Approval Timeline */}
+                            <div className="details-right-col">
+                                <h3 className="section-title">Approval Flow Timeline</h3>
+                                {renderTimeline(selectedOutpass)}
+                            </div>
                         </div>
                     </div>
                 )}
             </div>
+            </div>{/* end desktop */}
 
-            {/* Document Modal */}
+            {/* ── MOBILE VIEW ── */}
+            <div className="lux-mobile-view cred-page-bg">
+                {/* Mobile Header */}
+                <div className="mob-page-header">
+                    {selectedOutpass ? (
+                        <button className="mob-back-btn" onClick={() => setSelectedOutpass(null)}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                        </button>
+                    ) : (
+                        <button className="mob-back-btn" onClick={() => navigate('/dashboard')}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                        </button>
+                    )}
+                    <div className="mob-header-text">
+                        <span className="mob-header-title cred-h2" style={{fontSize: '18px'}}>{selectedOutpass ? 'Track Request' : 'My Outpasses'}</span>
+                    </div>
+                    {!selectedOutpass && (
+                        <button className="mob-apply-fab" onClick={() => navigate('/new-outpass')}>+</button>
+                    )}
+                    {selectedOutpass && <div style={{width: 36}} />}
+                </div>
+
+                <div className="mob-scroll-body">
+                    {!selectedOutpass ? (
+                        <>
+                            {/* Tab filters */}
+                            <div className="mob-tab-row animate-cred-enter cred-stagger-1">
+                                {(['all','pending','approved','rejected'] as const).map(f => (
+                                    <button
+                                        key={f}
+                                        className={`mob-tab-btn ${activeFilter === f ? 'mob-tab-active' : ''}`}
+                                        onClick={() => setActiveFilter(f)}
+                                    >
+                                        {f.charAt(0).toUpperCase() + f.slice(1)}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {loading ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    {[1, 2, 3, 4].map(i => (
+                                        <div key={i} className="cred-card" style={{ height: '140px' }}></div>
+                                    ))}
+                                </div>
+                            ) : filteredOutpasses.length === 0 ? (
+                                <div className="cred-card mob-empty-card animate-cred-enter cred-stagger-2">
+                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--cred-text-2)" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                    <span className="cred-p">No outpasses found</span>
+                                    <button className="mob-cta-btn" onClick={() => navigate('/new-outpass')}>Apply Now</button>
+                                </div>
+                            ) : (
+                                filteredOutpasses.map((op, index) => {
+                                    const staggerIndex = (index % 5) + 1;
+                                    return (
+                                        <div key={op.id} className={`cred-card mob-outpass-card animate-cred-enter cred-stagger-${staggerIndex}`} onClick={() => setSelectedOutpass(op)}>
+                                            <div className="mob-op-top">
+                                                <span className={`mob-op-type-tag ${op.outpassType.toLowerCase() === 'emergency' ? 'mob-op-emergency' : ''}`}>
+                                                    {op.outpassType}
+                                                </span>
+                                                <span className={`cred-label ${
+                                                    op.overallStatus === 'approved' ? 'text-success' :
+                                                    op.overallStatus === 'rejected' ? 'text-danger' : 'text-warning'
+                                                }`}>{op.overallStatus}</span>
+                                            </div>
+                                            <div className="mob-op-dates">
+                                                <div className="mob-op-date-item">
+                                                    <span className="cred-label">FROM</span>
+                                                    <span className="cred-h2" style={{fontSize: '14px'}}>{formatDateTime(op.fromDate)}</span>
+                                                </div>
+                                                <div className="mob-op-date-divider" />
+                                                <div className="mob-op-date-item">
+                                                    <span className="cred-label">TO</span>
+                                                    <span className="cred-h2" style={{fontSize: '14px'}}>{formatDateTime(op.toDate)}</span>
+                                                </div>
+                                            </div>
+                                            <p className="mob-op-reason cred-p" style={{fontSize: '13px', fontStyle: 'italic'}}>“{op.reason}”</p>
+                                            <div className="mob-op-footer">
+                                                <span className="cred-p" style={{fontSize: '12px'}}>Applied {new Date(op.createdAt).toLocaleDateString()}</span>
+                                                <span className="cred-gold-text" style={{fontSize: '13px', fontWeight: 'bold'}}>Track →</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </>
+                    ) : (
+                        /* ── DETAIL / TIMELINE VIEW ── */
+                        <>
+                            {/* Request Summary Card */}
+                            <div className="cred-card mob-form-card animate-cred-enter cred-stagger-1">
+                                <div className="mob-detail-top">
+                                    <span className={`mob-op-type-tag ${selectedOutpass.outpassType.toLowerCase() === 'emergency' ? 'mob-op-emergency' : ''}`}>
+                                        {selectedOutpass.outpassType}
+                                    </span>
+                                    <span className={`cred-label ${
+                                        selectedOutpass.overallStatus === 'approved' ? 'text-success' :
+                                        selectedOutpass.overallStatus === 'rejected' ? 'text-danger' : 'text-warning'
+                                    }`}>{selectedOutpass.overallStatus}</span>
+                                </div>
+                                <div className="mob-detail-row"><span className="cred-label">From</span><span className="cred-h2" style={{fontSize: '14px'}}>{formatDateTime(selectedOutpass.fromDate)}</span></div>
+                                <div className="mob-detail-row"><span className="cred-label">To</span><span className="cred-h2" style={{fontSize: '14px'}}>{formatDateTime(selectedOutpass.toDate)}</span></div>
+                                <div className="mob-detail-row"><span className="cred-label">Reason</span><span className="cred-p" style={{fontSize: '13px', fontStyle:'italic'}}>“{selectedOutpass.reason}”</span></div>
+                                <div className="mob-detail-row" style={{borderBottom: 'none'}}><span className="cred-label">Applied</span><span className="cred-h2" style={{fontSize: '14px'}}>{formatDateTime(selectedOutpass.createdAt)}</span></div>
+                                {selectedOutpass.document && (
+                                    <button onClick={() => handleViewDocument(selectedOutpass.document)} className="mob-btn-secondary" style={{marginTop: 12, width: '100%'}}>View Proof Document</button>
+                                )}
+                            </div>
+
+                            {/* Mobile QR Code */}
+                            {selectedOutpass.overallStatus === 'approved' && (
+                                <div className="cred-card mob-form-card animate-cred-enter cred-stagger-2" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '16px' }}>
+                                    <h3 className="cred-h2" style={{ fontSize: '16px', margin: '0 0 16px 0', alignSelf: 'flex-start' }}>Exit Pass QR</h3>
+                                    {isWithinTimeWindow(selectedOutpass.fromDate) ? (
+                                        <div style={{ padding: '16px', background: '#fff', borderRadius: '12px' }}>
+                                            <QRCodeSVG value={selectedOutpass.id} size={160} level="H" />
+                                        </div>
+                                    ) : (
+                                        <div style={{ textAlign: 'center', padding: '16px', background: 'var(--cred-surface-hover)', borderRadius: '8px', width: '100%' }}>
+                                            <span style={{ fontSize: '2rem' }}>🚫</span>
+                                            <p className="cred-p" style={{ marginTop: '8px', fontSize: '13px' }}>
+                                                QR Code has expired.<br/>Valid up to 30 mins after: <br/><strong>{formatDateTime(selectedOutpass.fromDate)}</strong>
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Timeline */}
+                            <h3 className="cred-h2 animate-cred-enter cred-stagger-2" style={{fontSize: '16px', margin: '16px 0 8px 0'}}>Approval Timeline</h3>
+                            <div className="mob-timeline animate-cred-enter cred-stagger-3">
+                                {[
+                                    { title: 'Staff / Tutor', ...selectedOutpass.staffApproval },
+                                    { title: 'Year Incharge', ...selectedOutpass.yearInchargeApproval },
+                                    ...(residenceType === 'hostel' ? [{ title: 'Hostel Warden', ...selectedOutpass.wardenApproval }] : [])
+                                ].map((step, idx, arr) => (
+                                    <div key={idx} className="mob-timeline-step">
+                                        <div className="mob-timeline-left">
+                                            <div className={`mob-timeline-dot ${
+                                                step.status === 'approved' ? 'mob-dot-approved' :
+                                                step.status === 'rejected' ? 'mob-dot-rejected' : 'mob-dot-pending'
+                                            }`}>
+                                                {step.status === 'approved' ? (
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--cred-surface)" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                                                ) : step.status === 'rejected' ? (
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--cred-surface)" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                                ) : (
+                                                    <div className="mob-dot-inner" />
+                                                )}
+                                            </div>
+                                            {idx < arr.length - 1 && <div className={`mob-timeline-line ${step.status === 'approved' ? 'mob-line-approved' : ''}`} />}
+                                        </div>
+                                        <div className="cred-card mob-timeline-card">
+                                            <div className="mob-tl-top">
+                                                <span className="cred-h2" style={{fontSize: '15px'}}>{step.title}</span>
+                                                <span className={`cred-label ${
+                                                    step.status === 'approved' ? 'text-success' :
+                                                    step.status === 'rejected' ? 'text-danger' : 'text-warning'
+                                                }`}>{step.status}</span>
+                                            </div>
+                                            {step.approverName && <p className="cred-p" style={{fontSize: '12px'}}>By: {step.approverName}</p>}
+                                            {(step.approvedAt || step.rejectedAt) && (
+                                                <p className="cred-p" style={{fontSize: '12px'}}>{formatDateTime(step.approvedAt || step.rejectedAt || '')}</p>
+                                            )}
+                                            {step.remarks && <p className="cred-p" style={{fontSize: '12px', fontStyle: 'italic', marginTop: '4px'}}>“{step.remarks}”</p>}
+                                            {!step.approverName && step.status === 'pending' && (
+                                                <p className="cred-p" style={{fontSize: '12px', fontStyle: 'italic'}}>Awaiting review...</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    )}
+                </div>
+
+                {/* BOTTOM NAVIGATION */}
+                <StudentBottomNav activeTab="outpass" />
+            </div>{/* end mobile */}
+
             {showDocumentModal && documentUrl && (
-                <div className="modal-overlay" onClick={() => setShowDocumentModal(false)}>
-                    <div className="modal-content-doc" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h3>Supporting Document</h3>
-                            <button className="modal-close" onClick={() => setShowDocumentModal(false)}>✕</button>
+                <div className="document-viewer-modal">
+                    <div className="document-modal-backdrop" onClick={() => setShowDocumentModal(false)} />
+                    <div className="document-modal-card card">
+                        <div className="document-modal-header">
+                            <div>
+                                <h3>Proof Document</h3>
+                                <p>{documentType === 'pdf' ? 'PDF preview' : 'Image preview'}</p>
+                            </div>
+                            <button className="btn btn-icon" onClick={() => setShowDocumentModal(false)}>✕</button>
                         </div>
-                        <div className="doc-viewer-container">
+                        <div className="document-modal-body">
                             {documentType === 'pdf' ? (
                                 <iframe
                                     src={documentUrl}
-                                    className="doc-iframe"
-                                    title="Document Viewer"
+                                    title="Proof Document"
+                                    className="document-iframe"
                                 />
                             ) : (
-                                <img
-                                    src={documentUrl}
-                                    alt="Proof"
-                                    className="doc-image"
-                                />
+                                <img src={documentUrl} alt="Proof Document" className="document-image" />
                             )}
-                        </div>
-                        <div className="modal-footer">
-                            <a
-                                href={documentUrl}
-                                download={`proof_document.${documentType === 'pdf' ? 'pdf' : 'jpg'}`}
-                                className="download-btn"
-                            >
-                                Download File
-                            </a>
                         </div>
                     </div>
                 </div>
             )}
 
             <style>{`
-                /* Custom Dashboard Header */
-                .dashboard-header-custom {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    height: 70px;
-                    background: white;
-                    border-bottom: 1px solid #e2e8f0;
-                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-                    z-index: 1000;
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+                /* ── DESKTOP VIEWS (RETAINED) ── */
+                .outpass-details-page { background: var(--bg); }
+                .page-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-6); flex-wrap: wrap; gap: var(--space-4); }
+                .page-subtitle { font-size: 0.95rem; color: var(--text-3); }
+                .back-link-wrapper { margin-bottom: var(--space-4); }
+                .btn-back { background: none; border: none; color: var(--primary); font-size: 0.9rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: var(--radius-sm); transition: var(--transition-fast); }
+                .btn-back:hover { background: var(--primary-light); color: var(--primary-dark); }
+                .tab-filters-container { display: flex; gap: 8px; background: var(--bg-elevated); padding: 4px; border-radius: var(--radius-md); margin-bottom: 24px; width: fit-content; }
+                .tab-filter-btn { border: none; background: transparent; padding: 8px 16px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; color: var(--text-3); cursor: pointer; transition: var(--transition-fast); }
+                .tab-filter-btn:hover { color: var(--text-1); }
+                .tab-filter-btn.active { background: var(--surface); color: var(--primary-dark); box-shadow: var(--shadow-sm); }
+                .outpass-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 20px; }
+                .outpass-item-card { display: flex; flex-direction: column; gap: 16px; min-height: 220px; }
+                .card-top-row { display: flex; justify-content: space-between; align-items: center; }
+                .outpass-type-indicator { font-size: 0.75rem; padding: 2px 10px; border-radius: var(--radius-full); background: var(--primary-light); color: var(--primary-dark); font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; }
+                .outpass-type-indicator.emergency { background: var(--danger-light); color: var(--danger); }
+                .card-mid-section { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+                .duration-row { display: flex; gap: 10px; align-items: flex-start; }
+                .duration-row .icon { font-size: 1.2rem; margin-top: 2px; }
+                .time-details { display: flex; flex-direction: column; }
+                .time-label { font-size: 0.65rem; font-weight: 800; color: var(--text-4); letter-spacing: 0.05em; }
+                .time-value { font-size: 0.85rem; font-weight: 600; color: var(--text-1); }
+                .reason-row { font-size: 0.88rem; color: var(--text-2); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
+                .card-bottom-row { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 12px; }
+                .applied-on { font-size: 0.75rem; color: var(--text-4); }
+                .empty-state-card { text-align: center; padding: var(--space-12) var(--space-6) !important; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; max-width: 480px; margin: 40px auto; }
+                .empty-state-icon { font-size: 3rem; }
+                .empty-state-card p { color: var(--text-3); font-size: 0.9rem; margin-bottom: 8px; }
+                .details-layout-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 32px; align-items: start; }
+                .outpass-meta-card { display: flex; flex-direction: column; gap: 16px; }
+                .meta-info-list { display: flex; flex-direction: column; gap: 12px; }
+                .meta-info-item { display: flex; justify-content: space-between; align-items: flex-start; font-size: 0.9rem; border-bottom: 1px dashed var(--border); padding-bottom: 8px; gap: 16px; }
+                .meta-info-item:last-child { border-bottom: none; }
+                .meta-info-item .label { color: var(--text-3); font-weight: 500; flex-shrink: 0; }
+                .meta-info-item .val { color: var(--text-1); font-weight: 600; text-align: right; }
+                .meta-info-item .val.reason-text { text-align: left; font-style: italic; color: var(--text-2); font-weight: 500; }
+                .proof-action-box { display: flex; justify-content: space-between; align-items: center; background: var(--bg-elevated); padding: 12px var(--space-4); border-radius: var(--radius-md); margin-top: var(--space-4); gap: 12px; }
+                .proof-text-details { display: flex; flex-direction: column; gap: 2px; }
+                .proof-text-details strong { font-size: 0.85rem; color: var(--text-1); }
+                .proof-text-details span { font-size: 0.75rem; color: var(--text-4); }
+                .timeline-stepper { display: flex; flex-direction: column; position: relative; margin-left: 20px; padding-left: 20px; border-left: 2px solid var(--border); }
+                .timeline-item { position: relative; margin-bottom: 24px; }
+                .timeline-item:last-child { margin-bottom: 0; }
+                .timeline-indicator { position: absolute; left: -36px; top: 12px; width: 30px; height: 30px; border-radius: 50%; background: var(--surface); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; z-index: 2; transition: var(--transition); }
+                .timeline-icon { font-size: 0.9rem; }
+                .timeline-connector { position: absolute; left: -22px; top: 42px; bottom: -20px; width: 2px; background: var(--border); z-index: 1; }
+                .timeline-item:last-child .timeline-connector { display: none; }
+                .timeline-card { padding: var(--space-4) var(--space-5) !important; }
+                .timeline-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px; gap: 12px; }
+                .timeline-title { font-size: 0.95rem; color: var(--text-1); margin: 0; }
+                .timeline-details-list { display: flex; flex-direction: column; gap: 6px; }
+                .timeline-details-list .detail-item { display: flex; gap: 8px; font-size: 0.8rem; }
+                .timeline-details-list .detail-item .label { color: var(--text-3); font-weight: 600; flex-shrink: 0; width: 70px; }
+                .timeline-details-list .detail-item .val { color: var(--text-1); font-weight: 500; }
+                .timeline-details-list .remarks-item .val { font-style: italic; color: var(--text-2); }
+                .timeline-waiting { font-size: 0.78rem; color: var(--text-4); font-style: italic; }
+                .timeline-approved .timeline-indicator { border-color: var(--success); background: var(--success-light); box-shadow: 0 0 0 4px var(--success-mid); }
+                .timeline-rejected .timeline-indicator { border-color: var(--danger); background: var(--danger-light); box-shadow: 0 0 0 4px var(--danger-mid); }
+                .timeline-pending .timeline-indicator { border-color: var(--warning); background: var(--warning-light); box-shadow: 0 0 0 4px var(--warning-mid); }
+
+                /* ── DESKTOP / MOBILE SPLIT ── */
+                .lux-desktop-view { display: block; }
+                .lux-mobile-view  { display: none; }
+                @media (max-width: 768px) {
+                    .lux-desktop-view { display: none !important; }
+                    .lux-mobile-view  { display: flex !important; flex-direction: column; min-height: 100vh; background: linear-gradient(135deg, #F7F3E6 0%, #E8EEF5 45%, #C8D9F2 100%); font-family: 'Inter', -apple-system, sans-serif; }
                 }
 
-                .mobile-menu-btn {
-                    display: none;
-                    background: none;
-                    border: none;
-                    font-size: 24px;
-                    cursor: pointer;
-                    color: #1e293b;
-                    padding: 8px;
-                    z-index: 1001;
-                }
+                /* ==========================================
+                   CRED PREMIUM MOBILE STYLES (OUTPASS)
+                   ========================================== */
+                .mob-page-header { display:flex; align-items:center; gap:12px; padding:16px 16px 12px; background:rgba(255,255,255,0.85); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); position:sticky; top:0; z-index:50; border-bottom: 1px solid rgba(226,232,240,0.6); }
+                .mob-back-btn { width:36px; height:36px; border-radius:10px; background:#FFFFFF; border:1px solid #E2E8F0; color:#1E293B; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; transition:transform 0.2s; }
+                .mob-back-btn:active { transform:scale(0.9); }
+                .mob-header-text { flex:1; }
+                .mob-apply-fab { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg, #1E3A8A, #0F172A); border:none; color:#FFFFFF; font-size:22px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow: 0 4px 12px rgba(15,23,42,0.25); }
 
-                .header-container-custom {
-                    max-width: 1400px;
-                    margin: 0 auto;
-                    height: 100%;
-                    padding: 0 24px;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                }
+                .mob-scroll-body { flex:1; overflow-y:auto; padding:24px 16px 100px; display:flex; flex-direction:column; gap:20px; }
 
-                .header-left-custom {
-                    display: flex;
-                    align-items: center;
-                }
+                /* Tabs */
+                .mob-tab-row { display:flex; gap:12px; overflow-x:auto; padding-bottom:4px; }
+                .mob-tab-btn { background:rgba(255,255,255,0.7); border:1px solid rgba(226,232,240,0.8); border-radius:24px; padding:8px 20px; font-size:13px; font-weight:600; color:#64748B; cursor:pointer; white-space:nowrap; transition:all 0.2s; flex-shrink:0; }
+                .mob-tab-active { background:#FFFFFF; border-color:var(--cred-gold); color:var(--cred-gold); box-shadow: 0 4px 12px rgba(184,134,11,0.15); }
 
-                .brand-custom {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                }
+                .mob-empty-card { padding:40px 20px; display:flex; flex-direction:column; align-items:center; gap:16px; }
 
-                .brand-icon-custom {
-                    font-size: 28px;
-                }
-
-                .brand-text-custom {
-                    font-size: 1.3rem;
-                    font-weight: 700;
-                    background: linear-gradient(135deg, #0047AB, #2563eb);
-                    -webkit-background-clip: text;
-                    -webkit-text-fill-color: transparent;
-                }
-
-                .header-nav-custom {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                }
-
-                .nav-item-custom {
-                    padding: 10px 20px;
-                    border: none;
-                    background: transparent;
-                    color: #64748b;
-                    font-weight: 600;
-                    font-size: 0.95rem;
-                    cursor: pointer;
-                    border-radius: 10px;
-                    transition: all 0.3s;
-                }
-
-                .nav-item-custom:hover {
-                    background: #f1f5f9;
-                    color: #0047AB;
-                }
-
-                .logout-btn-custom {
-                    padding: 10px 24px;
-                    border: 2px solid #ef4444;
-                    background: white;
-                    color: #ef4444;
-                    font-weight: 600;
-                    font-size: 0.95rem;
-                    cursor: pointer;
-                    border-radius: 10px;
-                    transition: all 0.3s;
-                    margin-left: 12px;
-                }
-
-                .logout-btn-custom:hover {
-                    background: #ef4444;
-                    color: white;
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-                }
-
-                .content-wrapper-custom {
-                    margin-top: 70px;
-                    padding: 0;
-                }
-
-
-                .page-container {
-                    min-height: 100vh;
-                    background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
-                }
-
-                .content-wrapper {
-                    max-width: 1200px;
-                    margin: 0 auto;
-                    padding: 40px 20px;
-                }
-
-                 @media (max-width: 768px) {
-                    .mobile-menu-btn {
-                        display: block;
-                    }
-
-                    .header-nav-custom {
-                        position: absolute;
-                        top: 70px;
-                        left: 0;
-                        right: 0;
-                        background: white;
-                        flex-direction: column;
-                        padding: 0;
-                        border-bottom: 1px solid #e2e8f0;
-                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                        overflow: hidden;
-                        max-height: 0;
-                        transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
-                        gap: 0;
-                    }
-
-                    .header-nav-custom.mobile-open {
-                        max-height: 500px;
-                        padding: 16px 0;
-                    }
-
-                    .nav-item-custom, .logout-btn-custom {
-                        width: 100%;
-                        text-align: left;
-                        padding: 12px 24px;
-                        border-radius: 0;
-                        margin: 0;
-                    }
-
-                    .logout-btn-custom {
-                        border: none;
-                        border-top: 1px solid #fee2e2;
-                        color: #ef4444;
-                        margin-top: 8px;
-                    }
-
-                    .content-wrapper-custom {
-                        margin-top: 70px;
-                    }
-                }
-
-                /* Page Header */
-                .page-header {
-                    background: linear-gradient(135deg, #0047AB, #2563eb);
-                    padding: 32px 40px;
-                    border-radius: 20px;
-                    margin-bottom: 32px;
-                    box-shadow: 0 10px 30px rgba(0, 71, 171, 0.2);
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    gap: 20px;
-                }
-
-                .page-header h1 {
-                    margin: 0;
-                    font-size: 2.2rem;
-                    color: white;
-                    font-weight: 700;
-                }
-
-                .new-outpass-btn {
-                    background: white;
-                    color: #0047AB;
-                    border: none;
-                    padding: 12px 28px;
-                    border-radius: 12px;
-                    font-weight: 700;
-                    font-size: 1rem;
-                    cursor: pointer;
-                    transition: all 0.3s;
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-                    white-space: nowrap;
-                }
-
-                .new-outpass-btn:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-                    background: #f0f9ff;
-                }
-
-
-                /* List View */
-                .outpass-list-view {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 20px;
-                    animation: fadeIn 0.4s ease-out;
-                }
-
-                .outpass-card {
-                    background: white;
-                    border-radius: 16px;
-                    padding: 24px;
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-                    border: 1px solid rgba(0, 0, 0, 0.05);
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                }
-
-                .outpass-card:hover {
-                    transform: translateY(-4px);
-                    box-shadow: 0 12px 24px rgba(0, 71, 171, 0.15);
-                    border-color: #0047AB;
-                }
-
-                .outpass-card-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 16px;
-                    flex-wrap: wrap;
-                    gap: 12px;
-                }
-
-                .outpass-duration {
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    font-weight: 600;
-                    color: #1e293b;
-                    font-size: 1rem;
-                }
-
-                .calendar-icon {
-                    font-size: 1.4rem;
-                }
-
-                .duration-text {
-                    color: #334155;
-                }
-
-                .status-badge {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 8px;
-                    padding: 8px 16px;
-                    border-radius: 20px;
-                    font-weight: 600;
-                    font-size: 0.9rem;
-                    border: 2px solid currentColor;
-                }
-
-                .status-dot {
-                    font-size: 0.8rem;
-                    line-height: 1;
-                }
-
-                .outpass-card-body {
-                    margin-bottom: 16px;
-                }
-
-                .reason-section {
-                    color: #475569;
-                    font-size: 1rem;
-                    line-height: 1.6;
-                    margin-bottom: 12px;
-                }
-
-                .reason-section strong {
-                    color: #1e293b;
-                }
-
-                .applied-section {
-                    display: flex;
-                    gap: 8px;
-                    font-size: 0.9rem;
-                    color: #64748b;
-                }
-
-                .applied-label {
-                    font-weight: 500;
-                }
-
-                .applied-date {
-                    font-weight: 600;
-                    color: #475569;
-                }
+                /* List Cards */
+                .mob-outpass-card { padding:16px; display:flex; flex-direction:column; gap:16px; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:transform 0.15s; }
+                .mob-outpass-card:active { transform:scale(0.98); }
+                .mob-op-top { display:flex; justify-content:space-between; align-items:center; }
+                .mob-op-type-tag { background:rgba(37, 99, 235, 0.1); color:#2563EB; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:6px; border: 1px solid rgba(37, 99, 235, 0.2); }
+                .mob-history-badge-info    { background:rgba(37,99,235,0.1); color:#2563EB; border:1px solid rgba(37,99,235,0.2); }
+                .mob-op-emergency { background:rgba(220, 38, 38, 0.1); color:#DC2626; border-color: rgba(220, 38, 38, 0.2); }
                 
-                .view-doc-btn {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 8px;
-                    padding: 8px 16px;
-                    background: white;
-                    border: 1px solid #3b82f6;
-                    borderRadius: 6px;
-                    color: #3b82f6;
-                    cursor: pointer;
-                    fontSize: 0.9rem;
-                    fontWeight: 500;
-                    transition: all 0.2s;
-                }
-                .view-doc-btn:hover {
-                    background: #eff6ff;
-                }
+                .text-success { color: var(--cred-success); }
+                .text-danger { color: var(--cred-danger); }
+                .text-warning { color: var(--cred-warning); }
+                .cred-gold-text { color: var(--cred-gold); }
 
-                /* Modal Styles */
-                .modal-overlay {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background-color: rgba(0,0,0,0.8);
-                    z-index: 1000;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                }
+                .mob-op-dates { display:flex; align-items:center; gap:16px; background:#F8FAFC; border-radius:12px; padding:12px; border: 1px solid rgba(226,232,240,0.8); }
+                .mob-op-date-item { flex:1; display:flex; flex-direction:column; gap:4px; }
+                .mob-op-date-divider { width:1px; height: 30px; background:rgba(226,232,240,0.8); }
+                .mob-op-footer { display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(226,232,240,0.8); padding-top:12px; }
 
-                .modal-content-doc {
-                    background: white;
-                    padding: 20px;
-                    border-radius: 12px;
-                    width: 90%;
-                    max-width: 1000px;
-                    height: 90vh;
-                    display: flex;
-                    flex-direction: column;
-                    position: relative;
-                }
+                /* Detail Card */
+                .mob-form-card { padding:20px; }
+                .mob-detail-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid var(--cred-border); }
+                .mob-detail-row { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; padding:12px 0; border-bottom:1px solid var(--cred-border); }
 
-                .modal-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 16px;
-                }
+                /* Timeline */
+                .mob-timeline { display:flex; flex-direction:column; gap:0; margin-top: 8px; }
+                .mob-timeline-step { display:flex; gap:16px; }
+                .mob-timeline-left { display:flex; flex-direction:column; align-items:center; width:28px; flex-shrink:0; }
+                .mob-timeline-dot { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; z-index: 2; border: 2px solid var(--cred-bg); }
+                .mob-dot-approved { background:var(--cred-success); }
+                .mob-dot-rejected { background:var(--cred-danger); }
+                .mob-dot-pending  { background:var(--cred-surface-2); border-color: var(--cred-border); }
+                .mob-dot-inner { width:8px; height:8px; border-radius:50%; background:var(--cred-border); }
+                .mob-timeline-line { flex:1; width:2px; background:var(--cred-border); margin:0; min-height:24px; position:relative; top:-4px; z-index: 1; }
+                .mob-line-approved { background:var(--cred-success); }
+                .mob-timeline-card { flex:1; padding:16px; margin-bottom:16px; }
+                .mob-tl-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
 
-                .modal-header h3 {
-                    margin: 0;
-                    font-size: 1.25rem;
-                    font-weight: 600;
-                }
+                .mob-cta-btn { width:100%; background:linear-gradient(135deg, #1E3A8A, #0F172A); color:#FFFFFF; border:none; border-radius:16px; padding:16px; font-size:16px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:transform 0.2s; box-shadow: 0 8px 24px rgba(15,23,42,0.25); }
+                .mob-cta-btn:active { transform:scale(0.96); }
+                .mob-btn-secondary { background:#FFFFFF; color:#0F172A; border:1px solid rgba(226,232,240,0.8); border-radius:12px; padding:14px 20px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; transition: background 0.2s; box-shadow: 0 4px 12px rgba(15,23,42,0.08); }
+                .mob-btn-secondary:active { background: #F1F5F9; }
 
-                .modal-close {
-                    background: none;
-                    border: none;
-                    font-size: 1.5rem;
-                    cursor: pointer;
-                    color: #64748b;
-                }
-
-                .doc-viewer-container {
-                    flex: 1;
-                    overflow: hidden;
-                    background: #f1f5f9;
-                    border-radius: 8px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                }
-
-                .doc-iframe {
-                    width: 100%;
-                    height: 100%;
-                    border: none;
-                }
-
-                .doc-image {
-                    max-width: 100%;
-                    max-height: 100%;
-                    object-fit: contain;
-                }
-
-                .modal-footer {
-                    margin-top: 16px;
-                    display: flex;
-                    justify-content: flex-end;
-                }
-
-                .download-btn {
-                    padding: 8px 16px;
-                    background: #3b82f6;
-                    color: white;
-                    border-radius: 6px;
-                    text-decoration: none;
-                    font-size: 0.9rem;
-                    font-weight: 500;
-                    display: inline-block;
-                }
-                    font-weight: 600;
-                    color: #475569;
-                }
-
-                .outpass-card-footer {
-                    display: flex;
-                    justify-content: flex-end;
-                }
-
-                .view-details-btn {
-                    background: linear-gradient(135deg, #0047AB, #2563eb);
-                    color: white;
-                    border: none;
-                    padding: 10px 24px;
-                    border-radius: 10px;
-                    font-weight: 600;
-                    font-size: 0.95rem;
-                    cursor: pointer;
-                    transition: all 0.3s;
-                    box-shadow: 0 4px 12px rgba(0, 71, 171, 0.2);
-                }
-
-                .view-details-btn:hover {
-                    transform: translateX(4px);
-                    box-shadow: 0 6px 16px rgba(0, 71, 171, 0.3);
-                }
-
-                /* Detail View */
-                .outpass-detail-view {
-                    animation: slideIn 0.4s ease-out;
-                }
-
-                .back-to-list-btn {
-                    background: white;
-                    border: 2px solid #0047AB;
-                    color: #0047AB;
-                    padding: 12px 24px;
-                    border-radius: 12px;
-                    font-weight: 600;
-                    font-size: 1rem;
-                    cursor: pointer;
-                    transition: all 0.3s;
-                    margin-bottom: 24px;
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 8px;
-                    box-shadow: 0 4px 12px rgba(0, 71, 171, 0.1);
-                }
-
-                .back-to-list-btn:hover {
-                    background: #0047AB;
-                    color: white;
-                    transform: translateX(-4px);
-                }
-
-                /* Basic Information Section */
-                .detail-section.student-info {
-                    background: white;
-                    border-radius: 16px;
-                    padding: 28px;
-                    margin-bottom: 24px;
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-                    border-left: 5px solid #0047AB;
-                }
-
-                .info-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 20px;
-                }
-
-                .uppercase {
-                    text-transform: uppercase;
-                }
-
-                .detail-section.basic-info {
-                    background: white;
-                    border-radius: 16px;
-                    padding: 28px;
-                    margin-bottom: 24px;
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-                }
-
-                .info-field {
-                    margin-bottom: 20px;
-                }
-
-                .info-field:last-child {
-                    margin-bottom: 0;
-                }
-
-                .info-field label {
-                    display: block;
-                    font-size: 0.85rem;
-                    font-weight: 700;
-                    color: #64748b;
-                    text-transform: uppercase;
-                    letter-spacing: 1px;
-                    margin-bottom: 10px;
-                }
-
-                .info-value-box {
-                    padding: 16px 20px;
-                    background: #f8fafc;
-                    border: 2px solid #e2e8f0;
-                    border-radius: 12px;
-                    color: #1e293b;
-                    font-size: 1rem;
-                    line-height: 1.6;
-                    font-weight: 500;
-                }
-
-                .info-value {
-                    padding: 12px 16px;
-                    background: #f8fafc;
-                    border-radius: 10px;
-                    color: #1e293b;
-                    font-size: 1rem;
-                    font-weight: 600;
-                    border-left: 4px solid #0047AB;
-                }
-
-                /* Approval Section */
-                .approval-section {
-                    display: grid;
-                    grid-template-columns: repeat(3, 1fr);
-                    gap: 24px;
-                }
-
-                @media (max-width: 1024px) {
-                     .approval-section {
-                        grid-template-columns: repeat(2, 1fr);
-                    }
-                }
-
-                @media (max-width: 768px) {
-                     .approval-section {
-                        grid-template-columns: 1fr;
-                    }
-                }
-
-                .approval-card {
-                    background: white;
-                    border-radius: 16px;
-                    overflow: hidden;
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-                    border: 1px solid rgba(0, 0, 0, 0.05);
-                }
-
-                .approval-card-header {
-                    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
-                    padding: 20px 24px;
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    border-bottom: 2px solid #e2e8f0;
-                }
-
-                .approval-icon {
-                    font-size: 1.8rem;
-                }
-
-                .approval-card-header h3 {
-                    margin: 0;
-                    font-size: 1.2rem;
-                    color: #1e293b;
-                    font-weight: 700;
-                }
-
-                .approval-card-body {
-                    padding: 24px;
-                }
-
-                .approval-field {
-                    margin-bottom: 20px;
-                }
-
-                .approval-field:last-child {
-                    margin-bottom: 0;
-                }
-
-                .approval-field label {
-                    display: block;
-                    font-size: 0.8rem;
-                    font-weight: 700;
-                    color: #64748b;
-                    text-transform: uppercase;
-                    letter-spacing: 1px;
-                    margin-bottom: 10px;
-                }
-
-                .approval-value {
-                    padding: 12px 16px;
-                    background: #f8fafc;
-                    border-radius: 10px;
-                    color: #1e293b;
-                    font-size: 0.95rem;
-                    font-weight: 500;
-                    border-left: 4px solid #0047AB;
-                }
-
-                /* Animations */
-                @keyframes fadeIn {
-                    from {
-                        opacity: 0;
-                        transform: translateY(10px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-
-                @keyframes slideIn {
-                    from {
-                        opacity: 0;
-                        transform: translateX(-20px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateX(0);
-                    }
-                }
-
-                /* Responsive Design */
-                @media (max-width: 768px) {
-                    .content-wrapper {
-                        padding: 20px 16px;
-                    }
-
-                    .page-header {
-                        padding: 24px 20px;
-                        flex-direction: column;
-                        align-items: flex-start;
-                    }
-
-                    .page-header h1 {
-                        font-size: 1.8rem;
-                    }
-
-                    .new-outpass-btn {
-                        width: 100%;
-                        justify-content: center;
-                    }
-
-                    .outpass-card {
-                        padding: 20px;
-                    }
-
-                    .outpass-card-header {
-                        flex-direction: column;
-                        align-items: flex-start;
-                    }
-
-                    .outpass-duration {
-                        font-size: 0.9rem;
-                    }
-
-                    .approval-section {
-                        grid-template-columns: 1fr;
-                    }
-
-                    .view-details-btn {
-                        width: 100%;
-                        justify-content: center;
-                    }
-
-                    .back-to-list-btn {
-                        width: 100%;
-                        justify-content: center;
-                    }
-                }
-
-                @media (max-width: 480px) {
-                    .page-header h1 {
-                        font-size: 1.5rem;
-                    }
-
-                    .outpass-duration {
-                        flex-direction: column;
-                        align-items: flex-start;
-                        gap: 6px;
-                    }
-
-                    .duration-text {
-                        font-size: 0.85rem;
-                    }
-                }
+                .document-viewer-modal { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+                .document-modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(2px); }
+                .document-modal-card { position: relative; width: min(920px, calc(100% - 32px)); max-height: min(90vh, 820px); overflow: hidden; padding: 0; border-radius: 24px; background: var(--bg); box-shadow: 0 40px 90px rgba(0,0,0,0.18); z-index: 1; }
+                .document-modal-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 20px 24px; border-bottom: 1px solid var(--border); }
+                .document-modal-header h3 { margin: 0; font-size: 1rem; }
+                .document-modal-header p { margin: 0; color: var(--text-3); font-size: 0.9rem; }
+                .btn-icon { border: none; background: transparent; color: var(--text-1); font-size: 1.1rem; cursor: pointer; padding: 6px; border-radius: 10px; transition: background 0.2s; }
+                .btn-icon:hover { background: rgba(0,0,0,0.05); }
+                .document-modal-body { width: 100%; min-height: 320px; max-height: calc(90vh - 110px); display: flex; align-items: center; justify-content: center; background: var(--surface); }
+                .document-iframe { width: 100%; height: 100%; border: none; }
+                .document-image { width: 100%; height: 100%; object-fit: contain; }
             `}</style>
         </div>
     );

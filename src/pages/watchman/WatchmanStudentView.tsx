@@ -10,6 +10,7 @@ const WatchmanStudentView: React.FC = () => {
   const navigate = useNavigate();
   const [student, setStudent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -33,6 +34,7 @@ const WatchmanStudentView: React.FC = () => {
         if (isMounted) {
           console.log("Student Details Response:", res.data);
           setStudent(res.data.outpass || res.data.outpassdetail || res.data);
+          setImageError(false);
         }
       } catch (error) {
         if (isMounted) {
@@ -140,10 +142,24 @@ const WatchmanStudentView: React.FC = () => {
           </div>
           <div className="section-body info-grid-with-avatar">
             <div className="avatar-box">
-              {s.name ? (
-                <div> <img src={s.photo} alt="Student" className="initials-avatar" /></div>
+              {s.photo && !imageError ? (
+                <div>
+                  <img
+                    src={
+                      s.photo.startsWith('http') || s.photo.startsWith('data:')
+                        ? s.photo
+                        : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${s.photo.replace(/^\//, '')}`
+                    }
+                    alt="Student"
+                    className="initials-avatar"
+                    style={{ objectFit: 'cover' }}
+                    onError={() => setImageError(true)}
+                  />
+                </div>
               ) : (
-                <div className="initials-avatar">NA</div>
+                <div className="initials-avatar">
+                  {s.name ? s.name.charAt(0).toUpperCase() : "NA"}
+                </div>
               )}
             </div>
             <div className="info-fields">

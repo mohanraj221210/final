@@ -62,6 +62,9 @@ const PassApproval: React.FC = () => {
     const [filterStatus, setFilterStatus] = useState<'all' | ApprovalStatus>(
         (location.state as any)?.filter || 'all'
     );
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'yesterday' | 'this_week' | 'this_month'>('all');
     const [showActionModal, setShowActionModal] = useState(false);
     const [actionType, setActionType] = useState<'approve' | 'reject'>('approve');
     const [actionRemarks, setActionRemarks] = useState('');
@@ -100,7 +103,7 @@ const PassApproval: React.FC = () => {
             });
 
             if (response.status === 200) {
-                const data = response.data.outpass;
+                const data = response.data.outpass || (response.data.filterOutpass && response.data.filterOutpass[0]) || {};
                 const roomMatesData = response.data.roomMates || [];
                 const studentDetails = data.studentid || {};
 
@@ -123,10 +126,10 @@ const PassApproval: React.FC = () => {
                     reason: data.reason,
                     fromDate: data.fromDate,
                     toDate: data.toDate,
-                    staffApproval: data.staffapprovalstatus || 'pending',
+                    staffApproval: data.staff?.status || data.staffapprovalstatus || 'pending',
                     staffApprovedBy: data.staffApprovedBy,
-                    yearInchargeApproval: data.yearinchargeapprovalstatus || 'pending',
-                    wardenApproval: data.wardenapprovalstatus || 'pending',
+                    yearInchargeApproval: data.yearincharge?.status || data.yearinchargeapprovalstatus || 'pending',
+                    wardenApproval: data.warden?.status || data.wardenapprovalstatus || 'pending',
                     lastOutpassFrom: data.lastOutpassFrom,
                     lastOutpassTo: data.lastOutpassTo,
                     lastOutpassReason: data.lastOutpassReason,
@@ -153,14 +156,28 @@ const PassApproval: React.FC = () => {
     useEffect(() => {
         const fetchRequests = async () => {
             try {
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}/staff/outpass/list`, {
+                // Use specific pending endpoint if filtered to pending
+                const endpoint = filterStatus === 'pending'
+                    ? `/staff/pending/outpass/list?page=${currentPage}`
+                    : `/staff/outpass/list?page=${currentPage}`;
+
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}${endpoint}`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
                 });
 
                 if (response.status === 200) {
-                    const mappedStudents = (response.data.outpasses || [])
+                    const data = response.data;
+                    const outpassList = data.outpasses || data.filterOutpass || data.data || [];
+                    
+                    if (data.totalPages) {
+                        setTotalPages(data.totalPages);
+                    } else {
+                        setTotalPages(1);
+                    }
+
+                    const mappedStudents = outpassList
                         .map((item: any) => {
                             const studentDetails = item.studentid || {};
                             return {
@@ -180,11 +197,12 @@ const PassApproval: React.FC = () => {
                                 reason: item.reason,
                                 fromDate: item.fromDate,
                                 toDate: item.toDate,
-                                staffApproval: item.staffapprovalstatus || 'pending',
-                                yearInchargeApproval: item.yearinchargeapprovalstatus || 'pending',
-                                wardenApproval: item.wardenapprovalstatus || 'pending',
+                                staffApproval: item.staff?.status || item.staffapprovalstatus || 'pending',
+                                yearInchargeApproval: item.yearincharge?.status || item.yearinchargeapprovalstatus || 'pending',
+                                wardenApproval: item.warden?.status || item.wardenapprovalstatus || 'pending',
                                 outpasstype: item.outpasstype,
-                                residencetype: studentDetails.residencetype || 'dayScholar'
+                                residencetype: studentDetails.residencetype || 'dayScholar',
+                                document: item.proof || item.document || item.file || null
                             };
                         });
 
@@ -204,21 +222,45 @@ const PassApproval: React.FC = () => {
         };
 
         fetchRequests();
-    }, []);
+    }, [currentPage, filterStatus]);
 
 
     // Filter and search logic
     const filteredStudents = students.filter(student => {
+        const dateStr = student.appliedDate ? new Date(student.appliedDate).toLocaleDateString() : '';
         const matchesSearch =
             student.studentId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            student.studentname.toLowerCase().includes(searchQuery.toLowerCase());
+            student.studentname.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            dateStr.includes(searchQuery.toLowerCase());
 
         // FIX: Filter based purely on Staff Approval status for this page
         const overallStatus = student.staffApproval;
 
         const matchesFilter = filterStatus === 'all' || overallStatus === filterStatus;
 
-        return matchesSearch && matchesFilter;
+        let matchesDate = true;
+        if (dateFilter !== 'all') {
+            const appliedDate = new Date(student.appliedDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (dateFilter === 'today') {
+                matchesDate = appliedDate >= today;
+            } else if (dateFilter === 'yesterday') {
+                const yesterday = new Date(today);
+                yesterday.setDate(yesterday.getDate() - 1);
+                matchesDate = appliedDate >= yesterday && appliedDate < today;
+            } else if (dateFilter === 'this_week') {
+                const thisWeek = new Date(today);
+                thisWeek.setDate(today.getDate() - today.getDay());
+                matchesDate = appliedDate >= thisWeek;
+            } else if (dateFilter === 'this_month') {
+                const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                matchesDate = appliedDate >= thisMonth;
+            }
+        }
+
+        return matchesSearch && matchesFilter && matchesDate;
     }).sort((a, b) => {
         // Priority 1: Emergency First
         const isAEmergency = a.outpasstype?.toLowerCase() === 'emergency';
@@ -278,19 +320,30 @@ const PassApproval: React.FC = () => {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.put(
-                `${import.meta.env.VITE_API_URL}/staff/outpass/approval`,
-                {
-                    outpassId: selectedStudent.id,
-                    staffapprovalstatus: actionType === 'approve' ? 'approved' : 'rejected',
-                    staffremarks: actionRemarks
-                },
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
+            let response;
+            
+            if (actionType === 'approve') {
+                // Outpass approve api - GET
+                response = await axios.get(
+                    `${import.meta.env.VITE_API_URL}/staff/outpass/approve/${selectedStudent.id}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
                     }
-                }
-            );
+                );
+            } else {
+                // Outpass reject api - PUT with remarks
+                response = await axios.put(
+                    `${import.meta.env.VITE_API_URL}/staff/outpass/reject/${selectedStudent.id}`,
+                    { remarks: actionRemarks },
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    }
+                );
+            }
 
             if (response.status === 200) {
                 toast.success(response.data.message || `Outpass ${actionType}d successfully`);
@@ -361,33 +414,69 @@ const PassApproval: React.FC = () => {
                                 <span className="search-icon">🔍</span>
                                 <input
                                     type="text"
-                                    placeholder="Search by Student ID or Name"
+                                    placeholder="Search by ID, Name, or Date..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                             </div>
-                            <div className="filter-buttons">
+                            <div className="filter-buttons" style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                <div style={{ position: 'relative', display: 'inline-block' }}>
+                                    <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '14px', pointerEvents: 'none' }}>
+                                        📅
+                                    </span>
+                                    <select
+                                        className="date-filter-select"
+                                        value={dateFilter}
+                                        onChange={(e) => {
+                                            setDateFilter(e.target.value as any);
+                                            setCurrentPage(1);
+                                        }}
+                                        style={{
+                                            padding: '10px 32px 10px 36px',
+                                            borderRadius: '12px',
+                                            border: '1px solid #cbd5e1',
+                                            background: 'white',
+                                            color: '#1e293b',
+                                            fontSize: '14px',
+                                            fontWeight: '600',
+                                            outline: 'none',
+                                            cursor: 'pointer',
+                                            boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                                            appearance: 'none',
+                                            minWidth: '150px'
+                                        }}
+                                    >
+                                        <option value="all">All Time</option>
+                                        <option value="today">Today</option>
+                                        <option value="yesterday">Yesterday</option>
+                                        <option value="this_week">This Week</option>
+                                        <option value="this_month">This Month</option>
+                                    </select>
+                                    <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '10px', pointerEvents: 'none' }}>
+                                        ▼
+                                    </span>
+                                </div>
                                 <button
                                     className={`filter-btn ${filterStatus === 'all' ? 'active' : ''}`}
-                                    onClick={() => setFilterStatus('all')}
+                                    onClick={() => { setFilterStatus('all'); setCurrentPage(1); }}
                                 >
                                     All
                                 </button>
                                 <button
                                     className={`filter-btn pending ${filterStatus === 'pending' ? 'active' : ''}`}
-                                    onClick={() => setFilterStatus('pending')}
+                                    onClick={() => { setFilterStatus('pending'); setCurrentPage(1); }}
                                 >
                                     Pending
                                 </button>
                                 <button
                                     className={`filter-btn approved ${filterStatus === 'approved' ? 'active' : ''}`}
-                                    onClick={() => setFilterStatus('approved')}
+                                    onClick={() => { setFilterStatus('approved'); setCurrentPage(1); }}
                                 >
                                     Approved
                                 </button>
                                 <button
                                     className={`filter-btn rejected ${filterStatus === 'rejected' ? 'active' : ''}`}
-                                    onClick={() => setFilterStatus('rejected')}
+                                    onClick={() => { setFilterStatus('rejected'); setCurrentPage(1); }}
                                 >
                                     Rejected
                                 </button>
@@ -425,14 +514,55 @@ const PassApproval: React.FC = () => {
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="student-card-action">
+                                        <div className="student-card-action" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                                             {getStatusBadge(overallStatus as ApprovalStatus)}
+                                            {student.document && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        window.open(`${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${student.document!.replace(/^\//, '')}`, '_blank');
+                                                    }}
+                                                    style={{
+                                                        padding: '6px 12px',
+                                                        background: '#eff6ff',
+                                                        border: '1px solid #3b82f6',
+                                                        borderRadius: '6px',
+                                                        color: '#3b82f6',
+                                                        fontSize: '0.85rem',
+                                                        fontWeight: '600',
+                                                        cursor: 'pointer',
+                                                        whiteSpace: 'nowrap'
+                                                    }}
+                                                >
+                                                    📄 View Doc
+                                                </button>
+                                            )}
                                             <span className="view-arrow">View →</span>
                                         </div>
                                     </div>
                                 );
                             })}
                         </div>
+
+                        {students.length > 0 && totalPages > 1 && (
+                            <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '24px', alignItems: 'center' }}>
+                                <button 
+                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+                                    disabled={currentPage === 1}
+                                    style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: currentPage === 1 ? '#f1f5f9' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                                >
+                                    &lt; Previous
+                                </button>
+                                <span style={{ fontWeight: '600', color: '#64748b' }}>Page {currentPage} of {totalPages}</span>
+                                <button 
+                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
+                                    disabled={currentPage === totalPages}
+                                    style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: currentPage === totalPages ? '#f1f5f9' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+                                >
+                                    Next &gt;
+                                </button>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     /* Detail View */
@@ -478,7 +608,7 @@ const PassApproval: React.FC = () => {
                                             </div>
                                             <div className="profile-field">
                                                 <label>MOBILE NUMBER</label>
-                                                <div className="field-value">{selectedStudent.mobile}</div>
+                                                <div className="field-value" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>{selectedStudent.mobile}{selectedStudent.mobile && <a href={"tel:" + selectedStudent.mobile} title="Call Student" className="dial-btn" style={{ background: "#10b981", color: "white", borderRadius: "50%", width: "24px", height: "24px", display: "inline-flex", alignItems: "center", justifyContent: "center", textDecoration: "none", fontSize: "0.8rem" }}>📞</a>}</div>
                                             </div>
                                         </div>
                                     </div>
@@ -534,7 +664,7 @@ const PassApproval: React.FC = () => {
                                     <div className="info-grid">
                                         <div className="info-field">
                                             <label>PARENT CONTACT</label>
-                                            <div className="field-value">{selectedStudent.parentContact}</div>
+                                            <div className="field-value" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>{selectedStudent.parentContact}{selectedStudent.parentContact && <a href={"tel:" + selectedStudent.parentContact} title="Call Parent" className="dial-btn" style={{ background: "#10b981", color: "white", borderRadius: "50%", width: "24px", height: "24px", display: "inline-flex", alignItems: "center", justifyContent: "center", textDecoration: "none", fontSize: "0.8rem" }}>📞</a>}</div>
                                         </div>
                                     </div>
                                 </div>

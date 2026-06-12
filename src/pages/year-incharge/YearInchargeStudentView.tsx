@@ -15,6 +15,7 @@ const YearInchargeStudentView: React.FC = () => {
     const [showDocumentModal, setShowDocumentModal] = useState(false);
     const [documentUrl, setDocumentUrl] = useState<string | null>(null);
     const [documentType, setDocumentType] = useState<'image' | 'pdf'>('image');
+    const [imageError, setImageError] = useState(false);
 
     useEffect(() => {
         const fetchOutpassDetails = async () => {
@@ -32,10 +33,11 @@ const YearInchargeStudentView: React.FC = () => {
                 });
 
                 if (response.status === 200) {
-                    const list = response.data.outpasses || response.data.outpasslist || [];
+                    const list = response.data.outpasses || response.data.outpasslist || response.data.filterOutpass || [];
                     const found = list.find((o: any) => o._id === id);
                     if (found) {
                         setOutpass(found);
+                        setImageError(false);
                     } else {
                         toast.error("Outpass record not found");
                         navigate('/year-incharge/pending-outpass');
@@ -137,7 +139,18 @@ const YearInchargeStudentView: React.FC = () => {
                     <div className="student-card-modern">
                         <div className="card-header-gradient">
                             <div className="avatar-large">
-                                {typeof outpass.studentid?.name === 'string' ? outpass.studentid.name.charAt(0) : 'S'}
+                                {outpass.studentid?.photo && !imageError ? (
+                                    <img
+                                        src={outpass.studentid.photo.startsWith('http') || outpass.studentid.photo.startsWith('data:')
+                                            ? outpass.studentid.photo
+                                            : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${outpass.studentid.photo.replace(/^\//, '')}`}
+                                        alt="Student"
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                                        onError={() => setImageError(true)}
+                                    />
+                                ) : (
+                                    typeof outpass.studentid?.name === 'string' ? outpass.studentid.name.charAt(0) : 'S'
+                                )}
                             </div>
                             <h3>{typeof outpass.studentid?.name === 'string' ? outpass.studentid.name : 'Unknown Name'}</h3>
                             <span className="badge-reg">{typeof outpass.studentid?.registerNumber === 'string' ? outpass.studentid.registerNumber : 'N/A'}</span>
@@ -178,7 +191,18 @@ const YearInchargeStudentView: React.FC = () => {
                                 <span className="icon">📞</span>
                                 <div>
                                     <label>Contact Number</label>
-                                    <p>{typeof outpass.studentid?.phone === 'string' ? outpass.studentid.phone : 'N/A'}</p>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <p style={{ margin: 0 }}>{typeof outpass.studentid?.phone === 'string' ? outpass.studentid.phone : 'N/A'}</p>
+                                        {typeof outpass.studentid?.phone === 'string' && (
+                                            <a
+                                                href={`tel:${outpass.studentid.phone}`}
+                                                className="dial-btn"
+                                                title="Call Student"
+                                            >
+                                                📞
+                                            </a>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                             <div className="info-row-modern">
@@ -224,6 +248,12 @@ const YearInchargeStudentView: React.FC = () => {
                                 <div className="step-content">
                                     <h4>Staff Approval</h4>
                                     <p>Status: {outpass.staffapprovalstatus}</p>
+                                    {outpass.staffid?.name && (
+                                        <p className="step-person">By: {outpass.staffid.name}</p>
+                                    )}
+                                    {outpass.staffapprovedAt && (
+                                        <p className="step-time">{new Date(outpass.staffapprovedAt).toLocaleDateString()}</p>
+                                    )}
                                 </div>
                             </div>
                             <div className={`status-step ${outpass.yearinchargeapprovalstatus === 'approved' ? 'completed' : outpass.yearinchargeapprovalstatus === 'rejected' ? 'rejected' : 'active'}`}>
@@ -234,6 +264,9 @@ const YearInchargeStudentView: React.FC = () => {
                                 <div className="step-content">
                                     <h4>Year Incharge</h4>
                                     <p>{outpass.yearinchargeapprovalstatus === 'pending' ? 'Pending Decision' : `Status: ${outpass.yearinchargeapprovalstatus}`}</p>
+                                    {outpass.yearinchargeapprovedAt && (
+                                        <p className="step-time">{new Date(outpass.yearinchargeapprovedAt).toLocaleDateString()}</p>
+                                    )}
                                 </div>
                             </div>
                             {/* Check for day scholar (case insensitive, ignoring spaces) */}
@@ -674,6 +707,18 @@ const YearInchargeStudentView: React.FC = () => {
                 .step-content p {
                     font-size: 0.75rem;
                     color: #64748b;
+                }
+
+                .step-person {
+                    font-weight: 600;
+                    color: #1e293b;
+                    margin-top: 4px;
+                }
+
+                .step-time {
+                    font-size: 0.7rem;
+                    color: #94a3b8;
+                    margin-top: 2px;
                 }
 
                 .request-details {
