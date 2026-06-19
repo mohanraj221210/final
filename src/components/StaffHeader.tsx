@@ -10,11 +10,48 @@ const StaffHeader: React.FC<StaffHeaderProps> = ({ activeMenu }) => {
     const location = useLocation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
+    const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+    const [staffName, setStaffName] = useState('Faculty Member');
+    const [staffEmail, setStaffEmail] = useState('faculty@jit.edu');
+    const [staffInitial, setStaffInitial] = useState('F');
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                if (token) {
+                    const res = await fetch(`${import.meta.env.VITE_API_URL}/staff/profile`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const data = await res.json();
+                    if (data && data.staff) {
+                        setStaffName(data.staff.name);
+                        setStaffEmail(data.staff.email);
+                        setStaffInitial(data.staff.name.charAt(0).toUpperCase());
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        };
+        fetchProfile();
+    }, []);
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 10);
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    useEffect(() => {
+        const handleClickOutside = () => {
+            setIsNotificationOpen(false);
+            setIsProfileOpen(false);
+        };
+        window.addEventListener('click', handleClickOutside);
+        return () => window.removeEventListener('click', handleClickOutside);
     }, []);
 
     useEffect(() => { setIsMobileMenuOpen(false); }, [location.pathname]);
@@ -29,6 +66,20 @@ const StaffHeader: React.FC<StaffHeaderProps> = ({ activeMenu }) => {
     const handleNavigation = (path: string) => {
         navigate(path);
         setIsMobileMenuOpen(false);
+        setIsNotificationOpen(false);
+        setIsProfileOpen(false);
+    };
+
+    // const toggleNotification = (e: React.MouseEvent) => {
+    //     e.stopPropagation();
+    //     setIsNotificationOpen(!isNotificationOpen);
+    //     setIsProfileOpen(false);
+    // };
+
+    const toggleProfile = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setIsProfileOpen(!isProfileOpen);
+        setIsNotificationOpen(false);
     };
 
     const navItems = [
@@ -38,6 +89,12 @@ const StaffHeader: React.FC<StaffHeaderProps> = ({ activeMenu }) => {
         { key: 'profile',      path: '/staff-profile',      label: 'Profile',       icon: '👤' },
     ];
 
+    const notifications = [
+        { id: 1, text: "⚠️ New emergency outpass request from Rohith (IT)", time: "5 mins ago", read: false },
+        { id: 2, text: "📋 Outpass pending list updated for Semester 6", time: "1 hour ago", read: true },
+        { id: 3, text: "📅 Staff coordination meeting at 3:00 PM today", time: "2 hours ago", read: true }
+    ];
+
     return (
         <>
             {/* Top Header */}
@@ -45,7 +102,7 @@ const StaffHeader: React.FC<StaffHeaderProps> = ({ activeMenu }) => {
                 <div className="sfh-container">
                     <div className="sfh-brand" onClick={() => handleNavigation('/staff-dashboard')}>
                         <span className="sfh-brand-icon">🎓</span>
-                        <span className="sfh-brand-text">JIT Staff Portal</span>
+                        <span className="sfh-brand-text">JIT Faculty Portal</span>
                     </div>
 
                     <nav className="sfh-desktop-nav">
@@ -61,8 +118,51 @@ const StaffHeader: React.FC<StaffHeaderProps> = ({ activeMenu }) => {
                     </nav>
 
                     <div className="sfh-right">
-                        <div className="sfh-role-badge">Staff</div>
-                        <button className="sfh-logout" onClick={handleLogout}>Logout</button>
+                        {/* Notifications */}
+                        {/* <button className="sfh-notif-btn" onClick={toggleNotification} aria-label="Notifications">
+                            🔔
+                            <span className="sfh-notif-badge">1</span>
+                        </button> */}
+
+                        {isNotificationOpen && (
+                            <div className="sfh-dropdown sfh-notif-dropdown" onClick={e => e.stopPropagation()}>
+                                <div className="sfh-dropdown-header">
+                                    <h4>Notifications</h4>
+                                    <p>Recent updates and alerts</p>
+                                </div>
+                                {notifications.map(n => (
+                                    <div key={n.id} className={`sfh-notif-item ${n.read ? 'read' : 'unread'}`}>
+                                        <div className="sfh-notif-text">{n.text}</div>
+                                        <div className="sfh-notif-time">{n.time}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Profile Avatar Trigger */}
+                        <button className="sfh-avatar-btn" onClick={toggleProfile} aria-label="Profile Menu">
+                            {staffInitial}
+                        </button>
+
+                        {isProfileOpen && (
+                            <div className="sfh-dropdown" onClick={e => e.stopPropagation()}>
+                                <div className="sfh-dropdown-header">
+                                    <h4>{staffName}</h4>
+                                    <p>{staffEmail}</p>
+                                </div>
+                                <button className="sfh-dropdown-item" onClick={() => handleNavigation('/staff-profile')}>
+                                    👤 My Profile
+                                </button>
+                                <button className="sfh-dropdown-item" onClick={() => handleNavigation('/staff-dashboard')}>
+                                    ⚙️ Command Center
+                                </button>
+                                <div className="sfh-dropdown-divider"></div>
+                                <button className="sfh-dropdown-item danger" onClick={handleLogout}>
+                                    🚪 Logout
+                                </button>
+                            </div>
+                        )}
+
                         <button
                             className={`sfh-hamburger ${isMobileMenuOpen ? 'sfh-ham-open' : ''}`}
                             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -83,8 +183,8 @@ const StaffHeader: React.FC<StaffHeaderProps> = ({ activeMenu }) => {
                         <div className="sfh-mobile-header">
                             <span className="sfh-mobile-logo">🎓</span>
                             <div>
-                                <div className="sfh-mobile-title">JIT Staff Portal</div>
-                                <div className="sfh-mobile-subtitle">Staff Member</div>
+                                <div className="sfh-mobile-title">{staffName}</div>
+                                <div className="sfh-mobile-subtitle">{staffEmail}</div>
                             </div>
                         </div>
                         {navItems.map(item => (
@@ -120,16 +220,18 @@ const StaffHeader: React.FC<StaffHeaderProps> = ({ activeMenu }) => {
             <style>{`
                 .sfh-header {
                     position: sticky; top: 0; left: 0; right: 0;
-                    height: var(--nav-height);
-                    background: rgba(255,255,255,0.9);
-                    backdrop-filter: blur(20px);
-                    border-bottom: 1px solid var(--border);
+                    height: 76px;
+                    background: rgba(255,255,255,0.85);
+                    backdrop-filter: blur(16px);
+                    -webkit-backdrop-filter: blur(16px);
+                    border-bottom: 1px solid rgba(229, 231, 235, 0.6);
                     z-index: 1000;
-                    transition: var(--transition);
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
                 }
                 .sfh-header.sfh-scrolled {
                     background: rgba(255,255,255,0.98);
-                    box-shadow: var(--shadow-sm);
+                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
                 }
                 .sfh-container {
                     max-width: var(--content-max);
@@ -148,9 +250,9 @@ const StaffHeader: React.FC<StaffHeaderProps> = ({ activeMenu }) => {
                     cursor: pointer;
                     flex-shrink: 0;
                 }
-                .sfh-brand-icon { font-size: 1.4rem; }
+                .sfh-brand-icon { font-size: 1.5rem; }
                 .sfh-brand-text {
-                    font-size: 1.05rem;
+                    font-size: 1.15rem;
                     font-weight: 800;
                     background: linear-gradient(135deg, var(--primary), var(--secondary));
                     -webkit-background-clip: text;
@@ -160,58 +262,192 @@ const StaffHeader: React.FC<StaffHeaderProps> = ({ activeMenu }) => {
                 .sfh-desktop-nav {
                     display: flex;
                     align-items: center;
-                    gap: 2px;
+                    gap: 4px;
                     flex: 1;
                     justify-content: center;
                 }
                 .sfh-nav-link {
-                    height: 36px;
+                    height: 38px;
                     padding: 0 var(--space-4);
                     border: none;
                     background: transparent;
                     color: var(--text-3);
-                    font-size: 0.875rem;
+                    font-size: 0.9rem;
                     font-weight: 600;
                     cursor: pointer;
-                    border-radius: var(--radius-md);
+                    border-radius: var(--radius-sm);
                     transition: var(--transition-fast);
                     font-family: inherit;
                 }
                 .sfh-nav-link:hover { color: var(--primary); background: var(--primary-light); }
                 .sfh-nav-link.sfh-active { color: var(--primary); background: var(--primary-light); }
+                
                 .sfh-right {
+                    position: relative;
                     display: flex;
                     align-items: center;
-                    gap: var(--space-3);
+                    gap: var(--space-4);
                     flex-shrink: 0;
                 }
-                .sfh-role-badge {
-                    height: 30px;
-                    padding: 0 var(--space-3);
-                    background: var(--secondary-light);
-                    color: var(--secondary);
-                    border-radius: var(--radius-full);
-                    font-size: 0.75rem;
-                    font-weight: 700;
+                .sfh-notif-btn, .sfh-avatar-btn {
+                    position: relative;
+                    background: transparent;
+                    border: none;
+                    cursor: pointer;
                     display: flex;
                     align-items: center;
-                    letter-spacing: 0.04em;
-                    border: 1px solid rgba(79,70,229,0.2);
+                    justify-content: center;
+                    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
                 }
-                .sfh-logout {
-                    height: 36px;
-                    padding: 0 var(--space-4);
+                .sfh-notif-btn {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    background: #F1F5F9;
+                    color: #475569;
+                    font-size: 1.25rem;
+                }
+                .sfh-notif-btn:hover {
+                    background: #E2E8F0;
+                    color: #0F172A;
+                    transform: translateY(-1px);
+                }
+                .sfh-notif-badge {
+                    position: absolute;
+                    top: 2px;
+                    right: 2px;
+                    background: #EF4444;
+                    color: white;
+                    font-size: 0.68rem;
+                    font-weight: 800;
+                    min-width: 16px;
+                    height: 16px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border: 2px solid #FFFFFF;
+                }
+                .sfh-avatar-btn {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    background: linear-gradient(135deg, var(--primary), var(--secondary));
+                    color: white;
+                    font-weight: 700;
+                    font-size: 1rem;
+                    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+                }
+                .sfh-avatar-btn:hover {
+                    transform: translateY(-1px) scale(1.03);
+                    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+                }
+
+                .sfh-dropdown {
+                    position: absolute;
+                    top: 52px;
+                    right: 0;
+                    background: #FFFFFF;
+                    border: 1px solid rgba(226, 232, 240, 0.8);
+                    border-radius: var(--radius-md);
+                    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 16px -8px rgba(0, 0, 0, 0.04);
+                    width: 280px;
+                    padding: 8px;
+                    z-index: 1001;
+                    display: flex;
+                    flex-direction: column;
+                    animation: dropdownSlide 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                }
+                @keyframes dropdownSlide {
+                    from { opacity: 0; transform: translateY(10px) scale(0.95); }
+                    to { opacity: 1; transform: translateY(0) scale(1); }
+                }
+                .sfh-dropdown-header {
+                    padding: 12px 16px;
+                    border-bottom: 1px solid #F1F5F9;
+                    margin-bottom: 6px;
+                }
+                .sfh-dropdown-header h4 {
+                    font-size: 0.95rem;
+                    color: #0F172A;
+                    font-weight: 700;
+                    margin-bottom: 2px;
+                }
+                .sfh-dropdown-header p {
+                    font-size: 0.78rem;
+                    color: #64748B;
+                }
+                .sfh-dropdown-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 10px 16px;
+                    width: 100%;
+                    border: none;
+                    background: transparent;
+                    text-align: left;
+                    font-size: 0.88rem;
+                    font-weight: 600;
+                    color: #334155;
+                    cursor: pointer;
+                    border-radius: var(--radius-sm);
+                    transition: all 0.15s ease;
+                }
+                .sfh-dropdown-item:hover {
+                    background: #F1F5F9;
+                    color: var(--primary);
+                }
+                .sfh-dropdown-divider {
+                    height: 1px;
+                    background: #F1F5F9;
+                    margin: 6px 0;
+                }
+                .sfh-dropdown-item.danger {
+                    color: var(--danger);
+                }
+                .sfh-dropdown-item.danger:hover {
                     background: var(--danger-light);
                     color: var(--danger);
-                    border: 1px solid var(--danger-mid);
-                    border-radius: var(--radius-md);
-                    font-size: 0.82rem;
-                    font-weight: 700;
-                    cursor: pointer;
-                    transition: var(--transition-fast);
-                    font-family: inherit;
                 }
-                .sfh-logout:hover { background: var(--danger); color: white; }
+
+                .sfh-notif-dropdown {
+                    width: 320px;
+                }
+                .sfh-notif-item {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                    padding: 12px 16px;
+                    border-radius: var(--radius-sm);
+                    cursor: pointer;
+                    transition: all 0.15s ease;
+                    position: relative;
+                }
+                .sfh-notif-item:hover {
+                    background: #F8FAFC;
+                }
+                .sfh-notif-item.unread::after {
+                    content: '';
+                    position: absolute;
+                    top: 16px;
+                    right: 16px;
+                    width: 8px;
+                    height: 8px;
+                    background: var(--primary);
+                    border-radius: 50%;
+                }
+                .sfh-notif-text {
+                    font-size: 0.82rem;
+                    color: #1E293B;
+                    font-weight: 500;
+                    line-height: 1.4;
+                    padding-right: 12px;
+                }
+                .sfh-notif-time {
+                    font-size: 0.72rem;
+                    color: #94A3B8;
+                }
+
                 .sfh-hamburger {
                     display: none;
                     flex-direction: column;
@@ -258,7 +494,7 @@ const StaffHeader: React.FC<StaffHeaderProps> = ({ activeMenu }) => {
                     align-items: center;
                     gap: var(--space-3);
                     padding: var(--space-4);
-                    background: var(--secondary-light);
+                    background: var(--primary-light);
                     border-radius: var(--radius-md);
                     margin-bottom: var(--space-4);
                 }
@@ -291,38 +527,72 @@ const StaffHeader: React.FC<StaffHeaderProps> = ({ activeMenu }) => {
 
                 .sfh-bottom-nav {
                     display: none;
-                    position: fixed; bottom: 0; left: 0; right: 0;
-                    height: var(--mobile-nav-height);
-                    background: rgba(255,255,255,0.97);
+                    position: fixed;
+                    bottom: 16px;
+                    left: 16px;
+                    right: 16px;
+                    height: 48px; /* reduced from 64px */
+                    background: rgba(255, 255, 255, 0.85);
                     backdrop-filter: blur(20px);
-                    border-top: 1px solid var(--border);
-                    box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+                    -webkit-backdrop-filter: blur(20px);
+                    border: 1px solid rgba(255, 255, 255, 0.4);
+                    box-shadow: 0 6px 24px 0 rgba(31, 38, 135, 0.06);
+                    border-radius: 20px; /* slightly more rounded */
                     z-index: 999;
                     justify-content: space-around;
                     align-items: center;
-                    padding: 0 var(--space-2);
+                    padding: 0 6px; /* reduced side padding */
+                    margin-bottom: env(safe-area-inset-bottom, 0px);
                 }
                 .sfh-bottom-item {
-                    display: flex; flex-direction: column;
-                    align-items: center; justify-content: center;
-                    gap: 3px; flex: 1; height: 100%;
-                    background: none; border: none;
-                    cursor: pointer; padding: var(--space-2);
-                    color: var(--text-4);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 2px;
+                    flex: 1;
+                    height: 80%;
+                    background: none;
+                    border: none;
+                    cursor: pointer;
+                    color: #64748B;
                     font-family: inherit;
-                    border-radius: var(--radius-sm);
-                    transition: var(--transition-fast);
+                    border-radius: 16px;
+                    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
                 }
-                .sfh-bottom-item.sfh-bottom-active { color: var(--primary); }
-                .sfh-bottom-icon { font-size: 1.3rem; line-height: 1; }
-                .sfh-bottom-label { font-size: 0.62rem; font-weight: 600; letter-spacing: 0.02em; }
+                .sfh-bottom-item:hover, .sfh-bottom-item.sfh-bottom-active {
+                    color: var(--primary);
+                }
+                .sfh-bottom-item.sfh-bottom-active {
+                    background: rgba(37, 99, 235, 0.08);
+                }
+                .sfh-bottom-icon {
+                    font-size: 1.25rem;
+                    line-height: 1;
+                    transition: transform 0.2s ease;
+                }
+                .sfh-bottom-item.sfh-bottom-active .sfh-bottom-icon {
+                    transform: scale(1.1);
+                }
+                .sfh-bottom-label {
+                    font-size: 0.65rem;
+                    font-weight: 700;
+                    letter-spacing: 0.01em;
+                }
 
                 @media (max-width: 768px) {
                     .sfh-desktop-nav { display: none; }
-                    .sfh-role-badge { display: none; }
-                    .sfh-logout { display: none; }
                     .sfh-hamburger { display: flex; }
                     .sfh-bottom-nav { display: flex; }
+                    .sfh-header {
+                        height: 84px !important;
+                    }
+                    .sfh-container {
+                        padding: 0 var(--space-4) !important;
+                    }
+                    .sfh-right {
+                        gap: var(--space-3) !important;
+                    }
                 }
             `}</style>
         </>

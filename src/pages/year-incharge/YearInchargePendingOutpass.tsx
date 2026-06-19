@@ -1,33 +1,14 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import YearInchargeNav from "../../components/YearInchargeNav";
-import LoadingSpinner from "../../components/LoadingSpinner";
+import { YearInchargeService } from "../../services/yearInchargeService";
 
-interface StudentDetails {
-    _id: string;
-    name: string;
-    department: string;
-    year: string;
-    registerNumber: string;
-}
 
-interface Outpass {
-    _id: string;
-    studentid: StudentDetails;
-    outpasstype: string;
-    fromDate: string;
-    toDate: string;
-    staffapprovalstatus: string;
-    wardenapprovalstatus: string;
-    yearinchargeapprovalstatus: string;
-    proof?: string;
-    document?: string;
-    file?: string;
-}
+
+
 
 const YearInchargePendingOutpass: React.FC = () => {
-    const [pendingOutpasses, setPendingOutpasses] = useState<Outpass[]>([]);
+    const [pendingOutpasses, setPendingOutpasses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'yesterday' | 'this_week' | 'this_month'>('all');
     const [showDocumentModal, setShowDocumentModal] = useState(false);
@@ -36,9 +17,14 @@ const YearInchargePendingOutpass: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const navigate = useNavigate();
 
+    // Pagination & Error states
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [error, setError] = useState<string | null>(null);
+
     useEffect(() => {
         fetchPendingOutpasses();
-    }, []);
+    }, [currentPage]);
 
     const fetchPendingOutpasses = async () => {
         const token = localStorage.getItem("token");
@@ -47,36 +33,30 @@ const YearInchargePendingOutpass: React.FC = () => {
             return;
         }
 
+        setLoading(true);
+        setError(null);
+
         try {
-            const res = await axios.get(
-                `${import.meta.env.VITE_API_URL}/incharge/outpass/list`,
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                }
-            );
+            const result = await YearInchargeService.getPendingOutpasses(currentPage, 10);
+            
+            // Sort Emergency first
+            const sorted = result.data.sort((a: any, b: any) => {
+                const aType = String(a.outpasstype || '').toLowerCase();
+                const bType = String(b.outpasstype || '').toLowerCase();
+                if (aType === 'emergency' && bType !== 'emergency') return -1;
+                if (aType !== 'emergency' && bType === 'emergency') return 1;
+                return new Date(b.fromDate).getTime() - new Date(a.fromDate).getTime();
+            });
 
-            if (res.status === 200) {
-                // Filter: staff approved AND incharge pending (Warden approval not required as per user response)
-                console.log("Full Outpass List Response:", res.data); // Debugging
-                const list = res.data.outpasses || res.data.outpasslist || res.data.filterOutpass || [];
-                const filtered = list.filter((o: any) =>
-                    String(o.staffapprovalstatus || '').toLowerCase() === 'approved' &&
-                    String(o.yearinchargeapprovalstatus || '').toLowerCase() === 'pending'
-                );
-
-                // Sort Emergency first
-                filtered.sort((a: any, b: any) => {
-                    const aType = String(a.outpasstype || '').toLowerCase();
-                    const bType = String(b.outpasstype || '').toLowerCase();
-                    if (aType === 'emergency' && bType !== 'emergency') return -1;
-                    if (aType !== 'emergency' && bType === 'emergency') return 1;
-                    return new Date(b.fromDate).getTime() - new Date(a.fromDate).getTime();
-                });
-
-                setPendingOutpasses(filtered);
+            setPendingOutpasses(sorted);
+            setTotalPages(result.totalPages);
+        } catch (err: any) {
+            console.error("Error fetching pending outpasses:", err);
+            if (err?.response?.status === 401 || err?.response?.status === 403) {
+                navigate('/year-incharge-login');
+                return;
             }
-        } catch (error) {
-            console.error("Error fetching pending outpasses:", error);
+            setError("Failed to fetch pending outpasses");
         } finally {
             setLoading(false);
         }
@@ -93,10 +73,6 @@ const YearInchargePendingOutpass: React.FC = () => {
         }
         setShowDocumentModal(true);
     };
-
-    if (loading) {
-        return <LoadingSpinner />;
-    }
 
     const filteredPending = pendingOutpasses.filter(item => {
         const fromDateObj = item.fromDate ? new Date(item.fromDate) : null;
@@ -204,7 +180,27 @@ const YearInchargePendingOutpass: React.FC = () => {
                 </div>
 
                 <div className="student-list">
-                    {filteredPending.length === 0 ? (
+                    {loading ? (
+                        [1, 2, 3].map((idx) => (
+                            <div className="student-card" key={idx} style={{ cursor: 'default' }}>
+                                <div className="student-card-main" style={{ width: '100%' }}>
+                                    <div className="lux-skeleton" style={{ width: '140px', height: '48px', borderRadius: '12px' }}></div>
+                                    <div className="student-info" style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+                                        <div className="lux-skeleton" style={{ width: '200px', height: '24px', borderRadius: '6px' }}></div>
+                                        <div className="lux-skeleton" style={{ width: '80%', height: '16px', borderRadius: '6px' }}></div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    ) : error ? (
+                        <div style={{ textAlign: 'center', padding: '40px', background: 'white', borderRadius: '16px', border: '1px solid #cbd5e1' }}>
+                            <span style={{ fontSize: '36px', display: 'block', marginBottom: '12px' }}>⚠️</span>
+                            <p style={{ color: '#ef4444', fontWeight: 'bold', marginBottom: '16px' }}>{error}</p>
+                            <button onClick={fetchPendingOutpasses} className="back-btn" style={{ margin: 0, padding: '8px 16px', background: '#0047AB', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
+                                🔄 Retry
+                            </button>
+                        </div>
+                    ) : filteredPending.length === 0 ? (
                         <div className="no-data-message" style={{ textAlign: "center", padding: "40px", color: "#64748b" }}>
                             No pending approvals found
                         </div>
@@ -262,6 +258,26 @@ const YearInchargePendingOutpass: React.FC = () => {
                         ))
                     )}
                 </div>
+
+                {totalPages > 1 && (
+                    <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '24px', alignItems: 'center', paddingBottom: '20px' }}>
+                        <button 
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+                            disabled={currentPage === 1}
+                            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: currentPage === 1 ? '#f1f5f9' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', fontWeight: 600, color: '#475569' }}
+                        >
+                            &lt; Previous
+                        </button>
+                        <span style={{ fontWeight: '600', color: '#64748b' }}>Page {currentPage} of {totalPages}</span>
+                        <button 
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
+                            disabled={currentPage === totalPages}
+                            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: currentPage === totalPages ? '#f1f5f9' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', fontWeight: 600, color: '#475569' }}
+                        >
+                            Next &gt;
+                        </button>
+                    </div>
+                )}
 
                 {/* Document Modal */}
                 {showDocumentModal && documentUrl && (

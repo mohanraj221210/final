@@ -1,74 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import YearInchargeNav from '../../components/YearInchargeNav';
-import LoadingSpinner from '../../components/LoadingSpinner';
-import axios from 'axios';
+import { YearInchargeService } from '../../services/yearInchargeService';
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 
-interface StudentDetails {
-    _id: string;
-    name: string;
-    registerNumber: string;
-    department: string;
-    year: string;
-    residencetype: string;
-    boardingpoint?: string;
-    busno?: string;
-    hostelname?: string;
-    hostelroomno?: string;
-    phone: string;
-    photo: string;
-}
 
-interface StaffDetails {
-    _id: string;
-    name: string;
-    contactNumber?: string;
-}
 
-interface InchargeDetails {
-    _id: string;
-    name: string;
-    phone: string;
-}
 
-interface WardenDetails {
-    _id: string;
-    name: string;
-    phone: string;
-}
-
-interface Outpass {
-    _id: string;
-    studentid: StudentDetails;
-    staffid: StaffDetails;
-    inchargeid?: InchargeDetails;
-    wardenid?: WardenDetails;
-    outpasstype: string;
-    fromDate: string;
-    toDate: string;
-    reason: string;
-    status: string;
-    staffapprovalstatus: string;
-    wardenapprovalstatus: string;
-    yearinchargeapprovalstatus: string;
-    staffremarks?: string;
-    yearinchargeremarks?: string;
-    wardenremarks?: string;
-    staffapprovedAt?: string;
-    yearinchargeapprovedAt?: string;
-    yearinchargerejectedAt?: string;
-    wardenapprovedAt?: string;
-    proof?: string;
-    document?: string;
-    file?: string;
-    createdAt: string;
-    skillrack?: string;
-    attendance?: string;
-}
 
 const YearInchargeOutpassList: React.FC = () => {
-    const [outpasses, setOutpasses] = useState<Outpass[]>([]);
+    const [outpasses, setOutpasses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'yesterday' | 'this_week' | 'this_month'>('all');
@@ -78,42 +19,52 @@ const YearInchargeOutpassList: React.FC = () => {
     const [documentUrl, setDocumentUrl] = useState<string | null>(null);
     const [documentType, setDocumentType] = useState<'image' | 'pdf'>('image');
     const [expandedRow, setExpandedRow] = useState<string | null>(null);
+
+    // Pagination & Error states
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [error, setError] = useState<string | null>(null);
+
     const navigate = useNavigate();
 
-    useEffect(() => {
-        const fetchOutpasses = async () => {
-            const token = localStorage.getItem('token');
-            if (!token) {
+    const fetchOutpasses = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/year-incharge-login');
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+
+        try {
+            const result = await YearInchargeService.getOutpasses(currentPage);
+            // Sort Emergency first, then newest first
+            const sortedList = result.data.sort((a: any, b: any) => {
+                const isAEmergency = a.outpasstype?.toLowerCase() === 'emergency';
+                const isBEmergency = b.outpasstype?.toLowerCase() === 'emergency';
+                if (isAEmergency && !isBEmergency) return -1;
+                if (!isAEmergency && isBEmergency) return 1;
+                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            });
+            setOutpasses(sortedList);
+            setTotalPages(result.totalPages);
+        } catch (err: any) {
+            console.error("Error fetching outpasses:", err);
+            if (err?.response?.status === 401 || err?.response?.status === 403) {
                 navigate('/year-incharge-login');
                 return;
             }
+            setError("Failed to fetch outpass list");
+            toast.error("Failed to fetch outpass list");
+        } finally {
+            setLoading(false);
+        }
+    };
 
-            try {
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}/incharge/outpass/list/all`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-
-                if (response.status === 200) {
-                    const list = response.data.outpasslist || [];
-                    const sortedList = list.sort((a: any, b: any) => {
-                        const isAEmergency = a.outpasstype?.toLowerCase() === 'emergency';
-                        const isBEmergency = b.outpasstype?.toLowerCase() === 'emergency';
-                        if (isAEmergency && !isBEmergency) return -1;
-                        if (!isAEmergency && isBEmergency) return 1;
-                        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-                    });
-                    setOutpasses(sortedList);
-                }
-            } catch (error) {
-                console.error("Error fetching outpasses:", error);
-                toast.error("Failed to fetch outpass list");
-            } finally {
-                setLoading(false);
-            }
-        };
-
+    useEffect(() => {
         fetchOutpasses();
-    }, [navigate]);
+    }, [navigate, currentPage]);
 
     const handleViewDocument = (url: string | null) => {
         if (!url) return;
@@ -144,18 +95,23 @@ const YearInchargeOutpassList: React.FC = () => {
     };
 
     const filteredOutpasses = outpasses.filter(outpass => {
+        // Helper: get first student from array
+        const stu = outpass.student?.[0];
+        const yiStatus = outpass.yearincharge?.status || 'pending';
+
         // Search filter
         const term = searchTerm.toLowerCase().trim();
         const matchesSearch = term === '' ||
-            (outpass.studentid?.name?.toLowerCase().includes(term) || false) ||
-            (outpass.studentid?.registerNumber?.toLowerCase().includes(term) || false) ||
-            (outpass.studentid?.department?.toLowerCase().includes(term) || false) ||
+            (stu?.name?.toLowerCase().includes(term) || false) ||
+            (stu?.registerNumber?.toLowerCase().includes(term) || false) ||
+            (stu?.department?.toLowerCase().includes(term) || false) ||
             (outpass.outpasstype?.toLowerCase().includes(term) || false) ||
             (outpass.reason?.toLowerCase().includes(term) || false);
 
-        // Status filter
+        // Status filter — uses overall outpass status
         const matchesStatus = statusFilter === 'all' ||
-            outpass.yearinchargeapprovalstatus === statusFilter;
+            outpass.status === statusFilter ||
+            yiStatus === statusFilter;
 
         // Type filter
         const matchesType = typeFilter === 'all' ||
@@ -193,7 +149,6 @@ const YearInchargeOutpassList: React.FC = () => {
         setExpandedRow(expandedRow === id ? null : id);
     };
 
-    if (loading) return <LoadingSpinner />;
 
     return (
         <div className="page-container">
@@ -286,173 +241,199 @@ const YearInchargeOutpassList: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredOutpasses.length > 0 ? (
-                                filteredOutpasses.map((outpass) => (
-                                    <React.Fragment key={outpass._id}>
-                                        <tr
-                                            className={`table-row ${expandedRow === outpass._id ? 'expanded' : ''}`}
-                                            onClick={() => toggleExpand(outpass._id)}
-                                            style={{ cursor: 'pointer' }}
-                                        >
-                                            <td data-label="Student Details">
-                                                <div className="student-info">
-                                                    <span className="font-bold">{typeof outpass.studentid?.name === 'string' ? outpass.studentid.name : 'Unknown'}</span>
-                                                    <span className="text-sm text-gray-500">{typeof outpass.studentid?.registerNumber === 'string' ? outpass.studentid.registerNumber : 'N/A'}</span>
-                                                    <span className="text-xs text-gray-400">
-                                                        {typeof outpass.studentid?.year === 'string' ? outpass.studentid.year : ''} - {typeof outpass.studentid?.department === 'string' ? outpass.studentid.department : ''}
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            <td data-label="Pass Information">
-                                                <div className="pass-info">
-                                                    <span className="pass-type">{outpass.outpasstype}</span>
-                                                    {outpass.outpasstype?.toLowerCase() === 'emergency' && (
-                                                        <span className="emergency-badge">🚨 CRITICAL</span>
-                                                    )}
-                                                    <span className="text-xs text-gray-400" style={{ marginTop: '4px' }}>
-                                                        Applied: {formatDate(outpass.createdAt)}
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            <td data-label="Duration">
-                                                <div className="date-info">
-                                                    <span className="date-label">From: {new Date(outpass.fromDate).toLocaleString()}</span>
-                                                    <span className="date-label">To: {new Date(outpass.toDate).toLocaleString()}</span>
-                                                </div>
-                                            </td>
-                                            <td data-label="Residence">
-                                                <div className="residence-info">
-                                                    <span className="residence-type">{outpass.studentid?.residencetype}</span>
-                                                    {outpass.studentid?.residencetype?.toLowerCase().replace(/\s/g, '') === 'dayscholar' ? (
-                                                        <>
-                                                            <span className="text-xs">Bus: {outpass.studentid?.busno || 'N/A'}</span>
-                                                            <span className="text-xs">Boarding: {outpass.studentid?.boardingpoint || 'N/A'}</span>
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <span className="text-xs">Hostel: {outpass.studentid?.hostelname || 'N/A'}</span>
-                                                            <span className="text-xs">Room: {outpass.studentid?.hostelroomno || 'N/A'}</span>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td data-label="Approvals">
-                                                <div className="status-stack">
-                                                    <span className={`status-badge ${getStatusColor(outpass.staffapprovalstatus)}`}>
-                                                        Staff: {outpass.staffapprovalstatus}
-                                                    </span>
-                                                    <span className={`status-badge ${getStatusColor(outpass.yearinchargeapprovalstatus)}`}>
-                                                        Incharge: {outpass.yearinchargeapprovalstatus}
-                                                    </span>
-                                                    {outpass.studentid?.residencetype?.toLowerCase().replace(/\s/g, '') !== 'dayscholar' && outpass.yearinchargeapprovalstatus !== 'rejected' && (
-                                                        <span className={`status-badge ${getStatusColor(outpass.wardenapprovalstatus)}`}>
-                                                            Warden: {outpass.wardenapprovalstatus}
+                            {loading ? (
+                                [1, 2, 3, 4, 5].map((idx) => (
+                                    <tr key={idx}>
+                                        <td data-label="Student Details"><div className="lux-skeleton" style={{ width: '130px', height: '40px' }}></div></td>
+                                        <td data-label="Pass Information"><div className="lux-skeleton" style={{ width: '110px', height: '40px' }}></div></td>
+                                        <td data-label="Duration"><div className="lux-skeleton" style={{ width: '160px', height: '40px' }}></div></td>
+                                        <td data-label="Residence"><div className="lux-skeleton" style={{ width: '100px', height: '40px' }}></div></td>
+                                        <td data-label="Approvals"><div className="lux-skeleton" style={{ width: '120px', height: '40px' }}></div></td>
+                                        <td data-label="Action"><div className="lux-skeleton" style={{ width: '80px', height: '40px' }}></div></td>
+                                    </tr>
+                                ))
+                            ) : error ? (
+                                <tr>
+                                    <td colSpan={6} className="text-center py-8">
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '20px 0' }}>
+                                            <span style={{ color: '#ef4444', fontWeight: 600 }}>⚠️ {error}</span>
+                                            <button onClick={fetchOutpasses} className="back-btn" style={{ margin: 0, padding: '6px 12px', background: '#eff6ff', border: '1px solid #3b82f6', color: '#3b82f6', borderRadius: '6px', fontSize: '0.85rem', cursor: 'pointer' }}>
+                                                🔄 Retry
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : filteredOutpasses.length > 0 ? (
+                                filteredOutpasses.map((outpass) => {
+                                    // Resolve student from array
+                                    const stu = outpass.student?.[0];
+                                    const yiStatus = outpass.yearincharge?.status || 'pending';
+                                    const staffStatus: string = outpass.staff ? 'approved' : 'pending';
+                                    const isHostel = stu?.residencetype?.toLowerCase() !== 'day scholar';
+                                    return (
+                                        <React.Fragment key={outpass._id}>
+                                            <tr
+                                                className={`table-row ${expandedRow === outpass._id ? 'expanded' : ''}`}
+                                                onClick={() => toggleExpand(outpass._id)}
+                                                style={{ cursor: 'pointer' }}
+                                            >
+                                                <td data-label="Student Details">
+                                                    <div className="student-info">
+                                                        <span className="font-bold">{stu?.name || 'Unknown'}</span>
+                                                        <span className="text-sm text-gray-500">{stu?.registerNumber || 'N/A'}</span>
+                                                        <span className="text-xs text-gray-400">
+                                                            {stu?.year || ''} — {stu?.department || ''}
                                                         </span>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td data-label="Action">
-                                                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                                                    <button
-                                                        className="expand-btn"
-                                                        onClick={(e) => { e.stopPropagation(); toggleExpand(outpass._id); }}
-                                                        title="View approval details"
-                                                    >
-                                                        {expandedRow === outpass._id ? '▲ Hide' : '▼ Details'}
-                                                    </button>
-                                                    {(outpass.proof || outpass.document || outpass.file) && (
+                                                    </div>
+                                                </td>
+                                                <td data-label="Pass Information">
+                                                    <div className="pass-info">
+                                                        <span className="pass-type">{outpass.outpasstype}</span>
+                                                        {outpass.outpasstype?.toLowerCase() === 'emergency' && (
+                                                            <span className="emergency-badge">🚨 CRITICAL</span>
+                                                        )}
+                                                        <span className="text-xs text-gray-400" style={{ marginTop: '4px' }}>
+                                                            Applied: {formatDate(outpass.createdAt)}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td data-label="Duration">
+                                                    <div className="date-info">
+                                                        <span className="date-label">From: {new Date(outpass.fromDate).toLocaleString()}</span>
+                                                        <span className="date-label">To: {new Date(outpass.toDate).toLocaleString()}</span>
+                                                    </div>
+                                                </td>
+                                                <td data-label="Residence">
+                                                    <div className="residence-info">
+                                                        <span className="residence-type">{stu?.residencetype || 'N/A'}</span>
+                                                        {stu?.residencetype?.toLowerCase() === 'day scholar' ? (
+                                                            <>
+                                                                <span className="text-xs">Bus: {stu?.busno || 'N/A'}</span>
+                                                                <span className="text-xs">Boarding: {stu?.boardingpoint || 'N/A'}</span>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <span className="text-xs">Hostel: {stu?.hostelname || 'N/A'}</span>
+                                                                <span className="text-xs">Room: {stu?.hostelroomno || 'N/A'}</span>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td data-label="Approvals">
+                                                    <div className="status-stack">
+                                                        <span className={`status-badge ${getStatusColor(staffStatus)}`}>
+                                                            Staff: {staffStatus}
+                                                        </span>
+                                                        <span className={`status-badge ${getStatusColor(yiStatus)}`}>
+                                                            Incharge: {yiStatus}
+                                                        </span>
+                                                        {isHostel && yiStatus !== 'rejected' && (
+                                                            <span className={`status-badge ${getStatusColor(outpass.warden ? outpass.status : 'pending')}`}>
+                                                                Warden: {outpass.warden ? outpass.status : 'pending'}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td data-label="Action">
+                                                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                                                         <button
-                                                            className="view-doc-btn-list"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                const url = (outpass.proof || outpass.document || outpass.file)!;
-                                                                handleViewDocument(url);
-                                                            }}
-                                                            style={{
-                                                                padding: '6px 12px',
-                                                                background: '#eff6ff',
-                                                                border: '1px solid #3b82f6',
-                                                                borderRadius: '6px',
-                                                                color: '#3b82f6',
-                                                                fontSize: '0.8rem',
-                                                                fontWeight: '600',
-                                                                cursor: 'pointer'
-                                                            }}
+                                                            className="expand-btn"
+                                                            onClick={(e) => { e.stopPropagation(); toggleExpand(outpass._id); }}
+                                                            title="View approval details"
                                                         >
-                                                            📄 Doc
+                                                            {expandedRow === outpass._id ? '▲ Hide' : '▼ Details'}
                                                         </button>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        {expandedRow === outpass._id && (
-                                            <tr className="expanded-details-row">
-                                                <td colSpan={6}>
-                                                    <div className="approval-details-panel">
-                                                        <div className="detail-section">
-                                                            <h4>📝 Reason</h4>
-                                                            <p>{outpass.reason || 'N/A'}</p>
-                                                            {outpass.skillrack && <p className="text-xs text-gray-400">Skillrack: {outpass.skillrack} | Attendance: {outpass.attendance || 'N/A'}%</p>}
-                                                        </div>
-                                                        <div className="approval-cards-grid">
-                                                            {/* Staff Approval */}
-                                                            <div className={`approval-card ${outpass.staffapprovalstatus === 'approved' ? 'card-approved' : outpass.staffapprovalstatus === 'rejected' ? 'card-rejected' : 'card-pending'}`}>
-                                                                <div className="approval-card-header">
-                                                                    <span className="approval-role">👨‍🏫 Staff (Advisor)</span>
-                                                                    <span className={`mini-badge ${getStatusColor(outpass.staffapprovalstatus)}`}>
-                                                                        {outpass.staffapprovalstatus}
-                                                                    </span>
-                                                                </div>
-                                                                <div className="approval-card-body">
-                                                                    <p className="approver-name">{outpass.staffid?.name || 'N/A'}</p>
-                                                                    <p className="approver-phone">📞 {outpass.staffid?.contactNumber || 'N/A'}</p>
-                                                                    {outpass.staffremarks && <p className="approver-remarks">💬 "{outpass.staffremarks}"</p>}
-                                                                    {outpass.staffapprovedAt && <p className="approver-time">🕐 {formatDate(outpass.staffapprovedAt)}</p>}
-                                                                </div>
-                                                            </div>
-
-                                                            {/* Year Incharge Approval */}
-                                                            <div className={`approval-card ${outpass.yearinchargeapprovalstatus === 'approved' ? 'card-approved' : outpass.yearinchargeapprovalstatus === 'rejected' ? 'card-rejected' : 'card-pending'}`}>
-                                                                <div className="approval-card-header">
-                                                                    <span className="approval-role">🎓 Year Incharge</span>
-                                                                    <span className={`mini-badge ${getStatusColor(outpass.yearinchargeapprovalstatus)}`}>
-                                                                        {outpass.yearinchargeapprovalstatus}
-                                                                    </span>
-                                                                </div>
-                                                                <div className="approval-card-body">
-                                                                    <p className="approver-name">{outpass.inchargeid?.name || 'N/A'}</p>
-                                                                    <p className="approver-phone">📞 {outpass.inchargeid?.phone || 'N/A'}</p>
-                                                                    {outpass.yearinchargeremarks && <p className="approver-remarks">💬 "{outpass.yearinchargeremarks}"</p>}
-                                                                    {(outpass.yearinchargeapprovedAt || outpass.yearinchargerejectedAt) && (
-                                                                        <p className="approver-time">🕐 {formatDate(outpass.yearinchargeapprovedAt || outpass.yearinchargerejectedAt)}</p>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-
-                                                            {/* Warden Approval (only for hostel students) */}
-                                                            {outpass.studentid?.residencetype?.toLowerCase().replace(/\s/g, '') !== 'dayscholar' && outpass.yearinchargeapprovalstatus !== 'rejected' && (
-                                                                <div className={`approval-card ${outpass.wardenapprovalstatus === 'approved' ? 'card-approved' : outpass.wardenapprovalstatus === 'rejected' ? 'card-rejected' : 'card-pending'}`}>
-                                                                    <div className="approval-card-header">
-                                                                        <span className="approval-role">🏠 Warden</span>
-                                                                        <span className={`mini-badge ${getStatusColor(outpass.wardenapprovalstatus)}`}>
-                                                                            {outpass.wardenapprovalstatus}
-                                                                        </span>
-                                                                    </div>
-                                                                    <div className="approval-card-body">
-                                                                        <p className="approver-name">{outpass.wardenid?.name || 'Pending'}</p>
-                                                                        <p className="approver-phone">📞 {outpass.wardenid?.phone || 'N/A'}</p>
-                                                                        {outpass.wardenremarks && <p className="approver-remarks">💬 "{outpass.wardenremarks}"</p>}
-                                                                        {outpass.wardenapprovedAt && <p className="approver-time">🕐 {formatDate(outpass.wardenapprovedAt)}</p>}
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                        </div>
+                                                        {(outpass.proof || outpass.document || outpass.file) && (
+                                                            <button
+                                                                className="view-doc-btn-list"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    const url = (outpass.proof || outpass.document || outpass.file)!;
+                                                                    handleViewDocument(url);
+                                                                }}
+                                                                style={{
+                                                                    padding: '6px 12px',
+                                                                    background: '#eff6ff',
+                                                                    border: '1px solid #3b82f6',
+                                                                    borderRadius: '6px',
+                                                                    color: '#3b82f6',
+                                                                    fontSize: '0.8rem',
+                                                                    fontWeight: '600',
+                                                                    cursor: 'pointer'
+                                                                }}
+                                                            >
+                                                                📄 Doc
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>
-                                        )}
-                                    </React.Fragment>
-                                ))
+                                            {expandedRow === outpass._id && (
+                                                <tr className="expanded-details-row">
+                                                    <td colSpan={6}>
+                                                        <div className="approval-details-panel">
+                                                            <div className="detail-section">
+                                                                <h4>📝 Reason</h4>
+                                                                <p>{outpass.reason || 'N/A'}</p>
+                                                                {outpass.skillrack && <p className="text-xs text-gray-400">Skillrack: {outpass.skillrack} | Attendance: {outpass.attendance || 'N/A'}%</p>}
+                                                                {outpass.remarks && <p className="approver-remarks" style={{ marginTop: '4px' }}>💬 Remarks: "{outpass.remarks}"</p>}
+                                                            </div>
+                                                            <div className="approval-cards-grid">
+                                                                {/* Staff Approval */}
+                                                                <div className={`approval-card ${staffStatus === 'approved' ? 'card-approved' : staffStatus === 'rejected' ? 'card-rejected' : 'card-pending'}`}>
+                                                                    <div className="approval-card-header">
+                                                                        <span className="approval-role">👨‍🏫 Staff (Advisor)</span>
+                                                                        <span className={`mini-badge ${getStatusColor(staffStatus)}`}>
+                                                                            {staffStatus}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="approval-card-body">
+                                                                        <p className="approver-name">{outpass.staff?.name || 'N/A'}</p>
+                                                                        <p className="approver-phone">📞 {outpass.staff?.contactNumber || 'N/A'}</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Year Incharge Approval */}
+                                                                <div className={`approval-card ${yiStatus === 'approved' ? 'card-approved' : yiStatus === 'rejected' ? 'card-rejected' : 'card-pending'}`}>
+                                                                    <div className="approval-card-header">
+                                                                        <span className="approval-role">🎓 Year Incharge</span>
+                                                                        <span className={`mini-badge ${getStatusColor(yiStatus)}`}>
+                                                                            {yiStatus}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="approval-card-body">
+                                                                        <p className="approver-name">{outpass.incharge?.name || 'N/A'}</p>
+                                                                        <p className="approver-phone">📞 {outpass.incharge?.phone || 'N/A'}</p>
+                                                                        {outpass.yearincharge?.actionAt && (
+                                                                            <p className="approver-time">🕐 {formatDate(outpass.yearincharge.actionAt)}</p>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Warden Approval (only for hostel students) */}
+                                                                {isHostel && yiStatus !== 'rejected' && (
+                                                                    <div className={`approval-card ${outpass.warden ? (outpass.status === 'approved' ? 'card-approved' : outpass.status === 'rejected' ? 'card-rejected' : 'card-pending') : 'card-pending'}`}>
+                                                                        <div className="approval-card-header">
+                                                                            <span className="approval-role">🏠 Warden</span>
+                                                                            <span className={`mini-badge ${getStatusColor(outpass.warden ? outpass.status : 'pending')}`}>
+                                                                                {outpass.warden ? outpass.status : 'pending'}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="approval-card-body">
+                                                                            <p className="approver-name">{outpass.warden?.name || 'Pending'}</p>
+                                                                            <p className="approver-phone">📞 {outpass.warden?.phone || 'N/A'}</p>
+                                                                            {outpass.approvedAt && outpass.warden && <p className="approver-time">🕐 {formatDate(outpass.approvedAt)}</p>}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </React.Fragment>
+                                    );
+                                })
                             ) : (
                                 <tr>
                                     <td colSpan={6} className="text-center py-8 text-gray-500">
@@ -467,127 +448,172 @@ const YearInchargeOutpassList: React.FC = () => {
                 {/* Mobile Card View */}
                 {!loading && filteredOutpasses.length > 0 && (
                     <div className="mobile-cards-view">
-                        {filteredOutpasses.map((outpass) => (
-                            <div className="mobile-card" key={outpass._id}>
-                                <div className="card-header-mobile" onClick={() => toggleExpand(outpass._id)} style={{ cursor: 'pointer' }}>
-                                    <div>
-                                        <h3 className="card-name">{typeof outpass.studentid?.name === 'string' ? outpass.studentid.name : 'Unknown'}</h3>
-                                        <p className="card-reg">{typeof outpass.studentid?.registerNumber === 'string' ? outpass.studentid.registerNumber : 'N/A'}</p>
-                                    </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                                        <span className="pass-type-mobile">{outpass.outpasstype}</span>
-                                        {outpass.outpasstype?.toLowerCase() === 'emergency' && (
-                                            <span className="emergency-badge mobile">🚨 CRITICAL</span>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="card-body-mobile">
-                                    <div className="info-row">
-                                        <span className="label">Dept/Year:</span>
-                                        <span className="value">
-                                            {typeof outpass.studentid?.department === 'string' ? outpass.studentid.department : ''} - {typeof outpass.studentid?.year === 'string' ? outpass.studentid.year : ''}
-                                        </span>
-                                    </div>
-                                    <div className="info-row">
-                                        <span className="label">From:</span>
-                                        <span className="value">{new Date(outpass.fromDate).toLocaleString()}</span>
-                                    </div>
-                                    <div className="info-row">
-                                        <span className="label">To:</span>
-                                        <span className="value">{new Date(outpass.toDate).toLocaleString()}</span>
-                                    </div>
-                                    <div className="info-row">
-                                        <span className="label">Applied:</span>
-                                        <span className="value">{formatDate(outpass.createdAt)}</span>
-                                    </div>
-                                    <div className="info-row">
-                                        <span className="label">Reason:</span>
-                                        <span className="value" style={{ maxWidth: '60%', wordBreak: 'break-word' }}>{outpass.reason || 'N/A'}</span>
-                                    </div>
-                                </div>
-
-                                <div className="card-footer-mobile">
-                                    <div className="status-grid">
-                                        <span className={`status-badge-mobile ${getStatusColor(outpass.staffapprovalstatus)}`}>
-                                            Staff: {outpass.staffapprovalstatus}
-                                        </span>
-                                        <span className={`status-badge-mobile ${getStatusColor(outpass.yearinchargeapprovalstatus)}`}>
-                                            Incharge: {outpass.yearinchargeapprovalstatus}
-                                        </span>
-                                        {outpass.studentid?.residencetype?.toLowerCase().replace(/\s/g, '') !== 'dayscholar' && outpass.yearinchargeapprovalstatus !== 'rejected' && (
-                                            <span className={`status-badge-mobile ${getStatusColor(outpass.wardenapprovalstatus)}`}>
-                                                Warden: {outpass.wardenapprovalstatus}
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    {/* Approval Details in Mobile */}
-                                    <div className="mobile-approval-toggle" onClick={() => toggleExpand(outpass._id)} style={{ cursor: 'pointer' }}>
-                                        <span>{expandedRow === outpass._id ? '▲ Hide Approval Details' : '▼ View Approval Details'}</span>
-                                    </div>
-
-                                    {expandedRow === outpass._id && (
-                                        <div className="mobile-approval-details">
-                                            {/* Staff */}
-                                            <div className={`mobile-approval-card ${outpass.staffapprovalstatus === 'approved' ? 'card-approved' : outpass.staffapprovalstatus === 'rejected' ? 'card-rejected' : 'card-pending'}`}>
-                                                <p className="mobile-role">👨‍🏫 Staff (Advisor)</p>
-                                                <p className="mobile-approver">{outpass.staffid?.name || 'N/A'}</p>
-                                                <p className="mobile-phone">📞 {outpass.staffid?.contactNumber || 'N/A'}</p>
-                                                {outpass.staffremarks && <p className="mobile-remarks">💬 {outpass.staffremarks}</p>}
-                                                {outpass.staffapprovedAt && <p className="mobile-time">🕐 {formatDate(outpass.staffapprovedAt)}</p>}
-                                            </div>
-
-                                            {/* Year Incharge */}
-                                            <div className={`mobile-approval-card ${outpass.yearinchargeapprovalstatus === 'approved' ? 'card-approved' : outpass.yearinchargeapprovalstatus === 'rejected' ? 'card-rejected' : 'card-pending'}`}>
-                                                <p className="mobile-role">🎓 Year Incharge</p>
-                                                <p className="mobile-approver">{outpass.inchargeid?.name || 'N/A'}</p>
-                                                <p className="mobile-phone">📞 {outpass.inchargeid?.phone || 'N/A'}</p>
-                                                {outpass.yearinchargeremarks && <p className="mobile-remarks">💬 {outpass.yearinchargeremarks}</p>}
-                                                {(outpass.yearinchargeapprovedAt || outpass.yearinchargerejectedAt) && (
-                                                    <p className="mobile-time">🕐 {formatDate(outpass.yearinchargeapprovedAt || outpass.yearinchargerejectedAt)}</p>
-                                                )}
-                                            </div>
-
-                                            {/* Warden */}
-                                            {outpass.studentid?.residencetype?.toLowerCase().replace(/\s/g, '') !== 'dayscholar' && outpass.yearinchargeapprovalstatus !== 'rejected' && (
-                                                <div className={`mobile-approval-card ${outpass.wardenapprovalstatus === 'approved' ? 'card-approved' : outpass.wardenapprovalstatus === 'rejected' ? 'card-rejected' : 'card-pending'}`}>
-                                                    <p className="mobile-role">🏠 Warden</p>
-                                                    <p className="mobile-approver">{outpass.wardenid?.name || 'Pending'}</p>
-                                                    <p className="mobile-phone">📞 {outpass.wardenid?.phone || 'N/A'}</p>
-                                                    {outpass.wardenremarks && <p className="mobile-remarks">💬 {outpass.wardenremarks}</p>}
-                                                    {outpass.wardenapprovedAt && <p className="mobile-time">🕐 {formatDate(outpass.wardenapprovedAt)}</p>}
-                                                </div>
+                        {filteredOutpasses.map((outpass) => {
+                            const stu = outpass.student?.[0];
+                            const yiStatus = outpass.yearincharge?.status || 'pending';
+                            const staffStatus: string = outpass.staff ? 'approved' : 'pending';
+                            const isHostel = stu?.residencetype?.toLowerCase() !== 'day scholar';
+                            return (
+                                <div className="mobile-card" key={outpass._id}>
+                                    <div className="card-header-mobile" onClick={() => toggleExpand(outpass._id)} style={{ cursor: 'pointer' }}>
+                                        <div>
+                                            <h3 className="card-name">{stu?.name || 'Unknown'}</h3>
+                                            <p className="card-reg">{stu?.registerNumber || 'N/A'}</p>
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                                            <span className="pass-type-mobile">{outpass.outpasstype}</span>
+                                            {outpass.outpasstype?.toLowerCase() === 'emergency' && (
+                                                <span className="emergency-badge mobile">🚨 CRITICAL</span>
                                             )}
                                         </div>
-                                    )}
+                                    </div>
 
-                                    {(outpass.proof || outpass.document || outpass.file) && (
-                                        <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'flex-start' }}>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    const url = (outpass.proof || outpass.document || outpass.file)!;
-                                                    handleViewDocument(url);
-                                                }}
-                                                style={{
-                                                    padding: '6px 12px',
-                                                    background: '#eff6ff',
-                                                    border: '1px solid #3b82f6',
-                                                    borderRadius: '6px',
-                                                    color: '#3b82f6',
-                                                    fontSize: '0.8rem',
-                                                    fontWeight: '600',
-                                                    cursor: 'pointer'
-                                                }}
-                                            >
-                                                📄 View Doc
-                                            </button>
+                                    <div className="card-body-mobile">
+                                        <div className="info-row">
+                                            <span className="label">Dept/Year:</span>
+                                            <span className="value">
+                                                {stu?.department || ''} — {stu?.year || ''}
+                                            </span>
                                         </div>
-                                    )}
+                                        <div className="info-row">
+                                            <span className="label">From:</span>
+                                            <span className="value">{new Date(outpass.fromDate).toLocaleString()}</span>
+                                        </div>
+                                        <div className="info-row">
+                                            <span className="label">To:</span>
+                                            <span className="value">{new Date(outpass.toDate).toLocaleString()}</span>
+                                        </div>
+                                        <div className="info-row">
+                                            <span className="label">Applied:</span>
+                                            <span className="value">{formatDate(outpass.createdAt)}</span>
+                                        </div>
+                                        <div className="info-row">
+                                            <span className="label">Reason:</span>
+                                            <span className="value" style={{ maxWidth: '60%', wordBreak: 'break-word' }}>{outpass.reason || 'N/A'}</span>
+                                        </div>
+                                        {outpass.remarks && (
+                                            <div className="info-row">
+                                                <span className="label">Remarks:</span>
+                                                <span className="value" style={{ maxWidth: '60%', wordBreak: 'break-word', color: '#EF4444' }}>{outpass.remarks}</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="card-footer-mobile">
+                                        <div className="status-grid">
+                                            <span className={`status-badge-mobile ${getStatusColor(staffStatus)}`}>
+                                                Staff: {staffStatus}
+                                            </span>
+                                            <span className={`status-badge-mobile ${getStatusColor(yiStatus)}`}>
+                                                Incharge: {yiStatus}
+                                            </span>
+                                            {isHostel && yiStatus !== 'rejected' && (
+                                                <span className={`status-badge-mobile ${getStatusColor(outpass.warden ? outpass.status : 'pending')}`}>
+                                                    Warden: {outpass.warden ? outpass.status : 'pending'}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {/* Approval Details in Mobile */}
+                                        <div className="mobile-approval-toggle" onClick={() => toggleExpand(outpass._id)} style={{ cursor: 'pointer' }}>
+                                            <span>{expandedRow === outpass._id ? '▲ Hide Approval Details' : '▼ View Approval Details'}</span>
+                                        </div>
+
+                                        {expandedRow === outpass._id && (
+                                            <div className="mobile-approval-details">
+                                                {/* Staff */}
+                                                <div className={`mobile-approval-card ${staffStatus === 'approved' ? 'card-approved' : staffStatus === 'rejected' ? 'card-rejected' : 'card-pending'}`}>
+                                                    <p className="mobile-role">👨‍🏫 Staff (Advisor)</p>
+                                                    <p className="mobile-approver">{outpass.staff?.name || 'N/A'}</p>
+                                                    <p className="mobile-phone">📞 {outpass.staff?.contactNumber || 'N/A'}</p>
+                                                </div>
+
+                                                {/* Year Incharge */}
+                                                <div className={`mobile-approval-card ${yiStatus === 'approved' ? 'card-approved' : yiStatus === 'rejected' ? 'card-rejected' : 'card-pending'}`}>
+                                                    <p className="mobile-role">🎓 Year Incharge</p>
+                                                    <p className="mobile-approver">{outpass.incharge?.name || 'N/A'}</p>
+                                                    <p className="mobile-phone">📞 {outpass.incharge?.phone || 'N/A'}</p>
+                                                    {outpass.yearincharge?.actionAt && (
+                                                        <p className="mobile-time">🕐 {formatDate(outpass.yearincharge.actionAt)}</p>
+                                                    )}
+                                                </div>
+
+                                                {/* Warden */}
+                                                {isHostel && yiStatus !== 'rejected' && (
+                                                    <div className={`mobile-approval-card ${outpass.warden ? (outpass.status === 'approved' ? 'card-approved' : outpass.status === 'rejected' ? 'card-rejected' : 'card-pending') : 'card-pending'}`}>
+                                                        <p className="mobile-role">🏠 Warden</p>
+                                                        <p className="mobile-approver">{outpass.warden?.name || 'Pending'}</p>
+                                                        <p className="mobile-phone">📞 {outpass.warden?.phone || 'N/A'}</p>
+                                                        {outpass.approvedAt && outpass.warden && <p className="mobile-time">🕐 {formatDate(outpass.approvedAt)}</p>}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {(outpass.proof || outpass.document || outpass.file) && (
+                                            <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'flex-start' }}>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        const url = (outpass.proof || outpass.document || outpass.file)!;
+                                                        handleViewDocument(url);
+                                                    }}
+                                                    style={{
+                                                        padding: '6px 12px',
+                                                        background: '#eff6ff',
+                                                        border: '1px solid #3b82f6',
+                                                        borderRadius: '6px',
+                                                        color: '#3b82f6',
+                                                        fontSize: '0.8rem',
+                                                        fontWeight: '600',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    📄 View Doc
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+
+                    </div>
+                )}
+
+                {loading && (
+                    <div className="mobile-cards-view">
+                        {[1, 2, 3].map((idx) => (
+                            <div className="mobile-card" key={idx}>
+                                <div className="card-header-mobile">
+                                    <div className="lux-skeleton" style={{ width: '120px', height: '24px', borderRadius: '12px', marginBottom: '8px' }}></div>
+                                    <div className="lux-skeleton" style={{ width: '85px', height: '20px', borderRadius: '10px' }}></div>
+                                </div>
+                                <div className="card-body-mobile">
+                                    <div className="lux-skeleton" style={{ width: '100%', height: '80px', borderRadius: '12px' }}></div>
                                 </div>
                             </div>
                         ))}
+                    </div>
+                )}
+
+                {totalPages > 1 && (
+                    <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '24px', alignItems: 'center', paddingBottom: '20px' }}>
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: currentPage === 1 ? '#f1f5f9' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', fontWeight: 600, color: '#475569' }}
+                        >
+                            &lt; Previous
+                        </button>
+                        <span style={{ fontWeight: '600', color: '#64748b' }}>Page {currentPage} of {totalPages}</span>
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: currentPage === totalPages ? '#f1f5f9' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', fontWeight: 600, color: '#475569' }}
+                        >
+                            Next &gt;
+                        </button>
                     </div>
                 )}
             </div>

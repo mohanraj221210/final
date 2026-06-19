@@ -149,7 +149,7 @@ const StudentDetails: React.FC = () => {
     if (!student) return <div className="error-screen">Student not found</div>;
 
     return (
-        <div className="details-page">
+        <div className="details-page mobile-page-content">
             <ToastContainer position="bottom-right" />
             <StaffHeader activeMenu="registration" />
 

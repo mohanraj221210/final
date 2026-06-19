@@ -5,7 +5,51 @@ import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import StudentHeader from '../../components/StudentHeader';
 import StudentBottomNav from '../../components/StudentBottomNav';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import { isProfileComplete } from '../../utils/profileHelper';
+
+const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+};
+
+const TypewriterText = ({ text }: { text: string }) => {
+    const [displayedText, setDisplayedText] = useState("");
+    
+    useEffect(() => {
+        let i = 0;
+        setDisplayedText("");
+        if (!text) return;
+        
+        const intervalId = setInterval(() => {
+            setDisplayedText(text.substring(0, i + 1));
+            i++;
+            if (i >= text.length) {
+                clearInterval(intervalId);
+            }
+        }, 80);
+        
+        return () => clearInterval(intervalId);
+    }, [text]);
+    
+    return (
+        <span>
+            {displayedText}
+            <span className="db-blinking-cursor">|</span>
+        </span>
+    );
+};
+
+const getStatusColor = (status: string) => {
+    const s = status?.toLowerCase();
+    if (s === 'approved') return { bg: 'rgba(16,185,129,0.1)', color: '#059669', border: 'rgba(16,185,129,0.2)' };
+    if (s === 'rejected') return { bg: 'rgba(239,68,68,0.1)', color: '#DC2626', border: 'rgba(239,68,68,0.2)' };
+    if (s === 'checkedout') return { bg: 'rgba(59,130,246,0.1)', color: '#2563EB', border: 'rgba(59,130,246,0.2)' };
+    if (s === 'checkedin') return { bg: 'rgba(139,92,246,0.1)', color: '#7C3AED', border: 'rgba(139,92,246,0.2)' };
+    return { bg: 'rgba(245,158,11,0.1)', color: '#D97706', border: 'rgba(245,158,11,0.2)' };
+};
 
 const Dashboard: React.FC = () => {
     const [Loading, setLoading] = useState(true);
@@ -31,6 +75,7 @@ const Dashboard: React.FC = () => {
     const [imageError, setImageError] = useState(false);
     const [outpassStats, setOutpassStats] = useState({ pending: 0, approved: 0, rejected: 0, checkedOut: 0, checkedIn: 0 });
     const [recentPasses, setRecentPasses] = useState<any[]>([]);
+    const [navigatingPath, setNavigatingPath] = useState<string | null>(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -43,29 +88,44 @@ const Dashboard: React.FC = () => {
                     axios.get(`${import.meta.env.VITE_API_URL}/api/profile`, {
                         headers: { authorization: `Bearer ${token}` },
                     }).catch(e => { console.error('Profile fetch error', e); return null; }),
-                    
+
                     axios.get(`${import.meta.env.VITE_API_URL}/api/outpass/stats`, {
                         headers: { authorization: `Bearer ${token}` },
                     }).catch(e => { console.error('Stats fetch error', e); return null; })
                 ]);
-                
+
                 if (profileRes?.status === 200) {
                     setUser(profileRes.data.user);
                     setImageError(false);
                 }
-                
+
                 if (statsRes?.status === 200 && statsRes.data && statsRes.data.stats && statsRes.data.stats.length > 0) {
-                    const statsData = statsRes.data.stats[0].stats && statsRes.data.stats[0].stats.length > 0 
-                                      ? statsRes.data.stats[0].stats[0] 
-                                      : {};
-                    setOutpassStats({
-                        pending: statsData.pending || 0,
-                        approved: statsData.approved || 0,
-                        rejected: statsData.rejected || 0,
-                        checkedOut: 0,
-                        checkedIn: 0,
+                    const statsArray = statsRes.data.stats[0].stats || [];
+                    let pendingCount = 0;
+                    let approvedCount = 0;
+                    let rejectedCount = 0;
+                    let checkedOutCount = 0;
+                    let checkedInCount = 0;
+
+                    statsArray.forEach((group: any) => {
+                        const statusId = (group._id || '').toLowerCase().replace(/[-_ ]/g, '');
+                        const count = typeof group.total === 'number' ? group.total : (group[group._id] || 0);
+
+                        if (statusId === 'pending') pendingCount += count;
+                        else if (statusId === 'approved') approvedCount += count;
+                        else if (statusId === 'rejected') rejectedCount += count;
+                        else if (statusId === 'checkedout') checkedOutCount += count;
+                        else if (statusId === 'checkedin') checkedInCount += count;
                     });
-                    
+
+                    setOutpassStats({
+                        pending: pendingCount,
+                        approved: approvedCount,
+                        rejected: rejectedCount,
+                        checkedOut: checkedOutCount,
+                        checkedIn: checkedInCount,
+                    });
+
                     const passes = statsRes.data.stats[0].recentpasses || [];
                     setRecentPasses(passes);
                 }
@@ -88,7 +148,11 @@ const Dashboard: React.FC = () => {
             });
             return;
         }
-        navigate(path);
+        setNavigatingPath(path);
+        setTimeout(() => {
+            setNavigatingPath(null);
+            navigate(path);
+        }, 200);
     };
 
     const handleLogout = () => {
@@ -98,1078 +162,686 @@ const Dashboard: React.FC = () => {
         navigate('/login');
     };
 
-    if (Loading) {
-        return (
-            <div className="student-page dashboard-page-view animate-page-enter">
-                <div className="lux-desktop-view">
-                    <StudentHeader />
-                    <div className="content-wrapper">
-                        <div className="lux-hero-card">
-                            <div className="lux-hero-content" style={{ display: 'flex', gap: '20px', alignItems: 'center', padding: '32px' }}>
-                                <div className="lux-skeleton" style={{ width: '80px', height: '80px', borderRadius: '50%' }}></div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                    <div className="lux-skeleton" style={{ width: '120px', height: '24px', borderRadius: '12px' }}></div>
-                                    <div className="lux-skeleton" style={{ width: '250px', height: '36px', borderRadius: '8px' }}></div>
-                                    <div className="lux-skeleton" style={{ width: '180px', height: '20px', borderRadius: '4px' }}></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="lux-quick-actions" style={{ marginTop: '32px' }}>
-                            {[1, 2, 3, 4].map((i) => (
-                                <div key={i} className="lux-qa-card lux-skeleton" style={{ height: '110px', borderRadius: '20px' }}></div>
-                            ))}
-                        </div>
-                        <div className="lux-dashboard-grid" style={{ marginTop: '32px' }}>
-                             <div className="lux-grid-col">
-                                 <div className="lux-widget-card lux-skeleton" style={{ height: '200px', borderRadius: '24px' }}></div>
-                             </div>
-                             <div className="lux-grid-col">
-                                 <div className="lux-widget-card lux-skeleton" style={{ height: '250px', borderRadius: '24px' }}></div>
-                             </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="lux-mobile-view cred-page-bg" style={{ minHeight: '100vh', padding: '24px 16px' }}>
-                    <div className="cred-card lux-skeleton" style={{ height: '140px', borderRadius: '24px' }}></div>
-                    <div className="mob-quick-actions" style={{ marginTop: '24px' }}>
-                        {[1, 2, 3, 4].map((i) => (
-                            <div key={i} className="cred-card lux-skeleton" style={{ height: '100px', borderRadius: '20px' }}></div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        );
-    }
+    const completionPercent = React.useMemo(() => {
+        let total = 0;
+        let filled = 0;
+        const basicFields = ['name', 'registerNumber', 'department', 'year', 'phone', 'email', 'parentnumber', 'residencetype', 'photo', 'semester', 'batch', 'gender'];
+        total += basicFields.length;
+        basicFields.forEach(field => {
+            if (user[field as keyof User] && user[field as keyof User] !== 'N/A' && user[field as keyof User] !== '') filled++;
+        });
+
+        if (user.residencetype === 'hostel') {
+            total += 2;
+            if (user.hostelname) filled++;
+            if (user.hostelroomno) filled++;
+        } else if (user.residencetype === 'day scholar') {
+            total += 2;
+            if (user.busno) filled++;
+            if (user.boardingpoint) filled++;
+        }
+        
+        return Math.round((filled / total) * 100) || 0;
+    }, [user]);
+
+    if (Loading) return <LoadingSpinner />;
+
+    const totalOutpasses = outpassStats.pending + outpassStats.approved + outpassStats.rejected + outpassStats.checkedOut + outpassStats.checkedIn;
+
+    const getAvatarSrc = () => {
+        if (!user.photo) return null;
+        if (user.photo.startsWith("blob:") || user.photo.startsWith("data:") || user.photo.startsWith("http")) return user.photo;
+        const normalizedPath = user.photo.startsWith("/") ? user.photo.slice(1) : user.photo;
+        const cdnUrl = import.meta.env.VITE_CDN_URL || '';
+        const normalizedCdnUrl = cdnUrl.endsWith("/") ? cdnUrl : `${cdnUrl}/`;
+        return `${normalizedCdnUrl}${normalizedPath}`;
+    };
+
+    const quickActions = [
+        {
+            path: '/new-outpass', label: 'Apply\nOutpass',
+            icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+        },
+        {
+            path: '/outpass', label: 'Track\nOutpass',
+            icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        },
+        {
+            path: '/staffs', label: 'Faculty\nDirectory',
+            icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        },
+        {
+            path: '/subjects', label: 'My\nSubjects',
+            icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        },
+        {
+            path: '/profile', label: 'My\nProfile',
+            icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        },
+        {
+            path: '/bus-routes', label: 'Bus\nRoutes',
+            icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><rect x="8" y="7" width="8" height="6" rx="1"/><path d="M6 21v-2"/><path d="M18 21v-2"/><circle cx="8" cy="17" r="1"/><circle cx="16" cy="17" r="1"/><path d="M4 11h16"/></svg>
+        },
+    ];
+
+    const statCards = [
+        { label: 'Approved', value: outpassStats.approved, colorClass: 'green', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> },
+        { label: 'Pending', value: outpassStats.pending, colorClass: 'amber', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
+        { label: 'Rejected', value: outpassStats.rejected, colorClass: 'red', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> },
+        { label: 'Checked Out', value: outpassStats.checkedOut, colorClass: 'blue', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> },
+        { label: 'Checked In', value: outpassStats.checkedIn, colorClass: 'sky', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> },
+    ];
 
     return (
-        <div className="student-page dashboard-page-view animate-page-enter">
-            <ToastContainer position="top-center" />
+        <div className="db-page">
+            <ToastContainer position="top-right" />
             
-            <div className="lux-desktop-view">
+            {/* Desktop Header */}
+            <div className="db-desktop-header">
                 <StudentHeader />
-
-                <div className="content-wrapper">
-                
-                {/* ── HERO SECTION ── */}
-                <div className="lux-hero-card animate-hero">
-                    <div className="lux-hero-bg-glow"></div>
-                    <div className="lux-hero-content">
-                        <div className="lux-avatar-container">
-                            {!imageError && user.photo ? (
-                                <img
-                                    src={user.photo.startsWith("blob:") || user.photo.startsWith("data:") || user.photo.startsWith("http")
-                                        ? user.photo
-                                        : `${import.meta.env.VITE_CDN_URL || ''}${user.photo.startsWith('/') ? user.photo.slice(1) : user.photo}`
-                                    }
-                                    alt="Profile"
-                                    className="lux-avatar-img"
-                                    onError={() => setImageError(true)}
-                                />
-                            ) : (
-                                <div className="lux-avatar-fallback">
-                                    {user.name ? user.name.charAt(0).toUpperCase() : 'S'}
-                                </div>
-                            )}
-                            <div className="lux-status-dot"></div>
-                        </div>
-                        <div className="lux-hero-text">
-                            <span className="lux-badge-gold">Student Portal</span>
-                            <h1 className="lux-hero-name">Welcome back, {user.name || 'Student'}</h1>
-                            <p className="lux-hero-meta">
-                                {user.registerNumber || 'Reg No. N/A'} &nbsp;•&nbsp; {user.department || 'Department N/A'}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* ── QUICK ACTIONS (Priority 1) ── */}
-                <div className="lux-quick-actions animate-stagger-1">
-                    <button className="lux-qa-card" onClick={() => handleNavigation('/new-outpass')}>
-                        <div className="lux-qa-gloss"></div>
-                        <div className="lux-qa-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                        </div>
-                        <div className="lux-qa-content">
-                            <span className="lux-qa-title">Apply Outpass</span>
-                            <span className="lux-qa-subtitle">Submit a new request</span>
-                        </div>
-                    </button>
-                    <button className="lux-qa-card" onClick={() => handleNavigation('/outpass')}>
-                        <div className="lux-qa-gloss"></div>
-                        <div className="lux-qa-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        </div>
-                        <div className="lux-qa-content">
-                            <span className="lux-qa-title">Track Outpass</span>
-                            <span className="lux-qa-subtitle">View request status</span>
-                        </div>
-                    </button>
-                    <button className="lux-qa-card" onClick={() => handleNavigation('/staffs')}>
-                        <div className="lux-qa-gloss"></div>
-                        <div className="lux-qa-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                        </div>
-                        <div className="lux-qa-content">
-                            <span className="lux-qa-title">Staff Directory</span>
-                            <span className="lux-qa-subtitle">Browse faculty members</span>
-                        </div>
-                    </button>
-                    <button className="lux-qa-card" onClick={() => handleNavigation('/profile')}>
-                        <div className="lux-qa-gloss"></div>
-                        <div className="lux-qa-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                        </div>
-                        <div className="lux-qa-content">
-                            <span className="lux-qa-title">Profile</span>
-                            <span className="lux-qa-subtitle">Manage personal details</span>
-                        </div>
-                    </button>
-                </div>
-
-                {/* ── DASHBOARD GRID ── */}
-                <div className="lux-dashboard-grid animate-stagger-2">
-                    
-                    {/* LEFT COLUMN */}
-                    <div className="lux-grid-col">
-                        
-                        {/* OUTPASS STATUS WIDGET */}
-                        <div className="lux-widget-card lux-outpass-widget">
-                            <div className="lux-widget-header">
-                                <h2>Current Outpass Status</h2>
-                                <button className="lux-text-btn" onClick={() => handleNavigation('/outpass')}>View All</button>
-                            </div>
-                            <div className="lux-outpass-badges">
-                                <div className="lux-outpass-stat">
-                                    <span className="lux-stat-val text-pending">{outpassStats.pending}</span>
-                                    <span className="lux-stat-lbl">Pending</span>
-                                </div>
-                                <div className="lux-outpass-stat">
-                                    <span className="lux-stat-val text-approved">{outpassStats.approved}</span>
-                                    <span className="lux-stat-lbl">Approved</span>
-                                </div>
-                                <div className="lux-outpass-stat">
-                                    <span className="lux-stat-val text-rejected">{outpassStats.rejected}</span>
-                                    <span className="lux-stat-lbl">Rejected</span>
-                                </div>
-                                <div className="lux-outpass-stat">
-                                    <span className="lux-stat-val text-navy">{outpassStats.checkedOut}</span>
-                                    <span className="lux-stat-lbl">Checked Out</span>
-                                </div>
-                                <div className="lux-outpass-stat">
-                                    <span className="lux-stat-val text-green">{outpassStats.checkedIn}</span>
-                                    <span className="lux-stat-lbl">Checked In</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* ACADEMIC SUMMARY */}
-                        <div className="lux-widget-card">
-                            <div className="lux-widget-header">
-                                <h2>Academic Information</h2>
-                            </div>
-                            <div className="lux-academic-grid">
-                                <div className="lux-metric-card">
-                                    <div className="lux-metric-icon bg-gold-light text-gold">
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                                    </div>
-                                    <div className="lux-metric-info">
-                                        <span className="lux-metric-val">{user.cgpa || '8.25'}</span>
-                                        <span className="lux-metric-lbl">Current CGPA</span>
-                                    </div>
-                                </div>
-                                <div className="lux-metric-card">
-                                    <div className="lux-metric-icon bg-blue-light text-blue">
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                                    </div>
-                                    <div className="lux-metric-info">
-                                        <span className="lux-metric-val">85%</span>
-                                        <span className="lux-metric-lbl">Attendance</span>
-                                    </div>
-                                </div>
-                                <div className="lux-metric-card">
-                                    <div className="lux-metric-icon bg-red-light text-red">
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                    </div>
-                                    <div className="lux-metric-info">
-                                        <span className="lux-metric-val">{user.arrears || '0'}</span>
-                                        <span className="lux-metric-lbl">Standing Arrears</span>
-                                    </div>
-                                </div>
-                                <div className="lux-metric-card">
-                                    <div className="lux-metric-icon bg-navy-light text-navy">
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-                                    </div>
-                                    <div className="lux-metric-info">
-                                        <span className="lux-metric-val">Sem {user.semester || 'N/A'}</span>
-                                        <span className="lux-metric-lbl">{user.year || 'Year N/A'}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* RIGHT COLUMN */}
-                    <div className="lux-grid-col">
-                        
-                        {/* RECENT PASSES WIDGET */}
-                        <div className="lux-widget-card lux-notices-widget">
-                            <div className="lux-widget-header">
-                                <h2>Recent Outpass Activity</h2>
-                                <button className="lux-text-btn" onClick={() => handleNavigation('/outpass')}>View All</button>
-                            </div>
-                            <div className="lux-notices-list">
-                                {recentPasses.length > 0 ? recentPasses.map((pass: any) => (
-                                    <div className="lux-notice-item" key={pass._id}>
-                                        <div className={`lux-notice-badge ${
-                                            pass.status === 'approved' ? 'badge-info' : 
-                                            pass.status === 'rejected' ? 'badge-urgent' : 'badge-event'
-                                        }`}>
-                                            {pass.status}
-                                        </div>
-                                        <div className="lux-notice-content">
-                                            <h4 style={{ textTransform: 'capitalize' }}>{pass.reason}</h4>
-                                            <p>From: {new Date(pass.fromDate).toLocaleDateString()} To: {new Date(pass.toDate).toLocaleDateString()}</p>
-                                            <span className="lux-notice-date">Applied: {new Date(pass.createdAt).toLocaleDateString()}</span>
-                                        </div>
-                                    </div>
-                                )) : (
-                                    <p style={{fontSize: '13px', color: 'var(--text-3)'}}>No recent activity found.</p>
-                                )}
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
             </div>
 
-            {/* ── MOBILE VIEW ── */}
-            <div className="lux-mobile-view cred-page-bg">
-                <div className="mob-container">
-                    {/* ── TOP SECTION (CRED ID CARD) ── */}
-                    <div className="cred-card cred-hero animate-cred-enter cred-stagger-1">
-                        <div className="cred-hero-bg"></div>
-                        <div className="cred-hero-content">
-                            <div className="cred-avatar-wrap">
-                                {!imageError && user.photo ? (
-                                    <img
-                                        src={user.photo.startsWith("blob:") || user.photo.startsWith("data:") || user.photo.startsWith("http")
-                                            ? user.photo
-                                            : `${import.meta.env.VITE_CDN_URL || ''}${user.photo.startsWith('/') ? user.photo.slice(1) : user.photo}`
-                                        }
-                                        alt="Profile"
-                                        className="cred-avatar"
-                                        onError={() => setImageError(true)}
-                                    />
+            <main className="db-main">
+                <div className="db-container">
+
+                    {/* ── HERO / WELCOME CARD ── */}
+                    <div className="db-hero-card pb-stagger-1">
+                        {/* Mobile logout button */}
+                        <button className="db-mob-logout" onClick={handleLogout}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                            Logout
+                        </button>
+
+                        <div className="db-hero-content">
+                            {/* Avatar */}
+                            <div className="db-avatar-wrap">
+                                {!imageError && getAvatarSrc() ? (
+                                    <img src={getAvatarSrc()!} alt="Profile" className="db-avatar-img" onError={() => setImageError(true)} />
                                 ) : (
-                                    <div className="cred-avatar cred-avatar-fallback">
+                                    <div className="db-avatar-fallback">
                                         {user.name ? user.name.charAt(0).toUpperCase() : 'S'}
                                     </div>
                                 )}
-                                <div className="cred-status-dot"></div>
+                                <div className="db-avatar-status" />
                             </div>
-                            <div className="cred-hero-text">
-                                <span className="cred-badge-gold">Student Portal</span>
-                                <span className="cred-h2" style={{marginTop: '4px', color: 'var(--cred-gold)'}}>{user.name || 'Student'}</span>
-                                <span className="cred-p" style={{fontSize: '13px'}}>{user.department || 'Dept'} • Sem {user.semester || 'N/A'}</span>
-                            </div>
-                        </div>
-                        <button className="mob-logout-btn" onClick={handleLogout} aria-label="Log Out">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                                <polyline points="16 17 21 12 16 7" />
-                                <line x1="21" y1="12" x2="9" y2="12" />
-                            </svg>
-                        </button>
-                    </div>
 
-                    {/* ── QUICK ACTIONS ── */}
-                    <div className="mob-quick-actions animate-cred-enter cred-stagger-2">
-                        <button className="cred-card cred-qa-card" onClick={() => handleNavigation('/new-outpass')}>
-                            <div className="cred-qa-icon" style={{background: 'rgba(212, 158, 23, 0.39)', color: '#D4A017'}}>
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                            {/* Greeting */}
+                            <div className="db-hero-text">
+                                <span className="db-greeting-pill">{getGreeting()} 👋</span>
+                                <h1 className="db-name"><TypewriterText text={user.name || 'Student'} /></h1>
+                                <p className="db-meta">{user.registerNumber || 'N/A'} · {user.department || 'Department'} · Sem {user.semester || 'N/A'}</p>
                             </div>
-                            <span>Apply Outpass</span>
-                        </button>
-                        <button className="cred-card cred-qa-card" onClick={() => handleNavigation('/outpass')}>
-                            <div className="cred-qa-icon" style={{background: 'rgba(37, 99, 235, 0.15)', color: '#3B82F6'}}>
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                            </div>
-                            <span>Track Outpass</span>
-                        </button>
-                        <button className="cred-card cred-qa-card" onClick={() => handleNavigation('/staffs')}>
-                            <div className="cred-qa-icon" style={{background: 'rgba(16, 185, 129, 0.15)', color: '#10B981'}}>
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                            </div>
-                            <span>Staff Directory</span>
-                        </button>
-                        <button className="cred-card cred-qa-card" onClick={() => handleNavigation('/profile')}>
-                            <div className="cred-qa-icon" style={{background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444'}}>
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            </div>
-                            <span>Profile</span>
-                        </button>
-                    </div>
+                        </div>
 
-                    {/* ── OUTPASS STATUS ── */}
-                    <div className="mob-section animate-cred-enter cred-stagger-3">
-                        <div className="mob-section-header">
-                            <span className="cred-h2" style={{fontSize: '18px'}}>Outpass Status</span>
-                        </div>
-                        <div className="mob-status-chips">
-                            <div className="cred-card cred-status-chip">
-                                <span className="val" style={{color: 'var(--cred-warning)'}}>{outpassStats.pending}</span>
-                                <span className="cred-label">Pending</span>
-                            </div>
-                            <div className="cred-card cred-status-chip">
-                                <span className="val" style={{color: 'var(--cred-success)'}}>{outpassStats.approved}</span>
-                                <span className="cred-label">Approved</span>
-                            </div>
-                            <div className="cred-card cred-status-chip">
-                                <span className="val" style={{color: 'var(--cred-blue)'}}>{outpassStats.checkedOut}</span>
-                                <span className="cred-label">Checked Out</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* ── ACADEMIC SUMMARY ── */}
-                    <div className="mob-section animate-cred-enter cred-stagger-4">
-                        <div className="mob-section-header">
-                            <span className="cred-h2" style={{fontSize: '18px'}}>Academic Summary</span>
-                        </div>
-                        <div className="mob-academic-grid">
-                            <div className="cred-card cred-metric">
-                                <span className="val">{user.cgpa || '8.25'}</span>
-                                <span className="cred-label">CGPA</span>
-                            </div>
-                            <div className="cred-card cred-metric">
-                                <span className="val">85%</span>
-                                <span className="cred-label">Attendance</span>
-                            </div>
-                            <div className="cred-card cred-metric">
-                                <span className="val">{user.arrears || '0'}</span>
-                                <span className="cred-label">Arrears</span>
-                            </div>
-                            <div className="cred-card cred-metric">
-                                <span className="val">Sem {user.semester || 'N/A'}</span>
-                                <span className="cred-label">Semester</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* ── RECENT PASSES ── */}
-                    <div className="mob-section animate-cred-enter cred-stagger-5" style={{marginBottom: '40px'}}>
-                        <div className="mob-section-header">
-                            <span className="cred-h2" style={{fontSize: '18px'}}>Recent Activity</span>
-                            <button className="mob-btn-text" onClick={() => handleNavigation('/outpass')}>View All</button>
-                        </div>
-                        {recentPasses.length > 0 ? recentPasses.map((pass: any) => (
-                            <div className="cred-card cred-notice-card" key={pass._id}>
-                                <div className="cred-notice-icon" style={{background: pass.status === 'approved' ? 'rgba(16, 185, 129, 0.1)' : pass.status === 'rejected' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)', color: pass.status === 'approved' ? '#10B981' : pass.status === 'rejected' ? '#EF4444' : '#F59E0B'}}>
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                        {/* Hero mini stats */}
+                        <div className="db-hero-stats">
+                            <div className="db-hero-stat">
+                                <div className="db-hero-stat-icon blue">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                                 </div>
-                                <div className="cred-notice-content">
-                                    <span className="cred-h2" style={{fontSize: '15px', textTransform: 'capitalize'}}>{pass.reason}</span>
-                                    <span className="cred-p" style={{fontSize: '13px'}}>{new Date(pass.fromDate).toLocaleDateString()} &bull; <span style={{ textTransform: 'capitalize' }}>{pass.status}</span></span>
+                                <div>
+                                    <div className="db-hero-stat-val">{completionPercent}%</div>
+                                    <div className="db-hero-stat-lbl">Profile</div>
                                 </div>
                             </div>
-                        )) : (
-                            <div className="cred-card cred-notice-card">
-                                <div className="cred-notice-content">
-                                    <span className="cred-p" style={{fontSize: '13px'}}>No recent outpass activity.</span>
+                            <div className="db-hero-stat-divider" />
+                            <div className="db-hero-stat">
+                                <div className="db-hero-stat-icon amber">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                                 </div>
+                                <div>
+                                    <div className="db-hero-stat-val">{totalOutpasses}</div>
+                                    <div className="db-hero-stat-lbl">Outpasses</div>
+                                </div>
+                            </div>
+                            <div className="db-hero-stat-divider" />
+                            <div className="db-hero-stat">
+                                <div className="db-hero-stat-icon green">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                                </div>
+                                <div>
+                                    <div className="db-hero-stat-val">{user.cgpa || 'N/A'}</div>
+                                    <div className="db-hero-stat-lbl">CGPA</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Profile completion progress */}
+                        {completionPercent < 100 && (
+                            <div className="db-progress-wrap">
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748B' }}>Profile Completion</span>
+                                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#3B82F6' }}>{completionPercent}%</span>
+                                </div>
+                                <div className="pb-progress">
+                                    <div className="pb-progress-fill" style={{ width: `${completionPercent}%` }} />
+                                </div>
+                                <button className="db-complete-profile-btn" onClick={() => handleNavigation('/profile')}>
+                                    Complete Profile →
+                                </button>
                             </div>
                         )}
                     </div>
-                </div>
 
-                {/* ── BOTTOM NAVIGATION ── */}
-                <StudentBottomNav activeTab="home" />
-            </div>
+                    {/* ── QUICK ACTIONS ── */}
+                    <section className="pb-stagger-2">
+                        <div className="pb-section-header">
+                            <h2 className="pb-section-title">
+                                <span className="pb-section-title-icon">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                                </span>
+                                Quick Actions
+                            </h2>
+                        </div>
+                        <div className="pb-action-grid">
+                            {quickActions.map((action) => (
+                                <button
+                                    key={action.path}
+                                    className={`pb-action-card ${navigatingPath === action.path ? 'navigating' : ''}`}
+                                    onClick={() => handleNavigation(action.path)}
+                                >
+                                    <div className="pb-action-icon">{action.icon}</div>
+                                    <span className="pb-action-label" style={{ whiteSpace: 'pre-line' }}>{action.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </section>
+
+                    {/* ── OUTPASS OVERVIEW ── */}
+                    <section className="pb-stagger-3">
+                        <div className="pb-section-header">
+                            <h2 className="pb-section-title">
+                                <span className="pb-section-title-icon">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                </span>
+                                Outpass Overview
+                            </h2>
+                            <button className="pb-view-all" onClick={() => navigate('/outpass')}>
+                                View All
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                            </button>
+                        </div>
+                        <div className="db-stats-grid">
+                            {statCards.map((stat) => (
+                                <div key={stat.label} className="pb-stat-card db-stat-hoverable">
+                                    <div className={`pb-stat-icon ${stat.colorClass}`}>{stat.icon}</div>
+                                    <div>
+                                        <div className="pb-stat-value">{stat.value}</div>
+                                        <div className="pb-stat-label">{stat.label}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+
+                    {/* ── RECENT ACTIVITY ── */}
+                    <section className="pb-stagger-4">
+                        <div className="pb-section-header">
+                            <h2 className="pb-section-title">
+                                <span className="pb-section-title-icon">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                                </span>
+                                Recent Activity
+                            </h2>
+                            <button className="pb-view-all" onClick={() => navigate('/outpass')}>
+                                View All
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                            </button>
+                        </div>
+                        <div className="pb-card" style={{ padding: '8px' }}>
+                            {recentPasses.length > 0 ? (
+                                <div>
+                                    {recentPasses.slice(0, 3).map((pass, idx) => {
+                                        const sc = getStatusColor(pass.status);
+                                        return (
+                                            <div key={pass._id || idx} className="db-activity-item">
+                                                <div className="db-activity-icon-wrap" style={{ background: sc.bg, border: `1px solid ${sc.border}` }}>
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={sc.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                                </div>
+                                                <div className="db-activity-content">
+                                                    <div className="db-activity-reason">{pass.reason}</div>
+                                                    <div className="db-activity-meta">{(pass.outpasstype || pass.outpassType || 'General')} · {new Date(pass.createdAt).toLocaleDateString()}</div>
+                                                </div>
+                                                <span className="db-status-pill" style={{ background: sc.bg, color: sc.color, border: `1px solid ${sc.border}` }}>
+                                                    {pass.status || 'Pending'}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="pb-empty-state">
+                                    <div className="pb-empty-icon">
+                                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-8 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg>
+                                    </div>
+                                    <div className="pb-empty-title">No Recent Activity</div>
+                                    <div className="pb-empty-desc">Apply for your first outpass to get started.</div>
+                                    <button className="pb-btn-primary" style={{ marginTop: '8px', height: '38px', fontSize: '0.82rem' }} onClick={() => handleNavigation('/new-outpass')}>
+                                        Apply Outpass
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </section>
+
+                    {/* ── ACADEMIC OVERVIEW ── */}
+                    <section className="pb-stagger-5">
+                        <div className="pb-section-header">
+                            <h2 className="pb-section-title">
+                                <span className="pb-section-title-icon">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                                </span>
+                                Academic Overview
+                            </h2>
+                            <span className="pb-badge pb-badge-blue">{user.department || 'N/A'}</span>
+                        </div>
+                        <div className="pb-card" style={{ padding: '20px' }}>
+                            <div className="db-academic-grid">
+                                {[
+                                    { icon: '👨‍🏫', label: 'Tutor', value: user.staffid?.name || 'Not Assigned' },
+                                    { icon: '🎓', label: 'Semester', value: user.semester ? `Sem ${user.semester}` : 'N/A' },
+                                    { icon: '📅', label: 'Batch', value: user.batch || 'N/A' },
+                                    { icon: '🏡', label: 'Residence', value: user.residencetype ? user.residencetype.charAt(0).toUpperCase() + user.residencetype.slice(1) : 'N/A' },
+                                ].map((item) => (
+                                    <div key={item.label} className="db-academic-item">
+                                        <div className="db-academic-icon">{item.icon}</div>
+                                        <div>
+                                            <div className="db-academic-label">{item.label}</div>
+                                            <div className="db-academic-value">{item.value}</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+
+                </div>
+            </main>
+
+            <StudentBottomNav activeTab="home" />
 
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
-                .dashboard-page-view {
-                    font-family: 'Inter', -apple-system, sans-serif;
-                    -webkit-font-smoothing: antialiased;
+                .db-page {
+                    min-height: 100vh;
+                    background: linear-gradient(180deg, #F8FBFF 0%, #EEF6FF 50%, #DCEEFF 100%);
+                    background-attachment: fixed;
+                    overflow-x: hidden;
+                    position: relative;
+                    padding-bottom: calc(100px + env(safe-area-inset-bottom, 16px));
+                }
+                
+                .db-desktop-header {
+                    display: block;
                 }
 
-                .dashboard-page-view .content-wrapper {
+                .db-main {
+                    padding-top: 96px;
+                }
+
+                .db-container {
                     max-width: 1400px;
                     margin: 0 auto;
-                    padding: 32px;
+                    padding: 16px 24px 0;
                     display: flex;
                     flex-direction: column;
-                    gap: 32px;
+                    gap: 20px;
                 }
 
-                @media (max-width: 1024px) {
-                    .dashboard-page-view .content-wrapper {
-                        gap: 24px;
-                    }
-                    .lux-quick-actions {
-                        grid-template-columns: repeat(2, 1fr);
-                        gap: 24px;
-                    }
-                }
-
-                /* ── DESKTOP VIEWS (RETAINED) ── */
-                .lux-hero-card {
-                    background: linear-gradient(135deg, #051d41c0 0%, #0d1b3d96 30%, #1a306bab 65%, #2b5cc7bd 100%);
-                    border-radius: 20px;
-                    padding: 32px 40px;
+                /* HERO CARD */
+                .db-hero-card {
+                    background: linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(239,246,255,0.94) 100%);
+                    backdrop-filter: blur(24px) saturate(200%);
+                    -webkit-backdrop-filter: blur(24px) saturate(200%);
+                    border: 1px solid rgba(59,130,246,0.14);
+                    border-radius: 24px;
+                    padding: 28px 28px 24px;
                     position: relative;
                     overflow: hidden;
-                    box-shadow: 0 24px 64px rgba(0,0,0,0.4);
-                    border: 1px solid rgba(212, 175, 55, 0.3);
-                    display: flex;
-                    align-items: center;
-                    backdrop-filter: blur(12px);
-                    -webkit-backdrop-filter: blur(12px);
+                    box-shadow: 0 8px 32px rgba(59,130,246,0.08), 0 2px 8px rgba(15,23,42,0.04);
                 }
-                
-                .lux-hero-card::before {
+
+                .db-hero-card::before {
                     content: '';
                     position: absolute;
-                    top: 0;
-                    left: -150%;
-                    width: 100%;
-                    height: 100%;
-                    background: linear-gradient(
-                        90deg,
-                        transparent,
-                        rgba(255,255,255,0.12),
-                        transparent
-                    );
-                    transform: skewX(-20deg);
-                    animation: shineSweep 6s infinite ease-in-out;
+                    top: -80px; right: -80px;
+                    width: 240px; height: 240px;
+                    background: radial-gradient(circle, rgba(59,130,246,0.07) 0%, transparent 70%);
                     pointer-events: none;
-                    z-index: 2;
                 }
 
-                .lux-hero-card::after {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    border-radius: 20px;
-                    padding: 1px;
-                    background: linear-gradient(to bottom, rgba(212, 175, 55, 0.4), rgba(212, 175, 55, 0.05));
-                    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-                    -webkit-mask-composite: xor;
-                    mask-composite: exclude;
-                    pointer-events: none;
-                    z-index: 3;
+                .db-mob-logout {
+                    display: none;
                 }
 
-                .lux-hero-bg-glow { 
-                    position: absolute; 
-                    top: -50%; right: -20%; 
-                    width: 70%; height: 200%; 
-                    background: radial-gradient(circle, rgba(37,99,235,0.25) 0%, transparent 60%); 
-                    pointer-events: none; 
-                    z-index: 1;
-                }
-                .lux-hero-content { position: relative; z-index: 4; display: flex; align-items: center; gap: 24px; }
-                
-                .lux-avatar-container {
-                    position: relative;
-                    width: 84px;
-                    height: 84px;
-                    border-radius: 50%;
-                    padding: 3px;
-                    background: linear-gradient(135deg, #D4A017, #FBBF24);
-                    animation: avatarPulse 6s infinite ease-in-out;
-                }
-                
-                .lux-avatar-img, .lux-avatar-fallback { width: 100%; height: 100%; border-radius: 50%; border: 3px solid #0B1120; background: #1E293B; object-fit: cover; }
-                .lux-avatar-fallback { display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; font-weight: 700; }
-                
-                .lux-status-dot {
-                    position: absolute;
-                    bottom: 4px;
-                    right: 4px;
-                    width: 14px;
-                    height: 14px;
-                    background: #10B981;
-                    border: 2px solid #0F172A;
-                    border-radius: 50%;
-                    box-shadow: 0 0 6px #10B981, 0 0 12px rgba(16, 185, 129, 0.4) !important;
-                }
-                
-                .lux-hero-text { display: flex; flex-direction: column; gap: 8px; }
-                
-                .lux-badge-gold {
-                    align-self: flex-start;
-                    background: rgba(212,160,23,0.15);
-                    color: #ffaf0c;
-                    padding: 4px 10px;
-                    border-radius: 6px;
-                    font-size: 11px;
-                    font-weight: 700;
-                    letter-spacing: 0.5px;
-                    text-transform: uppercase;
-                    border: 1px solid rgba(212,160,23,0.3);
-                    box-shadow: 0 0 12px rgba(212, 160, 23, 0.25);
-                }
-                
-                .lux-hero-name { color: white; font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
-                .lux-hero-meta { color: #edeff1ff; font-size: 14px; font-weight: 500; }
-                
-                .lux-quick-actions {
-                    display: grid;
-                    grid-template-columns: repeat(4, 1fr);
-                    gap: 24px;
-                }
-                
-                .lux-qa-card {
-                    position: relative;
-                    border-radius: 24px !important;
-                    height: 140px;
-                    padding: 24px;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: flex-start;
-                    justify-content: space-between;
-                    cursor: pointer;
-                    overflow: hidden;
-                    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
-                    outline: none;
-                    font-family: inherit;
-                    backdrop-filter: blur(16px);
-                    -webkit-backdrop-filter: blur(16px);
-                }
-                
-                .lux-qa-gloss {
-                    position: absolute;
-                    top: 0; left: 0; right: 0; height: 50%;
-                    background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 100%);
-                    pointer-events: none;
-                    border-radius: 24px 24px 0 0;
-                }
-
-                .lux-qa-content {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 4px;
-                    text-align: left;
-                }
-                
-                .lux-qa-title {
-                    font-size: 18px !important;
-                    font-weight: 700 !important;
-                    color: #FFFFFF !important;
-                    letter-spacing: 0.2px;
-                }
-
-                .lux-qa-subtitle {
-                    font-size: 13px !important;
-                    font-weight: 500 !important;
-                    color: rgba(255,255,255,0.7) !important;
-                    transition: color 0.3s ease;
-                }
-                
-                .lux-qa-icon { 
-                    width: 44px; height: 44px; 
-                    border-radius: 12px; 
-                    display: flex; align-items: center; justify-content: center; 
-                    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
-                }
-                
-                .lux-qa-card:hover {
-                    transform: translateY(-8px) !important;
-                }
-                
-                .lux-qa-card:hover .lux-qa-icon {
-                    transform: scale(1.1) translateY(-2px) !important;
-                }
-
-                .lux-qa-card:hover .lux-qa-subtitle {
-                    color: #FFFFFF !important;
-                }
-                
-                /* Apply Outpass - Gold */
-                .lux-qa-card:nth-child(1) {
-                    background: linear-gradient(135deg, rgba(15, 23, 42, 0.3) 0%, rgba(198, 166, 87, 0.6) 100%) !important;
-                    border: 1px solid rgba(212,160,23,0.2) !important;
-                    box-shadow: 0 12px 32px rgba(0,0,0,0.3) !important;
-                }
-                .lux-qa-card:nth-child(1) .lux-qa-icon { background: rgba(212,160,23,0.15) !important; color: #D4A017 !important; }
-                .lux-qa-card:nth-child(1):hover { 
-                    border-color: rgba(212,160,23,0.5) !important; 
-                    box-shadow: 0 20px 40px rgba(212, 160, 23, 0.2), 0 0 24px rgba(212, 160, 23, 0.15) !important;
-                }
-
-                /* Track Outpass - Royal Blue */
-                .lux-qa-card:nth-child(2) {
-                    background: linear-gradient(135deg, rgba(15, 23, 42, 0.64) 0%, rgba(37, 100, 235, 0.27) 100%) !important;
-                    border: 1px solid rgba(37,99,235,0.2) !important;
-                    box-shadow: 0 12px 32px rgba(0,0,0,0.3) !important;
-                }
-                .lux-qa-card:nth-child(2) .lux-qa-icon { background: rgba(37,99,235,0.15) !important; color: #3B82F6 !important; }
-                .lux-qa-card:nth-child(2):hover { 
-                    border-color: rgba(37,99,235,0.5) !important; 
-                    box-shadow: 0 20px 40px rgba(37,99,235,0.2), 0 0 24px rgba(37,99,235,0.15) !important;
-                }
-
-                /* Staff Directory - Emerald */
-                .lux-qa-card:nth-child(3) {
-                    background: linear-gradient(135deg, rgba(21, 31, 55, 0.49) 0%, rgba(16, 185, 129, 0.26) 100%) !important;
-                    border: 1px solid rgba(16,185,129,0.2) !important;
-                    box-shadow: 0 12px 32px rgba(0,0,0,0.3) !important;
-                }
-                .lux-qa-card:nth-child(3) .lux-qa-icon { background: rgba(16,185,129,0.15) !important; color: #10B981 !important; }
-                .lux-qa-card:nth-child(3):hover { 
-                    border-color: rgba(16,185,129,0.5) !important; 
-                    box-shadow: 0 20px 40px rgba(16,185,129,0.2), 0 0 24px rgba(16,185,129,0.15) !important;
-                }
-
-                /* Profile - Burgundy */
-                .lux-qa-card:nth-child(4) {
-                    background: linear-gradient(135deg, rgba(15, 23, 42, 0.4) 0%, rgba(159, 18, 58, 0.35) 100%) !important;
-                    border: 1px solid rgba(159,18,57,0.2) !important;
-                    box-shadow: 0 12px 32px rgba(0,0,0,0.3) !important;
-                }
-                .lux-qa-card:nth-child(4) .lux-qa-icon { background: rgba(159,18,57,0.15) !important; color: #F43F5E !important; }
-                .lux-qa-card:nth-child(4):hover { 
-                    border-color: rgba(159,18,57,0.5) !important; 
-                    box-shadow: 0 20px 40px rgba(159,18,57,0.2), 0 0 24px rgba(159,18,57,0.15) !important;
-                }
-
-                .lux-dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-                .lux-grid-col { display: flex; flex-direction: column; gap: 24px; }
-                .lux-widget-card { background: #FFFFFF; border-radius: 20px; border: 1px solid #E2E8F0; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
-                .lux-widget-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-                .lux-widget-header h2 { font-size: 17px; font-weight: 700; color: #0F172A; }
-                .lux-text-btn { background: none; border: none; color: #2563EB; font-size: 13px; font-weight: 600; cursor: pointer; transition: color 0.2s; }
-                .lux-text-btn:hover { color: #1D4ED8; text-decoration: underline; }
-                .lux-outpass-badges { display: flex; justify-content: space-between; gap: 12px; }
-                
-                .lux-outpass-stat {
-                    flex: 1;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 6px;
-                    padding: 16px 8px;
-                    border-radius: 12px;
-                    transition: all 0.3s ease !important;
-                }
-                
-                .lux-outpass-stat:nth-child(1) {
-                    background: rgba(255, 255, 255, 0.26) !important;
-                    backdrop-filter: blur(10px);
-                    -webkit-backdrop-filter: blur(10px);
-                    border: 1px solid rgba(245, 158, 11, 0.2) !important;
-                    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.08) !important;
-                }
-                .lux-outpass-stat:nth-child(2) {
-                    background: rgba(255, 255, 255, 0.4) !important;
-                    backdrop-filter: blur(10px);
-                    -webkit-backdrop-filter: blur(10px);
-                    border: 1px solid rgba(16, 185, 129, 0.2) !important;
-                    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08) !important;
-                }
-                .lux-outpass-stat:nth-child(3) {
-                    background: rgba(255, 255, 255, 0.4) !important;
-                    backdrop-filter: blur(10px);
-                    -webkit-backdrop-filter: blur(10px);
-                    border: 1px solid rgba(239, 68, 68, 0.2) !important;
-                    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.08) !important;
-                }
-                .lux-outpass-stat:nth-child(4) {
-                    background: rgba(255, 255, 255, 0.4) !important;
-                    backdrop-filter: blur(10px);
-                    -webkit-backdrop-filter: blur(10px);
-                    border: 1px solid rgba(212, 160, 23, 0.2) !important;
-                    box-shadow: 0 4px 12px rgba(212, 160, 23, 0.08) !important;
-                }
-                .lux-outpass-stat:nth-child(5) {
-                    background: rgba(255, 255, 255, 0.4) !important;
-                    backdrop-filter: blur(10px);
-                    -webkit-backdrop-filter: blur(10px);
-                    border: 1px solid rgba(37, 99, 235, 0.2) !important;
-                    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08) !important;
-                }
-
-                .lux-stat-val { font-size: 24px; font-weight: 800; line-height: 1; }
-                .lux-stat-lbl { font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.3px; }
-                
-                .lux-outpass-stat:nth-child(1) .lux-stat-val { color: #f59e0b !important; }
-                .lux-outpass-stat:nth-child(2) .lux-stat-val { color: #10B981 !important; }
-                .lux-outpass-stat:nth-child(3) .lux-stat-val { color: #ef4444 !important; }
-                .lux-outpass-stat:nth-child(4) .lux-stat-val { color: #D4A017 !important; }
-                .lux-outpass-stat:nth-child(5) .lux-stat-val { color: #3B82F6 !important; }
-
-                .lux-academic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-                .lux-metric-card { display: flex; align-items: center; gap: 16px; padding: 16px; background: #F8FAFC; border: 1px solid #F1F5F9; border-radius: 14px; transition: background 0.2s; }
-                .lux-metric-card:hover { background: #F1F5F9; }
-                .lux-metric-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
-                .bg-gold-light { background: #FEF3C7; } .text-gold { color: #D97706; } .bg-blue-light { background: #DBEAFE; } .text-blue { color: #2563EB; } .bg-red-light { background: #FEE2E2; } .text-red { color: #DC2626; } .bg-navy-light { background: #E2E8F0; } .text-navy { color: #0F172A; }
-                .lux-metric-info { display: flex; flex-direction: column; gap: 2px; }
-                .lux-metric-val { font-size: 18px; font-weight: 800; color: #0F172A; }
-                .lux-metric-lbl { font-size: 12px; font-weight: 500; color: #64748B; }
-                .lux-notices-list { display: flex; flex-direction: column; gap: 16px; }
-                .lux-notice-item { display: flex; gap: 16px; padding-bottom: 16px; border-bottom: 1px solid #F1F5F9; }
-                .lux-notice-item:last-child { border-bottom: none; padding-bottom: 0; }
-                .lux-notice-badge { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; height: fit-content; }
-                .badge-urgent { background: #FEE2E2; color: #DC2626; } .badge-info { background: #DBEAFE; color: #2563EB; } .badge-event { background: #FEF3C7; color: #D97706; }
-                .lux-notice-content { display: flex; flex-direction: column; gap: 4px; }
-                .lux-notice-content h4 { font-size: 14px; font-weight: 700; color: #0F172A; }
-                .lux-notice-content p { font-size: 13px; color: #475569; line-height: 1.5; }
-                .lux-notice-date { font-size: 11px; font-weight: 500; color: #94A3B8; margin-top: 4px; }
-                
-                .lux-mobile-view { display: none; }
-                .lux-desktop-view { display: block; }
-
-                @media (max-width: 900px) { .lux-dashboard-grid { grid-template-columns: 1fr; } }
-                @media (max-width: 768px) {
-                    .lux-desktop-view { display: none !important; }
-                    .lux-mobile-view { display: block !important; }
-                    .student-page.dashboard-page-view { 
-                        padding-bottom: calc(90px + env(safe-area-inset-bottom, 16px)); 
-                    }
-                }
-
-                /* ==========================================
-                   CRED PREMIUM MOBILE STYLES (DASHBOARD)
-                   ========================================== */
-                .mob-container {
-                    padding: 24px 16px 16px 16px;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 24px;
-                }
-
-                /* Hero Card */
-                .cred-hero {
-                    background: linear-gradient(-45deg, #0e0c0cff, #22262aff, #1E3A8A, #0B1120) !important;
-                    background-size: 300% 300% !important;
-                    padding: 24px;
+                .db-hero-content {
                     display: flex;
                     align-items: center;
                     gap: 16px;
-                    min-height: 140px;
-                    position: relative;
-                    overflow: hidden;
-                    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
-                }
-                
-                .cred-hero::before {
-                    content: '';
-                    position: absolute;
-                    top: 0;
-                    left: -150%;
-                    width: 100%;
-                    height: 100%;
-                    background: linear-gradient(
-                        90deg,
-                        transparent,
-                        rgba(255,255,255,0.08),
-                        transparent
-                    );
-                    transform: skewX(-20deg);
-                    animation: shineSweep 8s infinite ease-in-out;
-                    pointer-events: none;
-                    z-index: 2;
+                    margin-bottom: 20px;
                 }
 
-                .cred-hero::after {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    border-radius: 24px;
-                    padding: 1px;
-                    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0));
-                    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-                    -webkit-mask-composite: xor;
-                    mask-composite: exclude;
-                    pointer-events: none;
-                    z-index: 3;
-                }
-
-                .cred-hero.animate-cred-enter {
-                    animation: heroEntrance 500ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
-                    animation-delay: 50ms !important;
-                }
-
-                .mob-logout-btn {
-                    position: absolute;
-                    top: 16px;
-                    right: 16px;
-                    width: 36px;
-                    height: 36px;
-                    border-radius: 10px;
-                    background: rgba(239, 68, 68, 0.1);
-                    border: 1px solid rgba(239, 68, 68, 0.2);
-                    color: #EF4444;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    z-index: 10;
-                    transition: all 0.2s ease;
-                }
-                .mob-logout-btn:active {
-                    transform: scale(0.9);
-                    background: rgba(239, 68, 68, 0.2);
-                }
-                .cred-hero-bg {
-                    position: absolute;
-                    top: -50%; right: -20%;
-                    width: 150%; height: 200%;
-                    background: radial-gradient(circle, rgba(212,160,23,0.08) 0%, transparent 50%);
-                    pointer-events: none;
-                    z-index: 1;
-                }
-                .cred-avatar-wrap {
-                    position: relative;
-                    width: 72px;
-                    height: 72px;
+                .db-avatar-wrap {
+                    width: 68px; height: 68px;
                     border-radius: 50%;
+                    background: linear-gradient(135deg, #3B82F6, #1D4ED8);
                     padding: 3px;
-                    background: linear-gradient(135deg, #D4A017, #FBBF24) !important;
                     flex-shrink: 0;
-                    z-index: 1;
-                    animation: avatarPulse 6s infinite ease-in-out;
+                    position: relative;
                 }
-                .cred-avatar {
+
+                .db-avatar-img, .db-avatar-fallback {
                     width: 100%; height: 100%;
                     border-radius: 50%;
-                    border: 3px solid #0B1120;
                     object-fit: cover;
                 }
-                .cred-avatar-fallback {
-                    background: #1d377aff;
+
+                .db-avatar-fallback {
+                    background: white;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    color: white;
-                    font-size: 24px;
-                    font-weight: 700;
-                }
-                .cred-status-dot {
-                    position: absolute;
-                    bottom: 2px; right: 2px;
-                    width: 14px; height: 14px;
-                    background: #10B981;
-                    border: 2px solid #0B1120;
-                    border-radius: 50%;
-                    box-shadow: 0 0 6px #10B981, 0 0 12px rgba(16, 185, 129, 0.4) !important;
-                }
-                .cred-hero-text {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 2px;
-                    z-index: 1;
-                }
-                
-                .cred-badge-gold {
-                    background: rgba(212,160,23,0.15) !important;
-                    color: #FBBF24 !important;
-                    padding: 4px 10px;
-                    border-radius: 6px;
-                    font-size: 11px;
-                    font-weight: 700;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                    border: 1px solid rgba(212,160,23,0.2) !important;
-                    display: inline-block;
-                    box-shadow: 0 0 12px rgba(212, 160, 23, 0.25);
-                }
-
-                /* Quick Actions */
-                .mob-quick-actions {
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 16px;
-                }
-                
-                .cred-qa-card {
-                    color: #FFFFFF !important;
-                    font-weight: 600 !important;
-                }
-                
-                .cred-qa-card span {
-                    font-size: 14px;
-                    font-weight: 700;
-                    color: #0F172A !important;
-                }
-                
-                .cred-qa-card {
-                    background: rgba(255, 255, 255, 0.85) !important;
-                    backdrop-filter: blur(12px);
-                    -webkit-backdrop-filter: blur(12px);
-                    border: 1px solid rgba(255, 255, 255, 0.60) !important;
-                    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.10) !important;
-                    padding: 16px;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 12px;
-                    cursor: pointer;
-                    transition: transform 100ms ease, box-shadow 0.2s !important;
-                }
-                
-                .cred-qa-card:active {
-                    transform: scale(0.97) !important;
-                }
-                .cred-qa-icon {
-                    width: 44px; height: 44px;
-                    border-radius: 12px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                }
-
-                /* Sections */
-                .mob-section {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 16px;
-                }
-                .mob-section-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 0 4px;
-                }
-                .mob-btn-text {
-                    color: var(--cred-gold);
-                    font-size: 13px;
-                    font-weight: 700;
-                    background: none;
-                    border: none;
-                    padding: 0;
-                    cursor: pointer;
-                }
-
-                /* Status Chips */
-                .mob-status-chips {
-                    display: flex;
-                    flex-wrap: wrap;
-                    gap: 12px;
-                }
-                
-                .cred-status-chip {
-                    padding: 12px 16px;
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    flex: 1;
-                    min-width: 140px;
-                    border-radius: 16px;
-                    transition: all 0.2s ease !important;
-                }
-                
-                .cred-status-chip:nth-child(1) {
-                    background: rgba(245, 158, 11, 0.08) !important;
-                    border: 1px solid rgba(245, 158, 11, 0.20) !important;
-                    box-shadow: none !important;
-                }
-                .cred-status-chip:nth-child(1) .val { color: #D97706 !important; }
-
-                .cred-status-chip:nth-child(2) {
-                    background: rgba(5, 150, 105, 0.08) !important;
-                    border: 1px solid rgba(5, 150, 105, 0.20) !important;
-                    box-shadow: none !important;
-                }
-                .cred-status-chip:nth-child(2) .val { color: #059669 !important; }
-
-                .cred-status-chip:nth-child(3) {
-                    background: rgba(184, 134, 11, 0.08) !important;
-                    border: 1px solid rgba(184, 134, 11, 0.20) !important;
-                    box-shadow: none !important;
-                }
-                .cred-status-chip:nth-child(3) .val { color: #B8860B !important; }
-
-                .cred-status-chip .val {
-                    font-size: 24px;
+                    font-size: 1.6rem;
                     font-weight: 800;
+                    color: #3B82F6;
+                }
+
+                .db-avatar-status {
+                    position: absolute;
+                    bottom: 3px; right: 3px;
+                    width: 12px; height: 12px;
+                    background: #10B981;
+                    border: 2px solid white;
+                    border-radius: 50%;
+                }
+
+                .db-greeting-pill {
+                    display: inline-block;
+                    font-size: 0.78rem;
+                    font-weight: 600;
+                    color: #3B82F6;
+                    background: rgba(59,130,246,0.08);
+                    padding: 3px 10px;
+                    border-radius: 999px;
+                    margin-bottom: 6px;
+                    border: 1px solid rgba(59,130,246,0.12);
+                }
+
+                .db-name {
+                    font-size: 1.6rem;
+                    font-weight: 800;
+                    color: #0F172A;
+                    letter-spacing: -0.04em;
+                    line-height: 1.15;
+                    margin-bottom: 4px;
+                }
+
+                .db-blinking-cursor {
+                    font-weight: 200;
+                    color: #3B82F6;
+                    animation: dbBlink 1s step-end infinite;
+                }
+                @keyframes dbBlink {
+                    from, to { opacity: 1; }
+                    50% { opacity: 0; }
+                }
+
+                .db-meta {
+                    font-size: 0.82rem;
+                    color: #64748B;
+                    font-weight: 500;
+                }
+
+                /* HERO STATS */
+                .db-hero-stats {
+                    display: flex;
+                    align-items: center;
+                    gap: 0;
+                    background: rgba(241,245,249,0.7);
+                    border: 1px solid rgba(59,130,246,0.08);
+                    border-radius: 16px;
+                    padding: 12px 16px;
+                    margin-bottom: 16px;
+                }
+
+                .db-hero-stat {
+                    flex: 1;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                }
+
+                .db-hero-stat-divider {
+                    width: 1px;
+                    height: 32px;
+                    background: rgba(59,130,246,0.1);
+                    margin: 0 12px;
+                    flex-shrink: 0;
+                }
+
+                .db-hero-stat-icon {
+                    width: 32px; height: 32px;
+                    border-radius: 8px;
+                    display: flex; align-items: center; justify-content: center;
+                    flex-shrink: 0;
+                }
+                .db-hero-stat-icon.blue   { background: rgba(59,130,246,0.1); color: #3B82F6; }
+                .db-hero-stat-icon.amber  { background: rgba(245,158,11,0.1); color: #D97706; }
+                .db-hero-stat-icon.green  { background: rgba(16,185,129,0.1); color: #059669; }
+
+                .db-hero-stat-val {
+                    font-size: 1.1rem;
+                    font-weight: 800;
+                    color: #0F172A;
                     line-height: 1;
                 }
 
-                /* Academic Grid */
-                .mob-academic-grid {
+                .db-hero-stat-lbl {
+                    font-size: 0.7rem;
+                    font-weight: 500;
+                    color: #64748B;
+                    margin-top: 2px;
+                }
+
+                /* PROGRESS */
+                .db-progress-wrap {
+                    padding-top: 16px;
+                    border-top: 1px solid rgba(59,130,246,0.06);
+                }
+
+                .db-complete-profile-btn {
+                    margin-top: 10px;
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                    color: #3B82F6;
+                    background: rgba(59,130,246,0.07);
+                    border: 1px solid rgba(59,130,246,0.15);
+                    border-radius: 999px;
+                    padding: 6px 14px;
+                    cursor: pointer;
+                    font-family: inherit;
+                    transition: all 0.2s;
+                }
+                .db-complete-profile-btn:hover {
+                    background: rgba(59,130,246,0.12);
+                    border-color: rgba(59,130,246,0.25);
+                }
+
+                /* STATS GRID */
+                .db-stats-grid {
                     display: grid;
-                    grid-template-columns: 1fr 1fr;
+                    grid-template-columns: repeat(5, 1fr);
+                    gap: 10px;
+                }
+
+                .db-stat-hoverable {
+                    cursor: pointer;
+                }
+
+                /* ACTIVITY */
+                .db-activity-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 12px 12px;
+                    border-radius: 12px;
+                    transition: background 0.2s;
+                }
+                .db-activity-item:hover {
+                    background: rgba(59,130,246,0.04);
+                }
+                .db-activity-item + .db-activity-item {
+                    border-top: 1px solid rgba(59,130,246,0.06);
+                }
+
+                .db-activity-icon-wrap {
+                    width: 36px; height: 36px;
+                    border-radius: 10px;
+                    display: flex; align-items: center; justify-content: center;
+                    flex-shrink: 0;
+                }
+
+                .db-activity-content { flex: 1; min-width: 0; }
+                .db-activity-reason {
+                    font-size: 0.88rem;
+                    font-weight: 600;
+                    color: #0F172A;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .db-activity-meta {
+                    font-size: 0.75rem;
+                    color: #64748B;
+                    margin-top: 2px;
+                }
+
+                .db-status-pill {
+                    font-size: 0.7rem;
+                    font-weight: 700;
+                    padding: 3px 10px;
+                    border-radius: 999px;
+                    white-space: nowrap;
+                    text-transform: capitalize;
+                }
+
+                /* ACADEMIC GRID */
+                .db-academic-grid {
+                    display: grid;
+                    grid-template-columns: repeat(4, 1fr);
                     gap: 12px;
                 }
-                .cred-metric {
-                    padding: 16px;
+
+                .db-academic-item {
                     display: flex;
-                    flex-direction: column;
-                    gap: 4px;
-                    border-radius: 16px;
+                    align-items: flex-start;
+                    gap: 10px;
+                    background: rgba(248,251,255,0.8);
+                    border: 1px solid rgba(59,130,246,0.07);
+                    border-radius: 12px;
+                    padding: 14px 12px;
+                    transition: all 0.2s;
                 }
-                .cred-metric .val {
-                    font-size: 24px;
-                    font-weight: 800;
+                .db-academic-item:hover {
+                    background: rgba(239,246,255,0.9);
+                    border-color: rgba(59,130,246,0.14);
+                    transform: translateY(-1px);
+                }
+
+                .db-academic-icon {
+                    font-size: 1.3rem;
+                    flex-shrink: 0;
+                    line-height: 1;
+                }
+
+                .db-academic-label {
+                    font-size: 0.7rem;
+                    font-weight: 600;
+                    color: #64748B;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                    margin-bottom: 3px;
+                }
+
+                .db-academic-value {
+                    font-size: 0.9rem;
+                    font-weight: 700;
                     color: #0F172A;
                 }
 
-                /* Notice Card */
-                .cred-notice-card {
-                    padding: 16px;
-                    display: flex;
-                    gap: 16px;
-                    border-radius: 16px;
-                }
-                .cred-notice-icon {
-                    width: 44px; height: 44px;
-                    border-radius: 12px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    flex-shrink: 0;
-                }
-                .cred-notice-content {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 4px;
+                /* ── MOBILE ── */
+                @media (max-width: 850px) {
+                    .db-desktop-header { display: none; }
+                    .db-main { padding-top: 0; }
+                    .db-container { padding: 16px 14px 0; gap: 16px; }
+
+                    .db-mob-logout {
+                        display: flex;
+                        align-items: center;
+                        gap: 5px;
+                        position: absolute;
+                        top: 14px; right: 14px;
+                        background: rgba(59,130,246,0.07);
+                        border: 1px solid rgba(59,130,246,0.12);
+                        border-radius: 999px;
+                        padding: 5px 10px;
+                        font-size: 0.75rem;
+                        font-weight: 600;
+                        color: #64748B;
+                        cursor: pointer;
+                        font-family: inherit;
+                        transition: all 0.2s;
+                    }
+                    .db-mob-logout:active { transform: scale(0.95); }
+
+                    .db-hero-card { padding: 20px 18px 18px; }
+                    .db-hero-content { gap: 12px; margin-bottom: 16px; }
+                    .db-avatar-wrap { width: 56px; height: 56px; }
+                    .db-name { font-size: 1.3rem; }
+                    .db-meta { font-size: 0.76rem; }
+
+                    .db-hero-stats {
+                        padding: 10px 12px;
+                        gap: 0;
+                    }
+                    .db-hero-stat-val { font-size: 1rem; }
+                    .db-hero-stat-divider { margin: 0 8px; }
+
+                    .db-stats-grid {
+                        grid-template-columns: repeat(5, 1fr);
+                        gap: 6px;
+                    }
+                    .pb-stat-card {
+                        flex-direction: column;
+                        align-items: center;
+                        padding: 10px 6px;
+                        gap: 6px;
+                        text-align: center;
+                    }
+                    .pb-stat-icon {
+                        width: 34px; height: 34px;
+                    }
+                    .pb-stat-value { font-size: 1.1rem; }
+                    .pb-stat-label { font-size: 0.65rem; }
+
+                    .db-academic-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+                    .db-academic-item { padding: 12px 10px; }
                 }
 
-                /* Keyframes & Extra Utilities */
-                @keyframes meshGradient {
-                    0% { background-position: 0% 50%; }
-                    50% { background-position: 100% 50%; }
-                    100% { background-position: 0% 50%; }
+                @media (max-width: 480px) {
+                    .db-stats-grid { grid-template-columns: repeat(3, 1fr); }
+                    .db-academic-grid { grid-template-columns: repeat(2, 1fr); }
                 }
 
-                @keyframes shineSweep {
-                    0% { left: -150%; }
-                    30% { left: 150%; }
-                    100% { left: 150%; }
+                @media (max-width: 380px) {
+                    .db-hero-stat-divider { display: none; }
+                    .db-hero-stats { gap: 8px; flex-wrap: wrap; }
+                    .db-hero-stat { flex: auto; }
                 }
 
-                @keyframes avatarPulse {
-                    0% {
-                        box-shadow: 0 0 0 0 rgba(212, 160, 23, 0.4), 0 8px 16px rgba(0,0,0,0.25);
-                    }
-                    50% {
-                        box-shadow: 0 0 0 8px rgba(212, 160, 23, 0), 0 8px 16px rgba(0,0,0,0.25);
-                    }
-                    100% {
-                        box-shadow: 0 0 0 0 rgba(212, 160, 23, 0), 0 8px 16px rgba(0,0,0,0.25);
-                    }
-                }
-
-                @keyframes heroEntrance {
-                    from {
-                        opacity: 0;
-                        transform: translateY(12px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-
-                .animate-hero {
-                    animation: heroEntrance 500ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
+                /* Quick action navigating state */
+                .pb-action-card.navigating {
+                    opacity: 0.7;
+                    transform: scale(0.96) !important;
                 }
             `}</style>
         </div>

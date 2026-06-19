@@ -32,18 +32,29 @@ const WatchmanOutpassList: React.FC = () => {
       });
 
 
-      // Data extraction based on confirmed API response structure (outpass)
       const outpassData = res.data.outpass || [];
 
-      // Filter for approved outpasses based on residence type
-      const approvedOutpasses = outpassData.filter((item: any) => {
-        const resType = (item.studentid?.residencetype || '').toLowerCase().trim().replace(/\s/g, '');
-        const isDayScholar = resType === 'dayscholar';
-        if (isDayScholar) {
-          return item.yearinchargeapprovalstatus === 'approved';
-        }
-        return item.wardenapprovalstatus === 'approved';
-      });
+      const approvedOutpasses = outpassData
+        .filter((item: any) => {
+          const resType = (item.studentid?.residencetype || '').toLowerCase().trim().replace(/\s/g, '');
+          const isDayScholar = resType === 'dayscholar';
+          const isHostelEmergency = item.outpasstype === 'HostelEmergency';
+
+          if (isHostelEmergency) {
+            return item.status === 'approved';
+          }
+          if (isDayScholar) {
+            return item.yearincharge?.status === 'approved';
+          }
+          return item.warden?.status === 'approved';
+        })
+        .sort((a: any, b: any) => {
+          const isAEmergency = a.outpasstype?.toLowerCase().includes('emergency');
+          const isBEmergency = b.outpasstype?.toLowerCase().includes('emergency');
+          if (isAEmergency && !isBEmergency) return -1;
+          if (!isAEmergency && isBEmergency) return 1;
+          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+        });
 
       setOutpasses(approvedOutpasses);
     } catch (err: any) {
@@ -215,7 +226,7 @@ const WatchmanOutpassList: React.FC = () => {
                 </tr>
               ) : (
                 currentData.map((item, index) => (
-                  <tr key={item.id || index}>
+                  <tr key={item._id || index}>
                     <td data-label="#">{startIndex + index + 1}</td>
                     <td data-label="Name">
                       {item.studentid?.name || "N/A"}
@@ -232,15 +243,15 @@ const WatchmanOutpassList: React.FC = () => {
                     <td data-label="Reason">{item.reason}</td>
                     <td data-label="Status">
                       <div className="status-stack">
-                        <span className={`status-badge ${getStatusColor(item.staffapprovalstatus)}`}>
-                          Staff: {item.staffapprovalstatus}
+                        <span className={`status-badge ${getStatusColor(item.staff?.status || 'pending')}`}>
+                          Staff: {item.staff?.status || 'pending'}
                         </span>
-                        <span className={`status-badge ${getStatusColor(item.yearinchargeapprovalstatus)}`}>
-                          Incharge: {item.yearinchargeapprovalstatus}
+                        <span className={`status-badge ${getStatusColor(item.yearincharge?.status || 'pending')}`}>
+                          Incharge: {item.yearincharge?.status || 'pending'}
                         </span>
                         {(item.studentid?.residencetype || '').toLowerCase().trim().replace(/\s/g, '') !== 'dayscholar' && (
-                          <span className={`status-badge ${getStatusColor(item.wardenapprovalstatus)}`}>
-                            Warden: {item.wardenapprovalstatus}
+                          <span className={`status-badge ${getStatusColor(item.warden?.status || 'pending')}`}>
+                            Warden: {item.warden?.status || 'pending'}
                           </span>
                         )}
                       </div>
@@ -255,7 +266,7 @@ const WatchmanOutpassList: React.FC = () => {
           {!loading && currentData.length > 0 && (
             <div className="mobile-cards-view">
               {currentData.map((item, index) => (
-                <div className="mobile-card" key={item.id || index}>
+                <div className="mobile-card" key={item._id || index}>
                   <div className="card-badge">
                     {item.studentid?.registerNumber || item.register_number}
                   </div>
@@ -280,15 +291,15 @@ const WatchmanOutpassList: React.FC = () => {
                   </div>
 
                   <div className="card-footer-grid">
-                    <span className={`status-badge-mobile ${getStatusColor(item.staffapprovalstatus)}`}>
-                      Staff: {item.staffapprovalstatus}
+                    <span className={`status-badge-mobile ${getStatusColor(item.staff?.status || 'pending')}`}>
+                      Staff: {item.staff?.status || 'pending'}
                     </span>
-                    <span className={`status-badge-mobile ${getStatusColor(item.yearinchargeapprovalstatus)}`}>
-                      Incharge: {item.yearinchargeapprovalstatus}
+                    <span className={`status-badge-mobile ${getStatusColor(item.yearincharge?.status || 'pending')}`}>
+                      Incharge: {item.yearincharge?.status || 'pending'}
                     </span>
                     {(item.studentid?.residencetype || '').toLowerCase().trim().replace(/\s/g, '') !== 'dayscholar' && (
-                      <span className={`status-badge-mobile ${getStatusColor(item.wardenapprovalstatus)}`}>
-                        Warden: {item.wardenapprovalstatus}
+                      <span className={`status-badge-mobile ${getStatusColor(item.warden?.status || 'pending')}`}>
+                        Warden: {item.warden?.status || 'pending'}
                       </span>
                     )}
                   </div>

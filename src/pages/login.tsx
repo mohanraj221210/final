@@ -55,21 +55,21 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
   };
 
   const isStudent = loginType === 'student';
-  const roleLabel   = isStudent ? 'Student' : 'Staff';
-  const roleDesc    = isStudent ? 'Sign in to access your student profile & dashboard' : 'Enter your staff credentials to access the portal';
-  const emailLabel  = isStudent ? 'Email / Student ID' : 'Staff Email / ID';
+  const roleLabel = isStudent ? 'Student' : 'Staff';
+  const roleDesc = isStudent ? 'Sign in to access your student profile & dashboard' : 'Enter your faculty credentials to access the portal';
+  const emailLabel = isStudent ? 'Email / Student ID' : 'Staff Email / ID';
   const submitLabel = isStudent ? 'Sign In' : 'Sign In as Staff';
 
   const RoleIcon = () => isStudent ? (
     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-      <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+      <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+      <path d="M6 12v5c3 3 9 3 12 0v-5" />
     </svg>
   ) : (
     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-      <circle cx="9" cy="7" r="4"/>
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
     </svg>
   );
 
@@ -86,7 +86,7 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
 
       {/* ── Background image ── */}
       <div className="llp-bg" aria-hidden="true">
-        <img src="/main.jpg" alt="" className="llp-bg-img" />
+        <img src="/gate.jpg" alt="" className="llp-bg-img" />
         <div className="llp-bg-overlay" />
       </div>
 
@@ -101,13 +101,13 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
             <div className="llp-logo-row">
               <div className="llp-logo-icon">
                 <svg width="28" height="28" viewBox="0 0 36 36" fill="none">
-                  <rect width="36" height="36" rx="10" fill="url(#llpLogoGrad)"/>
-                  <path d="M9 26L18 10L27 26H9Z" fill="white" fillOpacity="0.95"/>
-                  <rect x="15" y="20" width="6" height="6" rx="2" fill="url(#llpLogoGrad)"/>
+                  <rect width="36" height="36" rx="10" fill="url(#llpLogoGrad)" />
+                  <path d="M9 26L18 10L27 26H9Z" fill="white" fillOpacity="0.95" />
+                  <rect x="15" y="20" width="6" height="6" rx="2" fill="url(#llpLogoGrad)" />
                   <defs>
                     <linearGradient id="llpLogoGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-                      <stop stopColor="#2563EB"/>
-                      <stop offset="1" stopColor="#7C3AED"/>
+                      <stop stopColor="#2563EB" />
+                      <stop offset="1" stopColor="#7C3AED" />
                     </linearGradient>
                   </defs>
                 </svg>
@@ -170,7 +170,7 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
           {/* Back button */}
           <button className="llp-back-btn" onClick={() => navigate('/')}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5M12 5l-7 7 7 7"/>
+              <path d="M19 12H5M12 5l-7 7 7 7" />
             </svg>
             Back to Welcome
           </button>
@@ -198,8 +198,8 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
                 <div className="llp-input-wrap">
                   <span className="llp-input-icon">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                      <circle cx="12" cy="7" r="4"/>
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
                     </svg>
                   </span>
                   <input
@@ -221,8 +221,8 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
                 <div className="llp-input-wrap">
                   <span className="llp-input-icon">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                     </svg>
                   </span>
                   <input
@@ -244,13 +244,13 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
                   >
                     {showPassword ? (
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-                        <line x1="1" y1="1" x2="23" y2="23"/>
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                        <line x1="1" y1="1" x2="23" y2="23" />
                       </svg>
                     ) : (
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
                       </svg>
                     )}
                   </button>
@@ -282,7 +282,7 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
                   <>
                     <span>{submitLabel}</span>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                      <path d="M5 12h14M12 5l7 7-7 7" />
                     </svg>
                   </>
                 )}
@@ -294,21 +294,21 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
             <div className="llp-security-row">
               <div className="llp-security-item">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                 </svg>
                 <span>SSL Encrypted</span>
               </div>
               <div className="llp-security-item">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                  <polyline points="22 4 12 14.01 9 11.01"/>
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <polyline points="22 4 12 14.01 9 11.01" />
                 </svg>
                 <span>Verified Platform</span>
               </div>
               <div className="llp-security-item">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  <rect x="3" y="11" width="18" height="11" rx="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                 </svg>
                 <span>Data Protected</span>
               </div>

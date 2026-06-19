@@ -12,13 +12,13 @@ interface StudentHeaderProps {
 const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
     const navigate = useNavigate();
     const location = useLocation();
-    
+
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [user, setUser] = useState<User | null>(initialUser || null);
     const [scrolled, setScrolled] = useState(false);
     const [imageError, setImageError] = useState(false);
-    
+
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -55,8 +55,8 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
     }, []);
 
     // Close menus on route change or outside click
-    useEffect(() => { 
-        setIsMobileMenuOpen(false); 
+    useEffect(() => {
+        setIsMobileMenuOpen(false);
         setIsDropdownOpen(false);
     }, [location.pathname]);
 
@@ -97,10 +97,10 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
 
     const navItems = [
         { path: '/dashboard', label: 'Dashboard', icon: '🏠' },
-        { path: '/staffs',    label: 'Staffs',    icon: '👥' },
-        { path: '/outpass',   label: 'Outpass',   icon: '📝' },
-        { path: '/subjects',  label: 'Subjects',  icon: '📚' },
-        { path: '/profile',   label: 'Profile',   icon: '👤' },
+        { path: '/staffs', label: 'Staffs', icon: '👥' },
+        { path: '/outpass', label: 'Outpass', icon: '📝' },
+        { path: '/subjects', label: 'Subjects', icon: '📚' },
+        { path: '/profile', label: 'Profile', icon: '👤' },
     ];
 
     const profileComplete = isProfileComplete(user);
@@ -122,13 +122,13 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
             {/* Top Header */}
             <header className={`lux-header ${scrolled ? 'lux-scrolled' : ''}`}>
                 <div className="lux-container">
-                    
+
                     {/* LEFT: Brand */}
                     <div className="lux-brand" onClick={() => handleNavigation('/dashboard')}>
                         <div className="lux-logo-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
                         </div>
-                        <span className="lux-brand-text">JIT Campus One</span>
+                        <span className="lux-brand-text">JIT Permigo</span>
                     </div>
 
                     {/* CENTER: Desktop Nav */}
@@ -155,7 +155,7 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
 
                         {/* Notification Bell */}
                         <button className="lux-icon-btn">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
                             <span className="lux-notification-dot"></span>
                         </button>
 
@@ -169,9 +169,9 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
                                         <span>{userInitial}</span>
                                     )}
                                 </div>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`lux-chevron ${isDropdownOpen ? 'open' : ''}`}><polyline points="6 9 12 15 18 9"/></svg>
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`lux-chevron ${isDropdownOpen ? 'open' : ''}`}><polyline points="6 9 12 15 18 9" /></svg>
                             </button>
-                            
+
                             {/* Dropdown Menu */}
                             {isDropdownOpen && (
                                 <div className="lux-dropdown-menu">
@@ -181,16 +181,12 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
                                     </div>
                                     <div className="lux-dropdown-divider"></div>
                                     <button className="lux-dropdown-item" onClick={() => handleNavigation('/profile')}>
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                                         My Profile
-                                    </button>
-                                    <button className="lux-dropdown-item" onClick={() => handleNavigation('/dashboard')}>
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                                        Settings
                                     </button>
                                     <div className="lux-dropdown-divider"></div>
                                     <button className="lux-dropdown-item lux-danger" onClick={handleLogout}>
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
                                         Log Out
                                     </button>
                                 </div>
@@ -240,7 +236,9 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
                         </div>
                         <div className="lux-dropdown-divider"></div>
                         <button className="lux-mobile-link lux-danger" onClick={handleLogout}>
-                            <span className="lux-mobile-icon">🚪</span>
+                            <span className="lux-mobile-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
+                            </span>
                             Log Out
                         </button>
                     </div>
@@ -248,374 +246,339 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
             )}
 
             <style>{`
-                /* === LUXURY UNIVERSITY HEADER === */
+                /* === PREMIUM PALE BLUE HEADER === */
                 .lux-header {
                     position: fixed;
-                    top: 0; left: 0; right: 0;
-                    height: 80px; /* Reduced optimal height */
-                    background: linear-gradient(
-                        90deg,
-                        rgba(1, 1, 3, 0.48) 100%
-                    );
-                    backdrop-filter: blur(20px);
-                    -webkit-backdrop-filter: blur(20px);
-                    border-bottom: 1px solid rgba(212,160,23,0.18);
-                    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+                    top: 12px; left: 16px; right: 16px;
+                    height: 64px;
+                    background: rgba(255, 255, 255, 0.88) !important;
+                    backdrop-filter: blur(20px) saturate(180%);
+                    -webkit-backdrop-filter: blur(20px) saturate(180%);
+                    border: 1px solid rgba(59, 130, 246, 0.12) !important;
+                    border-radius: 20px !important;
+                    box-shadow: 0 4px 24px rgba(59, 130, 246, 0.08), 0 1px 4px rgba(15,23,42,0.04) !important;
                     z-index: 1000;
-                    transition: all 0.3s ease;
+                    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
                 }
                 
                 .lux-header.lux-scrolled {
-                    height: 72px; /* Shrinks slightly on scroll */
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-                    background: linear-gradient(
-                        90deg,
-                        rgba(212,160,23,0.15) 0%,
-                        rgba(30,41,59,0.98) 25%,
-                        rgba(15,23,42,0.99) 60%,
-                        rgba(37,99,235,0.22) 100%
-                    );
+                    top: 8px;
+                    height: 58px;
+                    background: rgba(255, 255, 255, 0.94) !important;
+                    box-shadow: 0 8px 32px rgba(59, 130, 246, 0.10), 0 1px 4px rgba(15,23,42,0.04) !important;
                 }
 
                 .lux-container {
                     max-width: 1400px;
                     margin: 0 auto;
-                    padding: 0 32px;
+                    padding: 0 20px;
                     height: 100%;
                     display: grid;
-                    grid-template-columns: 250px 1fr 250px; /* Balanced 3-section layout */
+                    grid-template-columns: 220px 1fr 220px;
                     align-items: center;
                 }
 
-                /* ── LEFT: BRAND ── */
                 .lux-brand {
                     display: flex;
                     align-items: center;
-                    gap: 12px;
+                    gap: 10px;
                     cursor: pointer;
                     justify-self: flex-start;
+                    transition: opacity 0.2s;
                 }
+                .lux-brand:hover { opacity: 0.75; }
                 
                 .lux-logo-icon {
-                    width: 36px; height: 36px;
-                    background: rgba(212, 175, 55, 0.1);
-                    border: 1px solid rgba(212, 175, 55, 0.3);
-                    border-radius: 8px;
+                    width: 34px; height: 34px;
+                    background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(96,165,250,0.06)) !important;
+                    border: 1px solid rgba(59,130,246,0.15) !important;
+                    border-radius: 10px;
                     display: flex; align-items: center; justify-content: center;
                 }
 
                 .lux-brand-text {
-                    font-size: 1.15rem;
+                    font-size: 1.05rem;
                     font-weight: 800;
-                    color: #FFFFFF;
-                    letter-spacing: 0.5px;
+                    color: #0F172A !important;
+                    letter-spacing: -0.3px;
                 }
 
-                /* ── CENTER: NAVIGATION ── */
                 .lux-desktop-nav {
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    gap: 50px;
+                    gap: 4px;
                 }
 
                 .lux-nav-link {
                     position: relative;
-                    height: 40px;
+                    height: 36px;
                     padding: 0 16px;
                     background: transparent;
                     border: none;
-                    color: #94A3B8; /* Muted slate */
-                    font-size: 0.95rem;
+                    color: #64748B !important;
+                    font-size: 0.88rem;
                     font-weight: 500;
                     cursor: pointer;
-                    border-radius: 6px;
-                    transition: all 0.2s ease;
+                    border-radius: 999px !important;
+                    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
                     font-family: inherit;
-                    letter-spacing: 0.2px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                 }
 
                 .lux-nav-link:hover {
-                    color: #FFFFFF;
+                    color: #3B82F6 !important;
+                    background: rgba(59,130,246,0.07) !important;
                 }
 
                 .lux-nav-link.lux-active {
-                    color: #D4AF37; /* Gold accent */
-                    font-weight: 600;
+                    color: #FFFFFF !important;
+                    background: linear-gradient(135deg, #3B82F6, #1D4ED8) !important;
+                    font-weight: 600 !important;
+                    box-shadow: 0 4px 12px rgba(59,130,246,0.25) !important;
                 }
 
-                .lux-nav-indicator {
-                    position: absolute;
-                    bottom: -16px; /* Sits exactly on the bottom border */
-                    left: 16px; right: 16px;
-                    height: 3px;
-                    background: #D4AF37;
-                    border-radius: 3px 3px 0 0;
-                    box-shadow: 0 -2px 8px rgba(212, 175, 55, 0.4);
-                }
-                
-                .lux-header.lux-scrolled .lux-nav-indicator {
-                    bottom: -12px;
-                }
+                .lux-nav-indicator { display: none !important; }
 
-                /* ── RIGHT: USER & NOTIFICATIONS ── */
                 .lux-right {
                     display: flex;
                     align-items: center;
                     justify-content: flex-end;
-                    gap: 16px;
+                    gap: 10px;
                 }
 
                 .lux-icon-btn {
                     position: relative;
-                    width: 40px; height: 40px;
+                    width: 38px; height: 38px;
                     border-radius: 50%;
-                    border: 1px solid transparent;
-                    background: transparent;
-                    color: #94A3B8;
+                    border: 1px solid rgba(59,130,246,0.1);
+                    background: rgba(255,255,255,0.7);
+                    color: #64748B !important;
                     display: flex; align-items: center; justify-content: center;
                     cursor: pointer;
                     transition: all 0.2s ease;
                 }
 
                 .lux-icon-btn:hover {
-                    background: rgba(255, 255, 255, 0.05);
-                    border-color: rgba(255, 255, 255, 0.1);
-                    color: #FFFFFF;
+                    background: rgba(59,130,246,0.06);
+                    border-color: rgba(59,130,246,0.2);
+                    color: #3B82F6 !important;
                 }
 
                 .lux-notification-dot {
                     position: absolute;
-                    top: 8px; right: 10px;
-                    width: 8px; height: 8px;
-                    background: #D4AF37;
-                    border: 2px solid #0B1220;
+                    top: 7px; right: 7px;
+                    width: 7px; height: 7px;
+                    background: #10B981;
+                    border: 2px solid #FFFFFF;
                     border-radius: 50%;
-                    box-shadow: 0 0 8px rgba(212, 175, 55, 0.6);
                 }
 
-                .lux-dropdown-wrapper {
-                    position: relative;
-                }
+                .lux-dropdown-wrapper { position: relative; }
 
                 .lux-user-pill {
                     display: flex;
                     align-items: center;
-                    gap: 8px;
-                    height: 44px;
-                    padding: 0 12px 0 4px;
-                    background: rgba(255, 255, 255, 0.03);
-                    border: 1px solid rgba(255, 255, 255, 0.08);
-                    border-radius: 22px;
+                    gap: 7px;
+                    height: 40px;
+                    padding: 0 10px 0 4px;
+                    background: rgba(59,130,246,0.05) !important;
+                    border: 1px solid rgba(59,130,246,0.12) !important;
+                    border-radius: 999px;
                     cursor: pointer;
                     transition: all 0.2s ease;
-                    color: #94A3B8;
+                    color: #64748B !important;
                 }
 
                 .lux-user-pill:hover {
-                    background: rgba(255, 255, 255, 0.08);
-                    border-color: rgba(212, 175, 55, 0.4);
-                    color: #FFFFFF;
+                    background: rgba(59,130,246,0.09) !important;
+                    border-color: rgba(59,130,246,0.25) !important;
                 }
 
                 .lux-avatar {
-                    width: 34px; height: 34px;
+                    width: 32px; height: 32px;
                     border-radius: 50%;
-                    background: linear-gradient(135deg, #D4AF37, #B8860B);
+                    background: linear-gradient(135deg, #3B82F6, #1D4ED8) !important;
                     display: flex; align-items: center; justify-content: center;
-                    color: #0B1220; font-weight: 700; font-size: 0.9rem;
-                    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.2);
+                    color: #FFFFFF; font-weight: 700; font-size: 0.85rem;
+                    box-shadow: 0 2px 8px rgba(59,130,246,0.2);
                     overflow: hidden;
                 }
                 
                 .lux-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-                .lux-chevron {
-                    transition: transform 0.2s ease;
-                }
-                .lux-chevron.open {
-                    transform: rotate(180deg);
-                }
+                .lux-chevron { transition: transform 0.2s ease; }
+                .lux-chevron.open { transform: rotate(180deg); }
 
-                /* DROPDOWN MENU */
                 .lux-dropdown-menu {
                     position: absolute;
-                    top: calc(100% + 12px);
+                    top: calc(100% + 10px);
                     right: 0;
                     width: 240px;
-                    background: #FFFFFF;
-                    border: 1px solid #E2E8F0;
-                    border-radius: 12px;
-                    box-shadow: 0 10px 40px -10px rgba(11, 18, 32, 0.2);
+                    background: rgba(255,255,255,0.97);
+                    border: 1px solid rgba(59,130,246,0.12);
+                    border-radius: 16px;
+                    box-shadow: 0 12px 40px rgba(59,130,246,0.12), 0 4px 12px rgba(15,23,42,0.06);
                     padding: 8px 0;
                     animation: luxDropIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
                     transform-origin: top right;
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
+                    z-index: 9999;
                 }
 
                 @keyframes luxDropIn {
-                    from { opacity: 0; transform: scale(0.95) translateY(-10px); }
-                    to { opacity: 1; transform: scale(1) translateY(0); }
+                    from { opacity: 0; transform: scale(0.95) translateY(-8px); }
+                    to   { opacity: 1; transform: scale(1) translateY(0); }
                 }
 
-                .lux-dropdown-header {
-                    padding: 12px 16px;
-                }
-
-                .lux-dropdown-name {
-                    font-size: 0.95rem;
-                    font-weight: 700;
-                    color: #0B1220;
-                }
-
-                .lux-dropdown-email {
-                    font-size: 0.8rem;
-                    color: #64748B;
-                    margin-top: 2px;
-                }
-
-                .lux-dropdown-divider {
-                    height: 1px;
-                    background: #F1F5F9;
-                    margin: 4px 0;
-                }
+                .lux-dropdown-header { padding: 12px 16px; }
+                .lux-dropdown-name { font-size: 0.92rem; font-weight: 700; color: #0F172A; }
+                .lux-dropdown-email { font-size: 0.78rem; color: #64748B; margin-top: 2px; }
+                .lux-dropdown-divider { height: 1px; background: rgba(59,130,246,0.07); margin: 4px 0; }
 
                 .lux-dropdown-item {
                     display: flex;
                     align-items: center;
-                    gap: 12px;
+                    gap: 10px;
                     width: 100%;
-                    padding: 10px 16px;
+                    padding: 9px 16px;
                     background: transparent;
                     border: none;
                     color: #475569;
-                    font-size: 0.9rem;
+                    font-size: 0.88rem;
                     font-weight: 500;
                     cursor: pointer;
-                    transition: background 0.2s, color 0.2s;
+                    transition: background 0.15s, color 0.15s;
                     text-align: left;
+                    font-family: inherit;
                 }
-
-                .lux-dropdown-item:hover {
-                    background: #F8FAFC;
-                    color: #0B1220;
-                }
-
-                .lux-dropdown-item.lux-danger {
-                    color: #DC2626;
-                }
-                .lux-dropdown-item.lux-danger:hover {
-                    background: #FEF2F2;
-                }
+                .lux-dropdown-item:hover { background: rgba(59,130,246,0.05); color: #0F172A; }
+                .lux-dropdown-item.lux-danger { color: #DC2626; }
+                .lux-dropdown-item.lux-danger:hover { background: rgba(239,68,68,0.06); }
 
                 .lux-incomplete-badge {
-                    padding: 6px 12px;
-                    background: rgba(212, 175, 55, 0.1);
-                    color: #D4AF37;
-                    border: 1px solid rgba(212, 175, 55, 0.3);
-                    border-radius: 20px;
-                    font-size: 0.8rem;
+                    padding: 5px 12px;
+                    background: rgba(245,158,11,0.08);
+                    color: #D97706;
+                    border: 1px solid rgba(245,158,11,0.2);
+                    border-radius: 999px;
+                    font-size: 0.78rem;
                     font-weight: 600;
                     cursor: pointer;
+                    font-family: inherit;
                     animation: pulse 2s infinite;
                 }
 
-                /* ── MOBILE NAVBAR ── */
                 .lux-hamburger {
                     display: none;
                     flex-direction: column;
                     gap: 5px;
                     background: transparent;
                     border: none;
-                    padding: 8px;
+                    padding: 6px;
                     cursor: pointer;
                 }
                 .lux-hamburger span {
                     display: block;
-                    width: 22px; height: 2px;
-                    background: #FFFFFF;
+                    width: 20px; height: 2px;
+                    background: #334155;
                     border-radius: 2px;
-                    transition: all 0.3s ease;
+                    transition: all 0.25s ease;
                 }
                 .lux-hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
                 .lux-hamburger.open span:nth-child(2) { opacity: 0; }
                 .lux-hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
 
-                /* MOBILE MENU */
                 .lux-mobile-overlay {
                     position: fixed;
                     inset: 0;
-                    top: 80px; /* Right below header */
-                    background: rgba(11, 18, 32, 0.6);
-                    backdrop-filter: blur(8px);
+                    top: 76px;
+                    background: rgba(15,23,42,0.25);
+                    backdrop-filter: blur(4px);
                     z-index: 999;
-                }
-                
-                .lux-header.lux-scrolled ~ .lux-mobile-overlay {
-                    top: 72px;
                 }
 
                 .lux-mobile-menu {
-                    background: #0B1220;
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-                    padding: 24px;
+                    background: rgba(255,255,255,0.97);
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
+                    border-bottom: 1px solid rgba(59,130,246,0.1);
+                    border-radius: 0 0 20px 20px;
+                    padding: 20px 20px 24px;
                     display: flex;
                     flex-direction: column;
-                    gap: 16px;
-                    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+                    gap: 12px;
+                    box-shadow: 0 20px 40px rgba(59,130,246,0.1);
+                    animation: mobileMenuIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+                }
+
+                @keyframes mobileMenuIn {
+                    from { opacity: 0; transform: translateY(-10px); }
+                    to   { opacity: 1; transform: translateY(0); }
                 }
 
                 .lux-mobile-user {
                     display: flex;
                     align-items: center;
-                    gap: 16px;
-                    padding-bottom: 16px;
-                    border-bottom: 1px solid rgba(255,255,255,0.1);
+                    gap: 12px;
+                    padding-bottom: 14px;
+                    border-bottom: 1px solid rgba(59,130,246,0.08);
                 }
 
-                .lux-mobile-user-name { color: #FFFFFF; font-weight: 700; font-size: 1.1rem; }
-                .lux-mobile-user-meta { color: #94A3B8; font-size: 0.85rem; }
-
-                .lux-mobile-nav {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 4px;
+                .lux-mobile-avatar {
+                    width: 42px; height: 42px;
+                    border-radius: 50%;
+                    background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+                    display: flex; align-items: center; justify-content: center;
+                    color: white; font-weight: 700; font-size: 1rem;
+                    overflow: hidden;
+                    box-shadow: 0 4px 12px rgba(59,130,246,0.2);
+                    flex-shrink: 0;
                 }
+                .lux-mobile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+                .lux-mobile-user-name { color: #0F172A; font-weight: 700; font-size: 0.95rem; }
+                .lux-mobile-user-meta { color: #64748B; font-size: 0.8rem; margin-top: 1px; }
+
+                .lux-mobile-nav { display: flex; flex-direction: column; gap: 2px; }
 
                 .lux-mobile-link {
                     display: flex;
                     align-items: center;
-                    gap: 16px;
+                    gap: 12px;
                     width: 100%;
-                    padding: 12px;
+                    padding: 10px 12px;
                     background: transparent;
                     border: none;
-                    color: #94A3B8;
-                    font-size: 1rem;
+                    color: #64748B;
+                    font-size: 0.9rem;
                     font-weight: 500;
                     cursor: pointer;
-                    border-radius: 8px;
+                    border-radius: 10px;
                     text-align: left;
+                    transition: all 0.2s;
+                    font-family: inherit;
                 }
 
                 .lux-mobile-link.active, .lux-mobile-link:hover {
-                    background: rgba(212, 175, 55, 0.1);
-                    color: #D4AF37;
+                    background: rgba(59,130,246,0.07);
+                    color: #3B82F6;
                 }
 
-                .lux-mobile-link.lux-danger {
-                    color: #EF4444;
-                }
-                .lux-mobile-link.lux-danger:hover {
-                    background: rgba(239, 68, 68, 0.1);
+                .lux-mobile-icon {
+                    font-size: 1rem;
+                    display: flex;
+                    align-items: center;
                 }
 
-                /* RESPONSIVENESS */
+                .lux-mobile-link.lux-danger { color: #EF4444; }
+                .lux-mobile-link.lux-danger:hover { background: rgba(239,68,68,0.07); }
+
                 @media (max-width: 1100px) {
-                    .lux-container {
-                        grid-template-columns: auto 1fr auto;
-                        gap: 24px;
-                    }
-                    .lux-nav-link { padding: 0 12px; }
+                    .lux-container { grid-template-columns: auto 1fr auto; gap: 16px; }
+                    .lux-nav-link { padding: 0 11px; }
                 }
 
                 @media (max-width: 850px) {
@@ -627,8 +590,8 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
                 }
                 
                 @media (max-width: 600px) {
-                    .lux-container { padding: 0 20px; }
-                    .lux-icon-btn { display: none; } /* Hide bell on tiny screens to save space */
+                    .lux-container { padding: 0 16px; }
+                    .lux-icon-btn { display: none; }
                 }
             `}</style>
         </>

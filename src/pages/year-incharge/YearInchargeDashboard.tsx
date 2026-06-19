@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import YearInchargeNav from '../../components/YearInchargeNav';
-import LoadingSpinner from '../../components/LoadingSpinner';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
+import { YearInchargeService } from '../../services/yearInchargeService';
 
 interface User {
     name: string;
@@ -28,110 +28,78 @@ const YearInchargeDashboard: React.FC = () => {
         approved: 0,
         rejected: 0
     });
+    const [filter, setFilter] = useState<'total' | 'today' | 'weekly' | 'monthly'>('total');
 
     const navigate = useNavigate();
     const [zoomingPath, setZoomingPath] = useState<string | null>(null);
 
-    useEffect(() => {
-        let isMounted = true;
+    const [error, setError] = useState<string | null>(null);
 
-        const fetchDashboardData = async () => {
-            const token = localStorage.getItem('token');
-            if (!token) {
+    const fetchDashboardData = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/year-incharge-login');
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+
+        try {
+            // Run requests in parallel using service
+            const [profileResponse, statsData, pendingResponse] = await Promise.all([
+                axios.get(`${import.meta.env.VITE_API_URL}/incharge/profile`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }),
+                YearInchargeService.getStats(filter),
+                YearInchargeService.getPendingOutpasses(1, 100)
+            ]);
+
+            // Handle Profile Response
+            if (profileResponse.status === 200) {
+                const userData = profileResponse.data.user || profileResponse.data.yearincharge || profileResponse.data;
+                setUser({
+                    name: userData.name || "Year Incharge",
+                    registerNumber: userData.registerNumber || "INCHARGE001",
+                    department: userData.department || "Administration",
+                    year: userData.year || "N/A",
+                    email: userData.email || "incharge@jit.edu"
+                });
+            }
+
+            // Handle Stats & Pending Responses
+            setStats(statsData);
+
+            // Check for Emergency Requests
+            const emergencyRequests = pendingResponse.data.filter((o: any) =>
+                (o.outpasstype || '').toLowerCase() === 'emergency'
+            );
+
+            if (emergencyRequests.length > 0) {
+                toast.error(`⚠️ ${emergencyRequests.length} Emergency Request(s) Pending!`, {
+                    position: "top-center",
+                    autoClose: false,
+                    theme: "colored",
+                    style: { fontWeight: 'bold', fontSize: '16px' }
+                });
+            }
+
+        } catch (err: any) {
+            console.error("Dashboard data fetch error:", err);
+            if (err?.response?.status === 401 || err?.response?.status === 403) {
                 navigate('/year-incharge-login');
                 return;
             }
+            setError("Failed to update dashboard statistics");
+            toast.error("Failed to update dashboard statistics");
+        } finally {
+            setLoading(false);
+        }
+    };
 
-            try {
-                // Run requests in parallel
-                const [profileResult, outpassResult] = await Promise.allSettled([
-                    axios.get(`${import.meta.env.VITE_API_URL}/incharge/profile`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    }),
-                    axios.get(`${import.meta.env.VITE_API_URL}/incharge/outpass/list`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    })
-                ]);
-
-                if (!isMounted) return;
-
-                // Handle Profile Response
-                if (profileResult.status === 'fulfilled') {
-                    const profileResponse = profileResult.value;
-                    if (profileResponse.status === 200) {
-                        const userData = profileResponse.data.user || profileResponse.data;
-                        setUser({
-                            name: userData.name || "Year Incharge",
-                            registerNumber: userData.registerNumber || "INCHARGE001",
-                            department: userData.department || "Administration",
-                            year: userData.year || "N/A",
-                            email: userData.email || "incharge@jit.edu"
-                        });
-                    }
-                } else {
-                    console.error("Failed to fetch profile:", profileResult.reason);
-                    if (profileResult.reason?.response?.status === 401) {
-                        navigate('/year-incharge-login');
-                        return;
-                    }
-                }
-
-                // Handle Outpass Response
-                if (outpassResult.status === 'fulfilled') {
-                    const outpassResponse = outpassResult.value;
-                    if (outpassResponse.status === 200) {
-                        const outpasses = outpassResponse.data.outpasses || outpassResponse.data.outpasslist || [];
-                        const pending = outpasses.filter((o: any) =>
-                            o.staffapprovalstatus === 'approved' &&
-                            o.yearinchargeapprovalstatus === 'pending'
-                        ).length;
-
-                        const approved = outpasses.filter((o: any) => o.yearinchargeapprovalstatus === 'approved').length;
-                        const rejected = outpasses.filter((o: any) => o.yearinchargeapprovalstatus === 'rejected').length;
-
-                        setStats({
-                            total: outpasses.length,
-                            pending,
-                            approved,
-                            rejected
-                        });
-
-                        // Check for Emergency Requests
-                        const emergencyRequests = outpasses.filter((o: any) =>
-                            (o.outpasstype || o.outpassType || '').toLowerCase() === 'emergency' &&
-                            o.yearinchargeapprovalstatus === 'pending'
-                        );
-
-                        if (emergencyRequests.length > 0) {
-                            toast.error(`⚠️ ${emergencyRequests.length} Emergency Request(s) Pending!`, {
-                                position: "top-center",
-                                autoClose: false,
-                                theme: "colored",
-                                style: { fontWeight: 'bold', fontSize: '16px' }
-                            });
-                        }
-                    }
-                } else {
-                    console.error("Failed to fetch outpasses:", outpassResult.reason);
-                    if (outpassResult.reason?.response?.status === 401) {
-                        navigate('/year-incharge-login');
-                        return;
-                    }
-                    // Only toast if it's NOT a 401 (which is handled above)
-                    toast.error("Failed to update dashboard statistics");
-                }
-
-            } catch (error) {
-                console.error("Unexpected error in dashboard fetch:", error);
-            } finally {
-                if (isMounted) setLoading(false);
-            }
-        };
-
+    useEffect(() => {
         fetchDashboardData();
-
-        return () => { isMounted = false; };
-    }, [navigate]);
+    }, [navigate, filter]);
 
     const handleQuickAction = (path: string) => {
         setZoomingPath(path);
@@ -141,7 +109,73 @@ const YearInchargeDashboard: React.FC = () => {
     };
 
     if (loading) {
-        return <LoadingSpinner />;
+        return (
+            <div className="page-container dashboard-page">
+                <ToastContainer position="bottom-right" />
+                <YearInchargeNav />
+                <div className="content-wrapper" style={{ marginTop: '80px' }}>
+                    <div className="dashboard-hero">
+                        <div className="hero-welcome" style={{ width: '50%' }}>
+                            <div className="lux-skeleton" style={{ width: '120px', height: '24px', borderRadius: '12px', marginBottom: '16px' }}></div>
+                            <div className="lux-skeleton" style={{ width: '280px', height: '40px', borderRadius: '12px', marginBottom: '12px' }}></div>
+                            <div className="lux-skeleton" style={{ width: '180px', height: '20px', borderRadius: '12px' }}></div>
+                        </div>
+                        <div className="hero-stats-grid">
+                            <div className="stat-card">
+                                <div className="lux-skeleton" style={{ width: '130px', height: '50px', borderRadius: '12px' }}></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="dashboard-layout">
+                        <div className="main-content">
+                            <section className="section">
+                                <div className="lux-skeleton" style={{ width: '150px', height: '24px', borderRadius: '12px', marginBottom: '20px' }}></div>
+                                <div className="quick-links-grid">
+                                    {[1, 2, 3].map((i) => (
+                                        <div key={i} className="action-card" style={{ minHeight: '140px', justifyContent: 'center' }}>
+                                            <div className="lux-skeleton" style={{ width: '50px', height: '50px', borderRadius: '50%', marginBottom: '12px' }}></div>
+                                            <div className="lux-skeleton" style={{ width: '100px', height: '16px', borderRadius: '8px' }}></div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="page-container dashboard-page">
+                <ToastContainer position="bottom-right" />
+                <YearInchargeNav />
+                <div className="content-wrapper" style={{ paddingTop: '100px', textAlign: 'center' }}>
+                    <div className="card" style={{ padding: '40px', maxWidth: '500px', margin: '0 auto', background: 'white', borderRadius: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+                        <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px' }}>⚠️</span>
+                        <h2 style={{ color: '#ef4444', marginBottom: '12px', fontWeight: 700 }}>Unable to Load Dashboard</h2>
+                        <p style={{ color: '#64748b', marginBottom: '24px', fontSize: '0.95rem' }}>{error}</p>
+                        <button 
+                            onClick={fetchDashboardData} 
+                            style={{ 
+                                margin: 0, 
+                                padding: '12px 24px', 
+                                background: '#0047AB', 
+                                color: 'white', 
+                                border: 'none', 
+                                borderRadius: '10px', 
+                                fontWeight: '600', 
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            🔄 Retry Loading
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -158,9 +192,32 @@ const YearInchargeDashboard: React.FC = () => {
                         </div>
                         <div>
                             <h1 style={{ color: 'skyblue', marginTop: '20px' }}>Hello, {user.name}! 👋</h1>
-                            <p style={{ color: 'skyblue' }}>
+                            <p style={{ color: 'skyblue', marginBottom: '16px' }}>
                                 Year Incharge • {user.department}
                             </p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <label style={{ color: 'skyblue', fontSize: '0.85rem', fontWeight: 600 }}>Filter stats:</label>
+                                <select
+                                    value={filter}
+                                    onChange={(e) => setFilter(e.target.value as any)}
+                                    style={{
+                                        background: 'rgba(255, 255, 255, 0.15)',
+                                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                                        borderRadius: '8px',
+                                        color: 'white',
+                                        padding: '6px 12px',
+                                        fontSize: '0.85rem',
+                                        fontWeight: 600,
+                                        outline: 'none',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    <option value="total" style={{ color: '#1e293b' }}>Overall</option>
+                                    <option value="today" style={{ color: '#1e293b' }}>Today</option>
+                                    <option value="weekly" style={{ color: '#1e293b' }}>Weekly</option>
+                                    <option value="monthly" style={{ color: '#1e293b' }}>Monthly</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                     <div className="hero-stats-grid">
@@ -171,7 +228,13 @@ const YearInchargeDashboard: React.FC = () => {
                                 <span className="stat-label">Total Requests</span>
                             </div>
                         </div>
-                        {/* cmd
+                        <div className="stat-card">
+                            <div className="stat-icon yellow">⏳</div>
+                            <div className="stat-info">
+                                <span className="stat-value">{stats.pending}</span>
+                                <span className="stat-label">Pending</span>
+                            </div>
+                        </div>
                         <div className="stat-card">
                             <div className="stat-icon green">✅</div>
                             <div className="stat-info">
@@ -186,7 +249,6 @@ const YearInchargeDashboard: React.FC = () => {
                                 <span className="stat-label">Rejected</span>
                             </div>
                         </div>
-                        cmd */}
                     </div>
                 </div>
 

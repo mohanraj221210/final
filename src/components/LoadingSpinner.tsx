@@ -2,43 +2,54 @@ import React from 'react';
 
 const LoadingSpinner: React.FC = () => {
     return (
-        <div className="loading-spinner-container">
-            <div className="loading-spinner"></div>
-            <p>Loading...</p>
-            <style>{`
-                .loading-spinner-container {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    height: 100vh;
-                    width: 100%;
-                    background: rgba(255, 255, 255, 0.8);
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    z-index: 9999;
-                }
-                
-                .loading-spinner {
-                    border: 4px solid rgba(0, 0, 0, 0.1);
-                    width: 40px;
-                    height: 40px;
-                    border-radius: 50%;
-                    border-left-color: #09f;
-                    animation: spin 1s linear infinite;
-                    margin-bottom: 15px;
-                }
-                
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                }
+        <div className="pb-loading-page">
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+                {/* Animated logo mark */}
+                <div style={{
+                    width: '64px',
+                    height: '64px',
+                    background: 'linear-gradient(135deg, rgba(59,130,246,0.1), rgba(96,165,250,0.06))',
+                    border: '1px solid rgba(59,130,246,0.15)',
+                    borderRadius: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    animation: 'pbPulseScale 1.8s ease-in-out infinite',
+                }}>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                    </svg>
+                </div>
+                {/* Spinner */}
+                <div className="pb-loading-spinner" />
+                {/* Text */}
+                <div style={{ textAlign: 'center', gap: '4px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <span className="pb-loading-text">Loading your portal...</span>
+                    <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>JIT Campus One</span>
+                </div>
+            </div>
 
-                .loading-spinner-container p {
-                    font-family: 'Poppins', sans-serif;
-                    color: #555;
-                    font-weight: 500;
+            {/* Skeleton preview cards */}
+            <div style={{ width: '100%', maxWidth: '360px', padding: '0 24px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div className="pb-skeleton-card">
+                    <div className="pb-skeleton" style={{ height: '14px', width: '60%' }} />
+                    <div className="pb-skeleton" style={{ height: '10px', width: '40%' }} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className="pb-skeleton-card" style={{ padding: '14px', alignItems: 'center', minHeight: '72px' }}>
+                            <div className="pb-skeleton" style={{ width: '36px', height: '36px', borderRadius: '10px' }} />
+                            <div className="pb-skeleton" style={{ height: '8px', width: '80%' }} />
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <style>{`
+                @keyframes pbPulseScale {
+                    0%, 100% { transform: scale(1); opacity: 1; }
+                    50% { transform: scale(1.06); opacity: 0.85; }
                 }
             `}</style>
         </div>
