@@ -43,21 +43,21 @@ const Dashboard: React.FC = () => {
                     axios.get(`${import.meta.env.VITE_API_URL}/api/profile`, {
                         headers: { authorization: `Bearer ${token}` },
                     }).catch(e => { console.error('Profile fetch error', e); return null; }),
-                    
+
                     axios.get(`${import.meta.env.VITE_API_URL}/api/outpass/stats`, {
                         headers: { authorization: `Bearer ${token}` },
                     }).catch(e => { console.error('Stats fetch error', e); return null; })
                 ]);
-                
+
                 if (profileRes?.status === 200) {
                     setUser(profileRes.data.user);
                     setImageError(false);
                 }
-                
+
                 if (statsRes?.status === 200 && statsRes.data && statsRes.data.stats && statsRes.data.stats.length > 0) {
-                    const statsData = statsRes.data.stats[0].stats && statsRes.data.stats[0].stats.length > 0 
-                                      ? statsRes.data.stats[0].stats[0] 
-                                      : {};
+                    const statsData = statsRes.data.stats[0].stats && statsRes.data.stats[0].stats.length > 0
+                        ? statsRes.data.stats[0].stats[0]
+                        : {};
                     setOutpassStats({
                         pending: statsData.pending || 0,
                         approved: statsData.approved || 0,
@@ -65,7 +65,7 @@ const Dashboard: React.FC = () => {
                         checkedOut: 0,
                         checkedIn: 0,
                     });
-                    
+
                     const passes = statsRes.data.stats[0].recentpasses || [];
                     setRecentPasses(passes);
                 }
@@ -120,12 +120,12 @@ const Dashboard: React.FC = () => {
                             ))}
                         </div>
                         <div className="lux-dashboard-grid" style={{ marginTop: '32px' }}>
-                             <div className="lux-grid-col">
-                                 <div className="lux-widget-card lux-skeleton" style={{ height: '200px', borderRadius: '24px' }}></div>
-                             </div>
-                             <div className="lux-grid-col">
-                                 <div className="lux-widget-card lux-skeleton" style={{ height: '250px', borderRadius: '24px' }}></div>
-                             </div>
+                            <div className="lux-grid-col">
+                                <div className="lux-widget-card lux-skeleton" style={{ height: '200px', borderRadius: '24px' }}></div>
+                            </div>
+                            <div className="lux-grid-col">
+                                <div className="lux-widget-card lux-skeleton" style={{ height: '250px', borderRadius: '24px' }}></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -144,203 +144,202 @@ const Dashboard: React.FC = () => {
     return (
         <div className="student-page dashboard-page-view animate-page-enter">
             <ToastContainer position="top-center" />
-            
+
             <div className="lux-desktop-view">
                 <StudentHeader />
 
                 <div className="content-wrapper">
-                
-                {/* ── HERO SECTION ── */}
-                <div className="lux-hero-card animate-hero">
-                    <div className="lux-hero-bg-glow"></div>
-                    <div className="lux-hero-content">
-                        <div className="lux-avatar-container">
-                            {!imageError && user.photo ? (
-                                <img
-                                    src={user.photo.startsWith("blob:") || user.photo.startsWith("data:") || user.photo.startsWith("http")
-                                        ? user.photo
-                                        : `${import.meta.env.VITE_CDN_URL || ''}${user.photo.startsWith('/') ? user.photo.slice(1) : user.photo}`
-                                    }
-                                    alt="Profile"
-                                    className="lux-avatar-img"
-                                    onError={() => setImageError(true)}
-                                />
-                            ) : (
-                                <div className="lux-avatar-fallback">
-                                    {user.name ? user.name.charAt(0).toUpperCase() : 'S'}
-                                </div>
-                            )}
-                            <div className="lux-status-dot"></div>
-                        </div>
-                        <div className="lux-hero-text">
-                            <span className="lux-badge-gold">Student Portal</span>
-                            <h1 className="lux-hero-name">Welcome back, {user.name || 'Student'}</h1>
-                            <p className="lux-hero-meta">
-                                {user.registerNumber || 'Reg No. N/A'} &nbsp;•&nbsp; {user.department || 'Department N/A'}
-                            </p>
-                        </div>
-                    </div>
-                </div>
 
-                {/* ── QUICK ACTIONS (Priority 1) ── */}
-                <div className="lux-quick-actions animate-stagger-1">
-                    <button className="lux-qa-card" onClick={() => handleNavigation('/new-outpass')}>
-                        <div className="lux-qa-gloss"></div>
-                        <div className="lux-qa-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                        </div>
-                        <div className="lux-qa-content">
-                            <span className="lux-qa-title">Apply Outpass</span>
-                            <span className="lux-qa-subtitle">Submit a new request</span>
-                        </div>
-                    </button>
-                    <button className="lux-qa-card" onClick={() => handleNavigation('/outpass')}>
-                        <div className="lux-qa-gloss"></div>
-                        <div className="lux-qa-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        </div>
-                        <div className="lux-qa-content">
-                            <span className="lux-qa-title">Track Outpass</span>
-                            <span className="lux-qa-subtitle">View request status</span>
-                        </div>
-                    </button>
-                    <button className="lux-qa-card" onClick={() => handleNavigation('/staffs')}>
-                        <div className="lux-qa-gloss"></div>
-                        <div className="lux-qa-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                        </div>
-                        <div className="lux-qa-content">
-                            <span className="lux-qa-title">Staff Directory</span>
-                            <span className="lux-qa-subtitle">Browse faculty members</span>
-                        </div>
-                    </button>
-                    <button className="lux-qa-card" onClick={() => handleNavigation('/profile')}>
-                        <div className="lux-qa-gloss"></div>
-                        <div className="lux-qa-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                        </div>
-                        <div className="lux-qa-content">
-                            <span className="lux-qa-title">Profile</span>
-                            <span className="lux-qa-subtitle">Manage personal details</span>
-                        </div>
-                    </button>
-                </div>
-
-                {/* ── DASHBOARD GRID ── */}
-                <div className="lux-dashboard-grid animate-stagger-2">
-                    
-                    {/* LEFT COLUMN */}
-                    <div className="lux-grid-col">
-                        
-                        {/* OUTPASS STATUS WIDGET */}
-                        <div className="lux-widget-card lux-outpass-widget">
-                            <div className="lux-widget-header">
-                                <h2>Current Outpass Status</h2>
-                                <button className="lux-text-btn" onClick={() => handleNavigation('/outpass')}>View All</button>
-                            </div>
-                            <div className="lux-outpass-badges">
-                                <div className="lux-outpass-stat">
-                                    <span className="lux-stat-val text-pending">{outpassStats.pending}</span>
-                                    <span className="lux-stat-lbl">Pending</span>
-                                </div>
-                                <div className="lux-outpass-stat">
-                                    <span className="lux-stat-val text-approved">{outpassStats.approved}</span>
-                                    <span className="lux-stat-lbl">Approved</span>
-                                </div>
-                                <div className="lux-outpass-stat">
-                                    <span className="lux-stat-val text-rejected">{outpassStats.rejected}</span>
-                                    <span className="lux-stat-lbl">Rejected</span>
-                                </div>
-                                <div className="lux-outpass-stat">
-                                    <span className="lux-stat-val text-navy">{outpassStats.checkedOut}</span>
-                                    <span className="lux-stat-lbl">Checked Out</span>
-                                </div>
-                                <div className="lux-outpass-stat">
-                                    <span className="lux-stat-val text-green">{outpassStats.checkedIn}</span>
-                                    <span className="lux-stat-lbl">Checked In</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* ACADEMIC SUMMARY */}
-                        <div className="lux-widget-card">
-                            <div className="lux-widget-header">
-                                <h2>Academic Information</h2>
-                            </div>
-                            <div className="lux-academic-grid">
-                                <div className="lux-metric-card">
-                                    <div className="lux-metric-icon bg-gold-light text-gold">
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    {/* ── HERO SECTION ── */}
+                    <div className="lux-hero-card animate-hero">
+                        <div className="lux-hero-bg-glow"></div>
+                        <div className="lux-hero-content">
+                            <div className="lux-avatar-container">
+                                {!imageError && user.photo ? (
+                                    <img
+                                        src={user.photo.startsWith("blob:") || user.photo.startsWith("data:") || user.photo.startsWith("http")
+                                            ? user.photo
+                                            : `${import.meta.env.VITE_CDN_URL || ''}${user.photo.startsWith('/') ? user.photo.slice(1) : user.photo}`
+                                        }
+                                        alt="Profile"
+                                        className="lux-avatar-img"
+                                        onError={() => setImageError(true)}
+                                    />
+                                ) : (
+                                    <div className="lux-avatar-fallback">
+                                        {user.name ? user.name.charAt(0).toUpperCase() : 'S'}
                                     </div>
-                                    <div className="lux-metric-info">
-                                        <span className="lux-metric-val">{user.cgpa || '8.25'}</span>
-                                        <span className="lux-metric-lbl">Current CGPA</span>
-                                    </div>
-                                </div>
-                                <div className="lux-metric-card">
-                                    <div className="lux-metric-icon bg-blue-light text-blue">
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                                    </div>
-                                    <div className="lux-metric-info">
-                                        <span className="lux-metric-val">85%</span>
-                                        <span className="lux-metric-lbl">Attendance</span>
-                                    </div>
-                                </div>
-                                <div className="lux-metric-card">
-                                    <div className="lux-metric-icon bg-red-light text-red">
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                    </div>
-                                    <div className="lux-metric-info">
-                                        <span className="lux-metric-val">{user.arrears || '0'}</span>
-                                        <span className="lux-metric-lbl">Standing Arrears</span>
-                                    </div>
-                                </div>
-                                <div className="lux-metric-card">
-                                    <div className="lux-metric-icon bg-navy-light text-navy">
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-                                    </div>
-                                    <div className="lux-metric-info">
-                                        <span className="lux-metric-val">Sem {user.semester || 'N/A'}</span>
-                                        <span className="lux-metric-lbl">{user.year || 'Year N/A'}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* RIGHT COLUMN */}
-                    <div className="lux-grid-col">
-                        
-                        {/* RECENT PASSES WIDGET */}
-                        <div className="lux-widget-card lux-notices-widget">
-                            <div className="lux-widget-header">
-                                <h2>Recent Outpass Activity</h2>
-                                <button className="lux-text-btn" onClick={() => handleNavigation('/outpass')}>View All</button>
-                            </div>
-                            <div className="lux-notices-list">
-                                {recentPasses.length > 0 ? recentPasses.map((pass: any) => (
-                                    <div className="lux-notice-item" key={pass._id}>
-                                        <div className={`lux-notice-badge ${
-                                            pass.status === 'approved' ? 'badge-info' : 
-                                            pass.status === 'rejected' ? 'badge-urgent' : 'badge-event'
-                                        }`}>
-                                            {pass.status}
-                                        </div>
-                                        <div className="lux-notice-content">
-                                            <h4 style={{ textTransform: 'capitalize' }}>{pass.reason}</h4>
-                                            <p>From: {new Date(pass.fromDate).toLocaleDateString()} To: {new Date(pass.toDate).toLocaleDateString()}</p>
-                                            <span className="lux-notice-date">Applied: {new Date(pass.createdAt).toLocaleDateString()}</span>
-                                        </div>
-                                    </div>
-                                )) : (
-                                    <p style={{fontSize: '13px', color: 'var(--text-3)'}}>No recent activity found.</p>
                                 )}
+                                <div className="lux-status-dot"></div>
+                            </div>
+                            <div className="lux-hero-text">
+                                <span className="lux-badge-gold">Student Portal</span>
+                                <h1 className="lux-hero-name">Welcome back, {user.name || 'Student'}</h1>
+                                <p className="lux-hero-meta">
+                                    {user.registerNumber || 'Reg No. N/A'} &nbsp;•&nbsp; {user.department || 'Department N/A'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ── QUICK ACTIONS (Priority 1) ── */}
+                    <div className="lux-quick-actions animate-stagger-1">
+                        <button className="lux-qa-card" onClick={() => handleNavigation('/new-outpass')}>
+                            <div className="lux-qa-gloss"></div>
+                            <div className="lux-qa-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
+                            </div>
+                            <div className="lux-qa-content">
+                                <span className="lux-qa-title">Apply Outpass</span>
+                                <span className="lux-qa-subtitle">Submit a new request</span>
+                            </div>
+                        </button>
+                        <button className="lux-qa-card" onClick={() => handleNavigation('/outpass')}>
+                            <div className="lux-qa-gloss"></div>
+                            <div className="lux-qa-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                            </div>
+                            <div className="lux-qa-content">
+                                <span className="lux-qa-title">Track Outpass</span>
+                                <span className="lux-qa-subtitle">View request status</span>
+                            </div>
+                        </button>
+                        <button className="lux-qa-card" onClick={() => handleNavigation('/staffs')}>
+                            <div className="lux-qa-gloss"></div>
+                            <div className="lux-qa-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                            </div>
+                            <div className="lux-qa-content">
+                                <span className="lux-qa-title">Staff Directory</span>
+                                <span className="lux-qa-subtitle">Browse faculty members</span>
+                            </div>
+                        </button>
+                        <button className="lux-qa-card" onClick={() => handleNavigation('/profile')}>
+                            <div className="lux-qa-gloss"></div>
+                            <div className="lux-qa-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                            </div>
+                            <div className="lux-qa-content">
+                                <span className="lux-qa-title">Profile</span>
+                                <span className="lux-qa-subtitle">Manage personal details</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    {/* ── DASHBOARD GRID ── */}
+                    <div className="lux-dashboard-grid animate-stagger-2">
+
+                        {/* LEFT COLUMN */}
+                        <div className="lux-grid-col">
+
+                            {/* OUTPASS STATUS WIDGET */}
+                            <div className="lux-widget-card lux-outpass-widget">
+                                <div className="lux-widget-header">
+                                    <h2>Current Outpass Status</h2>
+                                    <button className="lux-text-btn" onClick={() => handleNavigation('/outpass')}>View All</button>
+                                </div>
+                                <div className="lux-outpass-badges">
+                                    <div className="lux-outpass-stat">
+                                        <span className="lux-stat-val text-pending">{outpassStats.pending}</span>
+                                        <span className="lux-stat-lbl">Pending</span>
+                                    </div>
+                                    <div className="lux-outpass-stat">
+                                        <span className="lux-stat-val text-approved">{outpassStats.approved}</span>
+                                        <span className="lux-stat-lbl">Approved</span>
+                                    </div>
+                                    <div className="lux-outpass-stat">
+                                        <span className="lux-stat-val text-rejected">{outpassStats.rejected}</span>
+                                        <span className="lux-stat-lbl">Rejected</span>
+                                    </div>
+                                    <div className="lux-outpass-stat">
+                                        <span className="lux-stat-val text-navy">{outpassStats.checkedOut}</span>
+                                        <span className="lux-stat-lbl">Checked Out</span>
+                                    </div>
+                                    <div className="lux-outpass-stat">
+                                        <span className="lux-stat-val text-green">{outpassStats.checkedIn}</span>
+                                        <span className="lux-stat-lbl">Checked In</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* ACADEMIC SUMMARY */}
+                            <div className="lux-widget-card">
+                                <div className="lux-widget-header">
+                                    <h2>Academic Information</h2>
+                                </div>
+                                <div className="lux-academic-grid">
+                                    <div className="lux-metric-card">
+                                        <div className="lux-metric-icon bg-gold-light text-gold">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+                                        </div>
+                                        <div className="lux-metric-info">
+                                            <span className="lux-metric-val">{user.cgpa || '8.25'}</span>
+                                            <span className="lux-metric-lbl">Current CGPA</span>
+                                        </div>
+                                    </div>
+                                    <div className="lux-metric-card">
+                                        <div className="lux-metric-icon bg-blue-light text-blue">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+                                        </div>
+                                        <div className="lux-metric-info">
+                                            <span className="lux-metric-val">85%</span>
+                                            <span className="lux-metric-lbl">Attendance</span>
+                                        </div>
+                                    </div>
+                                    <div className="lux-metric-card">
+                                        <div className="lux-metric-icon bg-red-light text-red">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
+                                        </div>
+                                        <div className="lux-metric-info">
+                                            <span className="lux-metric-val">{user.arrears || '0'}</span>
+                                            <span className="lux-metric-lbl">Standing Arrears</span>
+                                        </div>
+                                    </div>
+                                    <div className="lux-metric-card">
+                                        <div className="lux-metric-icon bg-navy-light text-navy">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
+                                        </div>
+                                        <div className="lux-metric-info">
+                                            <span className="lux-metric-val">Sem {user.semester || 'N/A'}</span>
+                                            <span className="lux-metric-lbl">{user.year || 'Year N/A'}</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
+                        {/* RIGHT COLUMN */}
+                        <div className="lux-grid-col">
+
+                            {/* RECENT PASSES WIDGET */}
+                            <div className="lux-widget-card lux-notices-widget">
+                                <div className="lux-widget-header">
+                                    <h2>Recent Outpass Activity</h2>
+                                    <button className="lux-text-btn" onClick={() => handleNavigation('/outpass')}>View All</button>
+                                </div>
+                                <div className="lux-notices-list">
+                                    {recentPasses.length > 0 ? recentPasses.map((pass: any) => (
+                                        <div className="lux-notice-item" key={pass._id}>
+                                            <div className={`lux-notice-badge ${pass.status === 'approved' ? 'badge-info' :
+                                                pass.status === 'rejected' ? 'badge-urgent' : 'badge-event'
+                                                }`}>
+                                                {pass.status}
+                                            </div>
+                                            <div className="lux-notice-content">
+                                                <h4 style={{ textTransform: 'capitalize' }}>{pass.reason}</h4>
+                                                <p>From: {new Date(pass.fromDate).toLocaleDateString()} To: {new Date(pass.toDate).toLocaleDateString()}</p>
+                                                <span className="lux-notice-date">Applied: {new Date(pass.createdAt).toLocaleDateString()}</span>
+                                            </div>
+                                        </div>
+                                    )) : (
+                                        <p style={{ fontSize: '13px', color: 'var(--text-3)' }}>No recent activity found.</p>
+                                    )}
+                                </div>
+                            </div>
+
+                        </div>
                     </div>
                 </div>
-            </div>
             </div>
 
             {/* ── MOBILE VIEW ── */}
@@ -370,8 +369,8 @@ const Dashboard: React.FC = () => {
                             </div>
                             <div className="cred-hero-text">
                                 <span className="cred-badge-gold">Student Portal</span>
-                                <span className="cred-h2" style={{marginTop: '4px', color: 'var(--cred-gold)'}}>{user.name || 'Student'}</span>
-                                <span className="cred-p" style={{fontSize: '13px'}}>{user.department || 'Dept'} • Sem {user.semester || 'N/A'}</span>
+                                <span className="cred-h2" style={{ marginTop: '4px', color: 'var(--cred-gold)' }}>{user.name || 'Student'}</span>
+                                <span className="cred-p" style={{ fontSize: '13px' }}>{user.department || 'Dept'} • Sem {user.semester || 'N/A'}</span>
                             </div>
                         </div>
                         <button className="mob-logout-btn" onClick={handleLogout} aria-label="Log Out">
@@ -386,26 +385,26 @@ const Dashboard: React.FC = () => {
                     {/* ── QUICK ACTIONS ── */}
                     <div className="mob-quick-actions animate-cred-enter cred-stagger-2">
                         <button className="cred-card cred-qa-card" onClick={() => handleNavigation('/new-outpass')}>
-                            <div className="cred-qa-icon" style={{background: 'rgba(212, 158, 23, 0.39)', color: '#D4A017'}}>
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                            <div className="cred-qa-icon" style={{ background: 'rgba(212, 158, 23, 0.39)', color: '#D4A017' }}>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
                             </div>
                             <span>Apply Outpass</span>
                         </button>
                         <button className="cred-card cred-qa-card" onClick={() => handleNavigation('/outpass')}>
-                            <div className="cred-qa-icon" style={{background: 'rgba(37, 99, 235, 0.15)', color: '#3B82F6'}}>
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <div className="cred-qa-icon" style={{ background: 'rgba(37, 99, 235, 0.15)', color: '#3B82F6' }}>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
                             </div>
                             <span>Track Outpass</span>
                         </button>
                         <button className="cred-card cred-qa-card" onClick={() => handleNavigation('/staffs')}>
-                            <div className="cred-qa-icon" style={{background: 'rgba(16, 185, 129, 0.15)', color: '#10B981'}}>
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            <div className="cred-qa-icon" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981' }}>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
                             </div>
                             <span>Staff Directory</span>
                         </button>
                         <button className="cred-card cred-qa-card" onClick={() => handleNavigation('/profile')}>
-                            <div className="cred-qa-icon" style={{background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444'}}>
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            <div className="cred-qa-icon" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444' }}>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                             </div>
                             <span>Profile</span>
                         </button>
@@ -414,19 +413,19 @@ const Dashboard: React.FC = () => {
                     {/* ── OUTPASS STATUS ── */}
                     <div className="mob-section animate-cred-enter cred-stagger-3">
                         <div className="mob-section-header">
-                            <span className="cred-h2" style={{fontSize: '18px'}}>Outpass Status</span>
+                            <span className="cred-h2" style={{ fontSize: '18px' }}>Outpass Status</span>
                         </div>
                         <div className="mob-status-chips">
                             <div className="cred-card cred-status-chip">
-                                <span className="val" style={{color: 'var(--cred-warning)'}}>{outpassStats.pending}</span>
+                                <span className="val" style={{ color: 'var(--cred-warning)' }}>{outpassStats.pending}</span>
                                 <span className="cred-label">Pending</span>
                             </div>
                             <div className="cred-card cred-status-chip">
-                                <span className="val" style={{color: 'var(--cred-success)'}}>{outpassStats.approved}</span>
+                                <span className="val" style={{ color: 'var(--cred-success)' }}>{outpassStats.approved}</span>
                                 <span className="cred-label">Approved</span>
                             </div>
                             <div className="cred-card cred-status-chip">
-                                <span className="val" style={{color: 'var(--cred-blue)'}}>{outpassStats.checkedOut}</span>
+                                <span className="val" style={{ color: 'var(--cred-blue)' }}>{outpassStats.checkedOut}</span>
                                 <span className="cred-label">Checked Out</span>
                             </div>
                         </div>
@@ -435,7 +434,7 @@ const Dashboard: React.FC = () => {
                     {/* ── ACADEMIC SUMMARY ── */}
                     <div className="mob-section animate-cred-enter cred-stagger-4">
                         <div className="mob-section-header">
-                            <span className="cred-h2" style={{fontSize: '18px'}}>Academic Summary</span>
+                            <span className="cred-h2" style={{ fontSize: '18px' }}>Academic Summary</span>
                         </div>
                         <div className="mob-academic-grid">
                             <div className="cred-card cred-metric">
@@ -458,25 +457,25 @@ const Dashboard: React.FC = () => {
                     </div>
 
                     {/* ── RECENT PASSES ── */}
-                    <div className="mob-section animate-cred-enter cred-stagger-5" style={{marginBottom: '40px'}}>
+                    <div className="mob-section animate-cred-enter cred-stagger-5" style={{ marginBottom: '40px' }}>
                         <div className="mob-section-header">
-                            <span className="cred-h2" style={{fontSize: '18px'}}>Recent Activity</span>
+                            <span className="cred-h2" style={{ fontSize: '18px' }}>Recent Activity</span>
                             <button className="mob-btn-text" onClick={() => handleNavigation('/outpass')}>View All</button>
                         </div>
                         {recentPasses.length > 0 ? recentPasses.map((pass: any) => (
                             <div className="cred-card cred-notice-card" key={pass._id}>
-                                <div className="cred-notice-icon" style={{background: pass.status === 'approved' ? 'rgba(16, 185, 129, 0.1)' : pass.status === 'rejected' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)', color: pass.status === 'approved' ? '#10B981' : pass.status === 'rejected' ? '#EF4444' : '#F59E0B'}}>
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                                <div className="cred-notice-icon" style={{ background: pass.status === 'approved' ? 'rgba(16, 185, 129, 0.1)' : pass.status === 'rejected' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)', color: pass.status === 'approved' ? '#10B981' : pass.status === 'rejected' ? '#EF4444' : '#F59E0B' }}>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
                                 </div>
                                 <div className="cred-notice-content">
-                                    <span className="cred-h2" style={{fontSize: '15px', textTransform: 'capitalize'}}>{pass.reason}</span>
-                                    <span className="cred-p" style={{fontSize: '13px'}}>{new Date(pass.fromDate).toLocaleDateString()} &bull; <span style={{ textTransform: 'capitalize' }}>{pass.status}</span></span>
+                                    <span className="cred-h2" style={{ fontSize: '15px', textTransform: 'capitalize' }}>{pass.reason}</span>
+                                    <span className="cred-p" style={{ fontSize: '13px' }}>{new Date(pass.fromDate).toLocaleDateString()} &bull; <span style={{ textTransform: 'capitalize' }}>{pass.status}</span></span>
                                 </div>
                             </div>
                         )) : (
                             <div className="cred-card cred-notice-card">
                                 <div className="cred-notice-content">
-                                    <span className="cred-p" style={{fontSize: '13px'}}>No recent outpass activity.</span>
+                                    <span className="cred-p" style={{ fontSize: '13px' }}>No recent outpass activity.</span>
                                 </div>
                             </div>
                         )}
@@ -522,7 +521,7 @@ const Dashboard: React.FC = () => {
                     position: relative;
                     overflow: hidden;
                     box-shadow: 0 24px 64px rgba(0,0,0,0.4);
-                    border: 1px solid rgba(212, 175, 55, 0.3);
+                    border: 1px solid rgba(3, 203, 234, 0.99);
                     display: flex;
                     align-items: center;
                     backdrop-filter: blur(12px);
