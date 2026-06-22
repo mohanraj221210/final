@@ -4,11 +4,13 @@ import axios from 'axios';
 export const API_ENDPOINTS = {
     YEAR_INCHARGE: {
         STATS: '/incharge/outpass/stats',
-        OUTPASS_LIST: '/incharge/outpass/list?',
+        OUTPASS_LIST: '/incharge/outpass/list',
         PENDING_LIST: '/incharge/pending/outpass/list',
         DETAILS: (id: string) => `/incharge/outpass/${id}`,
         APPROVE: (id: string) => `/incharge/outpass/approve/${id}`,
         REJECT: (id: string) => `/incharge/outpass/reject/${id}`,
+        PROFILE: '/incharge/profile',
+        PROFILE_UPDATE: '/incharge/profile/update',
     }
 };
 
@@ -109,6 +111,21 @@ export interface MappedStats {
     pending: number;
     approved: number;
     rejected: number;
+}
+
+export interface MappedYearIncharge {
+    name: string;
+    email: string;
+    phone: string;
+    gender: string;
+    photo: string;
+    year: string;
+    role: string;
+    handlingyears: string[];
+    handlingbatches: string[];
+    handlingdepartments: string[];
+    registerNumber?: string;
+    department?: string;
 }
 
 export interface PaginatedResult<T> {
@@ -238,41 +255,135 @@ export function mapPaginatedResponse<T>(data: any, mapper: (item: any) => T): Pa
     };
 }
 
+export function mapProfileResponse(data: any): MappedYearIncharge {
+    const rawData = data?.yearincharge || data?.user || data || {};
+    return {
+        name: rawData.name || '',
+        email: rawData.email || '',
+        phone: rawData.phone || '',
+        gender: rawData.gender || 'male',
+        photo: rawData.photo || '',
+        year: rawData.year || '',
+        role: rawData.role || '',
+        handlingyears: Array.isArray(rawData.handlingyears) ? rawData.handlingyears : rawData.handlingyears ? [rawData.handlingyears] : [],
+        handlingbatches: Array.isArray(rawData.handlingbatches) ? rawData.handlingbatches : rawData.handlingbatches ? [rawData.handlingbatches] : [],
+        handlingdepartments: Array.isArray(rawData.handlingdepartments) ? rawData.handlingdepartments : rawData.handlingdepartments ? [rawData.handlingdepartments] : [],
+        registerNumber: rawData.registerNumber,
+        department: rawData.department,
+    };
+}
+
 // 4. Year Incharge Service Methods
 export const YearInchargeService = {
     getStats: async (filter?: string) => {
         const url = filter 
             ? `${API_ENDPOINTS.YEAR_INCHARGE.STATS}?filter=${filter}` 
             : API_ENDPOINTS.YEAR_INCHARGE.STATS;
-        const response = await api.get(url);
-        return mapStatsResponse(response.data);
+        console.log(`[YearInchargeService.getStats] Request: Method: GET, URL: ${url}, Token: ${localStorage.getItem('token') ? 'Bearer present' : 'Missing'}`);
+        try {
+            const response = await api.get(url);
+            console.log(`[YearInchargeService.getStats] Response: Status: ${response.status}, Raw Data:`, response.data);
+            return mapStatsResponse(response.data);
+        } catch (error: any) {
+            console.error(`[YearInchargeService.getStats] Error: Status: ${error.response?.status}, Data:`, error.response?.data || error.message);
+            throw error;
+        }
     },
 
     getOutpasses: async (page: number) => {
-        const response = await api.get(`${API_ENDPOINTS.YEAR_INCHARGE.OUTPASS_LIST}?page=${page}`);
-        return mapPaginatedResponse<MappedOutpass>(response.data, mapOutpassResponse);
+        const url = `${API_ENDPOINTS.YEAR_INCHARGE.OUTPASS_LIST}?page=${page}`;
+        console.log(`[YearInchargeService.getOutpasses] Request: Method: GET, URL: ${url}, Token: ${localStorage.getItem('token') ? 'Bearer present' : 'Missing'}`);
+        try {
+            const response = await api.get(url);
+            console.log(`[YearInchargeService.getOutpasses] Response: Status: ${response.status}, Raw Data:`, response.data);
+            return mapPaginatedResponse<MappedOutpass>(response.data, mapOutpassResponse);
+        } catch (error: any) {
+            console.error(`[YearInchargeService.getOutpasses] Error: Status: ${error.response?.status}, Data:`, error.response?.data || error.message);
+            throw error;
+        }
     },
 
     getPendingOutpasses: async (page: number, limit: number) => {
-        const response = await api.get(`${API_ENDPOINTS.YEAR_INCHARGE.PENDING_LIST}?page=${page}&limit=${limit}`);
-        return mapPaginatedResponse<MappedOutpass>(response.data, mapOutpassResponse);
+        const url = `${API_ENDPOINTS.YEAR_INCHARGE.PENDING_LIST}?page=${page}&limit=${limit}`;
+        console.log(`[YearInchargeService.getPendingOutpasses] Request: Method: GET, URL: ${url}, Token: ${localStorage.getItem('token') ? 'Bearer present' : 'Missing'}`);
+        try {
+            const response = await api.get(url);
+            console.log(`[YearInchargeService.getPendingOutpasses] Response: Status: ${response.status}, Raw Data:`, response.data);
+            return mapPaginatedResponse<MappedOutpass>(response.data, mapOutpassResponse);
+        } catch (error: any) {
+            console.error(`[YearInchargeService.getPendingOutpasses] Error: Status: ${error.response?.status}, Data:`, error.response?.data || error.message);
+            throw error;
+        }
     },
 
     getOutpassDetails: async (id: string) => {
-        const response = await api.get(API_ENDPOINTS.YEAR_INCHARGE.DETAILS(id));
-        // Some backends return nested outpass object, some return direct
-        const data = response.data.outpass || response.data.filterOutpass?.[0] || response.data;
-        return mapOutpassResponse(data);
+        const url = API_ENDPOINTS.YEAR_INCHARGE.DETAILS(id);
+        console.log(`[YearInchargeService.getOutpassDetails] Request: Method: GET, URL: ${url}, Token: ${localStorage.getItem('token') ? 'Bearer present' : 'Missing'}`);
+        try {
+            const response = await api.get(url);
+            console.log(`[YearInchargeService.getOutpassDetails] Response: Status: ${response.status}, Raw Data:`, response.data);
+            const data = response.data.outpass || response.data.filterOutpass?.[0] || response.data;
+            return mapOutpassResponse(data);
+        } catch (error: any) {
+            console.error(`[YearInchargeService.getOutpassDetails] Error: Status: ${error.response?.status}, Data:`, error.response?.data || error.message);
+            throw error;
+        }
     },
 
     approveOutpass: async (id: string) => {
-        const response = await api.get(API_ENDPOINTS.YEAR_INCHARGE.APPROVE(id));
-        return response.data;
+        const url = API_ENDPOINTS.YEAR_INCHARGE.APPROVE(id);
+        console.log(`[YearInchargeService.approveOutpass] Request: Method: GET, URL: ${url}, Token: ${localStorage.getItem('token') ? 'Bearer present' : 'Missing'}`);
+        try {
+            const response = await api.get(url);
+            console.log(`[YearInchargeService.approveOutpass] Response: Status: ${response.status}, Raw Data:`, response.data);
+            return response.data;
+        } catch (error: any) {
+            console.error(`[YearInchargeService.approveOutpass] Error: Status: ${error.response?.status}, Data:`, error.response?.data || error.message);
+            throw error;
+        }
     },
 
     rejectOutpass: async (id: string, remarks?: string) => {
+        const url = API_ENDPOINTS.YEAR_INCHARGE.REJECT(id);
         const payload = remarks ? { remarks } : {};
-        const response = await api.put(API_ENDPOINTS.YEAR_INCHARGE.REJECT(id), payload);
-        return response.data;
+        console.log(`[YearInchargeService.rejectOutpass] Request: Method: PUT, URL: ${url}, Payload:`, payload, `, Token: ${localStorage.getItem('token') ? 'Bearer present' : 'Missing'}`);
+        try {
+            const response = await api.put(url, payload);
+            console.log(`[YearInchargeService.rejectOutpass] Response: Status: ${response.status}, Raw Data:`, response.data);
+            return response.data;
+        } catch (error: any) {
+            console.error(`[YearInchargeService.rejectOutpass] Error: Status: ${error.response?.status}, Data:`, error.response?.data || error.message);
+            throw error;
+        }
+    },
+
+    getProfile: async () => {
+        const url = API_ENDPOINTS.YEAR_INCHARGE.PROFILE;
+        console.log(`[YearInchargeService.getProfile] Request: Method: GET, URL: ${url}, Token: ${localStorage.getItem('token') ? 'Bearer present' : 'Missing'}`);
+        try {
+            const response = await api.get(url);
+            console.log(`[YearInchargeService.getProfile] Response: Status: ${response.status}, Raw Data:`, response.data);
+            return mapProfileResponse(response.data);
+        } catch (error: any) {
+            console.error(`[YearInchargeService.getProfile] Error: Status: ${error.response?.status}, Data:`, error.response?.data || error.message);
+            throw error;
+        }
+    },
+
+    updateProfile: async (formData: FormData) => {
+        const url = API_ENDPOINTS.YEAR_INCHARGE.PROFILE_UPDATE;
+        console.log(`[YearInchargeService.updateProfile] Request: Method: PUT, URL: ${url}, Token: ${localStorage.getItem('token') ? 'Bearer present' : 'Missing'}`);
+        try {
+            const response = await api.put(url, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            console.log(`[YearInchargeService.updateProfile] Response: Status: ${response.status}, Raw Data:`, response.data);
+            return response.data;
+        } catch (error: any) {
+            console.error(`[YearInchargeService.updateProfile] Error: Status: ${error.response?.status}, Data:`, error.response?.data || error.message);
+            throw error;
+        }
     }
 };

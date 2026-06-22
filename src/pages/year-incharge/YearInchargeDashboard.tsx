@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import YearInchargeNav from '../../components/YearInchargeNav';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import { YearInchargeService } from '../../services/yearInchargeService';
 
@@ -47,23 +46,20 @@ const YearInchargeDashboard: React.FC = () => {
 
         try {
             // Run requests in parallel using service
-            const [profileResponse, statsData, pendingResponse] = await Promise.all([
-                axios.get(`${import.meta.env.VITE_API_URL}/incharge/profile`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                }),
+            const [profileData, statsData, pendingResponse] = await Promise.all([
+                YearInchargeService.getProfile(),
                 YearInchargeService.getStats(filter),
                 YearInchargeService.getPendingOutpasses(1, 100)
             ]);
 
             // Handle Profile Response
-            if (profileResponse.status === 200) {
-                const userData = profileResponse.data.user || profileResponse.data.yearincharge || profileResponse.data;
+            if (profileData) {
                 setUser({
-                    name: userData.name || "Year Incharge",
-                    registerNumber: userData.registerNumber || "INCHARGE001",
-                    department: userData.department || "Administration",
-                    year: userData.year || "N/A",
-                    email: userData.email || "incharge@jit.edu"
+                    name: profileData.name || "Year Incharge",
+                    registerNumber: profileData.registerNumber || "INCHARGE001",
+                    department: profileData.department || "Administration",
+                    year: profileData.year || "N/A",
+                    email: profileData.email || "incharge@jit.edu"
                 });
             }
 
