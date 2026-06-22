@@ -312,7 +312,7 @@ const AdminDashboard: React.FC = () => {
                                                     dataKey="value"
                                                     stroke="none"
                                                 >
-                                                    {studentChartData.map((entry, index) => (
+                                                    {studentChartData.map((_, index) => (
                                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                                     ))}
                                                 </Pie>
