@@ -1,8 +1,28 @@
-
 import React, { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
+import {
+    LayoutDashboard,
+    Users,
+    UserCheck,
+    Shield,
+    FileText,
+    Bus,
+    LogOut,
+    Bell,
+    Search,
+    Menu,
+    X,
+    Building2,
+    ChevronRight,
+    UserCircle,
+    Settings,
+    Palette,
+    Moon,
+    Sun,
+    Check
+} from 'lucide-react';
 
 interface LayoutProps {
     children: ReactNode;
@@ -15,6 +35,19 @@ const AdminLayout: React.FC<LayoutProps> = ({ children, title }) => {
     const location = useLocation();
     const [adminName, setAdminName] = useState("Admin User");
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(false);
+    const [themeMenuOpen, setThemeMenuOpen] = useState(false);
+    const [darkMode, setDarkMode] = useState(() => localStorage.getItem('ent-dark-mode') === 'true');
+    const [primaryColor, setPrimaryColor] = useState(() => localStorage.getItem('ent-primary-color') || 'indigo');
+
+    useEffect(() => {
+        if (darkMode) document.documentElement.setAttribute('data-theme', 'dark');
+        else document.documentElement.removeAttribute('data-theme');
+        document.documentElement.setAttribute('data-color', primaryColor);
+
+        localStorage.setItem('ent-dark-mode', String(darkMode));
+        localStorage.setItem('ent-primary-color', primaryColor);
+    }, [darkMode, primaryColor]);
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -28,16 +61,25 @@ const AdminLayout: React.FC<LayoutProps> = ({ children, title }) => {
             }
         };
         fetchProfile();
+
+        // Handle responsive sidebar collapse automatically
+        const handleResize = () => {
+            if (window.innerWidth < 1024) {
+                setIsCollapsed(false);
+            }
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
     }, []);
 
     const menuItems = [
-        { label: 'Dashboard', path: '/admin/dashboard', icon: '📊' },
-        { label: 'Staff', path: '/admin/manage-staff', icon: '👨‍🏫' },
-        { label: 'Year-Incharge', path: '/admin/manage-year-incharge', icon: '⚡' },
-        { label: 'Warden', path: '/admin/manage-warden', icon: '🏠' },
-        { label: 'Security', path: '/admin/manage-security', icon: '👮' },
-        { label: 'Outpass', path: '/admin/outpass', icon: '📝' },
-        { label: 'Transport', path: '/admin/manage-bus', icon: '🚌' },
+        { label: 'Overview', path: '/admin/dashboard', icon: <LayoutDashboard size={20} /> },
+        { label: 'Staff Directory', path: '/admin/manage-staff', icon: <Users size={20} /> },
+        { label: 'Year Incharges', path: '/admin/manage-year-incharge', icon: <UserCheck size={20} /> },
+        { label: 'Wardens', path: '/admin/manage-warden', icon: <Building2 size={20} /> },
+        { label: 'Security Team', path: '/admin/manage-security', icon: <Shield size={20} /> },
+        { label: 'Outpass Requests', path: '/admin/outpass', icon: <FileText size={20} /> },
+        { label: 'Transport Fleet', path: '/admin/manage-bus', icon: <Bus size={20} /> },
     ];
 
     const handleLogout = () => {
@@ -48,378 +90,646 @@ const AdminLayout: React.FC<LayoutProps> = ({ children, title }) => {
     };
 
     return (
-        <div className="admin-layout">
-            {/* Mobile Sidebar Overlay */}
-            {isSidebarOpen && <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)}></div>}
+        <div className="ent-layout">
+            {/* Mobile Overlay */}
+            {isSidebarOpen && <div className="ent-overlay" onClick={() => setIsSidebarOpen(false)}></div>}
 
             {/* Sidebar */}
-            <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
-                <div className="sidebar-header">
-                    <div className="logo-icon">🎓</div>
-                    <span className="logo-text">JIT Admin</span>
-                    <button className="close-sidebar-btn" onClick={() => setIsSidebarOpen(false)}>×</button>
+            <aside className={`ent-sidebar ${isSidebarOpen ? 'mobile-open' : ''} ${isCollapsed ? 'collapsed' : ''}`}>
+                <div className="ent-sidebar-header">
+                    <div className="ent-logo">
+                        <div className="ent-logo-mark">
+                            <span>JIT</span>
+                        </div>
+                        {!isCollapsed && <span className="ent-logo-text">Admin Portal</span>}
+                    </div>
+                    {/* Desktop Collapse Toggle */}
+                    <button className="ent-collapse-btn hidden-mobile" onClick={() => setIsCollapsed(!isCollapsed)}>
+                        <Menu size={18} />
+                    </button>
+                    {/* Mobile Close Toggle */}
+                    <button className="ent-close-btn hidden-desktop" onClick={() => setIsSidebarOpen(false)}>
+                        <X size={20} />
+                    </button>
                 </div>
 
-                <nav className="sidebar-nav">
-                    {menuItems.map((item) => (
-                        <button
-                            key={item.path}
-                            className={`nav-item ${location.pathname.includes(item.path) ? 'active' : ''}`}
-                            onClick={() => {
-                                navigate(item.path);
-                                setIsSidebarOpen(false);
-                            }}
-                        >
-                            <span className="nav-icon">{item.icon}</span>
-                            <span className="nav-label">{item.label}</span>
-                        </button>
-                    ))}
-                </nav>
+                <div className="ent-nav-scroll">
+                    <div className="ent-nav-group">
+                        {!isCollapsed && <span className="ent-nav-label">Main Menu</span>}
+                        <nav className="ent-nav">
+                            {menuItems.map((item) => {
+                                const isActive = location.pathname.includes(item.path);
+                                return (
+                                    <button
+                                        key={item.path}
+                                        className={`ent-nav-item ${isActive ? 'active' : ''}`}
+                                        onClick={() => {
+                                            navigate(item.path);
+                                            setIsSidebarOpen(false);
+                                        }}
+                                        title={isCollapsed ? item.label : undefined}
+                                    >
+                                        <span className="ent-nav-icon">{item.icon}</span>
+                                        {!isCollapsed && <span className="ent-nav-text">{item.label}</span>}
+                                        {isActive && !isCollapsed && <span className="ent-nav-indicator"></span>}
+                                    </button>
+                                );
+                            })}
+                        </nav>
+                    </div>
+                </div>
 
-                <div className="sidebar-footer">
-                    <button className="nav-item logout" onClick={handleLogout}>
-                        <span className="nav-icon">🚪</span>
-                        <span className="nav-label">Logout</span>
-                    </button>
+                <div className="ent-sidebar-footer">
+                    {!isCollapsed ? (
+                        <div className="ent-user-card">
+                            <div className="ent-avatar-sm">{adminName.charAt(0).toUpperCase()}</div>
+                            <div className="ent-user-info">
+                                <span className="ent-user-name">{adminName}</span>
+                                <span className="ent-user-role">Administrator</span>
+                            </div>
+                            <button className="ent-logout-btn" onClick={handleLogout} title="Sign Out">
+                                <LogOut size={16} />
+                            </button>
+                        </div>
+                    ) : (
+                        <button className="ent-nav-item ent-logout-collapsed" onClick={handleLogout} title="Sign Out">
+                            <span className="ent-nav-icon"><LogOut size={20} /></span>
+                        </button>
+                    )}
                 </div>
             </aside>
 
-            {/* Main Content */}
-            <main className="main-wrapper">
-                <header className="top-header">
-                    <div className="header-left">
-                        <button className="mobile-menu-btn" onClick={() => setIsSidebarOpen(true)}>☰</button>
-                        <h2 className="header-title">{title}</h2>
+            {/* Main Content Area */}
+            <main className={`ent-main ${isCollapsed ? 'collapsed' : ''}`}>
+                <header className="ent-header">
+                    <div className="ent-header-left">
+                        <button className="ent-mobile-menu hidden-desktop" onClick={() => setIsSidebarOpen(true)}>
+                            <Menu size={20} />
+                        </button>
+
+                        <div className="ent-breadcrumbs">
+                            <Link to="/admin/dashboard" className="crumb-link">Admin</Link>
+                            <ChevronRight size={14} className="crumb-sep" />
+                            <span className="crumb-current">{title}</span>
+                        </div>
                     </div>
 
-                    <div className="header-actions">
+                    <div className="ent-header-right">
+                        <div className="ent-search">
+                            <Search size={16} className="search-icon" />
+                            <input type="text" placeholder="Search anything..." className="search-input" />
+                            <div className="search-cmd">⌘K</div>
+                        </div>
 
-                        <div className="admin-profile" onClick={() => navigate('/admin/profile')}>
-                            <div className="avatar">{adminName.charAt(0).toUpperCase()}</div>
-                            <div className="info">
-                                <span className="name">{adminName}</span>
-                                <span className="role">Administrator</span>
-                            </div>
+                        <div style={{ position: 'relative' }}>
+                            <button className="ent-icon-btn" onClick={() => setThemeMenuOpen(!themeMenuOpen)}>
+                                <Palette size={18} />
+                            </button>
+                            {themeMenuOpen && (
+                                <div className="theme-dropdown">
+                                    <div className="theme-dropdown-header">Appearance</div>
+                                    <div className="theme-toggle" onClick={() => setDarkMode(!darkMode)}>
+                                        {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+                                        <span>{darkMode ? 'Light Mode' : 'Dark Mode'}</span>
+                                    </div>
+                                    <div className="theme-dropdown-header">Accent Color</div>
+                                    <div className="color-options">
+                                        {[
+                                            { id: 'indigo', hex: '#4F46E5' },
+                                            { id: 'emerald', hex: '#10B981' },
+                                            { id: 'rose', hex: '#E11D48' },
+                                            { id: 'amber', hex: '#F59E0B' }
+                                        ].map(c => (
+                                            <button
+                                                key={c.id}
+                                                className={`color-btn ${primaryColor === c.id ? 'active' : ''}`}
+                                                style={{ backgroundColor: c.hex }}
+                                                onClick={() => setPrimaryColor(c.id)}
+                                            >
+                                                {primaryColor === c.id && <Check size={12} color="white" />}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <button className="ent-icon-btn">
+                            <Bell size={18} />
+                            <span className="badge-dot"></span>
+                        </button>
+
+                        <div className="ent-profile-dropdown" onClick={() => navigate('/admin/profile')}>
+                            <div className="ent-avatar">{adminName.charAt(0).toUpperCase()}</div>
                         </div>
                     </div>
                 </header>
 
-                <div className="content-area">
+                <div className="ent-content">
                     {children}
                 </div>
             </main>
 
             <style>{`
-        :root {
-            --sidebar-width: 260px;
-            --primary-color: #4f46e5;
-            --primary-light: #eef2ff;
-            --bg-color: #f3f4f6;
-            --text-color: #111827;
-            --border-color: #e5e7eb;
-            --header-height: 70px;
-        }
+                /* Premium Enterprise SaaS CSS Variables */
+                :root {
+                    --bg-app: #F8FAFC;
+                    --bg-surface: #FFFFFF;
+                    --text-main: #0F172A;
+                    --text-muted: #64748B;
+                    --text-light: #94A3B8;
+                    --border-light: #E2E8F0;
+                    --primary: #4F46E5;
+                    --primary-hover: #4338CA;
+                    --primary-subtle: #EEF2FF;
+                    --danger: #EF4444;
+                    --radius-sm: 6px;
+                    --radius-md: 8px;
+                    --radius-lg: 12px;
+                    --shadow-xs: 0 1px 2px rgba(0,0,0,0.05);
+                    --shadow-sm: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+                    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+                    --sidebar-width: 260px;
+                    --sidebar-collapsed: 80px;
+                    --header-height: 64px;
+                }
 
-        .admin-layout {
-            display: flex;
-            min-height: 100vh;
-            background-color: var(--bg-color);
-            font-family: 'Inter', system-ui, sans-serif;
-            color: var(--text-color);
-        }
+                [data-theme="dark"] {
+                    --bg-app: #0F172A;
+                    --bg-surface: #1E293B;
+                    --text-main: #F8FAFC;
+                    --text-muted: #94A3B8;
+                    --text-light: #64748B;
+                    --border-light: #334155;
+                }
 
-        /* Sidebar Overlay (Mobile) */
-        .sidebar-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 40;
-            backdrop-filter: blur(2px);
-            display: none;
-        }
+                [data-color="emerald"] {
+                    --primary: #10B981;
+                    --primary-hover: #059669;
+                    --primary-subtle: #D1FAE5;
+                }
+                [data-theme="dark"][data-color="emerald"] {
+                    --primary-subtle: rgba(16, 185, 129, 0.15);
+                }
 
-        /* Sidebar Styles */
-        .sidebar {
-            width: var(--sidebar-width);
-            background: white;
-            border-right: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            position: fixed;
-            height: 100vh;
-            z-index: 50;
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            transform: translateX(0);
-        }
+                [data-color="rose"] {
+                    --primary: #E11D48;
+                    --primary-hover: #BE123C;
+                    --primary-subtle: #FFE4E6;
+                }
+                [data-theme="dark"][data-color="rose"] {
+                    --primary-subtle: rgba(225, 29, 72, 0.15);
+                }
 
-        .sidebar-header {
-            height: var(--header-height);
-            display: flex;
-            align-items: center;
-            padding: 0 24px;
-            border-bottom: 1px solid var(--border-color);
-            gap: 12px;
-        }
+                [data-color="indigo"] {
+                    --primary: #4F46E5;
+                    --primary-hover: #4338CA;
+                    --primary-subtle: #EEF2FF;
+                }
+                [data-theme="dark"][data-color="indigo"] {
+                    --primary-subtle: rgba(79, 70, 229, 0.15);
+                }
+                
+                [data-color="amber"] {
+                    --primary: #F59E0B;
+                    --primary-hover: #D97706;
+                    --primary-subtle: #FEF3C7;
+                }
+                [data-theme="dark"][data-color="amber"] {
+                    --primary-subtle: rgba(245, 158, 11, 0.15);
+                }
 
-        .logo-icon {
-            font-size: 20px;
-            background: linear-gradient(135deg, #4f46e5, #4338ca);
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 10px;
-            color: white;
-            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
-        }
+                /* Component Overrides for Dark Mode */
+                [data-theme="dark"] .kpi-card,
+                [data-theme="dark"] .saas-card,
+                [data-theme="dark"] .saas-table th,
+                [data-theme="dark"] .theme-dropdown,
+                [data-theme="dark"] .search-cmd {
+                    background: var(--bg-surface);
+                    border-color: var(--border-light);
+                }
+                
+                [data-theme="dark"] .ent-search:focus-within {
+                    background: var(--bg-surface);
+                    box-shadow: 0 0 0 1px var(--primary);
+                }
 
-        .logo-text {
-            font-weight: 700;
-            font-size: 1.1rem;
-            color: #111827;
-        }
+                [data-theme="dark"] .kpi-top .kpi-icon-box {
+                    opacity: 0.9;
+                }
 
-        .close-sidebar-btn {
-            margin-left: auto;
-            background: transparent;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: #6b7280;
-            display: none;
-        }
+                * { box-sizing: border-box; }
 
-        .sidebar-nav {
-            padding: 24px 16px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            overflow-y: auto;
-        }
+                .ent-layout {
+                    display: flex;
+                    min-height: 100vh;
+                    background-color: var(--bg-app);
+                    font-family: var(--font-sans);
+                    color: var(--text-main);
+                }
 
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            border-radius: 10px;
-            border: none;
-            background: transparent;
-            color: #6b7280;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-align: left;
-            width: 100%;
-            font-size: 0.9rem;
-        }
+                /* Sidebar */
+                .ent-sidebar {
+                    width: var(--sidebar-width);
+                    background-color: var(--bg-surface);
+                    border-right: 1px solid var(--border-light);
+                    display: flex;
+                    flex-direction: column;
+                    position: fixed;
+                    top: 0;
+                    bottom: 0;
+                    left: 0;
+                    z-index: 50;
+                    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s;
+                }
+                .ent-sidebar.collapsed {
+                    width: var(--sidebar-collapsed);
+                }
 
-        .nav-item:hover {
-            background: #f9fafb;
-            color: #111827;
-        }
+                .ent-sidebar-header {
+                    height: var(--header-height);
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 0 20px;
+                    border-bottom: 1px solid var(--border-light);
+                }
+                .ent-sidebar.collapsed .ent-sidebar-header {
+                    justify-content: center;
+                    padding: 0;
+                }
 
-        .nav-item.active {
-            background: var(--primary-light);
-            color: var(--primary-color);
-            font-weight: 600;
-        }
+                .ent-logo {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                }
+                .ent-logo-mark {
+                    width: 32px;
+                    height: 32px;
+                    background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+                    color: white;
+                    border-radius: var(--radius-md);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: 800;
+                    font-size: 14px;
+                    letter-spacing: -0.5px;
+                    box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+                }
+                .ent-logo-text {
+                    font-weight: 600;
+                    font-size: 15px;
+                    letter-spacing: -0.3px;
+                }
 
-        .nav-icon {
-            font-size: 1.2rem;
-            width: 24px;
-            text-align: center;
-        }
+                .ent-collapse-btn, .ent-close-btn, .ent-mobile-menu {
+                    background: transparent;
+                    border: none;
+                    color: var(--text-muted);
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 4px;
+                    border-radius: var(--radius-sm);
+                    transition: background 0.2s;
+                }
+                .ent-collapse-btn:hover, .ent-mobile-menu:hover { background: var(--bg-app); color: var(--text-main); }
+                
+                .ent-nav-scroll {
+                    flex: 1;
+                    overflow-y: auto;
+                    padding: 24px 16px;
+                }
+                .ent-sidebar.collapsed .ent-nav-scroll { padding: 24px 12px; }
 
-        .sidebar-footer {
-            padding: 20px 16px;
-            border-top: 1px solid var(--border-color);
-        }
+                .ent-nav-group { margin-bottom: 24px; }
+                .ent-nav-label {
+                    display: block;
+                    font-size: 11px;
+                    font-weight: 600;
+                    color: var(--text-light);
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    margin-bottom: 8px;
+                    padding-left: 12px;
+                }
 
-        .nav-item.logout {
-            color: #ef4444;
-        }
-        
-        .nav-item.logout:hover {
-            background: #fef2f2;
-            color: #dc2626;
-        }
+                .ent-nav { display: flex; flex-direction: column; gap: 4px; }
+                
+                .ent-nav-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    width: 100%;
+                    padding: 10px 12px;
+                    background: transparent;
+                    border: none;
+                    border-radius: var(--radius-md);
+                    color: var(--text-muted);
+                    font-size: 14px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    position: relative;
+                }
+                .ent-sidebar.collapsed .ent-nav-item { justify-content: center; padding: 12px 0; }
 
-        /* Main Content Styles */
-        .main-wrapper {
-            flex: 1;
-            margin-left: var(--sidebar-width);
-            display: flex;
-            flex-direction: column;
-            width: calc(100% - var(--sidebar-width));
-            transition: margin-left 0.3s ease, width 0.3s ease;
-        }
+                .ent-nav-item:hover {
+                    background-color: var(--bg-app);
+                    color: var(--text-main);
+                }
+                .ent-nav-item.active {
+                    background-color: var(--primary-subtle);
+                    color: var(--primary);
+                    font-weight: 600;
+                }
+                
+                .ent-nav-icon {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                
+                .ent-nav-indicator {
+                    position: absolute;
+                    right: 12px;
+                    width: 6px;
+                    height: 6px;
+                    border-radius: 50%;
+                    background-color: var(--primary);
+                }
 
-        .top-header {
-            height: var(--header-height);
-            background: white;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 32px;
-            position: sticky;
-            top: 0;
-            z-index: 30;
-        }
+                .ent-sidebar-footer {
+                    padding: 16px;
+                    border-top: 1px solid var(--border-light);
+                }
+                .ent-sidebar.collapsed .ent-sidebar-footer { padding: 16px 12px; }
 
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
+                .ent-user-card {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 8px;
+                    border-radius: var(--radius-md);
+                    background: var(--bg-app);
+                    border: 1px solid var(--border-light);
+                }
+                .ent-avatar-sm {
+                    width: 32px;
+                    height: 32px;
+                    background: linear-gradient(135deg, var(--text-muted), var(--text-main));
+                    color: white;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 12px;
+                    font-weight: 600;
+                }
+                .ent-user-info { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+                .ent-user-name { font-size: 13px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+                .ent-user-role { font-size: 11px; color: var(--text-muted); }
 
-        .mobile-menu-btn {
-            display: none;
-            background: transparent;
-            border: none;
-            font-size: 1.25rem;
-            cursor: pointer;
-            color: #374151;
-            padding: 4px;
-        }
+                .ent-logout-btn {
+                    background: transparent;
+                    border: none;
+                    color: var(--text-muted);
+                    cursor: pointer;
+                    padding: 6px;
+                    border-radius: var(--radius-sm);
+                    transition: all 0.2s;
+                }
+                .ent-logout-btn:hover { background: #FEE2E2; color: var(--danger); }
+                
+                .ent-logout-collapsed { color: var(--danger); }
+                .ent-logout-collapsed:hover { background: #FEE2E2; }
 
-        .header-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #374151;
-            margin: 0;
-        }
+                /* Main Content Area */
+                .ent-main {
+                    flex: 1;
+                    margin-left: var(--sidebar-width);
+                    min-width: 0; /* Important for flex children truncating */
+                    display: flex;
+                    flex-direction: column;
+                    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+                .ent-main.collapsed { margin-left: var(--sidebar-collapsed); }
 
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 24px;
-        }
+                /* Header */
+                .ent-header {
+                    height: var(--header-height);
+                    background: var(--bg-surface);
+                    border-bottom: 1px solid var(--border-light);
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 0 32px;
+                    position: sticky;
+                    top: 0;
+                    z-index: 30;
+                }
 
-        .search-bar {
-            display: flex;
-            align-items: center;
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            padding: 8px 16px;
-            margin-top: 50px;
-            border-radius: 99px;
-            width: 280px;
-            gap: 10px;
-            transition: all 0.2s ease;
-        }
+                .ent-header-left { display: flex; align-items: center; gap: 16px; }
+                
+                .ent-breadcrumbs {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    font-size: 14px;
+                }
+                .crumb-link { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+                .crumb-link:hover { color: var(--text-main); }
+                .crumb-sep { color: var(--text-light); }
+                .crumb-current { color: var(--text-main); font-weight: 600; }
 
-        .search-bar:focus-within {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-            background: white;
-        }
+                .ent-header-right { display: flex; align-items: center; gap: 20px; }
 
-        .search-icon {
-            color: #9ca3af;
-            font-size: 1rem;
-        }
+                .ent-search {
+                    display: flex;
+                    align-items: center;
+                    background: var(--bg-app);
+                    border: 1px solid var(--border-light);
+                    border-radius: var(--radius-md);
+                    padding: 0 12px;
+                    height: 36px;
+                    width: 260px;
+                    transition: all 0.2s;
+                }
+                .ent-search:focus-within {
+                    background: var(--bg-surface);
+                    border-color: var(--primary);
+                    box-shadow: 0 0 0 3px var(--primary-subtle);
+                }
+                .search-icon { color: var(--text-muted); margin-right: 8px; }
+                .search-input {
+                    border: none;
+                    background: transparent;
+                    outline: none;
+                    font-size: 13px;
+                    width: 100%;
+                    color: var(--text-main);
+                }
+                .search-input::placeholder { color: var(--text-light); }
+                .search-cmd {
+                    font-size: 11px;
+                    color: var(--text-muted);
+                    background: var(--border-light);
+                    padding: 2px 6px;
+                    border-radius: 4px;
+                    font-weight: 500;
+                    letter-spacing: 0.5px;
+                }
 
-        .search-bar input {
-            border: none;
-            background: transparent;
-            outline: none;
-            width: 100%;
-            font-size: 0.9rem;
-            color: #111827;
-        }
+                .ent-icon-btn {
+                    background: transparent;
+                    border: none;
+                    color: var(--text-muted);
+                    cursor: pointer;
+                    position: relative;
+                    padding: 6px;
+                    border-radius: var(--radius-sm);
+                    transition: all 0.2s;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .ent-icon-btn:hover { background: var(--bg-app); color: var(--text-main); }
+                .badge-dot {
+                    position: absolute;
+                    top: 6px; right: 8px;
+                    width: 6px; height: 6px;
+                    background: var(--danger);
+                    border-radius: 50%;
+                    border: 1px solid var(--bg-surface);
+                }
 
-        .admin-profile {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            padding: 4px;
-            border-radius: 99px;
-            transition: background 0.2s;
-        }
+                .ent-profile-dropdown {
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                }
+                .ent-avatar {
+                    width: 36px;
+                    height: 36px;
+                    border-radius: 50%;
+                    background: var(--primary-subtle);
+                    color: var(--primary);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 14px;
+                    font-weight: 600;
+                    border: 1px solid var(--border-light);
+                    transition: all 0.2s;
+                }
+                .ent-profile-dropdown:hover .ent-avatar {
+                    border-color: var(--primary);
+                }
+                
+                .theme-dropdown {
+                    position: absolute;
+                    top: 100%;
+                    right: 0;
+                    margin-top: 10px;
+                    width: 220px;
+                    background: var(--bg-surface);
+                    border: 1px solid var(--border-light);
+                    border-radius: var(--radius-md);
+                    box-shadow: var(--shadow-sm);
+                    padding: 16px;
+                    z-index: 100;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                }
+                .theme-dropdown-header {
+                    font-size: 0.75rem;
+                    text-transform: uppercase;
+                    color: var(--text-light);
+                    font-weight: 600;
+                    letter-spacing: 0.05em;
+                }
+                .theme-toggle {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    font-size: 0.9rem;
+                    cursor: pointer;
+                    color: var(--text-main);
+                    padding: 8px 12px;
+                    border-radius: var(--radius-sm);
+                    background: var(--bg-app);
+                    transition: background 0.2s;
+                }
+                .theme-toggle:hover {
+                    background: var(--border-light);
+                }
+                .color-options {
+                    display: flex;
+                    gap: 12px;
+                    padding: 4px 0;
+                }
+                .color-btn {
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 50%;
+                    border: 2px solid transparent;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: transform 0.2s;
+                }
+                .color-btn:hover {
+                    transform: scale(1.1);
+                }
+                .color-btn.active {
+                    border-color: var(--text-main);
+                }
 
-        .admin-profile:hover {
-            background: #f9fafb;
-        }
+                /* Content */
+                .ent-content {
+                    padding: 32px;
+                    max-width: 1400px;
+                    margin: 0 auto;
+                    width: 100%;
+                    flex: 1;
+                }
 
-        .avatar {
-            width: 36px;
-            height: 36px;
-            background: var(--primary-color);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 0.95rem;
-            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
-        }
+                /* Mobile Overrides */
+                .hidden-desktop { display: none; }
+                .hidden-mobile { display: flex; }
 
-        .info {
-            display: flex;
-            flex-direction: column;
-        }
+                @media (max-width: 1024px) {
+                    .ent-sidebar { transform: translateX(-100%); }
+                    .ent-sidebar.mobile-open { transform: translateX(0); width: var(--sidebar-width); }
+                    .ent-main { margin-left: 0; }
+                    .ent-main.collapsed { margin-left: 0; }
+                    
+                    .hidden-desktop { display: flex; }
+                    .hidden-mobile { display: none; }
+                    
+                    .ent-overlay {
+                        position: fixed;
+                        inset: 0;
+                        background: rgba(15, 23, 42, 0.4);
+                        backdrop-filter: blur(2px);
+                        z-index: 40;
+                    }
 
-        .info .name {
-            font-weight: 600;
-            font-size: 0.85rem;
-            color: #111827;
-            line-height: 1.2;
-        }
-
-        .info .role {
-            font-size: 0.75rem;
-            color: #6b7280;
-        }
-
-        .content-area {
-            padding: 32px;
-            overflow-y: auto;
-            height: calc(100vh - var(--header-height));
-            max-width: 1600px;
-            width: 100%;
-            margin: 0 auto;
-        }
-
-        @media (max-width: 1024px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-            .sidebar.open {
-                transform: translateX(0);
-            }
-            .main-wrapper {
-                margin-left: 0;
-                width: 100%;
-            }
-            .mobile-menu-btn {
-                display: block;
-            }
-            .sidebar-overlay {
-                display: block;
-            }
-            .close-sidebar-btn {
-                display: block;
-            }
-            .search-bar {
-                display: none;
-            }
-            .info {
-                display: none;
-            }
-            .top-header {
-                padding: 0 16px;
-            }
-            .content-area {
-                padding: 16px;
-            }
-        }
-      `}</style>
+                    .ent-header { padding: 0 20px; }
+                    .ent-content { padding: 20px; }
+                    .ent-search { display: none; }
+                    
+                    .ent-nav-scroll { padding: 20px 16px; }
+                    .ent-nav-item { justify-content: flex-start; padding: 12px; }
+                    .ent-nav-text { display: block; }
+                    .ent-sidebar-footer { display: block; }
+                }
+            `}</style>
         </div>
     );
 };
