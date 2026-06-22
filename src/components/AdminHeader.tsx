@@ -7,7 +7,7 @@ interface AdminHeaderProps {
 
 const AdminHeader: React.FC<AdminHeaderProps> = ({ activeMenu }) => {
     const navigate = useNavigate();
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const handleLogout = () => {
         localStorage.removeItem('isLoggedIn');
@@ -18,283 +18,289 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ activeMenu }) => {
 
     const handleNavigation = (path: string) => {
         navigate(path);
-        setIsMenuOpen(false);
+        setIsSidebarOpen(false);
     };
 
-    return (
-        <header className="admin-header">
-            <div className="header-container">
-                <div className="header-left">
-                    <div className="brand" onClick={() => handleNavigation('/admin/dashboard')}>
-                        <span className="brand-icon">🎓</span>
-                        <span className="brand-text">JIT Admin Portal</span>
-                    </div>
+    const navGroups = [
+        {
+            title: 'Overview',
+            items: [
+                { key: 'dashboard', path: '/admin/dashboard',     label: 'Dashboard',     icon: '📊' },
+                { key: 'outpass',   path: '/admin/outpass',       label: 'Outpass',       icon: '📝' },
+                { key: 'profile',   path: '/admin/profile',       label: 'Profile',       icon: '👤' },
+            ]
+        },
+        {
+            title: 'Manage',
+            items: [
+                { key: 'staff',     path: '/admin/manage-staff',           label: 'Staff',         icon: '👨‍🏫' },
+                { key: 'incharge',  path: '/admin/manage-year-incharge',   label: 'Year Incharge', icon: '⚡' },
+                { key: 'warden',    path: '/admin/manage-warden',          label: 'Warden',        icon: '🏠' },
+                { key: 'security',  path: '/admin/manage-security',        label: 'Security',      icon: '👮' },
+                { key: 'transport', path: '/admin/manage-bus',             label: 'Transport',     icon: '🚌' },
+            ]
+        }
+    ];
+
+    const SidebarContent = () => (
+        <div className="adm-sidebar-inner">
+            <div className="adm-sidebar-header">
+                <span className="adm-sidebar-logo">🎓</span>
+                <div>
+                    <div className="adm-sidebar-brand">JIT Admin</div>
+                    <div className="adm-sidebar-subbrand">Portal</div>
                 </div>
-
-                {/* Mobile Menu Toggle */}
-                <button
-                    className={`mobile-toggle ${isMenuOpen ? 'open' : ''}`}
-                    onClick={() => setIsMenuOpen(!isMenuOpen)}
-                >
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
-
-                <nav className={`header-nav ${isMenuOpen ? 'mobile-open' : ''}`}>
-                    <button
-                        className={`nav-item ${activeMenu === 'dashboard' ? 'active' : ''}`}
-                        onClick={() => handleNavigation('/admin/dashboard')}
-                    >
-                        Dashboard
-                    </button>
-                    <button
-                        className={`nav-item ${activeMenu === 'staff' ? 'active' : ''}`}
-                        onClick={() => handleNavigation('/admin/manage-staff')}
-                    >
-                        Staff
-                    </button>
-                    <button
-                        className={`nav-item ${activeMenu === 'incharge' ? 'active' : ''}`}
-                        onClick={() => handleNavigation('/admin/manage-year-incharge')}
-                    >
-                        Incharge
-                    </button>
-                    <button
-                        className={`nav-item ${activeMenu === 'warden' ? 'active' : ''}`}
-                        onClick={() => handleNavigation('/admin/manage-warden')}
-                    >
-                        Warden
-                    </button>
-                    <button
-                        className={`nav-item ${activeMenu === 'security' ? 'active' : ''}`}
-                        onClick={() => handleNavigation('/admin/manage-security')}
-                    >
-                        Security
-                    </button>
-                    <button
-                        className={`nav-item ${activeMenu === 'transport' ? 'active' : ''}`}
-                        onClick={() => handleNavigation('/admin/manage-bus')}
-                    >
-                        Transport
-                    </button>
-                    <button
-                        className={`nav-item ${activeMenu === 'profile' ? 'active' : ''}`}
-                        onClick={() => handleNavigation('/admin/profile')}
-                    >
-                        Profile
-                    </button>
-                    <button className="logout-btn" onClick={handleLogout}>
-                        Logout
-                    </button>
-                </nav>
             </div>
 
+            <nav className="adm-sidebar-nav">
+                {navGroups.map(group => (
+                    <div key={group.title} className="adm-nav-group">
+                        <div className="adm-nav-group-title">{group.title}</div>
+                        {group.items.map(item => (
+                            <button
+                                key={item.key}
+                                className={`adm-nav-link ${activeMenu === item.key ? 'adm-active' : ''}`}
+                                onClick={() => handleNavigation(item.path)}
+                            >
+                                <span className="adm-nav-icon">{item.icon}</span>
+                                {item.label}
+                            </button>
+                        ))}
+                    </div>
+                ))}
+            </nav>
+
+            <div className="adm-sidebar-footer">
+                <div className="adm-role-pill">Admin</div>
+                <button className="adm-logout" onClick={handleLogout}>
+                    🚪 Logout
+                </button>
+            </div>
+        </div>
+    );
+
+    return (
+        <>
+            {/* Desktop Sidebar */}
+            <aside className="adm-sidebar">
+                <SidebarContent />
+            </aside>
+
+            {/* Mobile Top Bar */}
+            <header className="adm-mobile-topbar">
+                <button
+                    className="adm-mobile-toggle"
+                    onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                    aria-label="Toggle sidebar"
+                >
+                    <span></span><span></span><span></span>
+                </button>
+                <div className="adm-mobile-brand">
+                    <span>🎓</span>
+                    <span>JIT Admin</span>
+                </div>
+                <button className="adm-mobile-logout-btn" onClick={handleLogout}>
+                    Logout
+                </button>
+            </header>
+
+            {/* Mobile Sidebar Overlay */}
+            {isSidebarOpen && (
+                <div className="adm-overlay" onClick={() => setIsSidebarOpen(false)}>
+                    <div className="adm-mobile-sidebar" onClick={e => e.stopPropagation()}>
+                        <SidebarContent />
+                    </div>
+                </div>
+            )}
+
             <style>{`
-                .admin-header {
-                    background: white;
-                    border-bottom: 1px solid #e2e8f0;
-                    position: sticky;
-                    top: 0;
-                    z-index: 100;
-                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+                /* Admin Sidebar */
+                .adm-sidebar {
+                    position: fixed;
+                    top: 0; left: 0; bottom: 0;
+                    width: var(--sidebar-width);
+                    background: linear-gradient(180deg, #111827 0%, #1e293b 100%);
+                    z-index: 200;
+                    overflow-y: auto;
+                    display: flex;
+                    flex-direction: column;
                 }
-
-                .header-container {
-                    max-width: 1400px;
-                    margin: 0 auto;
-                    padding: 0 24px;
-                    height: 70px;
+                .adm-sidebar-inner {
+                    display: flex;
+                    flex-direction: column;
+                    height: 100%;
+                    min-height: 100vh;
+                }
+                .adm-sidebar-header {
                     display: flex;
                     align-items: center;
-                    justify-content: space-between;
+                    gap: var(--space-3);
+                    padding: var(--space-5) var(--space-5);
+                    border-bottom: 1px solid rgba(255,255,255,0.08);
+                    flex-shrink: 0;
                 }
-
-                .header-left {
+                .adm-sidebar-logo { font-size: 2rem; }
+                .adm-sidebar-brand {
+                    font-size: 1rem;
+                    font-weight: 800;
+                    color: white;
+                    letter-spacing: -0.02em;
+                    line-height: 1.1;
+                }
+                .adm-sidebar-subbrand {
+                    font-size: 0.72rem;
+                    color: rgba(255,255,255,0.4);
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.08em;
+                }
+                .adm-sidebar-nav {
+                    flex: 1;
+                    padding: var(--space-4) var(--space-3);
                     display: flex;
-                    align-items: center;
-                    gap: 40px;
+                    flex-direction: column;
+                    gap: var(--space-5);
+                    overflow-y: auto;
                 }
-
-                .brand {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    cursor: pointer;
-                }
-
-                .brand-icon {
-                    font-size: 28px;
-                }
-
-                .brand-text {
-                    font-size: 1.3rem;
+                .adm-nav-group { display: flex; flex-direction: column; gap: 2px; }
+                .adm-nav-group-title {
+                    font-size: 0.65rem;
                     font-weight: 700;
-                    background: linear-gradient(135deg, #0047AB, #2563eb);
-                    -webkit-background-clip: text;
-                    -webkit-text-fill-color: transparent;
+                    color: rgba(255,255,255,0.3);
+                    text-transform: uppercase;
+                    letter-spacing: 0.1em;
+                    padding: 0 var(--space-3);
+                    margin-bottom: var(--space-1);
                 }
-
-                .header-nav {
+                .adm-nav-link {
                     display: flex;
                     align-items: center;
-                    gap: 8px;
-                }
-
-                .nav-item {
-                    padding: 10px 14px;
+                    gap: var(--space-3);
+                    height: 42px;
+                    padding: 0 var(--space-3);
+                    border-radius: var(--radius-md);
+                    color: rgba(255,255,255,0.6);
+                    font-size: 0.88rem;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: var(--transition-fast);
                     border: none;
                     background: transparent;
-                    color: #64748b;
-                    font-weight: 600;
-                    font-size: 0.9rem;
-                    cursor: pointer;
-                    border-radius: 10px;
-                    transition: all 0.3s;
+                    text-align: left;
+                    width: 100%;
+                    font-family: inherit;
                 }
-
-                .nav-item:hover {
-                    background: #f1f5f9;
-                    color: #0047AB;
-                }
-
-                .nav-item.active {
-                    background: linear-gradient(135deg, #0047AB, #2563eb);
-                    color: white;
-                    box-shadow: 0 4px 12px rgba(0, 71, 171, 0.2);
-                }
-
-                .logout-btn {
-                    padding: 8px 16px;
-                    border: 2px solid #ef4444;
-                    background: white;
-                    color: #ef4444;
-                    font-weight: 600;
-                    font-size: 0.9rem;
-                    cursor: pointer;
-                    border-radius: 10px;
-                    transition: all 0.3s;
-                    margin-left: 8px;
-                }
-
-                .logout-btn:hover {
-                    background: #ef4444;
-                    color: white;
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-                }
-
-                /* Mobile Toggle */
-                .mobile-toggle {
-                    display: none;
+                .adm-nav-link:hover { color: white; background: rgba(255,255,255,0.08); }
+                .adm-nav-link.adm-active { color: white; background: var(--primary); font-weight: 600; }
+                .adm-nav-icon { font-size: 1rem; width: 20px; text-align: center; flex-shrink: 0; }
+                .adm-sidebar-footer {
+                    padding: var(--space-5);
+                    border-top: 1px solid rgba(255,255,255,0.08);
+                    display: flex;
                     flex-direction: column;
-                    gap: 6px;
+                    gap: var(--space-3);
+                }
+                .adm-role-pill {
+                    display: inline-flex;
+                    align-items: center;
+                    height: 28px;
+                    padding: 0 var(--space-3);
+                    background: rgba(37,99,235,0.3);
+                    color: #93c5fd;
+                    border-radius: var(--radius-full);
+                    font-size: 0.72rem;
+                    font-weight: 700;
+                    letter-spacing: 0.06em;
+                    text-transform: uppercase;
+                    border: 1px solid rgba(37,99,235,0.5);
+                    width: fit-content;
+                }
+                .adm-logout {
+                    display: flex;
+                    align-items: center;
+                    gap: var(--space-2);
+                    height: 40px;
+                    padding: 0 var(--space-3);
+                    background: rgba(239,68,68,0.15);
+                    color: #fca5a5;
+                    border: 1px solid rgba(239,68,68,0.3);
+                    border-radius: var(--radius-md);
+                    font-size: 0.88rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: var(--transition-fast);
+                    font-family: inherit;
+                }
+                .adm-logout:hover { background: var(--danger); color: white; border-color: var(--danger); }
+
+                /* Mobile Top Bar */
+                .adm-mobile-topbar {
+                    display: none;
+                    position: fixed;
+                    top: 0; left: 0; right: 0;
+                    height: 60px;
+                    background: rgba(17,24,39,0.97);
+                    backdrop-filter: blur(16px);
+                    border-bottom: 1px solid rgba(255,255,255,0.08);
+                    z-index: 300;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 0 var(--space-4);
+                }
+                .adm-mobile-toggle {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 5px;
                     background: none;
                     border: none;
                     cursor: pointer;
-                    padding: 4px;
-                    z-index: 102; /* Ensure above nav overlay */
+                    padding: var(--space-2);
+                }
+                .adm-mobile-toggle span { display: block; width: 20px; height: 2px; background: white; border-radius: 2px; }
+                .adm-mobile-brand {
+                    display: flex;
+                    align-items: center;
+                    gap: var(--space-2);
+                    font-size: 1rem;
+                    font-weight: 700;
+                    color: white;
+                }
+                .adm-mobile-logout-btn {
+                    height: 32px;
+                    padding: 0 var(--space-3);
+                    background: rgba(239,68,68,0.2);
+                    color: #fca5a5;
+                    border: 1px solid rgba(239,68,68,0.3);
+                    border-radius: var(--radius-md);
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    font-family: inherit;
                 }
 
-                .mobile-toggle span {
-                    display: block;
-                    width: 24px;
-                    height: 2px;
-                    background: #1e293b;
-                    transition: all 0.3s;
+                /* Mobile Sidebar */
+                .adm-overlay {
+                    position: fixed; inset: 0;
+                    background: rgba(0,0,0,0.6);
+                    z-index: 1100;
+                    backdrop-filter: blur(4px);
+                    animation: fadeIn 0.2s ease;
+                }
+                .adm-mobile-sidebar {
+                    position: absolute;
+                    top: 0; left: 0; bottom: 0;
+                    width: min(280px, 85vw);
+                    background: linear-gradient(180deg, #111827 0%, #1e293b 100%);
+                    animation: slideInLeft 0.25s ease;
+                    overflow-y: auto;
                 }
 
-                .mobile-toggle.open span:nth-child(1) {
-                    transform: rotate(45deg) translate(5px, 6px);
-                }
-
-                .mobile-toggle.open span:nth-child(2) {
-                    opacity: 0;
-                }
-
-                .mobile-toggle.open span:nth-child(3) {
-                    transform: rotate(-45deg) translate(5px, -6px);
-                }
-
-                /* Responsive */
-                @media (max-width: 1100px) {
-                    .nav-item {
-                        padding: 8px 10px;
-                        font-size: 0.85rem;
-                    }
-                }
-
-                @media (max-width: 900px) {
-                    .header-container {
-                        padding: 0 16px;
-                    }
-
-                    .mobile-toggle {
-                        display: flex;
-                    }
-
-                    .header-nav {
-                        position: fixed;
-                        top: 0;
-                        right: -100%;
-                        width: 70%;
-                        max-width: 300px;
-                        height: 100vh;
-                        background: white;
-                        flex-direction: column;
-                        padding: 80px 24px 24px;
-                        box-shadow: -4px 0 20px rgba(0,0,0,0.1);
-                        transition: right 0.3s ease-in-out;
-                        z-index: 101;
-                        gap: 16px;
-                        align-items: flex-start;
-                    }
-
-                    .header-nav.mobile-open {
-                        right: 0;
-                    }
-
-                    .nav-item {
-                        width: 100%;
-                        text-align: left;
-                        padding: 12px 16px;
-                        font-size: 1rem;
-                    }
-
-                    .logout-btn {
-                        width: 100%;
-                        text-align: center;
-                        margin-left: 0;
-                        margin-top: 20px;
-                        display: block; 
-                    }
-
-                    .brand-text {
-                        font-size: 1.1rem;
-                    }
-                }
-
-                /* Overlay for mobile menu */
-                .admin-header::after {
-                    content: '';
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background: rgba(0,0,0,0.5);
-                    opacity: 0;
-                    pointer-events: none;
-                    transition: opacity 0.3s;
-                    z-index: 100;
-                }
-                
-                .admin-header:has(.mobile-open)::after {
-                    opacity: 1;
-                    pointer-events: auto;
+                @media (max-width: 768px) {
+                    .adm-sidebar { display: none; }
+                    .adm-mobile-topbar { display: flex; }
                 }
             `}</style>
-        </header>
+        </>
     );
 };
 

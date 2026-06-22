@@ -25,6 +25,12 @@ interface Outpass {
     };
     studentName?: string;
 
+    // Flat properties from API
+    name?: string;
+    email?: string;
+    department?: string;
+    semester?: number;
+
     outpassType?: string;
     outpasstype?: string; // Add lowercase fallback to interface
     type?: string;
@@ -84,10 +90,10 @@ const OutpassAdmin: React.FC = () => {
     };
 
     // Helper to get safe values
-    const getStudentName = (op: Outpass) => op.studentid?.name || op.student?.name || op.studentName || '-';
-    const getStudentRegNo = (op: Outpass) => op.studentid?.registerNumber || '-';
-    const getStudentDept = (op: Outpass) => op.studentid?.department || op.student?.department || '-';
-    const getStudentYear = (op: Outpass) => op.studentid?.year || op.student?.year || '-';
+    const getStudentName = (op: Outpass) => op.name || op.studentid?.name || op.student?.name || op.studentName || '-';
+    const getStudentRegNo = (op: Outpass) => op.email || op.studentid?.registerNumber || '-';
+    const getStudentDept = (op: Outpass) => op.department || op.studentid?.department || op.student?.department || '-';
+    const getStudentYear = (op: Outpass) => op.semester ? `Sem ${op.semester}` : (op.studentid?.year || op.student?.year || '-');
 
     const getStudentType = (op: Outpass) => {
         const type = op.studentid?.studentType || op.studentid?.residenceType || 'Hosteller';
@@ -102,9 +108,9 @@ const OutpassAdmin: React.FC = () => {
 
     // Status is often 'status' or 'outpassStatus'
     // But specific approvals are usually distinct fields
-    const getStatus = (op: Outpass) => op.outpassStatus || op.status || '-';
+    const getStatus = (op: Outpass) => op.status || op.outpassStatus || '-';
 
-    const getFromDate = (op: Outpass) => op.fromDate || op.outDate || '';
+    const getFromDate = (op: Outpass) => op.fromDate || op.outDate || op.createdAt || '';
     const getToDate = (op: Outpass) => op.toDate || op.inDate || '';
 
     // Approval Status Helpers - Try lowercase first as seen in other files
@@ -187,16 +193,9 @@ const OutpassAdmin: React.FC = () => {
             "S.No",
             "Student Name",
             "Department",
-            "Batch",
-            "Dayscholar/Hostel",
+            "Batch (Semester)",
+            "Pass Type",
             "Status",
-            "Staff Approval",
-            "Year Incharge Approval",
-            "Warden Approval",
-            "Reason",
-            "Type",
-            "From Date",
-            "To Date",
             "Applied On"
         ];
 
@@ -206,15 +205,8 @@ const OutpassAdmin: React.FC = () => {
                 `"${getStudentName(op)}"`,
                 `"${getStudentDept(op)}"`,
                 `"${getStudentYear(op)}"`,
-                getStudentType(op),
-                getStatus(op),
-                getStaffStatus(op),
-                getYearInchargeStatus(op),
-                getWardenStatus(op),
-                `"${op.reason?.replace(/"/g, '""')}"`,
                 getType(op),
-                csvDate(getFromDate(op)),
-                csvDate(getToDate(op)),
+                getStatus(op),
                 csvDate(op.createdAt)
             ];
         });
@@ -331,11 +323,10 @@ const OutpassAdmin: React.FC = () => {
                             <th>S.No</th>
                             <th>Student Name</th>
                             <th>Department</th>
-                            <th>Batch (Year)</th>
-                            <th>Hosteller/DS</th>
-                            <th>Status (Overall)</th>
-                            <th>Approvals</th>
-                            <th>Reason</th>
+                            <th>Batch (Semester)</th>
+                            <th>Pass Type</th>
+                            <th>Status</th>
+                            <th>Applied On</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -349,8 +340,8 @@ const OutpassAdmin: React.FC = () => {
                                         <td>{getStudentDept(op)}</td>
                                         <td>{getStudentYear(op)}</td>
                                         <td>
-                                            <span className="text-gray-600 text-sm">
-                                                {getStudentType(op)}
+                                            <span className="font-medium text-gray-700">
+                                                {getType(op)}
                                             </span>
                                         </td>
                                         <td>
@@ -359,28 +350,16 @@ const OutpassAdmin: React.FC = () => {
                                             </span>
                                         </td>
                                         <td>
-                                            <div className="approval-status-col">
-                                                <div className="approval-item">
-                                                    <span className="label">Staff:</span>
-                                                    <span className={`val ${getStaffStatus(op).toLowerCase()}`}>{getStaffStatus(op)}</span>
-                                                </div>
-                                                <div className="approval-item">
-                                                    <span className="label">Year Incharge:</span>
-                                                    <span className={`val ${getYearInchargeStatus(op).toLowerCase()}`}>{getYearInchargeStatus(op)}</span>
-                                                </div>
-                                                <div className="approval-item">
-                                                    <span className="label">Warden:</span>
-                                                    <span className={`val ${getWardenStatus(op).toLowerCase()}`}>{getWardenStatus(op)}</span>
-                                                </div>
-                                            </div>
+                                            <span className="text-gray-500 text-sm">
+                                                {op.createdAt ? new Date(op.createdAt).toLocaleDateString() : '-'}
+                                            </span>
                                         </td>
-                                        <td title={op.reason} className="reason-cell">{op.reason}</td>
                                     </tr>
                                 );
                             })
                         ) : (
                             <tr>
-                                <td colSpan={8} className="no-data">No outpasses found matching the filters.</td>
+                                <td colSpan={7} className="no-data">No outpasses found matching the filters.</td>
                             </tr>
                         )}
                     </tbody>

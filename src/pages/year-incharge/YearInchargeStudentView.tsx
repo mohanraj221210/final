@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import YearInchargeNav from '../../components/YearInchargeNav';
-import LoadingSpinner from '../../components/LoadingSpinner';
+import { YearInchargeService } from '../../services/yearInchargeService';
 
 const YearInchargeStudentView: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -15,6 +14,8 @@ const YearInchargeStudentView: React.FC = () => {
     const [showDocumentModal, setShowDocumentModal] = useState(false);
     const [documentUrl, setDocumentUrl] = useState<string | null>(null);
     const [documentType, setDocumentType] = useState<'image' | 'pdf'>('image');
+    const [imageError, setImageError] = useState(false);
+    const [showApproveModal, setShowApproveModal] = useState(false);
 
     useEffect(() => {
         const fetchOutpassDetails = async () => {
@@ -25,21 +26,13 @@ const YearInchargeStudentView: React.FC = () => {
             }
 
             try {
-                // Get all list and find by ID since there's no single fetch API mentioned in user prompt for 'incharge'
-                // Re-using list API as per prompt instructions "Use ONLY the APIs provided below"
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}/incharge/outpass/list`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (response.status === 200) {
-                    const list = response.data.outpasses || response.data.outpasslist || response.data.filterOutpass || [];
-                    const found = list.find((o: any) => o._id === id);
-                    if (found) {
-                        setOutpass(found);
-                    } else {
-                        toast.error("Outpass record not found");
-                        navigate('/year-incharge/pending-outpass');
-                    }
+                const data = await YearInchargeService.getOutpassDetails(id!);
+                if (data && data._id) {
+                    setOutpass(data);
+                    setImageError(false);
+                } else {
+                    toast.error("Outpass record not found");
+                    navigate('/year-incharge/pending-outpass');
                 }
             } catch (error) {
                 console.error("Error details:", error);
@@ -53,38 +46,25 @@ const YearInchargeStudentView: React.FC = () => {
     }, [id, navigate]);
 
     const handleAction = async (status: 'approved' | 'rejected') => {
-        if (!remarks.trim()) {
-            toast.warning("Remarks are required for this action");
+        if (status === 'rejected' && !remarks.trim()) {
+            toast.warning("Remarks are required for rejection");
             return;
         }
 
         setActionLoading(true);
-        const token = localStorage.getItem('token');
 
         try {
-            const payload = {
-                outpassId: id,
-                yearinchargeapprovalstatus: status,
-                yearinchargeremarks: remarks
-            };
-
-            const response = await axios.put(
-                `${import.meta.env.VITE_API_URL}/incharge/outpass/approval`,
-                payload,
-                { headers: { 'Authorization': `Bearer ${token}` } }
-            );
-
-            if (response.status === 200) {
-                toast.success("Outpass Updated Successfully");
-                setTimeout(() => navigate('/year-incharge/pending-outpass'), 1500);
+            if (status === 'approved') {
+                await YearInchargeService.approveOutpass(id!);
+            } else {
+                await YearInchargeService.rejectOutpass(id!, remarks);
             }
+            toast.success(`Outpass ${status === 'approved' ? 'Approved' : 'Rejected'} Successfully`);
+            setTimeout(() => navigate('/year-incharge/pending-outpass'), 1500);
         } catch (error: any) {
             console.error("Update error:", error);
             if (error.response) {
                 switch (error.response.status) {
-                    case 400:
-                        toast.error("All fields are required");
-                        break;
                     case 401:
                         toast.error("Session expired. Please login again.");
                         navigate('/year-incharge-login');
@@ -119,7 +99,64 @@ const YearInchargeStudentView: React.FC = () => {
         setShowDocumentModal(true);
     };
 
-    if (loading) return <LoadingSpinner />;
+    if (loading) {
+        return (
+            <div className="page-container">
+                <ToastContainer position="bottom-right" />
+                <YearInchargeNav />
+                <div className="content-wrapper">
+                    <div className="lux-skeleton" style={{ width: '120px', height: '36px', borderRadius: '8px', marginBottom: '24px' }}></div>
+                    <div className="details-grid">
+                        {/* Student Profile Skeleton */}
+                        <div className="student-card-modern" style={{ minHeight: '400px' }}>
+                            <div className="card-header-gradient" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '24px' }}>
+                                <div className="lux-skeleton" style={{ width: '100px', height: '100px', borderRadius: '50%' }}></div>
+                                <div className="lux-skeleton" style={{ width: '150px', height: '24px', borderRadius: '6px' }}></div>
+                                <div className="lux-skeleton" style={{ width: '100px', height: '18px', borderRadius: '6px' }}></div>
+                            </div>
+                            <div className="card-body-modern" style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '24px' }}>
+                                {[1, 2, 3].map((i) => (
+                                    <div key={i} style={{ display: 'flex', gap: '12px' }}>
+                                        <div className="lux-skeleton" style={{ width: '24px', height: '24px', borderRadius: '4px' }}></div>
+                                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                            <div className="lux-skeleton" style={{ width: '80px', height: '12px', borderRadius: '4px' }}></div>
+                                            <div className="lux-skeleton" style={{ width: '140px', height: '16px', borderRadius: '4px' }}></div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        {/* Outpass Details Skeleton */}
+                        <div className="outpass-details-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <div className="lux-skeleton" style={{ width: '200px', height: '28px', borderRadius: '6px' }}></div>
+                            <div className="status-timeline" style={{ display: 'flex', gap: '16px', margin: '20px 0' }}>
+                                {[1, 2, 3].map((i) => (
+                                    <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', flex: 1 }}>
+                                        <div className="lux-skeleton" style={{ width: '32px', height: '32px', borderRadius: '50%' }}></div>
+                                        <div className="lux-skeleton" style={{ width: '80px', height: '14px', borderRadius: '4px' }}></div>
+                                    </div>
+                                ))}
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                <div className="lux-skeleton" style={{ width: '100px', height: '14px', borderRadius: '4px' }}></div>
+                                <div className="lux-skeleton" style={{ width: '100%', height: '40px', borderRadius: '6px' }}></div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '16px' }}>
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    <div className="lux-skeleton" style={{ width: '80px', height: '14px', borderRadius: '4px' }}></div>
+                                    <div className="lux-skeleton" style={{ width: '100%', height: '32px', borderRadius: '6px' }}></div>
+                                </div>
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    <div className="lux-skeleton" style={{ width: '80px', height: '14px', borderRadius: '4px' }}></div>
+                                    <div className="lux-skeleton" style={{ width: '100%', height: '32px', borderRadius: '6px' }}></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
     if (!outpass) return null;
 
     return (
@@ -137,13 +174,14 @@ const YearInchargeStudentView: React.FC = () => {
                     <div className="student-card-modern">
                         <div className="card-header-gradient">
                             <div className="avatar-large">
-                                {outpass.studentid?.photo ? (
+                                {outpass.studentid?.photo && !imageError ? (
                                     <img
                                         src={outpass.studentid.photo.startsWith('http') || outpass.studentid.photo.startsWith('data:')
                                             ? outpass.studentid.photo
                                             : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${outpass.studentid.photo.replace(/^\//, '')}`}
                                         alt="Student"
                                         style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                                        onError={() => setImageError(true)}
                                     />
                                 ) : (
                                     typeof outpass.studentid?.name === 'string' ? outpass.studentid.name.charAt(0) : 'S'
@@ -341,12 +379,125 @@ const YearInchargeStudentView: React.FC = () => {
                             </div>
                         </div>
 
+                        {/* Audit Log / History */}
+                        <div className="audit-log-section" style={{
+                            marginTop: '24px',
+                            paddingTop: '20px',
+                            borderTop: '1px dashed #cbd5e1'
+                        }}>
+                            <h3 style={{
+                                fontSize: '1.1rem',
+                                color: '#1e293b',
+                                fontWeight: 700,
+                                marginBottom: '16px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px'
+                            }}>
+                                📋 Audit Log & History
+                            </h3>
+                            <div className="audit-timeline" style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '16px'
+                            }}>
+                                {/* Applied Entry */}
+                                <div style={{ display: 'flex', gap: '12px' }}>
+                                    <div style={{ fontSize: '1rem' }}>📝</div>
+                                    <div>
+                                        <p style={{ margin: 0, fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Applied At</p>
+                                        <p style={{ margin: 0, color: '#64748b', fontSize: '0.85rem' }}>
+                                            {outpass.createdAt ? new Date(outpass.createdAt).toLocaleString('en-IN', {
+                                                day: '2-digit', month: 'short', year: 'numeric',
+                                                hour: '2-digit', minute: '2-digit', hour12: true
+                                            }) : 'N/A'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Staff Entry */}
+                                {(outpass.staffid?.name || outpass.staffapprovalstatus !== 'pending') && (
+                                    <div style={{ display: 'flex', gap: '12px' }}>
+                                        <div style={{ fontSize: '1rem' }}>
+                                            {outpass.staffapprovalstatus === 'approved' ? '✅' : '⏳'}
+                                        </div>
+                                        <div>
+                                            <p style={{ margin: 0, fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>
+                                                Staff Decision: {outpass.staffapprovalstatus === 'approved' ? 'Approved' : outpass.staffapprovalstatus || 'Pending'}
+                                            </p>
+                                            <p style={{ margin: 0, color: '#64748b', fontSize: '0.85rem' }}>
+                                                {outpass.staffid?.name ? `Approved By: ${outpass.staffid.name}` : ''}
+                                                {outpass.staffapprovedAt ? ` on ${new Date(outpass.staffapprovedAt).toLocaleString('en-IN', {
+                                                    day: '2-digit', month: 'short', year: 'numeric',
+                                                    hour: '2-digit', minute: '2-digit', hour12: true
+                                                })}` : ''}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Year Incharge Entry */}
+                                {outpass.yearinchargeapprovalstatus !== 'pending' && (
+                                    <div style={{ display: 'flex', gap: '12px' }}>
+                                        <div style={{ fontSize: '1rem' }}>
+                                            {outpass.yearinchargeapprovalstatus === 'approved' ? '✅' : '❌'}
+                                        </div>
+                                        <div>
+                                            <p style={{ margin: 0, fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>
+                                                Year Incharge Decision: {outpass.yearinchargeapprovalstatus === 'approved' ? 'Approved' : 'Rejected'}
+                                            </p>
+                                            <p style={{ margin: 0, color: '#64748b', fontSize: '0.85rem' }}>
+                                                {outpass.yearinchargeapprovedAt ? `${outpass.yearinchargeapprovalstatus === 'approved' ? 'Approved' : 'Rejected'} on ${new Date(outpass.yearinchargeapprovedAt).toLocaleString('en-IN', {
+                                                    day: '2-digit', month: 'short', year: 'numeric',
+                                                    hour: '2-digit', minute: '2-digit', hour12: true
+                                                })}` : ''}
+                                            </p>
+                                            {(outpass.yearinchargeremarks || outpass.remarks) && (
+                                                <p style={{
+                                                    margin: '4px 0 0 0',
+                                                    padding: '8px 12px',
+                                                    background: outpass.yearinchargeapprovalstatus === 'approved' ? '#f0fdf4' : '#fef2f2',
+                                                    borderLeft: `3px solid ${outpass.yearinchargeapprovalstatus === 'approved' ? '#22c55e' : '#ef4444'}`,
+                                                    color: outpass.yearinchargeapprovalstatus === 'approved' ? '#166534' : '#991b1b',
+                                                    fontSize: '0.85rem',
+                                                    borderRadius: '4px',
+                                                    fontStyle: 'italic'
+                                                }}>
+                                                    Remarks: "{outpass.yearinchargeremarks || outpass.remarks}"
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Warden Entry */}
+                                {outpass.wardenapprovalstatus !== 'pending' && (
+                                    <div style={{ display: 'flex', gap: '12px' }}>
+                                        <div style={{ fontSize: '1rem' }}>
+                                            {outpass.wardenapprovalstatus === 'approved' ? '✅' : '❌'}
+                                        </div>
+                                        <div>
+                                            <p style={{ margin: 0, fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>
+                                                Warden Decision: {outpass.wardenapprovalstatus === 'approved' ? 'Approved' : outpass.wardenapprovalstatus || 'Pending'}
+                                            </p>
+                                            <p style={{ margin: 0, color: '#64748b', fontSize: '0.85rem' }}>
+                                                {outpass.wardenapprovedAt ? `${outpass.wardenapprovalstatus === 'approved' ? 'Approved' : 'Rejected'} on ${new Date(outpass.wardenapprovedAt).toLocaleString('en-IN', {
+                                                    day: '2-digit', month: 'short', year: 'numeric',
+                                                    hour: '2-digit', minute: '2-digit', hour12: true
+                                                })}` : ''}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
                         {/* Approval Actions */}
                         <div className="action-section">
                             <h3>Take Action</h3>
                             <textarea
                                 className="remarks-input"
-                                placeholder="Enter remarks (required)..."
+                                placeholder="Enter remarks (required for rejection)..."
                                 value={remarks}
                                 onChange={(e) => setRemarks(e.target.value)}
                                 rows={3}
@@ -361,13 +512,60 @@ const YearInchargeStudentView: React.FC = () => {
                                 </button>
                                 <button
                                     className="btn-approve"
-                                    onClick={() => handleAction('approved')}
+                                    onClick={() => setShowApproveModal(true)}
                                     disabled={actionLoading}
                                 >
                                     {actionLoading ? 'Processing...' : 'Approve Request'}
                                 </button>
                             </div>
                         </div>
+
+                        {/* Approval Confirmation Modal */}
+                        {showApproveModal && (
+                            <div className="modal-overlay" onClick={() => setShowApproveModal(false)}>
+                                <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', padding: '32px', textAlign: 'center', borderRadius: '24px' }}>
+                                    <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px' }}>✅</span>
+                                    <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1e293b', marginBottom: '12px' }}>Confirm Approval</h3>
+                                    <p style={{ color: '#64748b', fontSize: '0.95rem', marginBottom: '24px', lineHeight: 1.5 }}>
+                                        Are you sure you want to approve this outpass request? This action cannot be undone.
+                                    </p>
+                                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                                        <button
+                                            onClick={() => setShowApproveModal(false)}
+                                            style={{
+                                                padding: '10px 20px',
+                                                borderRadius: '10px',
+                                                border: '1px solid #cbd5e1',
+                                                background: 'white',
+                                                color: '#475569',
+                                                fontWeight: '600',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setShowApproveModal(false);
+                                                handleAction('approved');
+                                            }}
+                                            disabled={actionLoading}
+                                            style={{
+                                                padding: '10px 20px',
+                                                borderRadius: '10px',
+                                                border: 'none',
+                                                background: '#10b981',
+                                                color: 'white',
+                                                fontWeight: '600',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            {actionLoading ? 'Approving...' : 'Confirm Approve'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

@@ -10,7 +10,7 @@ import type {
     AdminProfile
 } from '../types/admin';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = "http://localhost:8000";
 
 // Create axios instance with interceptor for token
 const api = axios.create({
@@ -88,6 +88,15 @@ export const adminService = {
         const response = await api.delete(`/admin/student/delete/${id}`);
         return response.data;
     },
+    getStudentStats: async (filters?: { department?: string, year?: string, semester?: string }) => {
+        const params = new URLSearchParams();
+        if (filters?.department) params.append('department', filters.department);
+        if (filters?.year) params.append('year', filters.year);
+        if (filters?.semester) params.append('semester', filters.semester);
+
+        const response = await api.get(`/admin/students/stats?${params.toString()}`);
+        return response.data.stats;
+    },
 
     // Staff
     addStaff: async (data: any) => {
@@ -123,6 +132,13 @@ export const adminService = {
     resetStaffPassword: async (id: string, newPassword: string) => {
         const response = await api.put(`/admin/staff/forgotpassword/${id}`, { newPassword });
         return response.data;
+    },
+    getStaffStats: async (filters?: { department?: string }) => {
+        const params = new URLSearchParams();
+        if (filters?.department) params.append('department', filters.department);
+
+        const response = await api.get(`/admin/staff/stats?${params.toString()}`);
+        return response.data.stats;
     },
 
     // Incharge
@@ -218,54 +234,14 @@ export const adminService = {
         const response = await api.get<{ message: string, outpasses: any[] }>('/admin/outpass/list');
         return response.data;
     },
-    getOutpassStats: async () => {
-        const response = await api.get<{ message: string, outpasses: any[], filterOutpass?: any[] }>('/admin/outpass/list');
-        const outpasses = response.data.outpasses || response.data.filterOutpass || [];
+    getOutpassStats: async (filters?: { status?: string, appliedDate?: string, department?: string, outpasstype?: string }) => {
+        const params = new URLSearchParams();
+        if (filters?.status) params.append('status', filters.status);
+        if (filters?.appliedDate) params.append('appliedDate', filters.appliedDate);
+        if (filters?.department) params.append('department', filters.department);
+        if (filters?.outpasstype) params.append('outpasstype', filters.outpasstype);
 
-        // Helper to get type safely
-        const getType = (o: any) => (o.outpassType || o.outpasstype || o.type || '').toLowerCase().trim();
-        // Helper to get status safely
-        const getStatus = (o: any) => (o.outpassStatus || o.status || '').toLowerCase().trim();
-
-        // Calculate Overview Stats
-        const stats = {
-            totalOutpasses: outpasses.length,
-            pendingApprovals: outpasses.filter(o => getStatus(o) === 'pending').length,
-            // Count ALL emergency requests for the stat card if the user implies that, 
-            // OR if it's meant to be an "Action item", then pending. 
-            // Usually "Emergency Requests" card implies attention needed, so pending is often right.
-            // BUT if the user says it's "Wrong", maybe they expect TOTAL emergency requests?
-            // The card says "⚠️ Action Required" which implies pending. 
-            // I will stick to pending but fix the property access which is the likely bug.
-            emergencyRequests: outpasses.filter(o =>
-                getType(o) === 'emergency' &&
-                getStatus(o) === 'pending'
-            ).length
-        };
-
-        // Calculate Chart Data (Counts by Type)
-        const typeCounts: { [key: string]: number } = {
-            'OD': 0,
-            'Home Pass': 0,
-            'Emergency': 0,
-            'Outing Pass': 0
-        };
-
-        outpasses.forEach(o => {
-            const type = getType(o);
-            if (type === 'od') typeCounts['OD']++;
-            else if (type.includes('home')) typeCounts['Home Pass']++;
-            else if (type === 'emergency') typeCounts['Emergency']++;
-            else if (type === 'medical' || type === 'outing') typeCounts['Outing Pass']++;
-        });
-
-        const chartData = [
-            { label: 'OD', value: typeCounts['OD'], color: '#6366f1' },
-            { label: 'Home Pass', value: typeCounts['Home Pass'], color: '#ec4899' },
-            { label: 'Emergency', value: typeCounts['Emergency'], color: '#ef4444' },
-            { label: 'Outing Pass', value: typeCounts['Outing Pass'], color: '#f59e0b' },
-        ];
-
-        return { stats, chartData };
+        const response = await api.get(`/admin/outpass/stats?${params.toString()}`);
+        return response.data.stats;
     }
 };

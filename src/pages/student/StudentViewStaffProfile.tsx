@@ -2,19 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
+import StudentHeader from '../../components/StudentHeader';
+import LoadingSpinner from '../../components/LoadingSpinner';
+import StudentBottomNav from '../../components/StudentBottomNav';
+
 const StudentViewStaffProfile: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [staff, setStaff] = useState<any>(null);
     const { id } = useParams<{ id: string }>();
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
     const navigate = useNavigate();
-
-    const handleLogout = () => {
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('userType');
-        localStorage.removeItem('token');
-        navigate('/login');
-    };
 
     useEffect(() => {
         const fetchStaffById = async () => {
@@ -30,7 +26,7 @@ const StudentViewStaffProfile: React.FC = () => {
                     setStaff(response.data.staff);
                 }
             } catch (error) {
-                console.error("Error valid fetching staff data by ID, falling back to list:", error);
+                console.error("Error fetching staff data by ID, falling back to list:", error);
 
                 // Fallback to searching the list if direct endpoint fails (robustness)
                 try {
@@ -54,805 +50,842 @@ const StudentViewStaffProfile: React.FC = () => {
         if (id) fetchStaffById();
     }, [id]);
 
-    if (loading) {
-        return (
-            <div className="loading-container">
-                <div className="spinner"></div>
-                <p style={{ color: '#333' }}>Loading profile...</p>
-            </div>
-        );
-    }
+    if (loading) return <LoadingSpinner />;
 
     if (!staff) {
         return (
-            <>
-
-                <header className="dashboard-header-custom">
-                    <div className="header-container-custom">
-                        <div className="header-left-custom">
-                            <div className="brand-custom">
-                                <span className="brand-icon-custom">🎓</span>
-                                <span className="brand-text-custom">JIT Student Portal</span>
+            <div className="pb-staff-profile-page">
+                <StudentHeader />
+                <main className="student-content">
+                    <div className="content-wrapper">
+                        <div className="pb-empty-state-card" style={{ marginTop: '40px' }}>
+                            <div className="pb-empty-state-icon">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <circle cx="11" cy="11" r="8" />
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                </svg>
                             </div>
-                        </div>
-
-                        <button
-                            className="mobile-menu-btn"
-                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                            aria-label="Toggle menu"
-                        >
-                            {isMobileMenuOpen ? '✕' : '☰'}
-                        </button>
-
-                        <nav className={`header-nav-custom ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
-                            <button
-                                className="nav-item-custom"
-                                onClick={() => navigate('/dashboard')}
-                            >
-                                Dashboard
-                            </button>
-                            <button
-                                className="nav-item-custom"
-                                onClick={() => navigate('/staffs')}
-                            >
-                                Staffs
-                            </button>
-
-                            <button
-                                className="nav-item-custom"
-                                onClick={() => navigate('/outpass')}
-                            >
-                                Outpass
-                            </button>
-                            <button
-                                className="nav-item-custom"
-                                onClick={() => navigate('/subjects')}
-                            >
-                                Subjects
-                            </button>
-                            <button
-                                className="nav-item-custom"
-                                onClick={() => navigate('/profile')}
-                            >
-                                Profile
-                            </button>
-                            <button className="logout-btn-custom" onClick={handleLogout}>
-                                Logout
-                            </button>
-                        </nav>
-                    </div>
-                </header>
-
-                <div className="page-container" style={{ background: 'white', minHeight: '100vh', padding: '20px' }}>
-                    <div className="error-message">
-                        <h2 style={{ color: '#333' }}>Staff member not found</h2>
-                        <button className="back-btn" onClick={() => navigate('/staffs')}>
-                            ← Back to Faculty List
-                        </button>
-                    </div>
-                </div>
-            </>
-        );
-    }
-
-    // Determine photo URL (handling user inconsistency)
-    const photoUrl = staff.photo || staff.profilePhoto;
-
-    return (
-        <>
-            <header className="dashboard-header-custom">
-                <div className="header-container-custom">
-                    <div className="header-left-custom">
-                        <div className="brand-custom">
-                            <span className="brand-icon-custom">🎓</span>
-                            <span className="brand-text-custom">JIT Student Portal</span>
-                        </div>
-                    </div>
-
-                    <button
-                        className="mobile-menu-btn"
-                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        aria-label="Toggle menu"
-                    >
-                        {isMobileMenuOpen ? '✕' : '☰'}
-                    </button>
-
-                    <nav className={`header-nav-custom ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/dashboard')}
-                        >
-                            Dashboard
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/staffs')}
-                        >
-                            Staffs
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/outpass')}
-                        >
-                            Outpass
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/subjects')}
-                        >
-                            Subjects
-                        </button>
-                        <button
-                            className="nav-item-custom"
-                            onClick={() => navigate('/profile')}
-                        >
-                            Profile
-                        </button>
-                        <button className="logout-btn-custom" onClick={handleLogout}>
-                            Logout
-                        </button>
-                    </nav>
-                </div>
-            </header>
-
-            <div className="page-container staff-profile-page">
-                <div className="content-wrapper">
-                    {/* Profile Header */}
-                    <div className="profile-header">
-                        <div className="header-top">
-                            <button className="back-btn" onClick={() => navigate('/staffs')}>
+                            <h3>Staff member not found</h3>
+                            <p>The requested faculty profile could not be loaded. It may have been removed or updated.</p>
+                            <button className="pb-clear-btn" onClick={() => navigate('/staffs')}>
                                 ← Back to Faculty List
                             </button>
                         </div>
-
-                        <div className="header-content-inner">
-                            <div className="profile-image-wrapper">
-                                <img
-                                    src={photoUrl
-                                        ? photoUrl.startsWith('http')
-                                            ? photoUrl
-                                            : `${import.meta.env.VITE_CDN_URL}${photoUrl}`
-                                        : `https://ui-avatars.com/api/?name=${staff.name}&background=0047AB&color=fff&size=200`}
-                                    alt={staff.name}
-                                    onError={(e) => {
-                                        e.currentTarget.src = `https://ui-avatars.com/api/?name=${staff.name}&background=0047AB&color=fff&size=200`;
-                                    }}
-                                    className="profile-image"
-                                />
-                            </div>
-                            <div className="profile-header-info">
-                                <h1 className="profile-name">{staff.name}</h1>
-                                <div className="profile-badges">
-                                    <span className="badge badge-primary">{staff.designation}</span>
-                                    <span className="badge badge-secondary">{staff.department}</span>
-                                </div>
-                                <p className="profile-qualification">{staff.qualification}</p>
-                            </div>
-                        </div>
                     </div>
-
-                    {/* Profile Content - Single Continuous Layout */}
-                    <div className="profile-content">
-                        {/* Basic Information Section */}
-                        <div className="section">
-                            <h2 className="section-heading">
-                                <span className="heading-icon">📋</span>
-                                Basic Information
-                            </h2>
-                            <div className="info-list">
-                                <div className="info-item">
-                                    <span className="info-label">Experience</span>
-                                    <span className="info-value">{staff.experience} Years</span>
-                                </div>
-                                <div className="info-item">
-                                    <span className="info-label">Designation</span>
-                                    <span className="info-value">{staff.designation}</span>
-                                </div>
-                                <div className="info-item">
-                                    <span className="info-label">Qualification</span>
-                                    <span className="info-value">{staff.qualification}</span>
-                                </div>
-                                <div className="info-item">
-                                    <span className="info-label">Department</span>
-                                    <span className="info-value">{staff.department}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Contact Information Section */}
-                        <div className="section">
-                            <h2 className="section-heading">
-                                <span className="heading-icon">📞</span>
-                                Contact Information
-                            </h2>
-                            <div className="contact-list">
-                                <div className="contact-item-new">
-                                    <span className="contact-icon-new">📧</span>
-                                    <div className="contact-info">
-                                        <span className="contact-label-new">EMAIL</span>
-                                        <a href={`mailto:${staff.email}`} className="contact-value">
-                                            {staff.email}
-                                        </a>
-                                    </div>
-                                </div>
-                                <div className="contact-item-new">
-                                    <span className="contact-icon-new">📱</span>
-                                    <div className="contact-info">
-                                        <span className="contact-label-new">PHONE</span>
-                                        <a href={`tel:${staff.contactNumber}`} className="contact-value">
-                                            {staff.contactNumber}
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Handling Subjects Section */}
-                        <div className="section">
-                            <h2 className="section-heading">
-                                <span className="heading-icon">📚</span>
-                                Handling Subjects
-                            </h2>
-                            <div className="subjects-list-new">
-                                {staff.subjects?.map((subject: string, idx: number) => (
-                                    <div key={idx} className="subject-item-new">
-                                        <span className="subject-bullet">📖</span>
-                                        <span className="subject-text">{subject}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Knowledge & Skills Section */}
-                        <div className="section">
-                            <h2 className="section-heading">
-                                <span className="heading-icon">💡</span>
-                                Knowledge & Skills
-                            </h2>
-                            <div className="skills-list">
-                                {staff.skills?.map((skill: string, idx: number) => (
-                                    <span key={idx} className="skill-badge">
-                                        {skill}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Achievements Section */}
-                        <div className="section">
-                            <h2 className="section-heading">
-                                <span className="heading-icon">🏆</span>
-                                Achievements
-                            </h2>
-                            <ul className="achievements-list-new">
-                                {staff.achievements?.map((achievement: string, idx: number) => (
-                                    <li key={idx} className="achievement-item-new">
-                                        <span className="achievement-check">✓</span>
-                                        <span className="achievement-content">{achievement}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+                </main>
             </div>
+        );
+    }
+
+    const photoUrl = staff.photo || staff.profilePhoto;
+    const finalPhotoUrl = photoUrl
+        ? photoUrl.startsWith('http')
+            ? photoUrl
+            : `${import.meta.env.VITE_CDN_URL}${photoUrl}`
+        : `https://ui-avatars.com/api/?name=${staff.name}&background=3B82F6&color=fff&size=200`;
+
+    return (
+        <div className="pb-staff-profile-page pb-animate-stagger-1">
+
+            {/* ── DESKTOP VIEW ── */}
+            <div className="lux-desktop-view">
+                <StudentHeader />
+                <main className="student-content">
+                    <div className="content-wrapper">
+                        {/* Back navigation */}
+                        <div className="pb-back-link-wrapper">
+                            <button className="pb-btn-back" onClick={() => navigate('/staffs')}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                    <line x1="19" y1="12" x2="5" y2="12" />
+                                    <polyline points="12 19 5 12 12 5" />
+                                </svg>
+                                Back to Faculty List
+                            </button>
+                        </div>
+
+                        <div className="pb-staff-profile-layout">
+                            {/* Left Column: Avatar & Summary Card */}
+                            <div className="pb-staff-summary-col">
+                                <div className="pb-staff-summary-card">
+                                    <div className="pb-avatar-section">
+                                        <div className="pb-avatar-ring">
+                                            <div className="pb-avatar-frame">
+                                                <img
+                                                    src={finalPhotoUrl}
+                                                    alt={staff.name}
+                                                    onError={(e) => {
+                                                        e.currentTarget.src = `https://ui-avatars.com/api/?name=${staff.name}&background=3B82F6&color=fff&size=200`;
+                                                    }}
+                                                    className="pb-avatar-image-actual"
+                                                />
+                                            </div>
+                                        </div>
+                                        <h2 className="pb-staff-full-name">{staff.name}</h2>
+                                        <span className="pb-badge pb-badge-blue">{staff.designation}</span>
+                                        <span className="pb-badge pb-badge-purple" style={{ marginTop: '6px' }}>{staff.department}</span>
+                                    </div>
+
+                                    {/* Contact Box */}
+                                    <div className="pb-quick-contact-panel">
+                                        <h3>Quick Connect</h3>
+                                        <div className="pb-quick-connect-links">
+                                            {staff.email && (
+                                                <a href={`mailto:${staff.email}`} className="pb-connect-item-card">
+                                                    <span className="icon">
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                                                            <rect width="20" height="16" x="2" y="4" rx="2" />
+                                                            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                                                        </svg>
+                                                    </span>
+                                                    <div className="connect-label-text">
+                                                        <span className="label">EMAIL</span>
+                                                        <span className="val">{staff.email}</span>
+                                                    </div>
+                                                </a>
+                                            )}
+                                            {staff.contactNumber && (
+                                                <a href={`tel:${staff.contactNumber}`} className="pb-connect-item-card">
+                                                    <span className="icon">
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                                                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                                                        </svg>
+                                                    </span>
+                                                    <div className="connect-label-text">
+                                                        <span className="label">PHONE</span>
+                                                        <span className="val">{staff.contactNumber}</span>
+                                                    </div>
+                                                </a>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Right Column: Detailed Info Sections */}
+                            <div className="pb-staff-details-col pb-animate-stagger-2">
+                                <div className="pb-staff-details-card">
+
+                                    {/* Basic stats row */}
+                                    <div className="pb-stats-row">
+                                        <div className="pb-stat-box">
+                                            <span className="pb-stat-num">{staff.experience || '0'}</span>
+                                            <span className="pb-stat-label">Years Experience</span>
+                                        </div>
+                                        <div className="pb-stat-divider"></div>
+                                        <div className="pb-stat-box">
+                                            <span className="pb-stat-num">{staff.qualification || 'Ph.D.'}</span>
+                                            <span className="pb-stat-label">Qualification</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Subjects section */}
+                                    {staff.subjects && staff.subjects.length > 0 && (
+                                        <fieldset className="pb-fieldset-section" style={{ marginTop: '24px' }}>
+                                            <legend className="pb-fieldset-legend">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '8px' }}>
+                                                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                                                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                                                </svg>
+                                                Handling Subjects
+                                            </legend>
+                                            <div className="pb-subjects-grid">
+                                                {staff.subjects.map((subject: string, idx: number) => (
+                                                    <div key={idx} className="pb-subject-box-item">
+                                                        <span className="icon">
+                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                                                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                                                            </svg>
+                                                        </span>
+                                                        <span className="text">{subject}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </fieldset>
+                                    )}
+
+                                    {/* Skills Section */}
+                                    {staff.skills && staff.skills.length > 0 && (
+                                        <fieldset className="pb-fieldset-section" style={{ marginTop: '32px' }}>
+                                            <legend className="pb-fieldset-legend">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '8px' }}>
+                                                    <circle cx="12" cy="12" r="10" />
+                                                    <line x1="2" y1="12" x2="22" y2="12" />
+                                                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                                                </svg>
+                                                Areas of Expertise
+                                            </legend>
+                                            <div className="pb-skills-badge-wrap">
+                                                {staff.skills.map((skill: string, idx: number) => (
+                                                    <span key={idx} className="pb-skill-badge-item">
+                                                        {skill}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </fieldset>
+                                    )}
+
+                                    {/* Achievements Section */}
+                                    {staff.achievements && staff.achievements.length > 0 && (
+                                        <fieldset className="pb-fieldset-section" style={{ marginTop: '32px' }}>
+                                            <legend className="pb-fieldset-legend">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '8px' }}>
+                                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                                </svg>
+                                                Key Achievements
+                                            </legend>
+                                            <div className="pb-achievements-wrap">
+                                                {staff.achievements.map((achievement: string, idx: number) => (
+                                                    <div key={idx} className="pb-achievement-bullet-row">
+                                                        <span className="bullet">★</span>
+                                                        <span className="content">{achievement}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </fieldset>
+                                    )}
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>{/* end desktop */}
+
+            {/* ── MOBILE VIEW ── */}
+            <div className="lux-mobile-view">
+                {/* Hero Header */}
+                <div className="pb-mob-staff-hero">
+                    <button className="pb-mob-back-btn" onClick={() => navigate('/staffs')}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
+                    </button>
+                    <div className="pb-mob-hero-avatar-ring">
+                        <div className="pb-mob-hero-avatar">
+                            <img
+                                src={finalPhotoUrl}
+                                alt={staff.name}
+                                onError={e => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${staff.name}&background=3B82F6&color=fff&size=200`; }}
+                            />
+                        </div>
+                    </div>
+                    <h1 className="pb-mob-hero-name">{staff.name}</h1>
+                    <p className="pb-mob-hero-sub">{staff.designation}</p>
+                    <span className="pb-mob-hero-dept-badge">{staff.department}</span>
+                </div>
+
+                <div className="pb-mob-scroll-body">
+                    {/* Stats row */}
+                    <div className="pb-mob-stats-card">
+                        <div className="pb-mob-stat-box">
+                            <span className="pb-mob-stat-num">{staff.experience || '0'}</span>
+                            <span className="pb-mob-stat-label">Yrs Experience</span>
+                        </div>
+                        <div className="pb-mob-stat-div" />
+                        <div className="pb-mob-stat-box">
+                            <span className="pb-mob-stat-num">{staff.qualification || 'Ph.D.'}</span>
+                            <span className="pb-mob-stat-label">Qualification</span>
+                        </div>
+                    </div>
+
+                    {/* Contact CTAs */}
+                    <div className="pb-mob-contact-row">
+                        {staff.email && (
+                            <a href={`mailto:${staff.email}`} className="pb-mob-contact-btn pb-email">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '6px' }}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg>
+                                Email Faculty
+                            </a>
+                        )}
+                        {staff.contactNumber && (
+                            <a href={`tel:${staff.contactNumber}`} className="pb-mob-contact-btn pb-phone">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.69a16 16 0 0 0 6.37 6.37l1.06-.94a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+                            </a>
+                        )}
+                    </div>
+
+                    {/* Subjects */}
+                    {staff.subjects && staff.subjects.length > 0 && (
+                        <div className="pb-mob-section-card animate-cred-enter cred-stagger-3">
+                            <h3 className="pb-mob-section-head">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '8px' }}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg>
+                                Handling Subjects
+                            </h3>
+                            {staff.subjects.map((sub: string, i: number) => (
+                                <div key={i} className="pb-mob-subject-row">
+                                    <div className="pb-mob-subject-dot" />
+                                    <span className="pb-mob-subject-name">{sub}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Skills */}
+                    {staff.skills && staff.skills.length > 0 && (
+                        <div className="pb-mob-section-card animate-cred-enter cred-stagger-4">
+                            <h3 className="pb-mob-section-head">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '8px' }}><circle cx="12" cy="12" r="10" /><path d="M12 8v4l3 3" /></svg>
+                                Areas of Expertise
+                            </h3>
+                            <div className="pb-mob-skills-wrap">
+                                {staff.skills.map((skill: string, i: number) => (
+                                    <span key={i} className="pb-mob-skill-badge">{skill}</span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Achievements */}
+                    {staff.achievements && staff.achievements.length > 0 && (
+                        <div className="pb-mob-section-card animate-cred-enter cred-stagger-5">
+                            <h3 className="pb-mob-section-head">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '8px' }}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+                                Key Achievements
+                            </h3>
+                            {staff.achievements.map((ach: string, i: number) => (
+                                <div key={i} className="pb-mob-achievement-row">
+                                    <span className="pb-mob-achievement-star">★</span>
+                                    <span className="pb-mob-achievement-text">{ach}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Bottom Nav */}
+                <StudentBottomNav activeTab="staff" />
+            </div>{/* end mobile */}
 
             <style>{`
-            /* Custom Dashboard Header */
-                .dashboard-header-custom {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    height: 70px;
-                    background: white;
-                    border-bottom: 1px solid #e2e8f0;
-                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-                    z-index: 1000;
-                }
-
-                .mobile-menu-btn {
-                    display: none;
-                    background: none;
-                    border: none;
-                    font-size: 24px;
-                    cursor: pointer;
-                    color: #1e293b;
-                    padding: 8px;
-                    z-index: 1001;
-                }
-
-                .header-container-custom {
-                    max-width: 1400px;
-                    margin: 0 auto;
-                    height: 100%;
-                    padding: 0 24px;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                }
-
-                .header-left-custom {
-                    display: flex;
-                    align-items: center;
-                }
-
-                .brand-custom {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                }
-
-                .brand-icon-custom {
-                    font-size: 28px;
-                }
-
-                .brand-text-custom {
-                    font-size: 1.3rem;
-                    font-weight: 700;
-                    background: linear-gradient(135deg, #0047AB, #2563eb);
-                    -webkit-background-clip: text;
-                    -webkit-text-fill-color: transparent;
-                }
-
-                .header-nav-custom {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                }
-
-                .nav-item-custom {
-                    padding: 10px 20px;
-                    border: none;
-                    background: transparent;
-                    color: #64748b;
-                    font-weight: 600;
-                    font-size: 0.95rem;
-                    cursor: pointer;
-                    border-radius: 10px;
-                    transition: all 0.3s;
-                }
-
-                .nav-item-custom:hover {
-                    background: #f1f5f9;
-                    color: #0047AB;
-                }
-
-                .logout-btn-custom {
-                    padding: 10px 24px;
-                    border: 2px solid #ef4444;
-                    background: white;
-                    color: #ef4444;
-                    font-weight: 600;
-                    font-size: 0.95rem;
-                    cursor: pointer;
-                    border-radius: 10px;
-                    transition: all 0.3s;
-                    margin-left: 12px;
-                }
-
-                .logout-btn-custom:hover {
-                    background: #ef4444;
-                    color: white;
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-                }
-
-                .content-wrapper-custom {
-                    margin-top: 70px;
-                    padding: 0;
-                }
-
-                :root {
-                    --bg-white: #ffffff;
-                    --text-main: #1e293b;
-                    --text-muted: #64748b;
-                    --primary: #0047AB;
-                    --primary-dark: #1e3a8a;
-                    --primary-light: #f0f9ff;
-                    --accent: #FFD700;
-                    --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
-                    --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-                    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-                    --radius-sm: 0.5rem;
-                    --radius-lg: 1rem;
-                    --radius-full: 9999px;
-                    --transition: all 0.2s ease-in-out;
-                }
-
-                 @media (max-width: 768px) {
-                    .mobile-menu-btn {
-                        display: block;
-                    }
-
-                    .header-nav-custom {
-                        position: absolute;
-                        top: 70px;
-                        left: 0;
-                        right: 0;
-                        background: white;
-                        flex-direction: column;
-                        padding: 0;
-                        border-bottom: 1px solid #e2e8f0;
-                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                        overflow: hidden;
-                        max-height: 0;
-                        transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
-                        gap: 0;
-                    }
-
-                    .header-nav-custom.mobile-open {
-                        max-height: 500px;
-                        padding: 16px 0;
-                    }
-
-                    .nav-item-custom, .logout-btn-custom {
-                        width: 100%;
-                        text-align: left;
-                        padding: 12px 24px;
-                        border-radius: 0;
-                        margin: 0;
-                    }
-
-                    .logout-btn-custom {
-                        border: none;
-                        border-top: 1px solid #fee2e2;
-                        color: #ef4444;
-                        margin-top: 8px;
-                    }
-
-                    .content-wrapper-custom {
-                        margin-top: 70px;
-                    }
-                }
-
-                /* Layout */
-                .staff-profile-page {
+                .pb-staff-profile-page {
                     min-height: 100vh;
-                    background: #ffffff; /* FORCE WHITE BACKGROUND */
-                    padding: 20px 0;
-                    color: var(--text-main);
+                    background: var(--pb-bg);
                 }
-
-                .content-wrapper {
-                    max-width: 1000px;
-                    margin: 0 auto;
-                    padding: 0 20px;
-                }
-
-                .page-container {
-                    padding-top: 80px;
-                }
-                
-                /* Loading */
-                 .loading-container {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    min-height: 100vh;
-                    background: white;
-                }
-                .spinner {
-                    width: 40px; 
-                    height: 40px; 
-                    border: 4px solid #f3f3f3; 
-                    border-top: 4px solid var(--primary); 
-                    border-radius: 50%; 
-                    animation: spin 1s linear infinite;
-                    margin-bottom: 20px;
-                }
-                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-
-                /* Back Button */
-                .back-btn {
-                    background: rgba(255, 255, 255, 0.2);
-                    border: 1px solid rgba(255, 255, 255, 0.3);
-                    color: white;
-                    font-size: 14px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    padding: 8px 16px;
-                    border-radius: var(--radius-sm);
-                    transition: var(--transition);
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 8px;
-                    backdrop-filter: blur(4px);
-                    margin-top: 15px; /* Added spacing from top */
-                    margin-bottom: 24px;
-                }
-
-                .back-btn:hover {
-                    background: rgba(255, 255, 255, 0.3);
-                    transform: translateX(-4px);
-                }
-
-                /* Profile Header (Blue Card) */
-                .profile-header {
-                    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-                    border-radius: var(--radius-lg);
-                    padding: 32px;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 24px;
-                    margin-bottom: 32px;
-                    box-shadow: var(--shadow-lg);
-                    position: relative;
-                    overflow: hidden;
-                    color: white;
-                }
-                
-                .header-top {
-                    width: 100%;
-                    display: flex;
-                    justify-content: flex-start;
-                    z-index: 2;
-                }
-
-                .header-content-inner {
-                    display: flex;
-                    align-items: center;
-                    gap: 32px;
-                    z-index: 2;
-                }
-                
-                /* Abstract bg decoration */
-                .profile-header::before {
-                    content: '';
-                    position: absolute;
-                    top: -50%;
-                    right: -10%;
-                    width: 300px;
-                    height: 300px;
-                    background: rgba(255, 255, 255, 0.1);
-                    border-radius: 50%;
-                    z-index: 1;
-                }
-
-                .profile-image-wrapper {
-                    flex-shrink: 0;
-                    width: 160px;
-                    height: 160px;
-                    border-radius: 50%;
-                    padding: 4px;
-                    background: rgba(255,255,255,0.2);
-                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-                }
-
-                .profile-image {
-                    width: 100%;
-                    height: 100%;
-                    border-radius: 50%;
-                    object-fit: cover;
-                    border: 4px solid white;
-                    background: white;
-                }
-
-                .profile-header-info {
-                    flex: 1;
-                    z-index: 1;
-                }
-
-                .profile-name {
-                    font-size: 32px;
-                    font-weight: 800;
-                    margin-bottom: 12px;
-                    color: white;
-                }
-
-                .profile-badges {
-                    display: flex;
-                    gap: 10px;
-                    margin-bottom: 12px;
-                    flex-wrap: wrap;
-                }
-
-                .badge {
-                    padding: 4px 12px;
-                    border-radius: 20px;
-                    font-size: 13px;
-                    font-weight: 600;
-                    letter-spacing: 0.5px;
-                }
-
-                .badge-primary {
-                    background: rgba(255, 255, 255, 0.2);
-                    color: white;
-                    border: 1px solid rgba(255,255,255,0.3);
-                }
-
-                .badge-secondary {
-                    background: var(--accent);
-                    color: #000;
-                }
-
-                .profile-qualification {
-                    font-size: 16px;
-                    opacity: 0.9;
-                }
-
-                /* Content Card */
-                .profile-content {
-                    background: white;
-                    border-radius: var(--radius-lg);
-                    padding: 32px;
-                    border: 1px solid #e2e8f0;
-                    box-shadow: var(--shadow-sm);
-                }
-
-                .section {
-                    margin-bottom: 40px;
-                }
-                .section:last-child { margin-bottom: 0; }
-
-                .section-heading {
-                    font-size: 18px;
-                    font-weight: 700;
-                    color: var(--primary-dark);
-                    margin-bottom: 20px;
-                    padding-bottom: 10px;
-                    border-bottom: 2px solid #e2e8f0;
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                }
-
-                /* Info List */
-                .info-list {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 12px;
-                }
-                .info-item {
-                    display: flex;
-                    justify-content: space-between;
-                    padding: 8px 0;
-                    border-bottom: 1px dashed #e2e8f0;
-                }
-                .info-label {
-                    font-weight: 600;
-                    color: var(--text-muted);
-                    font-size: 14px;
-                }
-                .info-value {
-                    font-weight: 500;
-                    color: var(--text-main);
-                    text-align: right;
-                }
-
-                /* Contact List */
-                .contact-list {
+                .pb-staff-profile-layout {
                     display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-                    gap: 20px;
+                    grid-template-columns: 320px 1fr;
+                    gap: 24px;
+                    align-items: start;
                 }
-                .contact-item-new {
-                    display: flex;
-                    align-items: center;
-                    gap: 16px;
-                    padding: 16px;
-                    background: #f8fafc;
-                    border-radius: var(--radius-sm);
-                    border: 1px solid #e2e8f0;
-                    transition: all 0.2s;
+                @media (max-width: 992px) {
+                    .pb-staff-profile-layout {
+                        grid-template-columns: 1fr;
+                        gap: 20px;
+                    }
                 }
-                .contact-item-new:hover {
-                    border-color: var(--primary);
-                    background: #f0f9ff;
+                
+                .pb-staff-summary-card { 
+                    display: flex; 
+                    flex-direction: column; 
+                    gap: 24px; 
+                    align-items: center; 
+                    text-align: center; 
+                    background: var(--pb-card);
+                    border: 1px solid var(--pb-card-border);
+                    border-radius: var(--pb-radius);
+                    box-shadow: var(--pb-shadow);
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
+                    padding: 28px;
                 }
-                .contact-icon-new {
-                    font-size: 24px;
-                    width: 48px;
-                    height: 48px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: white;
-                    border-radius: 50%;
-                    box-shadow: var(--shadow-sm);
-                }
-                .contact-info {
+                .pb-avatar-section {
                     display: flex;
                     flex-direction: column;
+                    align-items: center;
+                    width: 100%;
                 }
-                .contact-label-new {
-                    font-size: 11px;
-                    font-weight: 700;
-                    color: var(--text-muted);
-                    text-transform: uppercase;
+                .pb-avatar-ring {
+                    width: 138px;
+                    height: 138px;
+                    border-radius: 50%;
+                    background: linear-gradient(135deg, var(--pb-primary), var(--pb-primary-light));
+                    padding: 3px;
+                    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
+                    margin-bottom: 16px;
                 }
-                .contact-value {
-                    color: var(--primary);
+                .pb-avatar-frame {
+                    width: 100%;
+                    height: 100%;
+                    border-radius: 50%;
+                    overflow: hidden;
+                    background: #fff;
+                }
+                .pb-avatar-image-actual {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+                .pb-staff-full-name {
+                    font-size: 1.2rem;
+                    font-weight: 800;
+                    color: var(--pb-text);
+                    margin: 0;
+                    letter-spacing: -0.015em;
+                }
+                .pb-badge {
+                    margin-top: 8px;
+                    font-size: 0.72rem;
                     font-weight: 600;
-                    font-size: 15px;
+                    padding: 2px 10px;
+                    border-radius: 99px;
+                }
+                .pb-badge-blue {
+                    color: var(--pb-primary);
+                    background: var(--pb-secondary);
+                }
+                .pb-badge-purple {
+                    color: #7C3AED;
+                    background: rgba(124, 58, 237, 0.08);
+                    border: 1px solid rgba(124, 58, 237, 0.12);
+                }
+                
+                .pb-quick-contact-panel {
+                    width: 100%;
+                    border-top: 1px solid rgba(59, 130, 246, 0.08);
+                    padding-top: 20px;
+                    text-align: left;
+                }
+                .pb-quick-contact-panel h3 {
+                    font-size: 0.82rem;
+                    font-weight: 750;
+                    color: var(--pb-text-3);
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                    margin-bottom: 14px;
+                }
+                .pb-quick-connect-links {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                }
+                
+                .pb-connect-item-card { 
+                    display: flex; 
+                    align-items: center; 
+                    gap: 12px; 
+                    padding: 12px 16px; 
+                    background: rgba(59, 130, 246, 0.03); 
+                    border: 1px solid rgba(59, 130, 246, 0.06);
+                    border-radius: 14px;
+                    transition: var(--pb-transition);
+                    cursor: pointer;
                     text-decoration: none;
                 }
-
-                /* Subjects */
-                .subjects-list-new {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 12px;
+                .pb-connect-item-card:hover {
+                    background: var(--pb-secondary);
+                    border-color: rgba(59, 130, 246, 0.2);
+                    transform: translateY(-2px);
                 }
-                .subject-item-new {
+                .pb-connect-item-card .icon {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 8px;
+                    background: #fff;
                     display: flex;
                     align-items: center;
-                    gap: 10px;
-                    padding: 12px 16px;
-                    background: #f1f5f9;
-                    border-radius: 8px;
-                    border-left: 3px solid var(--primary);
+                    justify-content: center;
+                    color: var(--pb-primary);
+                    box-shadow: var(--pb-shadow);
+                    flex-shrink: 0;
                 }
-                .subject-text {
-                    font-weight: 500;
-                    font-size: 14px;
-                    color: var(--text-main);
+                .connect-label-text {
+                    display: flex;
+                    flex-direction: column;
+                    min-width: 0;
                 }
-
-                /* Skills */
-                .skills-list {
+                .connect-label-text .label {
+                    font-size: 0.65rem;
+                    font-weight: 800;
+                    color: var(--pb-text-4);
+                    letter-spacing: 0.05em;
+                }
+                .connect-label-text .val {
+                    font-size: 0.82rem;
+                    font-weight: 700;
+                    color: var(--pb-text-2);
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                
+                .pb-staff-details-card { 
+                    padding: 32px; 
+                    background: var(--pb-card);
+                    border: 1px solid var(--pb-card-border);
+                    border-radius: var(--pb-radius);
+                    box-shadow: var(--pb-shadow);
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
+                }
+                .pb-stats-row {
+                    display: flex;
+                    align-items: center;
+                    background: rgba(59, 130, 246, 0.03);
+                    border-radius: 16px;
+                    padding: 18px;
+                    border: 1px solid rgba(59, 130, 246, 0.06);
+                }
+                .pb-stat-box {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                }
+                .pb-stat-num {
+                    font-size: 1.35rem;
+                    font-weight: 800;
+                    color: var(--pb-primary);
+                    letter-spacing: -0.015em;
+                }
+                .pb-stat-label {
+                    font-size: 0.76rem;
+                    color: var(--pb-text-4);
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                    margin-top: 2px;
+                }
+                .pb-stat-divider {
+                    width: 1px;
+                    height: 36px;
+                    background: rgba(59, 130, 246, 0.1);
+                }
+                .pb-fieldset-section {
+                    border: none;
+                    margin: 0;
+                    padding: 0;
+                }
+                .pb-fieldset-legend {
+                    font-size: 1.05rem;
+                    font-weight: 800;
+                    color: var(--pb-text);
+                    margin-bottom: 18px;
+                    border-bottom: 1px solid rgba(59, 130, 246, 0.08);
+                    padding-bottom: 8px;
+                    width: 100%;
+                    display: flex;
+                    align-items: center;
+                    letter-spacing: -0.012em;
+                }
+                .pb-subjects-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+                    gap: 12px;
+                }
+                
+                .pb-subject-box-item { 
+                    display: flex; 
+                    align-items: center; 
+                    gap: 10px; 
+                    background: #fff; 
+                    padding: 12px 14px; 
+                    border-radius: 10px; 
+                    border: 1px solid rgba(59, 130, 246, 0.08);
+                    border-left: 3px solid var(--pb-primary);
+                    box-shadow: var(--pb-shadow);
+                }
+                .pb-subject-box-item .icon {
+                    color: var(--pb-primary);
+                    display: flex;
+                    align-items: center;
+                }
+                .pb-subject-box-item .text {
+                    font-size: 0.84rem;
+                    font-weight: 700;
+                    color: var(--pb-text);
+                }
+                .pb-skills-badge-wrap {
                     display: flex;
                     flex-wrap: wrap;
-                    gap: 10px;
+                    gap: 8px;
                 }
-                .skill-badge {
-                    padding: 8px 16px;
-                    background: white;
-                    color: var(--primary);
-                    border: 1px solid var(--primary);
-                    border-radius: 20px;
-                    font-size: 14px;
+                .pb-skill-badge-item {
+                    font-size: 0.78rem;
                     font-weight: 600;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                    padding: 6px 14px;
+                    border-radius: 20px;
+                    background: rgba(59, 130, 246, 0.05);
+                    border: 1px solid rgba(59, 130, 246, 0.08);
+                    color: var(--pb-primary);
                 }
-
-                /* Achievements */
-                .achievements-list-new {
-                    list-style: none;
-                    padding: 0;
+                .pb-achievements-wrap {
                     display: flex;
                     flex-direction: column;
                     gap: 12px;
                 }
-                .achievement-item-new {
+                
+                .pb-achievement-bullet-row { 
+                    display: flex; 
+                    align-items: flex-start; 
+                    gap: 12px; 
+                    padding: 14px; 
+                    background: rgba(245, 158, 11, 0.03); 
+                    border: 1px solid rgba(245, 158, 11, 0.1); 
+                    border-radius: 12px; 
+                }
+                .pb-achievement-bullet-row .bullet {
+                    color: #F59E0B;
+                    font-size: 1.1rem;
+                    line-height: 1;
+                }
+                .pb-achievement-bullet-row .content {
+                    font-size: 0.85rem;
+                    color: var(--pb-text-2);
+                    line-height: 1.45;
+                    font-weight: 500;
+                }
+
+                .pb-empty-state-card {
+                    text-align: center;
+                    padding: 48px;
+                    background: var(--pb-card);
+                    border: 1px solid var(--pb-card-border);
+                    border-radius: var(--pb-radius);
+                    box-shadow: var(--pb-shadow);
+                    max-width: 480px;
+                    margin: 40px auto;
+                }
+                .pb-empty-state-icon {
+                    width: 56px;
+                    height: 56px;
+                    border-radius: 16px;
+                    background: rgba(59, 130, 246, 0.05);
+                    border: 1px solid rgba(59, 130, 246, 0.08);
+                    color: var(--pb-primary);
                     display: flex;
-                    gap: 14px;
-                    padding: 16px;
-                    background: #fffbeb; /* Light yellow */
-                    border-radius: 8px;
-                    border: 1px solid #fef3c7;
+                    align-items: center;
+                    justify-content: center;
+                    margin: 0 auto 12px;
                 }
-                .achievement-check {
-                    color: #d97706; /* Dark yellow/orange */
-                    font-weight: bold;
-                    font-size: 18px;
+                .pb-empty-state-card h3 {
+                    font-size: 1.1rem;
+                    color: var(--pb-text);
+                    margin: 0 0 6px 0;
                 }
-                .achievement-content {
-                    font-size: 15px;
-                    color: #4b5563;
+                .pb-empty-state-card p {
+                    font-size: 0.88rem;
+                    color: var(--pb-text-3);
+                    margin: 0 0 16px 0;
                 }
 
-                /* Responsive */
+                /* ── DESKTOP / MOBILE SPLIT ── */
+                .lux-desktop-view { display: block; }
+                .lux-mobile-view  { display: none; }
                 @media (max-width: 768px) {
-                    .profile-header {
-                        padding: 24px;
+                    .lux-desktop-view { display: none !important; }
+                    .lux-mobile-view  { 
+                        display: flex !important; 
+                        flex-direction: column; 
+                        min-height: 100vh; 
+                        background: var(--pb-bg);
                     }
-                    .header-content-inner {
-                        flex-direction: column;
-                        text-align: center;
-                        width: 100%;
-                    }
-                    .profile-image-wrapper { width: 140px; height: 140px; }
-                    .profile-badges { justify-content: center; }
-                    .contact-list { grid-template-columns: 1fr; }
-                    .info-item { flex-direction: column; align-items: flex-start; gap: 4px; }
-                    .info-value { text-align: left; }
                 }
 
+                /* ==========================================
+                   PREMIUM MOBILE STYLES (STAFF PROFILE)
+                   ========================================== */
+                .pb-mob-staff-hero { 
+                    background: linear-gradient(135deg, var(--pb-primary), var(--pb-primary-dark)) !important; 
+                    padding: 32px 20px; 
+                    display: flex; 
+                    flex-direction: column; 
+                    align-items: center; 
+                    gap: 8px; 
+                    text-align: center; 
+                    position: relative; 
+                    border-bottom: 1px solid rgba(255,255,255,0.1); 
+                }
+                .pb-mob-back-btn { 
+                    position: absolute; 
+                    top: 16px; 
+                    left: 16px; 
+                    width: 36px; 
+                    height: 36px; 
+                    border-radius: 10px; 
+                    background: rgba(255,255,255,0.15); 
+                    border: 1px solid rgba(255,255,255,0.25); 
+                    color: white; 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center; 
+                    cursor: pointer; 
+                    transition: transform 0.2s; 
+                }
+                .pb-mob-back-btn:active { transform: scale(0.9); }
+                .pb-mob-hero-avatar-ring {
+                    width: 100px;
+                    height: 100px;
+                    border-radius: 50%;
+                    background: rgba(255,255,255,0.25);
+                    padding: 3px;
+                    box-shadow: 0 10px 24px rgba(0,0,0,0.15);
+                    margin-top: 8px;
+                }
+                .pb-mob-hero-avatar {
+                    width: 100%;
+                    height: 100%;
+                    border-radius: 50%;
+                    overflow: hidden;
+                    background: #fff;
+                }
+                .pb-mob-hero-avatar img { width: 100%; height: 100%; object-fit: cover; }
+                .pb-mob-hero-name {
+                    font-size: 1.15rem;
+                    font-weight: 800;
+                    color: #fff;
+                    margin: 8px 0 0 0;
+                    letter-spacing: -0.012em;
+                }
+                .pb-mob-hero-sub {
+                    font-size: 0.78rem;
+                    font-weight: 600;
+                    color: rgba(255, 255, 255, 0.85);
+                    margin: 0;
+                }
+                .pb-mob-hero-dept-badge { 
+                    background: rgba(255,255,255,0.2); 
+                    color: white; 
+                    border: 1px solid rgba(255,255,255,0.3); 
+                    font-size: 0.68rem; 
+                    font-weight: 700; 
+                    text-transform: uppercase; 
+                    letter-spacing: 0.05em; 
+                    padding: 3px 12px; 
+                    border-radius: 8px; 
+                    margin-top: 6px; 
+                }
+
+                .pb-mob-scroll-body {
+                    flex: 1;
+                    overflow-y: auto;
+                    padding: 16px 16px 90px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                }
+
+                .pb-mob-stats-card { 
+                    padding: 16px; 
+                    display: flex; 
+                    align-items: center; 
+                    background: var(--pb-card);
+                    border: 1px solid var(--pb-card-border);
+                    border-radius: var(--pb-radius);
+                    box-shadow: var(--pb-shadow);
+                }
+                .pb-mob-stat-box {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 2px;
+                }
+                .pb-mob-stat-num {
+                    font-size: 1.15rem;
+                    font-weight: 800;
+                    color: var(--pb-primary);
+                }
+                .pb-mob-stat-label {
+                    font-size: 0.68rem;
+                    color: var(--pb-text-4);
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 0.03em;
+                }
+                .pb-mob-stat-div { width: 1px; height: 32px; background: rgba(59, 130, 246, 0.08); }
+
+                .pb-mob-contact-row { display: flex; gap: 12px; }
+                .pb-mob-contact-btn { 
+                    height: 44px;
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center; 
+                    border-radius: 12px; 
+                    font-size: 0.85rem; 
+                    font-weight: 700; 
+                    text-decoration: none; 
+                    transition: transform 0.2s; 
+                    font-family: inherit; 
+                }
+                .pb-mob-contact-btn:active { transform: scale(0.96); }
+                .pb-mob-contact-btn.pb-email {
+                    flex: 1;
+                    background: linear-gradient(135deg, var(--pb-primary), var(--pb-primary-dark));
+                    color: #fff;
+                    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+                }
+                .pb-mob-contact-btn.pb-phone {
+                    width: 44px;
+                    background: var(--pb-card);
+                    color: var(--pb-text-2);
+                    border: 1px solid var(--pb-card-border);
+                    box-shadow: var(--pb-shadow);
+                }
+
+                .pb-mob-section-card { 
+                    padding: 16px; 
+                    display: flex; 
+                    flex-direction: column; 
+                    gap: 12px; 
+                    background: var(--pb-card);
+                    border: 1px solid var(--pb-card-border);
+                    border-radius: var(--pb-radius);
+                    box-shadow: var(--pb-shadow);
+                }
+                .pb-mob-section-head {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    font-size: 0.85rem;
+                    font-weight: 800;
+                    color: var(--pb-text);
+                    margin: 0;
+                    padding-bottom: 8px;
+                    border-bottom: 1px solid rgba(59, 130, 246, 0.06);
+                }
+                
+                .pb-mob-subject-row {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 8px 0;
+                    border-bottom: 1px dashed rgba(59, 130, 246, 0.06);
+                }
+                .pb-mob-subject-row:last-child { border-bottom: none; }
+                .pb-mob-subject-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--pb-primary); flex-shrink: 0; }
+                .pb-mob-subject-name {
+                    font-size: 0.82rem;
+                    font-weight: 700;
+                    color: var(--pb-text-2);
+                }
+                
+                .pb-mob-skills-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+                .pb-mob-skill-badge {
+                    background: rgba(59, 130, 246, 0.05);
+                    color: var(--pb-primary);
+                    border: 1px solid rgba(59, 130, 246, 0.08);
+                    font-size: 0.74rem;
+                    font-weight: 650;
+                    padding: 4px 10px;
+                    border-radius: 8px;
+                }
+                
+                .pb-mob-achievement-row {
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 10px;
+                    padding: 10px 12px;
+                    background: rgba(245, 158, 11, 0.03);
+                    border-radius: 10px;
+                    border: 1px solid rgba(245, 158, 11, 0.1);
+                }
+                .pb-mob-achievement-star { color: #F59E0B; font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+                .pb-mob-achievement-text {
+                    font-size: 0.78rem;
+                    color: var(--pb-text-2);
+                    line-height: 1.4;
+                    font-weight: 500;
+                }
             `}</style>
-        </>
+        </div>
     );
 };
 

@@ -29,7 +29,7 @@ const OutpassList: React.FC = () => {
     try {
       const token = localStorage.getItem("token");
 
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/warden/outpass/list/all`, {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/warden/outpass/list`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -39,13 +39,13 @@ const OutpassList: React.FC = () => {
       const list = Array.isArray(outpassData) ? outpassData : [];
       const sortedList = list.sort((a: any, b: any) => {
         // Priority 1: Emergency first
-        const isAEmergency = a.outpassType?.toLowerCase() === 'emergency';
-        const isBEmergency = b.outpassType?.toLowerCase() === 'emergency';
+        const isAEmergency = a.outpasstype?.toLowerCase() === 'emergency';
+        const isBEmergency = b.outpasstype?.toLowerCase() === 'emergency';
         if (isAEmergency && !isBEmergency) return -1;
         if (!isAEmergency && isBEmergency) return 1;
 
         // Priority 2: Date (Newest first)
-        return new Date(b.createdAt || b.outDate || Date.now()).getTime() - new Date(a.createdAt || a.outDate || Date.now()).getTime();
+        return new Date(b.createdAt || Date.now()).getTime() - new Date(a.createdAt || Date.now()).getTime();
       });
       setOutpasses(sortedList);
     } catch (err: any) {
@@ -70,16 +70,20 @@ const OutpassList: React.FC = () => {
 
   // Filter logic
   const filteredOutpasses = outpasses.filter((item) => {
-    const status = item.wardenapprovalstatus?.toLowerCase() || '';
+    // Use warden nested status object
+    const wardenStatus = item.warden?.status?.toLowerCase() || '';
+    const overallStatus = item.status?.toLowerCase() || '';
+    const status = wardenStatus || overallStatus;
+
     let matchesStatus = false;
-    if (filterStatus === 'All') matchesStatus = status === 'approved' || status === 'rejected' || status === 'declined';
+    if (filterStatus === 'All') matchesStatus = true;
     else if (filterStatus === 'Approved') matchesStatus = status === 'approved';
     else if (filterStatus === 'Rejected') matchesStatus = status === 'rejected' || status === 'declined';
     else matchesStatus = true;
 
     let matchesDate = true;
     if (dateFilter !== 'all') {
-      const appliedDate = new Date(item.createdAt || item.outDate || Date.now());
+      const appliedDate = new Date(item.createdAt || Date.now());
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -100,15 +104,14 @@ const OutpassList: React.FC = () => {
       }
     }
 
-    const appliedDate = new Date(item.createdAt || item.outDate || Date.now());
+    const appliedDate = new Date(item.createdAt || Date.now());
     const dateStr = appliedDate.toLocaleDateString();
 
-    // Check if name/register no matches
-    // Note: Outpasses might have the student info attached differently depending on API
-    const studentName = item.studentid?.name || item.studentName || '';
-    const registerNo = item.studentid?.registerNumber || item.register_number || item.registerNumber || '';
+    // student is an object (not array) in this API
+    const studentName = item.student?.name || item.studentName || '';
+    const registerNo = item.student?.registerNumber || item.registerNumber || '';
 
-    const matchesSearch = searchTerm === "" ||
+    const matchesSearch = searchTerm === '' ||
       studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       registerNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
       dateStr.includes(searchTerm.toLowerCase());
@@ -236,16 +239,16 @@ const OutpassList: React.FC = () => {
                   </tr>
                 ) : (
                   currentData.map((item, index) => (
-                    <tr key={item.id || index}>
+                    <tr key={item._id || index}>
                       <td data-label="#">{startIndex + index + 1}</td>
-                      <td data-label="Name">{item.studentid?.name || item.studentName || 'Unknown'}</td>
-                      <td data-label="Register No">{item.studentid?.registerNumber || item.register_number || 'N/A'}</td>
+                      <td data-label="Name">{item.student?.name || item.studentName || 'Unknown'}</td>
+                      <td data-label="Register No">{item.student?.registerNumber || item.registerNumber || 'N/A'}</td>
                       <td data-label="Date">
-                        {new Date(item.createdAt || item.outDate).toLocaleDateString()}
+                        {new Date(item.createdAt).toLocaleDateString()}
                       </td>
                       <td data-label="Reason">
                         {item.reason}
-                        {item.outpassType?.toLowerCase() === 'emergency' && (
+                        {item.outpasstype?.toLowerCase() === 'emergency' && (
                           <span className="emergency-badge">🚨 EMERGENCY</span>
                         )}
                       </td>
@@ -258,8 +261,7 @@ const OutpassList: React.FC = () => {
                         <button
                           className="view-btn"
                           onClick={() => {
-                            const studentId = item.studentID || item.studentId || item.id || item._id;
-                            navigate(`/warden/student/${studentId}`);
+                            navigate(`/warden/outpass/${item._id}`);
                           }}
                         >
                           View
@@ -298,15 +300,15 @@ const OutpassList: React.FC = () => {
           {!loading && currentData.length > 0 && (
             <div className="mobile-cards-view">
               {currentData.map((item, index) => (
-                <div className="mobile-card" key={item.id || index}>
+                <div className="mobile-card" key={item._id || index}>
                   <div className="card-badge">
-                    {item.studentid?.registerNumber || item.register_number || 'N/A'}
+                    {item.student?.registerNumber || item.registerNumber || 'N/A'}
                   </div>
-                  <h3 className="card-name">{item.studentid?.name || item.studentName || 'Unknown'}</h3>
+                  <h3 className="card-name">{item.student?.name || item.studentName || 'Unknown'}</h3>
                   <p className="card-details">
-                    {item.studentid?.year ? `Year ${item.studentid.year} • ` : ''}
-                    Applied on {new Date(item.createdAt || item.outDate).toLocaleDateString()}
-                    {item.outpassType?.toLowerCase() === 'emergency' && (
+                    {item.student?.year ? `${item.student.year} • ` : ''}
+                    Applied on {new Date(item.createdAt).toLocaleDateString()}
+                    {item.outpasstype?.toLowerCase() === 'emergency' && (
                       <div className="emergency-badge mobile">🚨 EMERGENCY</div>
                     )}
                   </p>
@@ -340,8 +342,7 @@ const OutpassList: React.FC = () => {
                       <button
                         className="card-view-link"
                         onClick={() => {
-                          const studentId = item.studentID || item.studentId || item.id || item._id;
-                          navigate(`/warden/student/${studentId}`);
+                          navigate(`/warden/outpass/${item._id}`);
                         }}
                       >
                         View →
