@@ -10,13 +10,13 @@ import StaffProfile from './pages/staff/StaffProfile'
 import StaffNotices from './pages/staff/StaffNotices'
 import StudentDetails from './pages/staff/StudentDetails'
 import StudentRegistration from './pages/staff/StudentRegistration'
-import StudentNotices from './pages/student/StudentNotices'
 import ProtectedRoute from './components/ProtectedRoute'
 import Dashboard from './pages/student/Dashboard'
 import Staffs from './pages/student/Staffs'
 import Subjects from './pages/student/Subjects'
 import SubjectDetails from './pages/student/SubjectDetails'
 import Profile from './pages/student/Profile'
+import BusRoutes from './pages/student/BusRoutes'
 import Outpass from './pages/student/OutpassDetails'
 import PassApproval from './pages/staff/PassApproval'
 import OutpassDetails from './pages/student/OutpassDetails'
@@ -35,6 +35,7 @@ import WatchmanLogin from './pages/watchman/WatchmanLogin'
 import WatchmanDashboard from './pages/watchman/WatchmanDashboard'
 import WatchmanOutpassList from './pages/watchman/WatchmanOutpassList'
 import WatchmanStudentView from './pages/watchman/WatchmanStudentView'
+import WatchmanScanQR from './pages/watchman/WatchmanScanQR'
 import YearInchargeLogin from './pages/year-incharge/YearInchargeLogin'
 import YearInchargeDashboard from './pages/year-incharge/YearInchargeDashboard'
 import YearInchargePendingOutpass from './pages/year-incharge/YearInchargePendingOutpass'
@@ -191,6 +192,11 @@ createRoot(document.getElementById('root')!).render(
           <WatchmanStudentView />
         </ProtectedRoute>
       } />
+      <Route path="/watchman/scan" element={
+        <ProtectedRoute>
+          <WatchmanScanQR />
+        </ProtectedRoute>
+      } />
       <Route path="/warden/pending-outpass" element={
         <ProtectedRoute>
           <PendingOutpass />
@@ -226,11 +232,7 @@ createRoot(document.getElementById('root')!).render(
           <StaffNotices />
         </ProtectedRoute>
       } />
-      <Route path="/student-notice" element={
-        <ProtectedRoute>
-          <StudentNotices />
-        </ProtectedRoute>
-      } />
+      
       <Route path="/staff-profile" element={
         <ProtectedRoute>
           <StaffProfile />
@@ -279,6 +281,11 @@ createRoot(document.getElementById('root')!).render(
       <Route path="/new-outpass" element={
         <ProtectedRoute>
           <NewOutpass />
+        </ProtectedRoute>
+      } />
+      <Route path="/bus-routes" element={
+        <ProtectedRoute>
+          <BusRoutes />
         </ProtectedRoute>
       } />
       <Route path="/dashboard" element={
@@ -331,11 +338,7 @@ createRoot(document.getElementById('root')!).render(
           <StudentDetails />
         </ProtectedRoute>
       } />
-      <Route path="/student-notice" element={
-        <ProtectedRoute>
-          <StudentNotices />
-        </ProtectedRoute>
-      } />
+    
       <Route path="/staff-profile" element={
         <ProtectedRoute>
           <StaffProfile />

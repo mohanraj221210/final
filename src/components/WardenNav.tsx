@@ -29,7 +29,7 @@ const WardenNav: React.FC = () => {
         { path: '/warden/pending-outpass',         label: 'Pending',         icon: '⏳' },
         { path: '/warden/outpass-list',            label: 'Outpass List',    icon: '📋' },
         { path: '/warden/apply-emergency',         label: '🚨 Emergency',   icon: '🚨' },
-        { path: '/warden/emergency-outpass-list',  label: 'Emergency List',  icon: '📝' },
+        // { path: '/warden/emergency-outpass-list',  label: 'Emergency List',  icon: '📝' },
         { path: '/warden-profile',                 label: 'Profile',         icon: '👤' },
     ];
 

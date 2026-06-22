@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import PremiumStaffLoader from '../../components/PremiumStaffLoader';
 import StaffHeader from '../../components/StaffHeader';
 import { toast, ToastContainer } from 'react-toastify';
 import axios from 'axios';
@@ -27,6 +28,7 @@ interface Student {
 
 const StudentRegistration: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'bulk' | 'single' | 'added-students'>('bulk');
+    const [appReady, setAppReady] = useState(false);
     const [loading, setLoading] = useState(false);
     const [currentStaffID, setCurrentStaffID] = useState<string | null>(null);
 
@@ -325,8 +327,10 @@ const StudentRegistration: React.FC = () => {
     };
 
 
+if (!appReady) return <PremiumStaffLoader isDataReady={true} onComplete={() => setAppReady(true)} />;
+
     return (
-        <div className="registration-page">
+        <div className="registration-page mobile-page-content">
             <StaffHeader activeMenu="registration" />
             <ToastContainer position="bottom-right" />
 
@@ -373,20 +377,20 @@ const StudentRegistration: React.FC = () => {
                                         <div className="upload-icon">
                                             {file ? '📄' : '☁️'}
                                         </div>
-                                        <h3>{file ? file.name : 'Click to Upload Excel File'}</h3>
-                                        <p>{file ? 'Ready to upload' : 'Supports .xls and .xlsx'}</p>
+                                        <h3>{file ? file.name : 'Drag & Drop or Click to Upload'}</h3>
+                                        <p>{file ? 'File ready for registration' : 'Excel files only (.xls, .xlsx)'}</p>
                                     </label>
                                 </div>
 
                                 <button type="submit" className="btn-primary" disabled={loading || !file}>
-                                    {loading ? 'Uploading...' : 'Upload & Register'}
+                                    {loading ? 'Uploading & Registering...' : 'Upload & Register'}
                                 </button>
                             </form>
                         )}
 
                         {activeTab === 'single' && (
                             <form onSubmit={handleSingleSubmit} className="single-form animate-fade">
-                                <div className="form-group">
+                                <div className="form-group grid-full">
                                     <label>Student Name</label>
                                     <input
                                         type="text"
@@ -401,9 +405,19 @@ const StudentRegistration: React.FC = () => {
                                     <label>Email Address</label>
                                     <input
                                         type="email"
-                                        placeholder="Enter email address"
+                                        placeholder="Enter student email"
                                         value={singleForm.email}
                                         onChange={(e) => setSingleForm({ ...singleForm, email: e.target.value })}
+                                        disabled={loading}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Password</label>
+                                    <input
+                                        type="password"
+                                        placeholder="Create student password"
+                                        value={singleForm.password}
+                                        onChange={(e) => setSingleForm({ ...singleForm, password: e.target.value })}
                                         disabled={loading}
                                     />
                                 </div>
@@ -414,7 +428,6 @@ const StudentRegistration: React.FC = () => {
                                         onChange={(e) => setSingleForm({ ...singleForm, department: e.target.value })}
                                         disabled={loading}
                                         className="input-select"
-                                        style={{ width: '100%', padding: '14px 16px', border: '1px solid #e2e8f0', borderRadius: '12px', fontSize: '1rem', background: '#f8fafc' }}
                                     >
                                         <option value="">Select Department</option>
                                         <option value="Computer Science and Engineering">Computer Science and Engineering</option>
@@ -432,7 +445,6 @@ const StudentRegistration: React.FC = () => {
                                         onChange={(e) => setSingleForm({ ...singleForm, semester: e.target.value })}
                                         disabled={loading}
                                         className="input-select"
-                                        style={{ width: '100%', padding: '14px 16px', border: '1px solid #e2e8f0', borderRadius: '12px', fontSize: '1rem', background: '#f8fafc' }}
                                     >
                                         <option value="">Select Semester</option>
                                         {[1, 2, 3, 4, 5, 6, 7, 8].map(num => (
@@ -440,111 +452,146 @@ const StudentRegistration: React.FC = () => {
                                         ))}
                                     </select>
                                 </div>
-                                <div className="form-group">
-                                    <label>Password</label>
-                                    <input
-                                        type="password"
-                                        placeholder="Create password"
-                                        value={singleForm.password}
-                                        onChange={(e) => setSingleForm({ ...singleForm, password: e.target.value })}
-                                        disabled={loading}
-                                    />
-                                </div>
 
-                                <button type="submit" className="btn-primary" disabled={loading}>
-                                    {loading ? 'Registering...' : 'Register Student'}
-                                </button>
+                                <div className="form-submit-wrapper grid-full">
+                                    <button type="submit" className="btn-primary" disabled={loading}>
+                                        {loading ? 'Registering...' : 'Register Student'}
+                                    </button>
+                                </div>
                             </form>
                         )}
 
                         {activeTab === 'added-students' && (
                             <div className="added-students-view animate-fade">
-                                {/* Total Count Header */}
-                                {studentsList.length > 0 && (
-                                    <div className="students-count-header">
-                                        <h3>Total Students Added: <span className="count-badge">{filteredStudents.length} / {studentsList.length}</span></h3>
-                                        <div className="search-bar">
-                                            <span className="search-icon">🔍</span>
-                                            <input
-                                                type="text"
-                                                placeholder="Search by name..."
-                                                value={searchQuery}
-                                                onChange={(e) => setSearchQuery(e.target.value)}
-                                            />
-                                        </div>
+                                <div className="students-count-header">
+                                    <div className="count-info">
+                                        <h3>All Registered Students</h3>
+                                        <span className="count-badge">
+                                            {filteredStudents.length} of {studentsList.length} shown
+                                        </span>
                                     </div>
-                                )}
+                                    <div className="search-bar">
+                                        <span className="search-icon">🔍</span>
+                                        <input
+                                            type="text"
+                                            placeholder="Search by name, email, or register number..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
 
                                 {loading && studentsList.length === 0 ? (
-                                    <div className="loading-state">Loading students...</div>
+                                    <div className="loading-state">
+                                        <span className="spinner"></span>
+                                        Loading students list...
+                                    </div>
                                 ) : studentsList.length === 0 ? (
                                     <div className="empty-state">
-                                        Total Students Added: 0
-                                        <br />
-                                        No students added yet.
+                                        <div className="empty-state-icon">🎓</div>
+                                        <h3>No Students Registered Yet</h3>
+                                        <p>Onboard your students using Bulk or Individual tabs above.</p>
                                     </div>
                                 ) : filteredStudents.length === 0 ? (
                                     <div className="empty-state">
-                                        No students found matching "{searchQuery}"
+                                        <div className="empty-state-icon">🔍</div>
+                                        <h3>No Matches Found</h3>
+                                        <p>Try refining your search keyword.</p>
                                     </div>
                                 ) : (
-                                    <div className="students-list">
-                                        {filteredStudents.map(student => (
-                                            <div
-                                                key={student._id}
-                                                className="student-item"
-                                                onClick={() => navigate(`/staff/student-details/${student._id}`)}
-                                            >
-                                                <div className="student-avatar">
-                                                    {student.photo ? (
-                                                        <img
-                                                            src={student.photo.startsWith('http') || student.photo.startsWith('data:') || student.photo.startsWith('blob:')
-                                                                ? student.photo
-                                                                : `${import.meta.env.VITE_CDN_URL}${student.photo}`}
-                                                            alt={student.name}
-                                                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
-                                                        />
-                                                    ) : (
-                                                        student.name.charAt(0).toUpperCase()
-                                                    )}
-                                                </div>
-                                                <div className="student-info">
-                                                    <h4>{student.name} {student.isBlocked && <span className="tag-blocked">Blocked</span>}</h4>
-                                                    <p>{student.email}</p>
-                                                    <div className="student-meta">
-                                                        {student.registerNo && <span>{student.registerNo} • </span>}
-                                                        {student.department && <span>{student.department} • </span>}
-                                                        {student.residentType && <span className="tag-resident">{student.residentType}</span>}
-                                                    </div>
-                                                </div>
-                                                <button className="btn-view" onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    navigate(`/staff/student-details/${student._id}`);
-                                                }}>
-                                                    View Details
-                                                </button>
-                                                <button className="btn-password-change" onClick={(e) => openPasswordModal(student._id, student.email, e)}>
-                                                    Change Password
-                                                </button>
-                                            </div>
-                                        ))}
+                                    <div className="students-table-wrapper">
+                                        <table className="students-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Student Details</th>
+                                                    <th>Register No</th>
+                                                    <th>Department</th>
+                                                    <th>Resident Type</th>
+                                                    <th className="text-right">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {filteredStudents.map(student => (
+                                                    <tr
+                                                        key={student._id}
+                                                        onClick={() => navigate(`/staff/student-details/${student._id}`)}
+                                                        className={student.isBlocked ? 'row-blocked' : ''}
+                                                    >
+                                                        <td data-label="Student Details">
+                                                            <div className="table-student-cell">
+                                                                <div className="student-avatar-small">
+                                                                    {student.photo ? (
+                                                                        <img
+                                                                            src={student.photo.startsWith('http') || student.photo.startsWith('data:') || student.photo.startsWith('blob:')
+                                                                                ? student.photo
+                                                                                : `${import.meta.env.VITE_CDN_URL}${student.photo}`}
+                                                                            alt={student.name}
+                                                                        />
+                                                                    ) : (
+                                                                        student.name.charAt(0).toUpperCase()
+                                                                    )}
+                                                                </div>
+                                                                <div className="student-name-email">
+                                                                    <div className="student-name-row">
+                                                                        <span className="student-name-text">{student.name}</span>
+                                                                        {student.isBlocked && <span className="badge-blocked">Blocked</span>}
+                                                                    </div>
+                                                                    <span className="student-email-text">{student.email}</span>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td data-label="Register No">
+                                                            <span className="student-reg-text">{student.registerNo || '—'}</span>
+                                                        </td>
+                                                        <td data-label="Department">
+                                                            <span className="student-dept-text">{student.department || '—'}</span>
+                                                        </td>
+                                                        <td data-label="Resident Type">
+                                                            {student.residentType ? (
+                                                                <span className={`resident-badge ${student.residentType.toLowerCase()}`}>
+                                                                    {student.residentType}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="resident-badge unassigned">Unassigned</span>
+                                                            )}
+                                                        </td>
+                                                        <td data-label="Actions" className="text-right" onClick={(e) => e.stopPropagation()}>
+                                                            <div className="actions-cell">
+                                                                <button
+                                                                    className="btn-table-action btn-view-action"
+                                                                    onClick={() => navigate(`/staff/student-details/${student._id}`)}
+                                                                >
+                                                                    View
+                                                                </button>
+                                                                <button
+                                                                    className="btn-table-action btn-pwd-action"
+                                                                    onClick={(e) => openPasswordModal(student._id, student.email, e)}
+                                                                >
+                                                                    Reset Pwd
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
                                     </div>
                                 )}
 
                                 {studentsList.length > 0 && totalPages > 1 && (
-                                    <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '24px', alignItems: 'center' }}>
-                                        <button 
-                                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+                                    <div className="pagination-controls">
+                                        <button
+                                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                             disabled={currentPage === 1}
-                                            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: currentPage === 1 ? '#f1f5f9' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                                            className="btn-pag"
                                         >
                                             &lt; Previous
                                         </button>
-                                        <span style={{ fontWeight: '600', color: '#64748b' }}>Page {currentPage} of {totalPages}</span>
-                                        <button 
-                                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
+                                        <span className="pag-label">Page {currentPage} of {totalPages}</span>
+                                        <button
+                                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                             disabled={currentPage === totalPages}
-                                            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: currentPage === totalPages ? '#f1f5f9' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+                                            className="btn-pag"
                                         >
                                             Next &gt;
                                         </button>
@@ -558,9 +605,9 @@ const StudentRegistration: React.FC = () => {
 
             {isPasswordModalOpen && (
                 <div className="modal-overlay" onClick={() => setIsPasswordModalOpen(false)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                    <div className="modal-content animate-slide-up" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h2>Change Password</h2>
+                            <h2>Reset Student Password</h2>
                             <button className="close-btn" onClick={() => setIsPasswordModalOpen(false)}>×</button>
                         </div>
                         <form onSubmit={handlePasswordUpdate}>
@@ -576,11 +623,12 @@ const StudentRegistration: React.FC = () => {
                             <div className="form-group">
                                 <label>New Password</label>
                                 <input
-                                    type="newPassword"
+                                    type="password"
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
-                                    placeholder="Enter new password"
+                                    placeholder="Enter new password (min 6 chars)"
                                     autoFocus
+                                    required
                                 />
                             </div>
                             <div className="form-group">
@@ -589,13 +637,14 @@ const StudentRegistration: React.FC = () => {
                                     type="password"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
-                                    placeholder="Confirm new password"
+                                    placeholder="Re-enter password to verify"
+                                    required
                                 />
                             </div>
                             <div className="modal-actions">
-                                <button type="button" className="btn-cancel-modal" onClick={() => setIsPasswordModalOpen(false)}>Cancel</button>
-                                <button type="submit" className="btn-confirm-password" disabled={passwordLoading}>
-                                    {passwordLoading ? 'Updating...' : 'Update Password'}
+                                <button type="button" className="btn-secondary-action" onClick={() => setIsPasswordModalOpen(false)}>Cancel</button>
+                                <button type="submit" className="btn-primary-action" disabled={passwordLoading}>
+                                    {passwordLoading ? 'Resetting...' : 'Reset Password'}
                                 </button>
                             </div>
                         </form>
@@ -603,90 +652,90 @@ const StudentRegistration: React.FC = () => {
                 </div>
             )}
 
-
-
             <style>{`
                 .registration-page {
                     min-height: 100vh;
-                    background: #f8fafc;
+                    background: var(--bg);
                 }
 
                 .main-content {
-                    max-width: 800px;
-                    margin: 40px auto;
+                    max-width: 1200px;
+                    margin: 32px auto;
                     padding: 0 24px;
                 }
 
                 .page-header {
-                    margin-bottom: 32px;
-                    text-align: center;
+                    margin-bottom: 24px;
+                    text-align: left;
                 }
 
                 .page-header h1 {
-                    font-size: 2.5rem;
-                    color: #1e293b;
-                    margin-bottom: 8px;
-                    font-weight: 700;
-                    background: linear-gradient(135deg, #0f172a, #334155);
-                    -webkit-background-clip: text;
-                    -webkit-text-fill-color: transparent;
+                    font-size: 2rem;
+                    color: var(--text);
+                    font-weight: 800;
+                    margin-bottom: 4px;
+                    letter-spacing: -0.025em;
                 }
 
                 .page-header p {
-                    color: #64748b;
-                    font-size: 1.1rem;
+                    color: var(--text-muted);
+                    font-size: 1rem;
                 }
 
                 .registration-card {
-                    background: white;
-                    border-radius: 24px;
-                    box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.05);
-                    overflow: hidden;
-                    border: 1px solid rgba(255,255,255,0.8);
+                    background: var(--surface);
+                    border-radius: 16px;
+                    border: 1px solid #e2e8f0;
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.025);
+                    padding: 24px;
                 }
 
+                /* Microsoft Fluent Segmented Tabs */
                 .tabs {
                     display: flex;
-                    border-bottom: 1px solid #e2e8f0;
-                    background: #f8fafc;
-                    overflow-x: auto;
+                    background: #f1f5f9;
+                    padding: 4px;
+                    border-radius: 12px;
+                    gap: 4px;
+                    margin-bottom: 24px;
                 }
 
                 .tab-btn {
                     flex: 1;
-                    padding: 20px;
+                    padding: 10px 16px;
                     border: none;
                     background: transparent;
-                    font-size: 1rem;
+                    font-size: 0.875rem;
                     font-weight: 600;
-                    color: #64748b;
+                    color: var(--text-muted);
                     cursor: pointer;
-                    transition: all 0.3s ease;
+                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    gap: 10px;
+                    gap: 8px;
+                    border-radius: 8px;
                     white-space: nowrap;
                 }
 
                 .tab-btn:hover {
-                    color: #0047AB;
-                    background: rgba(0, 71, 171, 0.05);
+                    color: var(--text);
+                    background: rgba(15, 23, 42, 0.04);
                 }
 
                 .tab-btn.active {
-                    color: #0047AB;
-                    background: white;
-                    box-shadow: 0 -4px 0 #0047AB inset;
+                    color: var(--primary);
+                    background: #ffffff;
+                    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
                 }
 
                 .tab-content {
-                    padding: 40px;
+                    min-height: 250px;
                 }
 
-                /* Bulk Upload Styles */
+                /* Bulk Upload Drag & Drop Zone */
                 .upload-zone {
-                    margin-bottom: 32px;
+                    margin-bottom: 24px;
                 }
 
                 .upload-zone input[type="file"] {
@@ -698,322 +747,479 @@ const StudentRegistration: React.FC = () => {
                     flex-direction: column;
                     align-items: center;
                     justify-content: center;
-                    padding: 48px;
+                    padding: 48px 24px;
                     border: 2px dashed #cbd5e1;
-                    border-radius: 16px;
+                    border-radius: 12px;
                     cursor: pointer;
-                    transition: all 0.3s ease;
+                    transition: all 0.2s ease;
                     background: #f8fafc;
+                    text-align: center;
                 }
 
                 .upload-label:hover {
-                    border-color: #0047AB;
+                    border-color: var(--primary);
                     background: #eff6ff;
                 }
 
                 .upload-label.has-file {
-                    border-color: #10b981;
+                    border-color: var(--success);
                     background: #f0fdf4;
                 }
 
                 .upload-icon {
-                    font-size: 48px;
-                    margin-bottom: 16px;
+                    font-size: 44px;
+                    margin-bottom: 12px;
+                    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.05));
                 }
 
                 .upload-label h3 {
-                    font-size: 1.2rem;
-                    color: #1e293b;
-                    margin-bottom: 8px;
+                    font-size: 1.1rem;
+                    color: var(--text);
+                    margin-bottom: 4px;
                     font-weight: 600;
                 }
 
                 .upload-label p {
-                    color: #94a3b8;
-                    font-size: 0.95rem;
+                    color: var(--text-muted);
+                    font-size: 0.875rem;
                 }
 
-                /* Single Form Styles */
+                /* Single Form Grid */
+                .single-form {
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 20px;
+                }
+
+                .grid-full {
+                    grid-column: span 2;
+                }
+
                 .form-group {
-                    margin-bottom: 24px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 6px;
                 }
 
                 .form-group label {
-                    display: block;
-                    margin-bottom: 8px;
-                    color: #475569;
-                    font-weight: 500;
-                    font-size: 0.95rem;
+                    color: var(--text);
+                    font-weight: 600;
+                    font-size: 0.85rem;
+                    letter-spacing: -0.01em;
                 }
 
-                .form-group input {
+                .form-group input, 
+                .form-group select {
                     width: 100%;
-                    padding: 14px 16px;
-                    border: 1px solid #e2e8f0;
-                    border-radius: 12px;
-                    font-size: 1rem;
-                    transition: all 0.3s;
-                    background: #f8fafc;
+                    padding: 10px 14px;
+                    border: 1px solid #cbd5e1;
+                    border-radius: 8px;
+                    font-size: 0.95rem;
+                    color: var(--text);
+                    background: #ffffff;
+                    transition: all 0.15s ease;
                 }
 
-                .form-group input:focus {
+                .form-group input::placeholder {
+                    color: #94a3b8;
+                }
+
+                .form-group input:focus, 
+                .form-group select:focus {
                     outline: none;
-                    border-color: #0047AB;
-                    background: white;
-                    box-shadow: 0 0 0 4px rgba(0, 71, 171, 0.1);
+                    border-color: var(--primary);
+                    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
                 }
 
                 .btn-primary {
-                    width: 100%;
-                    padding: 16px;
-                    background: linear-gradient(135deg, #0047AB, #2563eb);
-                    color: white;
+                    background: var(--primary);
+                    color: #ffffff;
                     border: none;
-                    border-radius: 12px;
-                    font-size: 1rem;
+                    border-radius: 8px;
+                    padding: 12px 24px;
+                    font-size: 0.95rem;
                     font-weight: 600;
                     cursor: pointer;
-                    transition: all 0.3s ease;
-                    box-shadow: 0 10px 20px -5px rgba(0, 71, 171, 0.3);
+                    transition: all 0.15s ease;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.15);
                 }
 
                 .btn-primary:hover:not(:disabled) {
-                    transform: translateY(-2px);
-                    box-shadow: 0 15px 25px -5px rgba(0, 71, 171, 0.4);
+                    background: #1d4ed8;
+                    transform: translateY(-1px);
+                    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+                }
+
+                .btn-primary:active:not(:disabled) {
+                    transform: translateY(0);
                 }
 
                 .btn-primary:disabled {
-                    opacity: 0.7;
+                    opacity: 0.6;
                     cursor: not-allowed;
-                    transform: none;
                 }
 
-                .animate-fade {
-                    animation: fadeIn 0.4s ease-out;
-                }
-
-                @keyframes fadeIn {
-                    from { opacity: 0; transform: translateY(10px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-
-                /* Added Students List Styles */
+                /* Added Students Directory Table */
                 .students-count-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 16px;
                     margin-bottom: 20px;
                     padding-bottom: 16px;
-                    border-bottom: 1px solid #e2e8f0;
+                    border-bottom: 1px solid #f1f5f9;
                 }
 
-                .students-count-header h3 {
-                    margin: 0;
-                    font-size: 1.1rem;
-                    color: #334155;
-                    font-weight: 600;
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
+                .count-info h3 {
+                    font-size: 1.125rem;
+                    font-weight: 700;
+                    color: var(--text);
+                    margin: 0 0 4px;
                 }
 
                 .count-badge {
-                    background: #e0f2fe;
-                    color: #0284c7;
-                    padding: 4px 12px;
-                    border-radius: 12px;
-                    font-size: 1rem;
-                    font-weight: 700;
-                }
-
-                .students-count-header {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 16px;
+                    display: inline-block;
+                    font-size: 0.775rem;
+                    font-weight: 600;
+                    color: var(--primary);
+                    background: #eff6ff;
+                    padding: 2px 8px;
+                    border-radius: 9999px;
+                    border: 1px solid #dbeafe;
                 }
 
                 .search-bar {
                     position: relative;
-                    width: 100%;
+                    width: 320px;
                 }
 
                 .search-bar input {
                     width: 100%;
-                    padding: 12px 16px 12px 48px;
-                    border: 1px solid #e2e8f0;
-                    border-radius: 12px;
-                    font-size: 0.95rem;
-                    background: white;
+                    padding: 10px 14px 10px 40px;
+                    border: 1px solid #cbd5e1;
+                    border-radius: 8px;
+                    font-size: 0.875rem;
+                    background: #ffffff;
                     transition: all 0.2s;
                 }
 
                 .search-bar input:focus {
                     outline: none;
-                    border-color: #0047AB;
-                    box-shadow: 0 0 0 4px rgba(0, 71, 171, 0.1);
+                    border-color: var(--primary);
+                    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
                 }
 
                 .search-icon {
                     position: absolute;
-                    left: 16px;
+                    left: 14px;
                     top: 50%;
                     transform: translateY(-50%);
                     color: #94a3b8;
-                    font-size: 1.2rem;
+                    font-size: 1rem;
                 }
 
-                .students-list {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 16px;
+                .students-table-wrapper {
+                    border: 1px solid #e2e8f0;
+                    border-radius: 12px;
+                    overflow: hidden;
+                    background: #ffffff;
                 }
 
-                .student-item {
+                .students-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    text-align: left;
+                    font-size: 0.875rem;
+                }
+
+                .students-table th {
+                    background: #f8fafc;
+                    padding: 12px 16px;
+                    font-weight: 600;
+                    color: var(--text-muted);
+                    border-bottom: 1px solid #e2e8f0;
+                    text-transform: uppercase;
+                    font-size: 0.75rem;
+                    letter-spacing: 0.05em;
+                }
+
+                .students-table td {
+                    padding: 12px 16px;
+                    border-bottom: 1px solid #f1f5f9;
+                    color: var(--text);
+                    vertical-align: middle;
+                }
+
+                .students-table tr {
+                    cursor: pointer;
+                    transition: background-color 0.15s ease;
+                }
+
+                .students-table tr:hover {
+                    background-color: #f8fafc;
+                }
+
+                .students-table tr.row-blocked {
+                    background-color: #fffefb;
+                }
+
+                .table-student-cell {
                     display: flex;
                     align-items: center;
-                    padding: 16px;
-                    background: white;
-                    border: 1px solid #e2e8f0;
-                    border-radius: 16px;
-                    cursor: pointer;
-                    transition: all 0.2s;
+                    gap: 12px;
                 }
 
-                .student-item:hover {
-                    border-color: #0047AB;
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-                    transform: translateX(4px);
-                }
-
-                .student-avatar {
-                    width: 48px;
-                    height: 48px;
-                    background: #e0f2fe;
-                    color: #0369a1;
+                .student-avatar-small {
+                    width: 38px;
+                    height: 38px;
                     border-radius: 50%;
+                    background: #eff6ff;
+                    color: var(--primary);
+                    font-weight: 700;
+                    font-size: 0.95rem;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    font-size: 1.2rem;
-                    font-weight: 700;
-                    margin-right: 16px;
+                    overflow: hidden;
+                    border: 1px solid #dbeafe;
+                    flex-shrink: 0;
                 }
 
-                .student-info {
-                    flex: 1;
+                .student-avatar-small img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
                 }
 
-                .student-info h4 {
-                    font-size: 1.05rem;
-                    color: #0f172a;
-                    margin: 0 0 4px;
+                .student-name-email {
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .student-name-row {
                     display: flex;
                     align-items: center;
-                    gap: 8px;
+                    gap: 6px;
                 }
 
-                .student-info p {
-                    color: #64748b;
-                    font-size: 0.9rem;
+                .student-name-text {
+                    font-weight: 600;
+                    color: var(--text);
+                }
+
+                .student-email-text {
+                    font-size: 0.775rem;
+                    color: var(--text-muted);
+                }
+
+                .student-reg-text {
+                    font-family: monospace;
+                    font-weight: 600;
+                    color: #475569;
+                }
+
+                .student-dept-text {
+                    color: #334155;
+                    font-weight: 500;
+                }
+
+                .badge-blocked {
+                    background: #fef2f2;
+                    color: var(--danger);
+                    border: 1px solid #fee2e2;
+                    padding: 1px 6px;
+                    border-radius: 4px;
+                    font-size: 0.7rem;
+                    font-weight: 600;
+                }
+
+                .resident-badge {
+                    display: inline-block;
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                    padding: 2px 8px;
+                    border-radius: 9999px;
+                    text-transform: capitalize;
+                }
+
+                .resident-badge.hosteler {
+                    background: #ecfdf5;
+                    color: var(--success);
+                    border: 1px solid #a7f3d0;
+                }
+
+                .resident-badge.dayscholar {
+                    background: #f0f9ff;
+                    color: #0284c7;
+                    border: 1px solid #bae6fd;
+                }
+
+                .resident-badge.unassigned {
+                    background: #f1f5f9;
+                    color: var(--text-muted);
+                    border: 1px solid #e2e8f0;
+                }
+
+                .actions-cell {
+                    display: flex;
+                    gap: 8px;
+                    justify-content: flex-end;
+                }
+
+                .btn-table-action {
+                    padding: 6px 12px;
+                    font-size: 0.775rem;
+                    font-weight: 600;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    transition: all 0.15s ease;
+                }
+
+                .btn-view-action {
+                    background: #f1f5f9;
+                    color: #334155;
+                    border: 1px solid #cbd5e1;
+                }
+
+                .btn-view-action:hover {
+                    background: #e2e8f0;
+                    color: var(--text);
+                }
+
+                .btn-pwd-action {
+                    background: #ffffff;
+                    color: var(--primary);
+                    border: 1px solid rgba(37, 99, 235, 0.3);
+                }
+
+                .btn-pwd-action:hover {
+                    background: var(--primary);
+                    color: #ffffff;
+                    border-color: var(--primary);
+                }
+
+                .text-right {
+                    text-align: right;
+                }
+
+                /* Pagination */
+                .pagination-controls {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    gap: 16px;
+                    margin-top: 24px;
+                }
+
+                .btn-pag {
+                    padding: 8px 16px;
+                    font-size: 0.85rem;
+                    font-weight: 600;
+                    border: 1px solid #cbd5e1;
+                    border-radius: 6px;
+                    background: #ffffff;
+                    color: #334155;
+                    cursor: pointer;
+                    transition: all 0.15s;
+                }
+
+                .btn-pag:hover:not(:disabled) {
+                    background: #f8fafc;
+                    border-color: #94a3b8;
+                }
+
+                .btn-pag:disabled {
+                    background: #f1f5f9;
+                    color: #94a3b8;
+                    cursor: not-allowed;
+                    border-color: #e2e8f0;
+                }
+
+                .pag-label {
+                    font-size: 0.85rem;
+                    color: var(--text-muted);
+                    font-weight: 600;
+                }
+
+                /* States */
+                .loading-state, 
+                .empty-state {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 48px 24px;
+                    text-align: center;
+                    color: var(--text-muted);
+                    background: #f8fafc;
+                    border-radius: 12px;
+                    border: 1px dashed #cbd5e1;
+                }
+
+                .empty-state-icon {
+                    font-size: 40px;
+                    margin-bottom: 12px;
+                    opacity: 0.7;
+                }
+
+                .empty-state h3 {
+                    font-size: 1.1rem;
+                    font-weight: 600;
+                    color: var(--text);
                     margin: 0 0 4px;
                 }
-                
-                .student-meta {
-                    font-size: 0.85rem;
-                    color: #94a3b8;
+
+                .empty-state p {
+                    font-size: 0.875rem;
+                    margin: 0;
+                    max-width: 320px;
                 }
 
-                .tag-resident {
-                    background: #f1f5f9;
-                    color: #475569;
-                    padding: 2px 8px;
-                    border-radius: 4px;
-                    font-size: 0.75rem;
-                    font-weight: 600;
-                }
-                
-                .tag-blocked {
-                    background: #fef2f2;
-                    color: #ef4444;
-                    padding: 2px 8px;
-                    border-radius: 4px;
-                    font-size: 0.75rem;
-                    font-weight: 600;
+                .spinner {
+                    width: 24px;
+                    height: 24px;
+                    border: 3px solid #e2e8f0;
+                    border-top-color: var(--primary);
+                    border-radius: 50%;
+                    animation: spin 0.8s linear infinite;
+                    margin-bottom: 12px;
                 }
 
-                .btn-view {
-                    padding: 8px 16px;
-                    background: #f1f5f9;
-                    color: #475569;
-                    border: none;
-                    border-radius: 8px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    transition: all 0.2s;
+                @keyframes spin {
+                    to { transform: rotate(360deg); }
                 }
 
-                .btn-view:hover {
-                    background: #e2e8f0;
-                    color: #1e293b;
-                }
-
-                .btn-password-change {
-                    padding: 8px 16px;
-                    background: #fff;
-                    color: #0047AB;
-                    border: 1px solid #0047AB;
-                    border-radius: 8px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    margin-left: 8px;
-                }
-
-                .btn-password-change:hover {
-                    background: #0047AB;
-                    color: white;
-                }
-                
-                .input-disabled {
-                    background-color: #f1f5f9;
-                    cursor: not-allowed;
-                    color: #64748b;
-                }
-                    color: #cbd5e1;
-                    font-size: 1.5rem;
-                    font-weight: 300;
-                }
-
-                .empty-state, .loading-state {
-                    text-align: center;
-                    padding: 40px;
-                    color: #94a3b8;
-                    font-style: italic;
-                }
-
-                /* Modal Styles */
+                /* Modals */
                 .modal-overlay {
                     position: fixed;
                     inset: 0;
-                    background: rgba(0, 0, 0, 0.5);
+                    background: rgba(15, 23, 42, 0.4);
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     z-index: 1000;
-                    backdrop-filter: blur(4px);
+                    backdrop-filter: blur(8px);
                 }
 
                 .modal-content {
-                    background: white;
-                    width: 90%;
-                    max-width: 600px;
-                    border-radius: 20px;
-                    padding: 32px;
+                    background: #ffffff;
+                    width: 95%;
+                    max-width: 450px;
+                    border-radius: 16px;
+                    padding: 24px;
                     position: relative;
-                    animation: slideUp 0.3s ease-out;
-                    max-height: 90vh;
-                    overflow-y: auto;
+                    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                }
+
+                .animate-slide-up {
+                    animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
                 }
 
                 @keyframes slideUp {
-                    from { transform: translateY(20px); opacity: 0; }
+                    from { transform: translateY(12px); opacity: 0; }
                     to { transform: translateY(0); opacity: 1; }
                 }
 
@@ -1021,224 +1227,204 @@ const StudentRegistration: React.FC = () => {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    margin-bottom: 24px;
+                    margin-bottom: 20px;
                 }
 
                 .modal-header h2 {
+                    font-size: 1.25rem;
+                    font-weight: 700;
+                    color: var(--text);
                     margin: 0;
-                    font-size: 1.5rem;
-                    color: #0f172a;
                 }
 
                 .close-btn {
                     background: none;
                     border: none;
-                    font-size: 2rem;
-                    color: #94a3b8;
+                    font-size: 1.5rem;
+                    color: var(--text-muted);
                     cursor: pointer;
                     line-height: 1;
-                    padding: 0;
+                    padding: 4px;
+                    border-radius: 6px;
+                    transition: background 0.15s;
                 }
 
-                .form-grid {
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 16px;
+                .close-btn:hover {
+                    background: #f1f5f9;
+                    color: var(--text);
                 }
-                
-                .info-section {
-                    background: #f8fafc;
-                    padding: 16px;
-                    border-radius: 12px;
-                    margin-bottom: 24px;
-                }
-                
-                .info-section h3 {
-                    font-size: 1rem;
-                    color: #475569;
-                    margin: 0 0 12px;
-                }
-                
-                .info-grid {
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 12px;
-                }
-                
-                .info-item label {
-                    display: block;
-                    font-size: 0.8rem;
-                    color: #94a3b8;
-                    margin-bottom: 2px;
-                }
-                
-                .info-item span {
-                    font-weight: 500;
-                    color: #334155;
+
+                .input-disabled {
+                    background: #f8fafc !important;
+                    color: var(--text-muted) !important;
+                    cursor: not-allowed;
+                    border-color: #e2e8f0 !important;
                 }
 
                 .modal-actions {
                     display: flex;
                     gap: 12px;
-                    margin-top: 32px;
+                    margin-top: 24px;
                 }
 
-                .btn-update {
-                    flex: 2;
-                    padding: 12px;
-                    background: #0047AB;
-                    color: white;
-                    border: none;
-                    border-radius: 8px;
-                    font-weight: 600;
-                    cursor: pointer;
-                }
-
-                .btn-block-toggle {
+                .btn-secondary-action {
                     flex: 1;
-                    padding: 12px;
-                    background: #e2e8f0;
+                    padding: 10px;
+                    background: #ffffff;
                     color: #475569;
-                    border: none;
+                    border: 1px solid #cbd5e1;
                     border-radius: 8px;
                     font-weight: 600;
                     cursor: pointer;
-                }
-                
-                .btn-block-toggle.blocked {
-                    background: #fef2f2;
-                    color: #ef4444;
-                    border: 1px solid #fee2e2;
+                    transition: all 0.15s;
                 }
 
-                @media (max-width: 768px) {
-                    .main-content {
-                        margin: 20px auto;
-                        padding: 0 16px;
-                    }
-
-                    .page-header h1 {
-                        font-size: 1.8rem;
-                    }
-
-                    .registration-card {
-                        border-radius: 16px;
-                    }
-
-                    .tabs {
-                        flex-direction: column;
-                    }
-
-                    .tab-btn {
-                        padding: 16px;
-                        border-bottom: 1px solid #e2e8f0;
-                        border-right: none;
-                        justify-content: flex-start;
-                    }
-                    
-                    .tab-btn:last-child {
-                        border-bottom: none;
-                    }
-
-                    .tab-content {
-                        padding: 24px;
-                    }
-
-                    .upload-label {
-                        padding: 32px 16px;
-                    }
-                    
-                    .upload-icon {
-                        font-size: 32px;
-                    }
-
-                    .students-list {
-                        gap: 12px;
-                    }
-
-                    .student-item {
-                        flex-direction: column;
-                        align-items: flex-start;
-                        gap: 16px;
-                    }
-
-                    .student-avatar {
-                        margin-right: 0;
-                        margin-bottom: 8px;
-                    }
-
-                    .student-info {
-                        width: 100%;
-                    }
-
-                    .btn-view {
-                        width: 100%;
-                        margin-top: 8px;
-                    }
+                .btn-secondary-action:hover {
+                    background: #f8fafc;
+                    color: var(--text);
                 }
 
-                .btn-delete {
-                    flex: 1;
-                    padding: 12px;
-                    background: white;
-                    color: #ef4444;
-                    border: 1px solid #fee2e2;
-                    border-radius: 8px;
-                    font-weight: 600;
-                    cursor: pointer;
-                }
-
-                .btn-cancel-modal {
-                    flex: 1;
-                    padding: 12px;
-                    background: white;
-                    color: #64748b;
-                    border: 1px solid #e2e8f0;
-                    border-radius: 8px;
-                    font-weight: 600;
-                    cursor: pointer;
-                }
-
-                .btn-confirm-password {
+                .btn-primary-action {
                     flex: 2;
-                    padding: 12px;
-                    background: #0047AB;
-                    color: white;
+                    padding: 10px;
+                    background: var(--primary);
+                    color: #ffffff;
                     border: none;
                     border-radius: 8px;
                     font-weight: 600;
                     cursor: pointer;
-                }
-                
-                .btn-confirm-password:disabled {
-                    opacity: 0.7;
-                    cursor: not-allowed;
+                    transition: all 0.15s;
                 }
 
-                .btn-update:disabled, .btn-delete:disabled, .btn-block-toggle:disabled {
+                .btn-primary-action:hover:not(:disabled) {
+                    background: #1d4ed8;
+                }
+
+                .btn-primary-action:disabled {
                     opacity: 0.6;
                     cursor: not-allowed;
                 }
 
+                /* Mobile Responsiveness override */
                 @media (max-width: 768px) {
-                    .tab-content {
-                        padding: 24px;
-                    }
-
-                    .tab {
-                        
+                    .main-content {
+                        margin: 16px auto;
+                        padding: 0 16px;
                     }
 
                     .page-header h1 {
-                        font-size: 2rem;
+                        font-size: 1.75rem;
                     }
-                    
-                    .form-grid {
+
+                    .registration-card {
+                        padding: 16px;
+                    }
+
+                    .tabs {
+                        flex-direction: row;
+                        overflow-x: auto;
+                        padding: 2px;
+                        gap: 2px;
+                    }
+
+                    .tab-btn {
+                        padding: 8px 12px;
+                        font-size: 0.8rem;
+                    }
+
+                    .single-form {
                         grid-template-columns: 1fr;
+                        gap: 16px;
                     }
-                    
-                    .modal-actions {
+
+                    .grid-full {
+                        grid-column: span 1;
+                    }
+
+                    .students-count-header {
                         flex-direction: column;
+                        align-items: flex-start;
+                        gap: 12px;
+                    }
+
+                    .search-bar {
+                        width: 100%;
+                    }
+
+                    /* Table to card stack for mobile devices */
+                    .students-table-wrapper {
+                        border: none;
+                    }
+
+                    .students-table thead {
+                        display: none;
+                    }
+
+                    .students-table, 
+                    .students-table tbody, 
+                    .students-table tr, 
+                    .students-table td {
+                        display: block;
+                        width: 100%;
+                    }
+
+                    .students-table tr {
+                        background: #ffffff;
+                        border: 1px solid #e2e8f0;
+                        border-radius: 12px;
+                        margin-bottom: 16px;
+                        padding: 14px;
+                        position: relative;
+                        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+                    }
+
+                    .students-table tr:hover {
+                        background-color: #ffffff;
+                    }
+
+                    .students-table td {
+                        padding: 8px 0;
+                        border-bottom: 1px dashed #f1f5f9;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    }
+
+                    .students-table td:first-child {
+                        border-bottom: 1px solid #f1f5f9;
+                        padding-bottom: 12px;
+                        margin-bottom: 8px;
+                        display: block;
+                    }
+
+                    .students-table td:first-child::before {
+                        display: none;
+                    }
+
+                    .students-table td:last-child {
+                        border-bottom: none;
+                        padding-top: 12px;
+                        margin-top: 4px;
+                    }
+
+                    .students-table td::before {
+                        content: attr(data-label);
+                        font-weight: 600;
+                        color: var(--text-muted);
+                        font-size: 0.8rem;
+                    }
+
+                    .actions-cell {
+                        width: 100%;
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 8px;
+                    }
+
+                    .btn-table-action {
+                        text-align: center;
+                        padding: 8px;
+                        font-size: 0.8rem;
                     }
                 }
             `}</style>

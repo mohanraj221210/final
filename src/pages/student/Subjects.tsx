@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import SubjectCard from '../../components/SubjectCard';
 import { SUBJECTS_DATA } from '../../data/sampleData';
 import { useNavigate } from 'react-router-dom';
+
 import StudentHeader from '../../components/StudentHeader';
 import StudentBottomNav from '../../components/StudentBottomNav';
 
@@ -19,120 +20,141 @@ const Subjects: React.FC = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="student-page academic-subjects-page animate-page-enter">
+        <div className="pb-subjects-page">
 
             {/* ── DESKTOP VIEW ── */}
             <div className="lux-desktop-view">
-            <StudentHeader />
+                <StudentHeader />
+                <main className="student-content">
+                    <div className="content-wrapper">
+                        {/* Back link */}
+                        <div className="pb-back-link-wrapper">
+                            <button className="pb-btn-back" onClick={() => navigate('/dashboard')}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                    <line x1="19" y1="12" x2="5" y2="12" />
+                                    <polyline points="12 19 5 12 12 5" />
+                                </svg>
+                                Back to Dashboard
+                            </button>
+                        </div>
 
-            <div className="content-wrapper">
-                {/* Back link */}
-                <div className="back-link-wrapper" style={{ marginBottom: '24px' }}>
-                    <button className="btn-back" onClick={() => navigate('/dashboard')}>
-                        <span className="icon">←</span> Back to Dashboard
-                    </button>
-                </div>
+                        {/* Page Title Header */}
+                        <div className="pb-page-header-simple">
+                            <h1 className="pb-page-title">Curriculum & Subjects</h1>
+                            <p className="pb-page-subtitle">Explore courses, syllabi, and reference materials grouped by semester</p>
+                        </div>
 
-                {/* Page Title Header */}
-                <div className="page-header-simple" style={{ marginBottom: '32px' }}>
-                    <h1>Curriculum & Subjects</h1>
-                    <p className="subtitle">Explore courses, syllabi, and reference materials grouped by semester</p>
-                </div>
+                        {/* Semester Accordion Panels */}
+                        <div className="pb-semesters-accordion-wrap">
+                            {semesters.map((sem, index) => {
+                                const isExpanded = expandedSem === sem;
+                                const staggerIndex = (index % 6) + 1;
+                                return (
+                                    <div key={sem} className={`pb-sem-accordion-group ${isExpanded ? 'expanded' : ''} pb-animate-stagger-${staggerIndex}`}>
+                                        <button
+                                            className="pb-sem-accordion-trigger"
+                                            onClick={() => setExpandedSem(isExpanded ? null : sem)}
+                                            aria-expanded={isExpanded}
+                                        >
+                                            <div className="pb-sem-trigger-left">
+                                                <span className="pb-sem-title-label">Semester {sem}</span>
+                                                <span className="pb-sem-badge">{subjectsBySem[sem].length} Courses</span>
+                                            </div>
+                                            <span className="pb-chevron-arrow">
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.25s' }}>
+                                                    <polyline points="6 9 12 15 18 9" />
+                                                </svg>
+                                            </span>
+                                        </button>
 
-                {/* Semester Accordion Panels */}
-                <div className="semesters-accordion-wrap">
-                    {semesters.map((sem, index) => {
-                        const isExpanded = expandedSem === sem;
-                        const staggerIndex = (index % 6) + 1;
-                        return (
-                            <div key={sem} className={`sem-accordion-group card ${isExpanded ? 'expanded' : ''} animate-stagger-${staggerIndex}`}>
-                                <button
-                                    className="sem-accordion-trigger"
-                                    onClick={() => setExpandedSem(isExpanded ? null : sem)}
-                                    aria-expanded={isExpanded}
-                                >
-                                    <div className="sem-trigger-left">
-                                        <span className="sem-title-label">Semester {sem}</span>
-                                        <span className="badge badge-gray">{subjectsBySem[sem].length} Courses</span>
+                                        {isExpanded && (
+                                            <div className="pb-sem-accordion-content">
+                                                <div className="pb-subjects-grid">
+                                                    {subjectsBySem[sem].map(subject => (
+                                                        <SubjectCard key={subject.id} subject={subject} />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
-                                    <span className="chevron-arrow">{isExpanded ? '▲' : '▼'}</span>
-                                </button>
-
-                                {isExpanded && (
-                                    <div className="sem-accordion-content">
-                                        <div className="subjects-grid">
-                                            {subjectsBySem[sem].map(subject => (
-                                                <SubjectCard key={subject.id} subject={subject} />
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </main>
             </div>{/* end desktop */}
 
             {/* ── MOBILE VIEW ── */}
-            <div className="lux-mobile-view cred-page-bg">
+            <div className="lux-mobile-view">
                 {/* Header */}
-                <div className="mob-page-header animate-cred-enter cred-stagger-1">
-                    <button className="mob-back-btn" onClick={() => navigate('/dashboard')}>
+                <div className="pb-mob-page-header">
+                    <button className="pb-mob-back-btn" onClick={() => navigate('/dashboard')}>
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
                     </button>
-                    <div className="mob-header-text">
-                        <h1 className="cred-h2" style={{ margin: 0, fontSize: '18px' }}>Curriculum</h1>
-                        <p className="cred-p" style={{ margin: '2px 0 0', fontSize: '12px' }}>Subjects & Study Materials</p>
+                    <div className="pb-mob-header-text">
+                        <span className="pb-mob-header-title">Curriculum</span>
+                        <span className="pb-mob-header-subtitle">Subjects & Study Materials</span>
                     </div>
                     <div style={{ width: 36 }} />
                 </div>
 
-                <div className="mob-scroll-body">
+                <div className="pb-mob-scroll-body">
                     {semesters.map((sem, index) => {
                         const isExp = expandedSem === sem;
                         const staggerIndex = (index % 6) + 1;
                         return (
-                            <div key={sem} className={`cred-card mob-sem-card ${isExp ? 'mob-sem-expanded' : ''} animate-cred-enter cred-stagger-${staggerIndex}`}>
+                            <div key={sem} className={`pb-mob-sem-card ${isExp ? 'expanded' : ''} pb-animate-stagger-${staggerIndex}`}>
                                 <button
-                                    className="mob-sem-trigger"
+                                    className="pb-mob-sem-trigger"
                                     onClick={() => setExpandedSem(isExp ? null : sem)}
                                 >
-                                    <div className="mob-sem-left">
-                                        <div className="mob-sem-num">{sem}</div>
-                                        <div className="mob-sem-info">
-                                            <span className="mob-sem-title">Semester {sem}</span>
-                                            <span className="mob-sem-count">{subjectsBySem[sem].length} Courses</span>
+                                    <div className="pb-mob-sem-left">
+                                        <div className="pb-mob-sem-num">{sem}</div>
+                                        <div className="pb-mob-sem-info">
+                                            <span className="pb-mob-sem-title">Semester {sem}</span>
+                                            <span className="pb-mob-sem-count">{subjectsBySem[sem].length} Courses</span>
                                         </div>
                                     </div>
                                     <svg
                                         width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-                                        style={{transform: isExp ? 'rotate(180deg)' : 'none', transition:'transform 0.3s ease', color: isExp ? 'var(--cred-gold)' : '#94A3B8'}}
+                                        style={{transform: isExp ? 'rotate(180deg)' : 'none', transition:'transform 0.3s ease', color: isExp ? 'var(--pb-primary)' : 'var(--pb-text-4)'}}
                                     >
                                         <polyline points="6 9 12 15 18 9"/>
                                     </svg>
                                 </button>
                                 {isExp && (
-                                    <div className="mob-sem-subjects animate-cred-enter cred-stagger-1">
+                                    <div className="pb-mob-sem-subjects">
                                         {subjectsBySem[sem].map(subject => (
                                             <div
                                                 key={subject.id}
-                                                className="mob-subject-row"
+                                                className="pb-mob-subject-row"
                                                 onClick={() => navigate(`/subjects/${subject.id}`)}
                                             >
-                                                <div className="mob-subject-icon">
-                                                    {subject.type === 'laboratory' ? '🔬' : '📘'}
+                                                <div className="pb-mob-subject-icon">
+                                                    {subject.type === 'laboratory' ? (
+                                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                            <path d="M6 3h12" />
+                                                            <path d="M12 3v18" />
+                                                            <path d="M6 18h12" />
+                                                            <path d="M3 12h18" />
+                                                        </svg>
+                                                    ) : (
+                                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                                                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                                                        </svg>
+                                                    )}
                                                 </div>
-                                                <div className="mob-subject-info">
-                                                    <span className="mob-subject-name">{subject.name}</span>
-                                                    <div className="mob-subject-metadata">
-                                                        <span className="mob-subject-code">{subject.code || 'Code N/A'}</span>
-                                                        <span className={`mob-badge-type ${subject.type === 'laboratory' ? 'type-lab' : 'type-theory'}`}>
+                                                <div className="pb-mob-subject-info">
+                                                    <span className="pb-mob-subject-name">{subject.name}</span>
+                                                    <div className="pb-mob-subject-metadata">
+                                                        <span className="pb-mob-subject-code">{subject.code || 'Code N/A'}</span>
+                                                        <span className={`pb-mob-badge-type ${subject.type === 'laboratory' ? 'type-lab' : 'type-theory'}`}>
                                                             {subject.type === 'laboratory' ? 'Lab' : 'Theory'}
                                                         </span>
                                                     </div>
                                                 </div>
-                                                <div className="mob-subject-arrow">
+                                                <div className="pb-mob-subject-arrow">
                                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
                                                 </div>
                                             </div>
@@ -151,59 +173,52 @@ const Subjects: React.FC = () => {
             </div>{/* end mobile */}
 
             <style>{`
-                .academic-subjects-page {
-                    background: var(--bg);
-                }
-                .btn-back {
-                    background: none;
-                    border: none;
-                    color: var(--primary);
-                    font-size: 0.9rem;
-                    font-weight: 600;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    padding: 8px 12px;
-                    border-radius: var(--radius-sm);
-                    transition: var(--transition-fast);
-                }
-                .btn-back:hover {
-                    background: var(--primary-light);
-                    color: var(--primary-dark);
+                .pb-subjects-page {
+                    min-height: 100vh;
+                    background: var(--pb-bg);
                 }
                 
-                .page-header-simple h1 {
-                    font-size: 1.8rem;
-                    color: var(--text-1);
-                    margin: 0 0 6px 0;
-                }
-                .page-header-simple .subtitle {
-                    font-size: 0.95rem;
-                    color: var(--text-3);
+                .pb-page-title {
+                    font-size: 1.75rem;
+                    font-weight: 800;
+                    color: var(--pb-text);
                     margin: 0;
+                    letter-spacing: -0.025em;
+                }
+                .pb-page-subtitle {
+                    font-size: 0.9rem;
+                    color: var(--pb-text-3);
+                    margin: 4px 0 0 0;
+                }
+                .pb-page-header-simple {
+                    margin-bottom: 32px;
                 }
 
                 /* Accordion styling */
-                .semesters-accordion-wrap {
+                .pb-semesters-accordion-wrap {
                     display: flex;
                     flex-direction: column;
                     gap: 16px;
                 }
                 
-                .sem-accordion-group {
-                    padding: 0 !important;
+                .pb-sem-accordion-group {
+                    background: var(--pb-card);
+                    border: 1px solid var(--pb-card-border);
+                    border-radius: var(--pb-radius);
+                    box-shadow: var(--pb-shadow);
                     overflow: hidden;
-                    transition: var(--transition);
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
+                    transition: var(--pb-transition);
                 }
-                .sem-accordion-group.expanded {
-                    border-color: var(--primary-mid);
-                    box-shadow: var(--shadow-md);
+                .pb-sem-accordion-group.expanded {
+                    border-color: rgba(59, 130, 246, 0.25);
+                    box-shadow: var(--pb-shadow-md);
                 }
 
-                .sem-accordion-trigger {
+                .pb-sem-accordion-trigger {
                     width: 100%;
-                    padding: 20px var(--space-6);
+                    padding: 20px 24px;
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
@@ -211,44 +226,56 @@ const Subjects: React.FC = () => {
                     border: none;
                     cursor: pointer;
                     text-align: left;
+                    font-family: inherit;
                 }
-                .sem-accordion-trigger:hover {
-                    background: var(--surface-hover);
+                .pb-sem-accordion-trigger:hover {
+                    background: rgba(59, 130, 246, 0.02);
                 }
                 
-                .sem-trigger-left {
+                .pb-sem-trigger-left {
                     display: flex;
                     align-items: center;
-                    gap: var(--space-3);
+                    gap: 12px;
                 }
                 
-                .sem-title-label {
-                    font-size: 1.1rem;
-                    font-weight: 700;
-                    color: var(--text-1);
+                .pb-sem-title-label {
+                    font-size: 1.05rem;
+                    font-weight: 800;
+                    color: var(--pb-text);
+                    letter-spacing: -0.01em;
                 }
 
-                .chevron-arrow {
-                    font-size: 0.8rem;
-                    color: var(--text-4);
-                    transition: var(--transition);
+                .pb-sem-badge {
+                    font-size: 0.72rem;
+                    font-weight: 600;
+                    color: var(--pb-text-3);
+                    background: rgba(59, 130, 246, 0.05);
+                    border: 1px solid rgba(59, 130, 246, 0.08);
+                    padding: 2px 10px;
+                    border-radius: 99px;
                 }
 
-                .sem-accordion-content {
-                    padding: 0 var(--space-6) var(--space-6) var(--space-6);
-                    animation: slideDown 0.25s ease-out;
-                    border-top: 1px solid var(--border);
-                    background: var(--bg);
+                .pb-chevron-arrow {
+                    color: var(--pb-text-4);
+                    display: flex;
+                    align-items: center;
                 }
 
-                .subjects-grid {
+                .pb-sem-accordion-content {
+                    padding: 0 24px 24px 24px;
+                    animation: pbSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+                    border-top: 1px solid rgba(59, 130, 246, 0.06);
+                    background: rgba(59, 130, 246, 0.01);
+                }
+
+                .pb-subjects-grid {
                     display: grid;
                     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-                    gap: 20px;
-                    padding-top: var(--space-5);
+                    gap: 16px;
+                    padding-top: 20px;
                 }
 
-                @keyframes slideDown {
+                @keyframes pbSlideDown {
                     from { opacity: 0; transform: translateY(-8px); }
                     to { opacity: 1; transform: translateY(0); }
                 }
@@ -262,35 +289,34 @@ const Subjects: React.FC = () => {
                         display: flex !important; 
                         flex-direction: column; 
                         min-height: 100vh; 
-                        font-family: 'Inter', -apple-system, sans-serif; 
-                        color: #1E293B !important; 
+                        background: var(--pb-bg);
                     }
                 }
                 
                 /* ==========================================
-                   CRED PREMIUM MOBILE STYLES (SUBJECTS)
+                   PREMIUM MOBILE STYLES (SUBJECTS)
                    ========================================== */
-                .mob-page-header {
+                .pb-mob-page-header {
                     display: flex;
                     align-items: center;
                     gap: 12px;
-                    padding: 16px 16px 12px;
-                    background: rgba(255, 255, 255, 0.75) !important;
+                    padding: 16px;
+                    background: rgba(255, 255, 255, 0.85);
                     backdrop-filter: blur(20px);
                     -webkit-backdrop-filter: blur(20px);
                     position: sticky;
                     top: 0;
                     z-index: 50;
-                    border-bottom: 1px solid rgba(226, 232, 240, 0.5) !important;
+                    border-bottom: 1px solid rgba(59, 130, 246, 0.08);
                 }
 
-                .mob-back-btn {
+                .pb-mob-back-btn {
                     width: 36px;
                     height: 36px;
                     border-radius: 10px;
-                    background: #FFFFFF !important;
-                    border: 1px solid #E2E8F0 !important;
-                    color: #1E293B !important;
+                    background: #fff;
+                    border: 1px solid rgba(59, 130, 246, 0.12);
+                    color: var(--pb-text);
                     display: flex;
                     align-items: center;
                     justify-content: center;
@@ -298,180 +324,200 @@ const Subjects: React.FC = () => {
                     flex-shrink: 0;
                     transition: transform 0.2s;
                 }
-                .mob-back-btn:active {
-                    transform: scale(0.9);
-                }
+                .pb-mob-back-btn:active { transform: scale(0.9); }
 
-                .mob-header-text {
+                .pb-mob-header-text {
                     flex: 1;
                     display: flex;
                     flex-direction: column;
-                    text-align: left;
+                }
+                .pb-mob-header-title {
+                    font-size: 1.1rem;
+                    font-weight: 800;
+                    color: var(--pb-text);
+                    letter-spacing: -0.01em;
+                }
+                .pb-mob-header-subtitle {
+                    font-size: 0.72rem;
+                    font-weight: 600;
+                    color: var(--pb-text-4);
                 }
 
-                .mob-scroll-body { 
+                .pb-mob-scroll-body { 
                     flex: 1; 
                     overflow-y: auto; 
-                    padding: 24px 16px calc(110px + env(safe-area-inset-bottom, 16px)); 
+                    padding: 16px 16px 90px; 
                     display: flex; 
                     flex-direction: column; 
                     gap: 12px; 
                 }
 
-                .mob-sem-card { 
-                    padding: 0 !important; 
+                .pb-mob-sem-card { 
                     overflow: hidden; 
-                    background: #FFFFFF !important;
-                    border: 1px solid rgba(226, 232, 240, 0.8) !important;
-                    border-radius: 20px !important;
-                    box-shadow: 0 4px 12px rgba(31, 38, 135, 0.03) !important;
-                    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s; 
+                    background: var(--pb-card);
+                    border: 1px solid var(--pb-card-border);
+                    border-radius: var(--pb-radius);
+                    box-shadow: var(--pb-shadow);
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
+                    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s, border-color 0.2s; 
                 }
-                .mob-sem-card:active {
+                .pb-mob-sem-card:active {
                     transform: scale(0.99);
                 }
-                .mob-sem-expanded { 
-                    border-color: var(--cred-gold) !important; 
-                    box-shadow: 0 8px 24px rgba(212, 160, 23, 0.12) !important; 
+                .pb-mob-sem-card.expanded { 
+                    border-color: rgba(59, 130, 246, 0.25); 
+                    box-shadow: var(--pb-shadow-md); 
                 }
                 
-                .mob-sem-trigger { 
+                .pb-mob-sem-trigger { 
                     width: 100%; 
                     display: flex; 
                     align-items: center; 
                     justify-content: space-between; 
-                    padding: 12px 16px; 
+                    padding: 14px 16px; 
                     background: none; 
                     border: none; 
                     cursor: pointer; 
                     -webkit-tap-highlight-color: transparent; 
-                    transition: background-color 0.2s;
+                    font-family: inherit;
                 }
-                .mob-sem-trigger:active {
-                    background: rgba(241, 245, 249, 0.5);
+                .pb-mob-sem-trigger:active {
+                    background: rgba(59, 130, 246, 0.02);
                 }
                 
-                .mob-sem-left { display: flex; align-items: center; gap: 12px; }
+                .pb-mob-sem-left { display: flex; align-items: center; gap: 12px; }
                 
-                .mob-sem-num { 
-                    width: 36px; 
-                    height: 36px; 
+                .pb-mob-sem-num { 
+                    width: 32px; 
+                    height: 32px; 
                     border-radius: 10px; 
-                    background: linear-gradient(135deg, #1E3A8A, #0F172A) !important; 
-                    color: #FFFFFF !important; 
-                    border: 1.5px solid var(--cred-gold) !important;
+                    background: linear-gradient(135deg, var(--pb-primary), var(--pb-primary-light)); 
+                    color: #fff; 
                     display: flex; 
                     align-items: center; 
                     justify-content: center; 
-                    font-size: 15px; 
+                    font-size: 14px; 
                     font-weight: 800; 
                     flex-shrink: 0; 
-                    box-shadow: 0 4px 10px rgba(30, 58, 138, 0.2); 
+                    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.15); 
                 }
                 
-                .mob-sem-info { display: flex; flex-direction: column; gap: 2px; text-align: left; }
-                .mob-sem-title { font-size: 15px; font-weight: 700; color: #0F172A !important; }
-                .mob-sem-count { font-size: 12px; color: var(--cred-gold) !important; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+                .pb-mob-sem-info { display: flex; flex-direction: column; gap: 2px; text-align: left; }
+                .pb-mob-sem-title { font-size: 0.88rem; font-weight: 800; color: var(--pb-text); }
+                .pb-mob-sem-count { font-size: 0.68rem; color: var(--pb-primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
 
-                .mob-sem-subjects { 
-                    padding: 8px 12px 14px; 
+                .pb-mob-sem-subjects { 
+                    padding: 10px; 
                     display: flex;
                     flex-direction: column;
-                    gap: 10px;
-                    background: #F8FAFC;
-                    border-top: 1px solid #F1F5F9;
+                    gap: 8px;
+                    background: rgba(59, 130, 246, 0.02);
+                    border-top: 1px solid rgba(59, 130, 246, 0.06);
                 }
                 
-                .mob-subject-row { 
+                .pb-mob-subject-row { 
                     display: flex; 
                     align-items: center; 
                     gap: 12px; 
-                    padding: 16px; 
-                    background: #FFFFFF !important;
-                    border: 1px solid #E2E8F0 !important;
-                    border-radius: 14px !important;
+                    padding: 12px; 
+                    background: #fff;
+                    border: 1px solid rgba(59, 130, 246, 0.08);
+                    border-radius: 12px;
                     cursor: pointer; 
                     -webkit-tap-highlight-color: transparent; 
-                    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s, border-color 0.2s; 
-                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+                    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s, border-color 0.2s; 
+                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.01);
                 }
-                .mob-subject-row:active { 
+                .pb-mob-subject-row:active { 
                     transform: scale(0.98);
-                    background: #F1F5F9 !important; 
-                    border-color: #CBD5E1 !important;
+                    background: rgba(59, 130, 246, 0.02); 
+                    border-color: rgba(59, 130, 246, 0.15);
                 }
                 
-                .mob-subject-icon { 
-                    font-size: 20px; 
-                    flex-shrink: 0; 
-                    background: #EFF6FF !important; 
-                    border: 1px solid #DBEAFE !important;
-                    width: 40px; 
-                    height: 40px; 
-                    display: flex; 
+                .pb-mob-subject-icon { 
+                    color: var(--pb-primary);
+                    background: var(--pb-secondary); 
+                    border: 1px solid rgba(59, 130, 246, 0.08);
+                    width: 36px; 
+                    height: 36px; 
+                    display: flex;
                     align-items: center; 
                     justify-content: center; 
-                    border-radius: 10px; 
+                    border-radius: 8px; 
+                    flex-shrink: 0;
                 }
                 
-                .mob-subject-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+                .pb-mob-subject-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
                 
-                .mob-subject-name { 
-                    font-size: 14px; 
-                    font-weight: 600; 
-                    color: #1E293B !important; 
+                .pb-mob-subject-name { 
+                    font-size: 0.85rem; 
+                    font-weight: 700; 
+                    color: var(--pb-text); 
                     white-space: normal; 
                     word-break: break-word;
                     line-height: 1.4;
                 }
                 
-                .mob-subject-metadata {
+                .pb-mob-subject-metadata {
                     display: flex;
                     align-items: center;
                     gap: 8px;
                     margin-top: 4px;
                 }
                 
-                .mob-subject-code { 
-                    font-size: 11px; 
-                    color: #475569 !important; 
+                .pb-mob-subject-code { 
+                    font-size: 0.68rem; 
+                    color: var(--pb-text-3); 
                     font-weight: 700; 
                     font-family: monospace, ui-monospace;
-                    background: #E2E8F0;
+                    background: rgba(59, 130, 246, 0.05);
                     padding: 2px 6px;
                     border-radius: 4px;
                     letter-spacing: 0.5px;
                 }
 
-                .mob-badge-type {
-                    font-size: 10px;
+                .pb-mob-badge-type {
+                    font-size: 0.65rem;
                     font-weight: 700;
                     text-transform: uppercase;
                     letter-spacing: 0.5px;
                     padding: 2px 6px;
                     border-radius: 4px;
                 }
-                .mob-badge-type.type-theory {
-                    background: rgba(37, 99, 235, 0.1);
-                    color: #1D4ED8;
-                    border: 1px solid rgba(37, 99, 235, 0.15);
+                .pb-mob-badge-type.type-theory {
+                    background: rgba(59, 130, 246, 0.08);
+                    color: var(--pb-primary);
+                    border: 1px solid rgba(59, 130, 246, 0.12);
                 }
-                .mob-badge-type.type-lab {
-                    background: rgba(16, 185, 129, 0.1);
-                    color: #047857;
-                    border: 1px solid rgba(16, 185, 129, 0.15);
+                .pb-mob-badge-type.type-lab {
+                    background: rgba(16, 185, 129, 0.08);
+                    color: #10B981;
+                    border: 1px solid rgba(16, 185, 129, 0.12);
                 }
 
-                .mob-subject-arrow {
+                .pb-mob-subject-arrow {
                     display: flex;
                     align-items: center;
-                    color: #94A3B8;
+                    color: var(--pb-text-4);
                     transition: transform 0.2s, color 0.2s;
                 }
-                .mob-subject-row:active .mob-subject-arrow {
+                .pb-mob-subject-row:active .pb-mob-subject-arrow {
                     transform: translateX(2px);
-                    color: var(--cred-gold);
+                    color: var(--pb-primary);
                 }
+
+                /* ANIMATIONS */
+                @keyframes pbFadeIn {
+                    from { opacity: 0; transform: translateY(8px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                .pb-animate-stagger-1 { animation: pbFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: 0.05s; }
+                .pb-animate-stagger-2 { animation: pbFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: 0.1s; }
+                .pb-animate-stagger-3 { animation: pbFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: 0.15s; }
+                .pb-animate-stagger-4 { animation: pbFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: 0.2s; }
+                .pb-animate-stagger-5 { animation: pbFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: 0.25s; }
+                .pb-animate-stagger-6 { animation: pbFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: 0.3s; }
             `}</style>
         </div>
     );

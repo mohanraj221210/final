@@ -1,7 +1,9 @@
+import PremiumStaffLoader from '../../components/PremiumStaffLoader';
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { io, Socket } from 'socket.io-client';
+import StaffHeader from '../../components/StaffHeader';
 
 interface Message {
     _id: string;
@@ -23,6 +25,7 @@ interface Group {
 const StaffNotices: React.FC = () => {
     const navigate = useNavigate();
     const [group, setGroup] = useState<Group | null>(null);
+    const [appReady, setAppReady] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
@@ -122,199 +125,494 @@ const StaffNotices: React.FC = () => {
         });
     };
 
-    if (loading) return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '50px' }}>Loading Community...</div>;
+    if (!appReady) return <PremiumStaffLoader isDataReady={!loading} onComplete={() => setAppReady(true)} />;
 
     if (!group) return (
-        <div className="whatsapp-layout">
-            <header className="dashboard-header">
-                <div className="header-container">
-                    <div className="brand" onClick={() => navigate('/staff-dashboard')} style={{ cursor: 'pointer' }}>
-                        <span className="brand-text">Staff Dashboard</span>
-                    </div>
+        <div className="notices-page mobile-page-content">
+            <StaffHeader activeMenu="notices" />
+            <div className="no-community-screen">
+                <div className="no-community-card">
+                    <span className="notice-empty-icon">📢</span>
+                    <h2>No Community Assigned</h2>
+                    <p>You have not been assigned to any faculty community group yet.</p>
+                    <button className="btn-back-dashboard" onClick={() => navigate('/staff-dashboard')}>
+                        Go to Dashboard
+                    </button>
                 </div>
-            </header>
-            <div style={{ textAlign: 'center', marginTop: '50px', color: '#54656f' }}>
-                <h2>No Community Found</h2>
-                <p>You have not been assigned to any community group yet.</p>
             </div>
         </div>
     );
 
     return (
-        <div className="whatsapp-layout">
-            <header className="dashboard-header">
-                <div className="header-container">
-                    <div className="header-left">
-                        <div className="brand" onClick={() => navigate('/staff-dashboard')} style={{ cursor: 'pointer' }}>
-                            <span className="brand-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M19 12H5" />
-                                    <path d="M12 19l-7-7 7-7" />
-                                </svg>
-                            </span>
-                            <span className="brand-text">Staff Dashboard</span>
-                        </div>
-                    </div>
-                </div>
-            </header>
+        <div className="notices-page mobile-page-content">
+            <StaffHeader activeMenu="notices" />
 
-            <div className="app-container">
-                <div className="chat-area">
-                    <div className="chat-header">
-                        <div className="chat-header-info">
-                            <div className="comm-icon small">📢</div>
-                            <div className="header-text">
-                                <h3>{group.groupname}</h3>
-                                <p>Community Chat</p>
-                            </div>
-                        </div>
-                        <div className="chat-actions">
-                            <span>🔍</span>
-                            <span>⋮</span>
+            <div className="workspace-container">
+                <aside className="workspace-sidebar">
+                    <div className="sidebar-group-header">
+                        <span className="group-avatar">🏫</span>
+                        <div className="group-details">
+                            <h3>{group.groupname}</h3>
+                            <span className="group-status-pill">Faculty Hub</span>
                         </div>
                     </div>
 
-                    <div className="messages-container">
-                        <div className="encryption-notice">
-                            🔒 Messages are end-to-end encrypted.
+                    <div className="sidebar-section">
+                        <h4 className="section-title">Academic Channels</h4>
+                        <div className="channel-list">
+                            <button className="channel-item active">
+                                <span className="hash">#</span> announcement-board
+                            </button>
+                            <button className="channel-item">
+                                <span className="hash">#</span> exam-circulars
+                            </button>
+                            <button className="channel-item">
+                                <span className="hash">#</span> general-discussions
+                            </button>
+                            <button className="channel-item">
+                                <span className="hash">#</span> leave-requests
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="sidebar-section">
+                        <h4 className="section-title">Members ({group.members?.length || 0})</h4>
+                        <div className="member-list">
+                            {group.members?.map((_memberId, i) => (
+                                <div key={i} className="member-item">
+                                    <span className="member-status-dot"></span>
+                                    <span className="member-name-text">Faculty Member</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </aside>
+
+                <main className="chat-pane">
+                    <div className="chat-pane-header">
+                        <div className="channel-info">
+                            <h3><span className="hash">#</span> announcement-board</h3>
+                            <p className="channel-desc">Official community notices and campus announcements for {group.groupname}</p>
+                        </div>
+                    </div>
+
+                    <div className="chat-messages-container">
+                        <div className="workspace-encryption-notice">
+                            🔒 Channel security active. All notices posted here are distributed to assigned community staff.
                         </div>
 
-                        {messages.map((msg, idx) => {
-
-                            const isMe = false;
-
-                            return (
-                                <div key={msg._id || idx} className={`message-row ${isMe ? 'my-message' : 'other-message'}`}>
-                                    <div className="message-bubble">
-                                        {!isMe && <div className="sender-name">{msg.senderName || msg.from}</div>}
-                                        <div className="message-text">{msg.text}</div>
-                                        <div className="message-meta">
-                                            <span className="timestamp">
-                                                {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                                            </span>
+                        <div className="message-list">
+                            {messages.map((msg, idx) => {
+                                return (
+                                    <div key={msg._id || idx} className="workspace-message-row">
+                                        <div className="message-sender-avatar">
+                                            {msg.senderName ? msg.senderName.charAt(0).toUpperCase() : msg.from.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div className="message-content-block">
+                                            <div className="message-meta-line">
+                                                <span className="message-sender-name">{msg.senderName || msg.from}</span>
+                                                <span className="message-timestamp">
+                                                    {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                                </span>
+                                            </div>
+                                            <div className="message-text-content">{msg.text}</div>
                                         </div>
                                     </div>
-                                </div>
-                            );
-                        })}
-                        <div ref={messagesEndRef} />
+                                );
+                            })}
+                            <div ref={messagesEndRef} />
+                        </div>
                     </div>
 
-                    <div className="input-area">
-                        <div className="input-actions">😊 📎</div>
-                        <form onSubmit={handleSendMessage} className="input-form">
+                    <div className="chat-input-area">
+                        <form onSubmit={handleSendMessage} className="chat-input-form">
                             <input
                                 type="text"
-                                placeholder="Type a message"
+                                placeholder={`Send a message to #announcement-board...`}
                                 value={newMessage}
                                 onChange={(e) => setNewMessage(e.target.value)}
                             />
+                            <button type="submit" className="chat-send-btn" disabled={!newMessage.trim()}>
+                                Send
+                            </button>
                         </form>
-                        <div className="voice-note" onClick={(e) => newMessage.trim() && handleSendMessage(e as any)}>
-                            {newMessage.trim() ? '➤' : '🎤'}
-                        </div>
                     </div>
-                </div>
+                </main>
             </div>
 
             <style>{`
-                /* Reuse existing styles */
-                .whatsapp-layout {
+                .notices-page {
                     height: 100vh;
-                    background-color: #d1d7db;
                     display: flex;
                     flex-direction: column;
-                    font-family: 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-                }
-                .dashboard-header {
-                    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-                    height: 64px;
-                    flex-shrink: 0;
-                    display: flex;
-                    align-items: center;
-                    padding: 0 24px;
-                    color: white;
-                    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-                    z-index: 10;
-                }
-                .brand { display: flex; align-items: center; gap: 10px; font-weight: bold; }
-                .brand-icon { display: flex; align-items: center; }
-                .app-container {
-                    display: flex;
-                    flex: 1;
-                    max-width: 1600px;
-                    margin: 10px auto;
-                    width: 98%;
-                    background: white;
-                    box-shadow: 0 1px 1px 0 rgba(11,20,26,.06), 0 2px 5px 0 rgba(11,20,26,.2);
-                    height: calc(100vh - 80px);
-                    border-radius: 4px;
+                    background: var(--bg);
                     overflow: hidden;
                 }
-                .chat-area {
+
+                .workspace-container {
+                    display: flex;
                     flex: 1;
+                    height: calc(100vh - 76px);
+                    overflow: hidden;
+                }
+
+                .workspace-sidebar {
+                    width: 260px;
+                    background: #0f172a;
+                    color: #e2e8f0;
                     display: flex;
                     flex-direction: column;
-                    background: #efeae2;
-                    background-image: url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png");
+                    border-right: 1px solid #1e293b;
+                    flex-shrink: 0;
                 }
-                .chat-header {
-                    height: 64px;
-                    background: white;
-                    border-bottom: 1px solid rgba(0,0,0,0.06);
+
+                .sidebar-group-header {
                     display: flex;
                     align-items: center;
-                    padding: 10px 16px;
-                    justify-content: space-between;
+                    gap: 12px;
+                    padding: 16px 20px;
+                    border-bottom: 1px solid #1e293b;
                 }
-                .chat-header-info { display: flex; align-items: center; gap: 15px; }
-                .comm-icon.small { width: 40px; height: 40px; border-radius: 50%; background: #dfe5e7; display: flex; justify-content: center; align-items: center; }
-                .messages-container {
-                    flex: 1;
-                    overflow-y: auto;
-                    padding: 20px 5%;
+
+                .group-avatar {
+                    width: 40px;
+                    height: 40px;
+                    background: #1e293b;
+                    border-radius: 8px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 1.25rem;
+                }
+
+                .group-details h3 {
+                    margin: 0 0 2px 0;
+                    font-size: 0.95rem;
+                    font-weight: 700;
+                    color: #ffffff;
+                }
+
+                .group-status-pill {
+                    font-size: 0.7rem;
+                    color: #94a3b8;
+                    font-weight: 600;
+                }
+
+                .sidebar-section {
+                    padding: 20px;
+                    border-bottom: 1px solid #1e293b;
+                }
+
+                .section-title {
+                    font-size: 0.725rem;
+                    font-weight: 700;
+                    color: #64748b;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                    margin: 0 0 12px 0;
+                }
+
+                .channel-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                }
+
+                .channel-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    background: transparent;
+                    border: none;
+                    color: #94a3b8;
+                    padding: 8px 12px;
+                    border-radius: 6px;
+                    font-size: 0.875rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    text-align: left;
+                    width: 100%;
+                    transition: all 0.15s ease;
+                }
+
+                .channel-item:hover {
+                    background: rgba(255, 255, 255, 0.05);
+                    color: #f1f5f9;
+                }
+
+                .channel-item.active {
+                    background: var(--primary);
+                    color: #ffffff;
+                }
+
+                .hash {
+                    font-weight: 400;
+                    opacity: 0.6;
+                }
+
+                .member-list {
                     display: flex;
                     flex-direction: column;
                     gap: 8px;
+                    max-height: 200px;
+                    overflow-y: auto;
                 }
-                .encryption-notice {
-                    background: #ffecb5;
-                    padding: 5px 12px;
-                    border-radius: 8px;
-                    font-size: 12.5px;
-                    color: #54656f;
-                    text-align: center;
-                    margin: 0 auto 16px;
-                    width: fit-content;
-                }
-                .message-row { display: flex; margin-bottom: 2px; }
-                .my-message { justify-content: flex-end; }
-                .other-message { justify-content: flex-start; }
-                .message-bubble {
-                    max-width: 65%;
-                    padding: 6px 7px 8px 9px;
-                    border-radius: 7.5px;
-                    box-shadow: 0 1px 0.5px rgba(11,20,26,.13);
-                    background: white;
-                }
-                .my-message .message-bubble { background: #d9fdd3; }
-                .sender-name { font-weight: bold; color: #e542a3; font-size: 13px; margin-bottom: 4px; }
-                .message-meta { display: flex; justify-content: flex-end; font-size: 11px; color: #667781; }
-                .input-area {
-                    min-height: 62px;
-                    background: #f0f2f5;
+
+                .member-item {
                     display: flex;
                     align-items: center;
-                    padding: 5px 16px;
                     gap: 10px;
+                    font-size: 0.85rem;
+                    color: #94a3b8;
                 }
-                .input-form { flex: 1; }
-                .input-form input { width: 100%; padding: 9px 12px; border-radius: 8px; border: none; outline: none; }
-                .voice-note, .input-actions { font-size: 1.5rem; color: #54656f; cursor: pointer; }
+
+                .member-status-dot {
+                    width: 8px;
+                    height: 8px;
+                    border-radius: 50%;
+                    background: var(--success);
+                    box-shadow: 0 0 6px var(--success);
+                }
+
+                .member-name-text {
+                    font-weight: 500;
+                }
+
+                .chat-pane {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    background: #ffffff;
+                    overflow: hidden;
+                }
+
+                .chat-pane-header {
+                    padding: 16px 24px;
+                    border-bottom: 1px solid #e2e8f0;
+                    background: #ffffff;
+                }
+
+                .channel-info h3 {
+                    margin: 0 0 2px 0;
+                    font-size: 1.1rem;
+                    font-weight: 800;
+                    color: var(--text);
+                }
+
+                .channel-desc {
+                    margin: 0;
+                    font-size: 0.8rem;
+                    color: var(--text-muted);
+                }
+
+                .chat-messages-container {
+                    flex: 1;
+                    padding: 24px;
+                    overflow-y: auto;
+                    background: #f8fafc;
+                }
+
+                .workspace-encryption-notice {
+                    background: #eff6ff;
+                    border: 1px solid #dbeafe;
+                    color: var(--primary);
+                    padding: 8px 16px;
+                    border-radius: 8px;
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                    max-width: 500px;
+                    margin: 0 auto 24px auto;
+                    text-align: center;
+                }
+
+                .message-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                }
+
+                .workspace-message-row {
+                    display: flex;
+                    gap: 12px;
+                    align-items: flex-start;
+                    padding: 4px 8px;
+                    border-radius: 8px;
+                    transition: background 0.15s;
+                }
+
+                .workspace-message-row:hover {
+                    background: #f1f5f9;
+                }
+
+                .message-sender-avatar {
+                    width: 36px;
+                    height: 36px;
+                    background: var(--primary);
+                    color: white;
+                    font-weight: 700;
+                    font-size: 1rem;
+                    border-radius: 6px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                }
+
+                .message-content-block {
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .message-meta-line {
+                    display: flex;
+                    align-items: baseline;
+                    gap: 8px;
+                    margin-bottom: 2px;
+                }
+
+                .message-sender-name {
+                    font-weight: 700;
+                    font-size: 0.875rem;
+                    color: var(--text);
+                }
+
+                .message-timestamp {
+                    font-size: 0.725rem;
+                    color: var(--text-muted);
+                }
+
+                .message-text-content {
+                    font-size: 0.9rem;
+                    color: var(--text);
+                    line-height: 1.5;
+                }
+
+                .chat-input-area {
+                    padding: 16px 24px 24px 24px;
+                    background: #ffffff;
+                }
+
+                .chat-input-form {
+                    display: flex;
+                    gap: 12px;
+                    border: 1px solid #cbd5e1;
+                    border-radius: 8px;
+                    padding: 4px;
+                    background: #ffffff;
+                    transition: border-color 0.15s;
+                }
+
+                .chat-input-form:focus-within {
+                    border-color: var(--primary);
+                }
+
+                .chat-input-form input {
+                    flex: 1;
+                    border: none;
+                    outline: none;
+                    font-size: 0.9rem;
+                    padding: 8px 12px;
+                    background: transparent;
+                }
+
+                .chat-send-btn {
+                    background: var(--primary);
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    padding: 8px 16px;
+                    font-size: 0.85rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: opacity 0.15s;
+                }
+
+                .chat-send-btn:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+
+                .no-community-screen {
+                    flex: 1;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    height: calc(100vh - 76px);
+                }
+
+                .no-community-card {
+                    background: var(--surface);
+                    border: 1px solid #cbd5e1;
+                    border-radius: 16px;
+                    padding: 32px;
+                    text-align: center;
+                    max-width: 400px;
+                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+                }
+
+                .notice-empty-icon {
+                    font-size: 44px;
+                    display: block;
+                    margin-bottom: 16px;
+                }
+
+                .no-community-card h2 {
+                    font-size: 1.25rem;
+                    font-weight: 700;
+                    color: var(--text);
+                    margin: 0 0 8px 0;
+                }
+
+                .no-community-card p {
+                    font-size: 0.875rem;
+                    color: var(--text-muted);
+                    margin: 0 0 20px 0;
+                }
+
+                .btn-back-dashboard {
+                    background: var(--primary);
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    padding: 10px 20px;
+                    font-size: 0.875rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                }
+
+                @media (max-width: 768px) {
+                    .notices-page {
+                        min-height: 100vh !important;
+                        height: auto !important;
+                        overflow: auto !important;
+                        overflow-y: auto !important;
+                    }
+                    .workspace-container {
+                        height: auto !important;
+                        min-height: calc(100vh - 76px) !important;
+                        overflow: visible !important;
+                    }
+                    .chat-pane {
+                        overflow: visible !important;
+                        height: auto !important;
+                    }
+                    .workspace-sidebar {
+                        display: none;
+                    }
+                    .chat-pane-header {
+                        padding: 12px 16px;
+                    }
+                    .chat-messages-container {
+                        padding: 16px;
+                        overflow-y: visible !important;
+                    }
+                    .chat-input-area {
+                        padding: 12px 12px 120px 12px !important;
+                    }
+                }
             `}</style>
         </div>
     );
 };
-
 
 export default StaffNotices;

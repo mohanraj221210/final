@@ -3,7 +3,9 @@ import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
+
 import StudentHeader from '../../components/StudentHeader';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import StudentBottomNav from '../../components/StudentBottomNav';
 
 // Outpass status types
@@ -41,6 +43,7 @@ interface OutpassData {
     };
     createdAt: string;
     document?: string;
+    remarks?: string;
 }
 
 const OutpassDetails: React.FC = () => {
@@ -86,8 +89,7 @@ const OutpassDetails: React.FC = () => {
                 if (profileResponse.status === 200) {
                     const userData = profileResponse.data.user;
                     setResidenceType(userData.residencetype?.toLowerCase() || '');
- 
-               }
+                }
 
                 if (outpassResponse.status === 200) {
                     const outpassList = outpassResponse.data.outpasses || outpassResponse.data.filterOutpass || [];
@@ -106,26 +108,27 @@ const OutpassDetails: React.FC = () => {
                         overallStatus: item.status || 'pending',
                         createdAt: item.createdAt,
                         document: item.proof || item.document || item.file || null,
+                        remarks: item.remarks || '',
                         staffApproval: {
-                            status: item.staffapprovalstatus || 'pending',
+                            status: item.staff?.status || item.staffapprovalstatus || 'pending',
                             approverName: item.staffid?.name,
-                            remarks: item.staffremarks,
-                            approvedAt: item.staffapprovedAt,
-                            rejectedAt: item.staffapprovalstatus === 'rejected' ? item.updatedAt : undefined
+                            remarks: (item.staff?.status === 'rejected' ? item.remarks : '') || item.staffremarks || '',
+                            approvedAt: item.staff?.actionAt || item.staffapprovedAt,
+                            rejectedAt: (item.staff?.status === 'rejected' ? item.staff?.actionAt : undefined) || (item.staffapprovalstatus === 'rejected' ? item.updatedAt : undefined)
                         },
                         yearInchargeApproval: {
-                            status: item.yearinchargeapprovalstatus || 'pending',
+                            status: item.yearincharge?.status || item.yearinchargeapprovalstatus || 'pending',
                             approverName: item.inchargeid?.name,
-                            remarks: item.yearinchargeremarks,
-                            approvedAt: item.yearinchargeapprovedAt,
-                            rejectedAt: item.yearinchargeapprovalstatus === 'rejected' ? item.updatedAt : undefined
+                            remarks: (item.yearincharge?.status === 'rejected' ? item.remarks : '') || item.yearinchargeremarks || '',
+                            approvedAt: item.yearincharge?.actionAt || item.yearinchargeapprovedAt,
+                            rejectedAt: (item.yearincharge?.status === 'rejected' ? item.yearincharge?.actionAt : undefined) || (item.yearinchargeapprovalstatus === 'rejected' ? item.updatedAt : undefined)
                         },
                         wardenApproval: {
-                            status: item.wardenapprovalstatus || 'pending',
+                            status: item.warden?.status || item.wardenapprovalstatus || 'pending',
                             approverName: item.wardenid?.name,
-                            remarks: item.wardenremarks,
-                            approvedAt: item.wardenapprovedAt,
-                            rejectedAt: item.wardenapprovalstatus === 'rejected' ? item.updatedAt : undefined
+                            remarks: (item.warden?.status === 'rejected' ? item.remarks : '') || item.wardenremarks || '',
+                            approvedAt: item.warden?.actionAt || item.wardenapprovedAt,
+                            rejectedAt: (item.warden?.status === 'rejected' ? item.warden?.actionAt : undefined) || (item.wardenapprovalstatus === 'rejected' ? item.updatedAt : undefined)
                         }
                     }));
                     // Sort outpasses by creation date descending
@@ -146,11 +149,11 @@ const OutpassDetails: React.FC = () => {
     const getStatusBadge = (status: string) => {
         const normalizedStatus = (status || 'pending').toLowerCase();
         if (normalizedStatus === 'approved') {
-            return <span className="status-pill status-approved">Approved</span>;
+            return <span className="pb-status-badge pb-status-approved">Approved</span>;
         } else if (normalizedStatus === 'rejected' || normalizedStatus === 'declined') {
-            return <span className="status-pill status-rejected">Rejected</span>;
+            return <span className="pb-status-badge pb-status-rejected">Rejected</span>;
         }
-        return <span className="status-pill status-pending">Pending</span>;
+        return <span className="pb-status-badge pb-status-pending">Pending</span>;
     };
 
     const formatDateTime = (dateString: string) => {
@@ -200,7 +203,14 @@ const OutpassDetails: React.FC = () => {
                 name: outpass.staffApproval.approverName,
                 time: outpass.staffApproval.approvedAt || outpass.staffApproval.rejectedAt,
                 remarks: outpass.staffApproval.remarks,
-                icon: '👨‍🏫'
+                icon: (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                )
             },
             {
                 title: 'Year Incharge',
@@ -208,7 +218,14 @@ const OutpassDetails: React.FC = () => {
                 name: outpass.yearInchargeApproval.approverName,
                 time: outpass.yearInchargeApproval.approvedAt || outpass.yearInchargeApproval.rejectedAt,
                 remarks: outpass.yearInchargeApproval.remarks,
-                icon: '🧑‍💼'
+                icon: (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" />
+                        <line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                    </svg>
+                )
             }
         ];
 
@@ -219,56 +236,61 @@ const OutpassDetails: React.FC = () => {
                 name: outpass.wardenApproval.approverName,
                 time: outpass.wardenApproval.approvedAt || outpass.wardenApproval.rejectedAt,
                 remarks: outpass.wardenApproval.remarks,
-                icon: '👔'
+                icon: (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                        <polyline points="9 22 9 12 15 12 15 22" />
+                    </svg>
+                )
             });
         }
 
         return (
-            <div className="timeline-stepper">
+            <div className="pb-timeline-stepper">
                 {steps.map((step, idx) => {
-                    let statusClass = 'timeline-pending';
-                    if (step.status === 'approved') statusClass = 'timeline-approved';
-                    if (step.status === 'rejected') statusClass = 'timeline-rejected';
+                    let statusClass = 'pb-timeline-pending';
+                    if (step.status === 'approved') statusClass = 'pb-timeline-approved';
+                    if (step.status === 'rejected') statusClass = 'pb-timeline-rejected';
 
                     return (
-                        <div key={idx} className={`timeline-item ${statusClass}`}>
-                            <div className="timeline-indicator">
-                                <span className="timeline-icon">{step.icon}</span>
+                        <div key={idx} className={`pb-timeline-step-item ${statusClass}`}>
+                            <div className="pb-timeline-indicator">
+                                <span className="pb-timeline-icon-wrapper">{step.icon}</span>
                             </div>
-                            {idx < steps.length - 1 && <div className="timeline-connector"></div>}
+                            {idx < steps.length - 1 && <div className="pb-timeline-connector"></div>}
                             
-                            <div className="timeline-card card">
-                                <div className="timeline-header-row">
-                                    <h4 className="timeline-title">{step.title}</h4>
-                                    <span className={`badge ${
-                                        step.status === 'approved' ? 'badge-green' : 
-                                        step.status === 'rejected' ? 'badge-red' : 'badge-amber'
+                            <div className="pb-timeline-card">
+                                <div className="pb-timeline-header-row">
+                                    <h4 className="pb-timeline-title">{step.title}</h4>
+                                    <span className={`pb-step-badge ${
+                                        step.status === 'approved' ? 'pb-badge-green' : 
+                                        step.status === 'rejected' ? 'pb-badge-red' : 'pb-badge-amber'
                                     }`}>
                                         {step.status}
                                     </span>
                                 </div>
                                 
-                                <div className="timeline-details-list">
+                                <div className="pb-timeline-details-list">
                                     {step.name && (
-                                        <div className="detail-item">
-                                            <span className="label">Approver:</span>
-                                            <span className="val">{step.name}</span>
+                                        <div className="pb-detail-item">
+                                            <span className="pb-label">Approver</span>
+                                            <span className="pb-val">{step.name}</span>
                                         </div>
                                     )}
                                     {step.time && (
-                                        <div className="detail-item">
-                                            <span className="label">Date/Time:</span>
-                                            <span className="val">{formatDateTime(step.time)}</span>
+                                        <div className="pb-detail-item">
+                                            <span className="pb-label">Date/Time</span>
+                                            <span className="pb-val">{formatDateTime(step.time)}</span>
                                         </div>
                                     )}
                                     {step.remarks && (
-                                        <div className="detail-item remarks-item">
-                                            <span className="label">Remarks:</span>
-                                            <span className="val">"{step.remarks}"</span>
+                                        <div className="pb-detail-item pb-remarks-item">
+                                            <span className="pb-label">Remarks</span>
+                                            <span className="pb-val">"{step.remarks}"</span>
                                         </div>
                                     )}
                                     {!step.name && step.status === 'pending' && (
-                                        <span className="timeline-waiting">Waiting for review...</span>
+                                        <span className="pb-timeline-waiting">Waiting for review...</span>
                                     )}
                                 </div>
                             </div>
@@ -280,242 +302,300 @@ const OutpassDetails: React.FC = () => {
     };
 
     return (
-        <div className="student-page outpass-tracking-page animate-page-enter">
+        <div className="pb-outpass-page">
             <ToastContainer position="bottom-right" />
 
             {/* ── DESKTOP VIEW ── */}
             <div className="lux-desktop-view">
-            <StudentHeader />
-
-            <div className="content-wrapper">
-                {/* Header Section */}
-                <div className="page-header-row">
-                    <div>
-                        <h1 className="page-title" style={{ marginBottom: '4px' }}>
-                            {selectedOutpass ? 'Track Outpass' : 'My Outpasses'}
-                        </h1>
-                        <p className="page-subtitle">
-                            {selectedOutpass ? 'Track the active approval timeline' : 'View and track all campus exit history'}
-                        </p>
-                    </div>
-                    {!selectedOutpass && (
-                        <button
-                            className="btn btn-primary"
-                            onClick={() => navigate('/new-outpass')}
-                            style={{ minWidth: '160px' }}
-                        >
-                            + Apply Outpass
-                        </button>
-                    )}
-                </div>
-
-                {!selectedOutpass ? (
-                    /* LIST VIEW WITH TABS FILTER */
-                    <div className="outpass-list-view">
-                        <div className="tab-filters-container">
-                            {(['all', 'pending', 'approved', 'rejected'] as const).map((filter) => (
-                                <button
-                                    key={filter}
-                                    className={`tab-filter-btn capitalize ${activeFilter === filter ? 'active' : ''}`}
-                                    onClick={() => setActiveFilter(filter)}
-                                >
-                                    {filter}
+                <StudentHeader />
+                <main className="student-content">
+                    <div className="content-wrapper">
+                        {/* Back button */}
+                        {!selectedOutpass && (
+                            <div className="pb-back-link-wrapper">
+                                <button className="pb-btn-back" onClick={() => navigate('/dashboard')}>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <line x1="19" y1="12" x2="5" y2="12" />
+                                        <polyline points="12 19 5 12 12 5" />
+                                    </svg>
+                                    Back to Dashboard
                                 </button>
-                            ))}
-                        </div>
-
-                        {loading ? (
-                            <div className="outpass-grid">
-                                {[1,2,3,4].map(i => (
-                                    <div key={i} className="card lux-skeleton" style={{ height: '220px', borderRadius: '20px' }}></div>
-                                ))}
-                            </div>
-                        ) : filteredOutpasses.length === 0 ? (
-                            <div className="empty-state-card card">
-                                <span className="empty-state-icon">📝</span>
-                                <h3>No outpasses found</h3>
-                                <p>There are no outpasses matching the "{activeFilter}" filter state.</p>
-                                <button className="btn btn-secondary" onClick={() => navigate('/new-outpass')}>
-                                    Apply Now
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="outpass-grid">
-                                {filteredOutpasses.map((outpass, index) => {
-                                    const staggerIndex = (index % 6) + 1;
-                                    return (
-                                        <div key={outpass.id} className={`outpass-item-card card card-hover animate-stagger-${staggerIndex}`}>
-                                        <div className="card-top-row">
-                                            <span className={`outpass-type-indicator ${
-                                                outpass.outpassType.toLowerCase() === 'emergency' ? 'emergency' : ''
-                                            }`}>
-                                                {outpass.outpassType}
-                                            </span>
-                                            {getStatusBadge(outpass.overallStatus)}
-                                        </div>
-
-                                        <div className="card-mid-section">
-                                            <div className="duration-row">
-                                                <span className="icon">📅</span>
-                                                <div className="time-details">
-                                                    <span className="time-label">FROM</span>
-                                                    <span className="time-value">{formatDateTime(outpass.fromDate)}</span>
-                                                    <span className="time-label" style={{ marginTop: '4px' }}>TO</span>
-                                                    <span className="time-value">{formatDateTime(outpass.toDate)}</span>
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="reason-row">
-                                                <strong>Reason:</strong> "{outpass.reason}"
-                                            </div>
-                                        </div>
-
-                                        <div className="card-bottom-row">
-                                            <span className="applied-on">
-                                                Applied on: {new Date(outpass.createdAt).toLocaleDateString()}
-                                            </span>
-                                            <button
-                                                className="btn btn-secondary btn-sm"
-                                                onClick={() => setSelectedOutpass(outpass)}
-                                            >
-                                                Track Progress →
-                                            </button>
-                                        </div>
-                                    </div>
-                                    );
-                                })}
                             </div>
                         )}
-                    </div>
-                ) : (
-                    /* TRACKING / DETAIL VIEW */
-                    <div className="outpass-detail-view animate-fade-in">
-                        <div className="back-link-wrapper" style={{ marginBottom: '24px' }}>
-                            <button className="btn-back" onClick={() => setSelectedOutpass(null)}>
-                                <span className="icon">←</span> Back to Outpass History
-                            </button>
+
+                        {/* Header Section */}
+                        <div className="pb-page-header-row">
+                            <div>
+                                <h1 className="pb-page-title">
+                                    {selectedOutpass ? 'Track Outpass' : 'My Outpasses'}
+                                </h1>
+                                <p className="pb-page-subtitle">
+                                    {selectedOutpass ? 'Track the active approval timeline' : 'View and track all campus exit history'}
+                                </p>
+                            </div>
+                            {!selectedOutpass && (
+                                <button
+                                    className="pb-apply-btn"
+                                    onClick={() => navigate('/new-outpass')}
+                                >
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '6px' }}>
+                                        <line x1="12" y1="5" x2="12" y2="19" />
+                                        <line x1="5" y1="12" x2="19" y2="12" />
+                                    </svg>
+                                    Apply Outpass
+                                </button>
+                            )}
                         </div>
 
-                        <div className="details-layout-grid">
-                            {/* Left Column: Outpass Details */}
-                            <div className="details-left-col">
-                                <div className="card outpass-meta-card">
-                                    <h3 className="section-title">Request Information</h3>
-                                    
-                                    <div className="meta-info-list">
-                                        <div className="meta-info-item">
-                                            <span className="label">Outpass Type</span>
-                                            <span className="val font-semibold">{selectedOutpass.outpassType}</span>
-                                        </div>
-                                        <div className="meta-info-item">
-                                            <span className="label">Status</span>
-                                            <span>{getStatusBadge(selectedOutpass.overallStatus)}</span>
-                                        </div>
-                                        <div className="meta-info-item">
-                                            <span className="label">From</span>
-                                            <span className="val">{formatDateTime(selectedOutpass.fromDate)}</span>
-                                        </div>
-                                        <div className="meta-info-item">
-                                            <span className="label">To</span>
-                                            <span className="val">{formatDateTime(selectedOutpass.toDate)}</span>
-                                        </div>
-                                        <div className="meta-info-item">
-                                            <span className="label">Reason</span>
-                                            <span className="val reason-text">"{selectedOutpass.reason}"</span>
-                                        </div>
-                                        <div className="meta-info-item">
-                                            <span className="label">Applied on</span>
-                                            <span className="val">{formatDateTime(selectedOutpass.createdAt)}</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Proof document button */}
-                                    {selectedOutpass.document && (
-                                        <div className="proof-action-box">
-                                            <div className="proof-text-details">
-                                                <strong>Supporting Document</strong>
-                                                <span>OD proof attached</span>
-                                            </div>
-                                            <button
-                                                onClick={() => handleViewDocument(selectedOutpass.document)}
-                                                className="btn btn-outline btn-sm"
-                                            >
-                                                👁️ View Proof
-                                            </button>
-                                        </div>
-                                    )}
+                        {!selectedOutpass ? (
+                            /* LIST VIEW WITH TABS FILTER */
+                            <div className="pb-list-view-container">
+                                <div className="pb-tab-filters-container">
+                                    {(['all', 'pending', 'approved', 'rejected'] as const).map((filter) => (
+                                        <button
+                                            key={filter}
+                                            className={`pb-tab-filter-btn capitalize ${activeFilter === filter ? 'active' : ''}`}
+                                            onClick={() => setActiveFilter(filter)}
+                                        >
+                                            {filter}
+                                        </button>
+                                    ))}
                                 </div>
 
-                                {/* QR Code Card */}
-                                {selectedOutpass.overallStatus === 'approved' && (
-                                    <div className="card outpass-meta-card" style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                        <h3 className="section-title">Exit Pass QR</h3>
-                                        {isWithinTimeWindow(selectedOutpass.fromDate) ? (
-                                            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                                <div style={{ padding: '16px', background: '#fff', borderRadius: '12px', display: 'inline-block' }}>
-                                                    <QRCodeSVG value={selectedOutpass.id} size={180} level="H" />
+                                {loading ? (
+                                    <LoadingSpinner />
+                                ) : filteredOutpasses.length === 0 ? (
+                                    <div className="pb-empty-state-card">
+                                        <div className="pb-empty-state-icon">
+                                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                                <rect width="18" height="18" x="3" y="3" rx="2" />
+                                                <path d="M7 8h10" />
+                                                <path d="M7 12h10" />
+                                                <path d="M7 16h10" />
+                                            </svg>
+                                        </div>
+                                        <h3>No outpasses found</h3>
+                                        <p>There are no outpasses matching the "{activeFilter}" filter state.</p>
+                                        <button className="pb-apply-btn" style={{ margin: '16px auto 0' }} onClick={() => navigate('/new-outpass')}>
+                                            Apply Now
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="pb-outpass-grid">
+                                        {filteredOutpasses.map((outpass, index) => {
+                                            const staggerIndex = (index % 6) + 1;
+                                            return (
+                                                <div key={outpass.id} className={`pb-outpass-item-card pb-animate-stagger-${staggerIndex}`}>
+                                                    <div className="pb-card-top-row">
+                                                        <span className={`pb-outpass-type-indicator ${
+                                                            outpass.outpassType.toLowerCase() === 'emergency' ? 'emergency' : ''
+                                                        }`}>
+                                                            {outpass.outpassType}
+                                                        </span>
+                                                        {getStatusBadge(outpass.overallStatus)}
+                                                    </div>
+
+                                                    <div className="pb-card-mid-section">
+                                                        <div className="pb-duration-row">
+                                                            <div className="pb-duration-icon">
+                                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                                                                    <line x1="16" y1="2" x2="16" y2="6" />
+                                                                    <line x1="8" y1="2" x2="8" y2="6" />
+                                                                    <line x1="3" y1="10" x2="21" y2="10" />
+                                                                </svg>
+                                                            </div>
+                                                            <div className="pb-time-details">
+                                                                <span className="pb-time-label">FROM</span>
+                                                                <span className="pb-time-value">{formatDateTime(outpass.fromDate)}</span>
+                                                                <span className="pb-time-label" style={{ marginTop: '6px' }}>TO</span>
+                                                                <span className="pb-time-value">{formatDateTime(outpass.toDate)}</span>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div className="pb-reason-row">
+                                                            <strong>Reason:</strong> "{outpass.reason}"
+                                                        </div>
+                                                        {outpass.overallStatus === 'rejected' && outpass.remarks && (
+                                                            <div className="pb-card-remarks-box">
+                                                                <strong>Remarks:</strong> "{outpass.remarks}"
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="pb-card-bottom-row">
+                                                        <span className="pb-applied-on">
+                                                            Applied: {new Date(outpass.createdAt).toLocaleDateString()}
+                                                        </span>
+                                                        <button
+                                                            className="pb-track-btn"
+                                                            onClick={() => setSelectedOutpass(outpass)}
+                                                        >
+                                                            Track Progress
+                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginLeft: '4px' }}>
+                                                                <polyline points="9 18 15 12 9 6" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                                <p style={{ marginTop: '16px', color: 'var(--text-2)', fontSize: '0.9rem', textAlign: 'center' }}>
-                                                    Show this QR code at the security gate.<br/>
-                                                    <small>Valid up to 30 minutes after departure.</small>
-                                                </p>
-                                            </div>
-                                        ) : (
-                                            <div style={{ textAlign: 'center', padding: '20px', background: 'var(--bg-elevated)', borderRadius: '8px', width: '100%' }}>
-                                                <span style={{ fontSize: '2rem' }}>🚫</span>
-                                                <p style={{ marginTop: '12px', color: 'var(--text-2)' }}>
-                                                    QR Code has expired.<br/>
-                                                    It was valid up to 30 minutes after your departure time:<br/>
-                                                    <strong>{formatDateTime(selectedOutpass.fromDate)}</strong>
-                                                </p>
-                                            </div>
-                                        )}
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </div>
+                        ) : (
+                            /* TRACKING / DETAIL VIEW */
+                            <div className="pb-outpass-detail-view">
+                                <div className="pb-back-link-wrapper">
+                                    <button className="pb-btn-back" onClick={() => setSelectedOutpass(null)}>
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                            <line x1="19" y1="12" x2="5" y2="12" />
+                                            <polyline points="12 19 5 12 12 5" />
+                                        </svg>
+                                        Back to Outpass History
+                                    </button>
+                                </div>
 
-                            {/* Right Column: Vertical Approval Timeline */}
-                            <div className="details-right-col">
-                                <h3 className="section-title">Approval Flow Timeline</h3>
-                                {renderTimeline(selectedOutpass)}
+                                <div className="pb-details-layout-grid">
+                                    {/* Left Column: Outpass Details */}
+                                    <div className="pb-details-left-col">
+                                        <div className="pb-detail-info-card">
+                                            <h3 className="pb-section-title">Request Information</h3>
+                                            
+                                            <div className="pb-meta-info-list">
+                                                <div className="pb-meta-info-item">
+                                                    <span className="label">Outpass Type</span>
+                                                    <span className="val font-semibold">{selectedOutpass.outpassType}</span>
+                                                </div>
+                                                <div className="pb-meta-info-item">
+                                                    <span className="label">Status</span>
+                                                    <span>{getStatusBadge(selectedOutpass.overallStatus)}</span>
+                                                </div>
+                                                <div className="pb-meta-info-item">
+                                                    <span className="label">From</span>
+                                                    <span className="val">{formatDateTime(selectedOutpass.fromDate)}</span>
+                                                </div>
+                                                <div className="pb-meta-info-item">
+                                                    <span className="label">To</span>
+                                                    <span className="val">{formatDateTime(selectedOutpass.toDate)}</span>
+                                                </div>
+                                                <div className="pb-meta-info-item">
+                                                    <span className="label">Reason</span>
+                                                    <span className="val reason-text">"{selectedOutpass.reason}"</span>
+                                                </div>
+                                                {selectedOutpass.overallStatus === 'rejected' && selectedOutpass.remarks && (
+                                                    <div className="pb-meta-info-item">
+                                                        <span className="label" style={{ color: '#EF4444' }}>Remarks</span>
+                                                        <span className="val reason-text" style={{ color: '#EF4444', fontWeight: 600 }}>"{selectedOutpass.remarks}"</span>
+                                                    </div>
+                                                )}
+                                                <div className="pb-meta-info-item">
+                                                    <span className="label">Applied on</span>
+                                                    <span className="val">{formatDateTime(selectedOutpass.createdAt)}</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Proof document button */}
+                                            {selectedOutpass.document && (
+                                                <div className="pb-proof-action-box">
+                                                    <div className="pb-proof-text-details">
+                                                        <strong>Supporting Document</strong>
+                                                        <span>OD proof attached</span>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => handleViewDocument(selectedOutpass.document)}
+                                                        className="pb-view-proof-btn"
+                                                    >
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '6px' }}>
+                                                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                                            <circle cx="12" cy="12" r="3" />
+                                                        </svg>
+                                                        View Proof
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* QR Code Card */}
+                                        {selectedOutpass.overallStatus === 'approved' && (
+                                            <div className="pb-detail-info-card pb-qr-card-container">
+                                                <h3 className="pb-section-title">Exit Pass QR</h3>
+                                                {isWithinTimeWindow(selectedOutpass.fromDate) ? (
+                                                    <div className="pb-qr-wrapper">
+                                                        <div className="pb-qr-box">
+                                                            <QRCodeSVG value={selectedOutpass.id} size={180} level="H" />
+                                                        </div>
+                                                        <p className="pb-qr-tip">
+                                                            Show this QR code at the security gate.<br/>
+                                                            <small>Valid up to 30 minutes after departure.</small>
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <div className="pb-qr-expired">
+                                                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                            <circle cx="12" cy="12" r="10" />
+                                                            <line x1="15" y1="9" x2="9" y2="15" />
+                                                            <line x1="9" y1="9" x2="15" y2="15" />
+                                                        </svg>
+                                                        <p>
+                                                            QR Code has expired.<br/>
+                                                            It was valid up to 30 minutes after your departure time:<br/>
+                                                            <strong>{formatDateTime(selectedOutpass.fromDate)}</strong>
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Right Column: Vertical Approval Timeline */}
+                                    <div className="pb-details-right-col">
+                                        <h3 className="pb-section-title">Approval Flow Timeline</h3>
+                                        {renderTimeline(selectedOutpass)}
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
-                )}
-            </div>
+                </main>
             </div>{/* end desktop */}
 
             {/* ── MOBILE VIEW ── */}
-            <div className="lux-mobile-view cred-page-bg">
+            <div className="lux-mobile-view">
                 {/* Mobile Header */}
-                <div className="mob-page-header">
+                <div className="pb-mob-page-header">
                     {selectedOutpass ? (
-                        <button className="mob-back-btn" onClick={() => setSelectedOutpass(null)}>
+                        <button className="pb-mob-back-btn" onClick={() => setSelectedOutpass(null)}>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
                         </button>
                     ) : (
-                        <button className="mob-back-btn" onClick={() => navigate('/dashboard')}>
+                        <button className="pb-mob-back-btn" onClick={() => navigate('/dashboard')}>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
                         </button>
                     )}
-                    <div className="mob-header-text">
-                        <span className="mob-header-title cred-h2" style={{fontSize: '18px'}}>{selectedOutpass ? 'Track Request' : 'My Outpasses'}</span>
+                    <div className="pb-mob-header-text">
+                        <span className="pb-mob-header-title">{selectedOutpass ? 'Track Request' : 'My Outpasses'}</span>
                     </div>
                     {!selectedOutpass && (
-                        <button className="mob-apply-fab" onClick={() => navigate('/new-outpass')}>+</button>
+                        <button className="pb-mob-apply-fab" onClick={() => navigate('/new-outpass')}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                        </button>
                     )}
                     {selectedOutpass && <div style={{width: 36}} />}
                 </div>
 
-                <div className="mob-scroll-body">
+                <div className="pb-mob-scroll-body">
                     {!selectedOutpass ? (
                         <>
                             {/* Tab filters */}
-                            <div className="mob-tab-row animate-cred-enter cred-stagger-1">
+                            <div className="pb-mob-tab-row">
                                 {(['all','pending','approved','rejected'] as const).map(f => (
                                     <button
                                         key={f}
-                                        className={`mob-tab-btn ${activeFilter === f ? 'mob-tab-active' : ''}`}
+                                        className={`pb-mob-tab-btn ${activeFilter === f ? 'active' : ''}`}
                                         onClick={() => setActiveFilter(f)}
                                     >
                                         {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -524,46 +604,49 @@ const OutpassDetails: React.FC = () => {
                             </div>
 
                             {loading ? (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                    {[1, 2, 3, 4].map(i => (
-                                        <div key={i} className="cred-card" style={{ height: '140px' }}></div>
-                                    ))}
-                                </div>
+                                <LoadingSpinner />
                             ) : filteredOutpasses.length === 0 ? (
-                                <div className="cred-card mob-empty-card animate-cred-enter cred-stagger-2">
-                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--cred-text-2)" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                                    <span className="cred-p">No outpasses found</span>
-                                    <button className="mob-cta-btn" onClick={() => navigate('/new-outpass')}>Apply Now</button>
+                                <div className="pb-mob-empty-card">
+                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                        <rect width="18" height="18" x="3" y="3" rx="2" />
+                                        <path d="M9 17h6" />
+                                        <path d="M9 12h6" />
+                                        <path d="M9 7h6" />
+                                    </svg>
+                                    <span>No outpasses found</span>
+                                    <button className="pb-mob-cta-btn" onClick={() => navigate('/new-outpass')}>Apply Now</button>
                                 </div>
                             ) : (
                                 filteredOutpasses.map((op, index) => {
                                     const staggerIndex = (index % 5) + 1;
                                     return (
-                                        <div key={op.id} className={`cred-card mob-outpass-card animate-cred-enter cred-stagger-${staggerIndex}`} onClick={() => setSelectedOutpass(op)}>
-                                            <div className="mob-op-top">
-                                                <span className={`mob-op-type-tag ${op.outpassType.toLowerCase() === 'emergency' ? 'mob-op-emergency' : ''}`}>
+                                        <div key={op.id} className={`pb-mob-outpass-card pb-animate-stagger-${staggerIndex}`} onClick={() => setSelectedOutpass(op)}>
+                                            <div className="pb-mob-op-top">
+                                                <span className={`pb-outpass-type-indicator ${op.outpassType.toLowerCase() === 'emergency' ? 'emergency' : ''}`}>
                                                     {op.outpassType}
                                                 </span>
-                                                <span className={`cred-label ${
-                                                    op.overallStatus === 'approved' ? 'text-success' :
-                                                    op.overallStatus === 'rejected' ? 'text-danger' : 'text-warning'
-                                                }`}>{op.overallStatus}</span>
+                                                {getStatusBadge(op.overallStatus)}
                                             </div>
-                                            <div className="mob-op-dates">
-                                                <div className="mob-op-date-item">
-                                                    <span className="cred-label">FROM</span>
-                                                    <span className="cred-h2" style={{fontSize: '14px'}}>{formatDateTime(op.fromDate)}</span>
+                                            <div className="pb-mob-op-dates">
+                                                <div className="pb-mob-op-date-item">
+                                                    <span className="pb-label">FROM</span>
+                                                    <span className="pb-val">{formatDateTime(op.fromDate)}</span>
                                                 </div>
-                                                <div className="mob-op-date-divider" />
-                                                <div className="mob-op-date-item">
-                                                    <span className="cred-label">TO</span>
-                                                    <span className="cred-h2" style={{fontSize: '14px'}}>{formatDateTime(op.toDate)}</span>
+                                                <div className="pb-mob-op-date-divider" />
+                                                <div className="pb-mob-op-date-item">
+                                                    <span className="pb-label">TO</span>
+                                                    <span className="pb-val">{formatDateTime(op.toDate)}</span>
                                                 </div>
                                             </div>
-                                            <p className="mob-op-reason cred-p" style={{fontSize: '13px', fontStyle: 'italic'}}>“{op.reason}”</p>
-                                            <div className="mob-op-footer">
-                                                <span className="cred-p" style={{fontSize: '12px'}}>Applied {new Date(op.createdAt).toLocaleDateString()}</span>
-                                                <span className="cred-gold-text" style={{fontSize: '13px', fontWeight: 'bold'}}>Track →</span>
+                                            <p className="pb-mob-op-reason">“{op.reason}”</p>
+                                            {op.overallStatus === 'rejected' && op.remarks && (
+                                                <div className="pb-mob-card-remarks-box">
+                                                    <strong>Remarks:</strong> "{op.remarks}"
+                                                </div>
+                                            )}
+                                            <div className="pb-mob-op-footer">
+                                                <span className="pb-date">Applied {new Date(op.createdAt).toLocaleDateString()}</span>
+                                                <span className="pb-track-link">Track Progress →</span>
                                             </div>
                                         </div>
                                     );
@@ -574,37 +657,50 @@ const OutpassDetails: React.FC = () => {
                         /* ── DETAIL / TIMELINE VIEW ── */
                         <>
                             {/* Request Summary Card */}
-                            <div className="cred-card mob-form-card animate-cred-enter cred-stagger-1">
-                                <div className="mob-detail-top">
-                                    <span className={`mob-op-type-tag ${selectedOutpass.outpassType.toLowerCase() === 'emergency' ? 'mob-op-emergency' : ''}`}>
+                            <div className="pb-mob-detail-card">
+                                <div className="pb-mob-detail-top">
+                                    <span className={`pb-outpass-type-indicator ${selectedOutpass.outpassType.toLowerCase() === 'emergency' ? 'emergency' : ''}`}>
                                         {selectedOutpass.outpassType}
                                     </span>
-                                    <span className={`cred-label ${
-                                        selectedOutpass.overallStatus === 'approved' ? 'text-success' :
-                                        selectedOutpass.overallStatus === 'rejected' ? 'text-danger' : 'text-warning'
-                                    }`}>{selectedOutpass.overallStatus}</span>
+                                    {getStatusBadge(selectedOutpass.overallStatus)}
                                 </div>
-                                <div className="mob-detail-row"><span className="cred-label">From</span><span className="cred-h2" style={{fontSize: '14px'}}>{formatDateTime(selectedOutpass.fromDate)}</span></div>
-                                <div className="mob-detail-row"><span className="cred-label">To</span><span className="cred-h2" style={{fontSize: '14px'}}>{formatDateTime(selectedOutpass.toDate)}</span></div>
-                                <div className="mob-detail-row"><span className="cred-label">Reason</span><span className="cred-p" style={{fontSize: '13px', fontStyle:'italic'}}>“{selectedOutpass.reason}”</span></div>
-                                <div className="mob-detail-row" style={{borderBottom: 'none'}}><span className="cred-label">Applied</span><span className="cred-h2" style={{fontSize: '14px'}}>{formatDateTime(selectedOutpass.createdAt)}</span></div>
+                                <div className="pb-mob-detail-row"><span className="pb-label">From</span><span className="pb-val">{formatDateTime(selectedOutpass.fromDate)}</span></div>
+                                <div className="pb-mob-detail-row"><span className="pb-label">To</span><span className="pb-val">{formatDateTime(selectedOutpass.toDate)}</span></div>
+                                <div className="pb-mob-detail-row"><span className="pb-label">Reason</span><span className="pb-val italic">“{selectedOutpass.reason}”</span></div>
+                                {selectedOutpass.overallStatus === 'rejected' && selectedOutpass.remarks && (
+                                    <div className="pb-mob-detail-row" style={{ color: '#EF4444' }}>
+                                        <span className="pb-label" style={{ color: '#EF4444' }}>Remarks</span>
+                                        <span className="pb-val font-semibold">“{selectedOutpass.remarks}”</span>
+                                    </div>
+                                )}
+                                <div className="pb-mob-detail-row" style={{borderBottom: 'none'}}><span className="pb-label">Applied</span><span className="pb-val">{formatDateTime(selectedOutpass.createdAt)}</span></div>
                                 {selectedOutpass.document && (
-                                    <button onClick={() => handleViewDocument(selectedOutpass.document)} className="mob-btn-secondary" style={{marginTop: 12, width: '100%'}}>View Proof Document</button>
+                                    <button onClick={() => handleViewDocument(selectedOutpass.document)} className="pb-mob-view-proof-btn">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '6px' }}>
+                                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                            <circle cx="12" cy="12" r="3" />
+                                        </svg>
+                                        View Proof Document
+                                    </button>
                                 )}
                             </div>
 
                             {/* Mobile QR Code */}
                             {selectedOutpass.overallStatus === 'approved' && (
-                                <div className="cred-card mob-form-card animate-cred-enter cred-stagger-2" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '16px' }}>
-                                    <h3 className="cred-h2" style={{ fontSize: '16px', margin: '0 0 16px 0', alignSelf: 'flex-start' }}>Exit Pass QR</h3>
+                                <div className="pb-mob-detail-card pb-mob-qr-container">
+                                    <h3 className="pb-mob-section-title">Exit Pass QR</h3>
                                     {isWithinTimeWindow(selectedOutpass.fromDate) ? (
-                                        <div style={{ padding: '16px', background: '#fff', borderRadius: '12px' }}>
+                                        <div className="pb-mob-qr-box">
                                             <QRCodeSVG value={selectedOutpass.id} size={160} level="H" />
                                         </div>
                                     ) : (
-                                        <div style={{ textAlign: 'center', padding: '16px', background: 'var(--cred-surface-hover)', borderRadius: '8px', width: '100%' }}>
-                                            <span style={{ fontSize: '2rem' }}>🚫</span>
-                                            <p className="cred-p" style={{ marginTop: '8px', fontSize: '13px' }}>
+                                        <div className="pb-mob-qr-expired">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <circle cx="12" cy="12" r="10" />
+                                                <line x1="15" y1="9" x2="9" y2="15" />
+                                                <line x1="9" y1="9" x2="15" y2="15" />
+                                            </svg>
+                                            <p>
                                                 QR Code has expired.<br/>Valid up to 30 mins after: <br/><strong>{formatDateTime(selectedOutpass.fromDate)}</strong>
                                             </p>
                                         </div>
@@ -613,44 +709,46 @@ const OutpassDetails: React.FC = () => {
                             )}
 
                             {/* Timeline */}
-                            <h3 className="cred-h2 animate-cred-enter cred-stagger-2" style={{fontSize: '16px', margin: '16px 0 8px 0'}}>Approval Timeline</h3>
-                            <div className="mob-timeline animate-cred-enter cred-stagger-3">
+                            <h3 className="pb-mob-section-header">Approval Timeline</h3>
+                            <div className="pb-mob-timeline">
                                 {[
-                                    { title: 'Staff / Tutor', ...selectedOutpass.staffApproval },
+                                    { title: 'Staff / Tutor Advisor', ...selectedOutpass.staffApproval },
                                     { title: 'Year Incharge', ...selectedOutpass.yearInchargeApproval },
                                     ...(residenceType === 'hostel' ? [{ title: 'Hostel Warden', ...selectedOutpass.wardenApproval }] : [])
                                 ].map((step, idx, arr) => (
-                                    <div key={idx} className="mob-timeline-step">
-                                        <div className="mob-timeline-left">
-                                            <div className={`mob-timeline-dot ${
-                                                step.status === 'approved' ? 'mob-dot-approved' :
-                                                step.status === 'rejected' ? 'mob-dot-rejected' : 'mob-dot-pending'
+                                    <div key={idx} className="pb-mob-timeline-step">
+                                        <div className="pb-mob-timeline-left">
+                                            <div className={`pb-mob-timeline-dot ${
+                                                step.status === 'approved' ? 'pb-dot-approved' :
+                                                step.status === 'rejected' ? 'pb-dot-rejected' : 'pb-dot-pending'
                                             }`}>
                                                 {step.status === 'approved' ? (
-                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--cred-surface)" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
                                                 ) : step.status === 'rejected' ? (
-                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--cred-surface)" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                                                 ) : (
-                                                    <div className="mob-dot-inner" />
+                                                    <div className="pb-dot-inner" />
                                                 )}
                                             </div>
-                                            {idx < arr.length - 1 && <div className={`mob-timeline-line ${step.status === 'approved' ? 'mob-line-approved' : ''}`} />}
+                                            {idx < arr.length - 1 && <div className={`pb-mob-timeline-line ${step.status === 'approved' ? 'pb-line-approved' : ''}`} />}
                                         </div>
-                                        <div className="cred-card mob-timeline-card">
-                                            <div className="mob-tl-top">
-                                                <span className="cred-h2" style={{fontSize: '15px'}}>{step.title}</span>
-                                                <span className={`cred-label ${
-                                                    step.status === 'approved' ? 'text-success' :
-                                                    step.status === 'rejected' ? 'text-danger' : 'text-warning'
-                                                }`}>{step.status}</span>
+                                        <div className="pb-mob-timeline-card">
+                                            <div className="pb-mob-tl-top">
+                                                <span className="pb-tl-title">{step.title}</span>
+                                                <span className={`pb-step-badge ${
+                                                    step.status === 'approved' ? 'pb-badge-green' : 
+                                                    step.status === 'rejected' ? 'pb-badge-red' : 'pb-badge-amber'
+                                                }`}>
+                                                    {step.status}
+                                                </span>
                                             </div>
-                                            {step.approverName && <p className="cred-p" style={{fontSize: '12px'}}>By: {step.approverName}</p>}
+                                            {step.approverName && <p className="pb-tl-text">By: {step.approverName}</p>}
                                             {(step.approvedAt || step.rejectedAt) && (
-                                                <p className="cred-p" style={{fontSize: '12px'}}>{formatDateTime(step.approvedAt || step.rejectedAt || '')}</p>
+                                                <p className="pb-tl-text">{formatDateTime(step.approvedAt || step.rejectedAt || '')}</p>
                                             )}
-                                            {step.remarks && <p className="cred-p" style={{fontSize: '12px', fontStyle: 'italic', marginTop: '4px'}}>“{step.remarks}”</p>}
+                                            {step.remarks && <p className="pb-tl-remarks">“{step.remarks}”</p>}
                                             {!step.approverName && step.status === 'pending' && (
-                                                <p className="cred-p" style={{fontSize: '12px', fontStyle: 'italic'}}>Awaiting review...</p>
+                                                <p className="pb-tl-text italic">Awaiting review...</p>
                                             )}
                                         </div>
                                     </div>
@@ -665,25 +763,30 @@ const OutpassDetails: React.FC = () => {
             </div>{/* end mobile */}
 
             {showDocumentModal && documentUrl && (
-                <div className="document-viewer-modal">
-                    <div className="document-modal-backdrop" onClick={() => setShowDocumentModal(false)} />
-                    <div className="document-modal-card card">
-                        <div className="document-modal-header">
+                <div className="pb-document-viewer-modal">
+                    <div className="pb-document-modal-backdrop" onClick={() => setShowDocumentModal(false)} />
+                    <div className="pb-document-modal-card">
+                        <div className="pb-document-modal-header">
                             <div>
                                 <h3>Proof Document</h3>
-                                <p>{documentType === 'pdf' ? 'PDF preview' : 'Image preview'}</p>
+                                <p>{documentType === 'pdf' ? 'PDF Preview' : 'Image Preview'}</p>
                             </div>
-                            <button className="btn btn-icon" onClick={() => setShowDocumentModal(false)}>✕</button>
+                            <button className="pb-close-modal-btn" onClick={() => setShowDocumentModal(false)}>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            </button>
                         </div>
-                        <div className="document-modal-body">
+                        <div className="pb-document-modal-body">
                             {documentType === 'pdf' ? (
                                 <iframe
                                     src={documentUrl}
                                     title="Proof Document"
-                                    className="document-iframe"
+                                    className="pb-document-iframe"
                                 />
                             ) : (
-                                <img src={documentUrl} alt="Proof Document" className="document-image" />
+                                <img src={documentUrl} alt="Proof Document" className="pb-document-image" />
                             )}
                         </div>
                     </div>
@@ -691,147 +794,1038 @@ const OutpassDetails: React.FC = () => {
             )}
 
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+                /* ── DESKTOP VIEWS ── */
+                .pb-outpass-page {
+                    min-height: 100vh;
+                    background: var(--pb-bg);
+                }
+                .pb-page-header-row {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 24px;
+                    flex-wrap: wrap;
+                    gap: 16px;
+                }
+                .pb-page-title {
+                    font-size: 1.75rem;
+                    font-weight: 800;
+                    color: var(--pb-text);
+                    margin: 0;
+                    letter-spacing: -0.025em;
+                }
+                .pb-page-subtitle {
+                    font-size: 0.9rem;
+                    color: var(--pb-text-3);
+                    margin: 4px 0 0 0;
+                }
+                .pb-apply-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    height: 42px;
+                    padding: 0 20px;
+                    background: linear-gradient(135deg, var(--pb-primary), var(--pb-primary-dark));
+                    color: #fff;
+                    font-weight: 600;
+                    font-size: 0.88rem;
+                    border: none;
+                    border-radius: 12px;
+                    cursor: pointer;
+                    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
+                    transition: var(--pb-transition);
+                }
+                .pb-apply-btn:hover {
+                    transform: translateY(-1px);
+                    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
+                }
+                .pb-list-view-container {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 20px;
+                }
+                .pb-tab-filters-container {
+                    display: flex;
+                    gap: 6px;
+                    background: rgba(59, 130, 246, 0.05);
+                    border: 1px solid rgba(59, 130, 246, 0.08);
+                    padding: 4px;
+                    border-radius: 14px;
+                    width: fit-content;
+                }
+                .pb-tab-filter-btn {
+                    border: none;
+                    background: transparent;
+                    padding: 6px 16px;
+                    border-radius: 10px;
+                    font-size: 0.82rem;
+                    font-weight: 600;
+                    color: var(--pb-text-3);
+                    cursor: pointer;
+                    transition: var(--pb-transition);
+                }
+                .pb-tab-filter-btn:hover {
+                    color: var(--pb-text);
+                }
+                .pb-tab-filter-btn.active {
+                    background: #fff;
+                    color: var(--pb-primary);
+                    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
+                }
+                .pb-outpass-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+                    gap: 20px;
+                }
+                .pb-outpass-item-card {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                    min-height: 190px;
+                    padding: 20px;
+                    background: var(--pb-card);
+                    border: 1px solid var(--pb-card-border);
+                    border-radius: var(--pb-radius);
+                    box-shadow: var(--pb-shadow);
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
+                    transition: var(--pb-transition);
+                }
+                .pb-outpass-item-card:hover {
+                    transform: translateY(-4px);
+                    box-shadow: var(--pb-shadow-md);
+                    border-color: rgba(59, 130, 246, 0.3);
+                }
+                .pb-card-top-row {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                .pb-outpass-type-indicator {
+                    font-size: 0.72rem;
+                    padding: 3px 10px;
+                    border-radius: 99px;
+                    background: rgba(59, 130, 246, 0.08);
+                    color: var(--pb-primary);
+                    font-weight: 700;
+                    letter-spacing: 0.04em;
+                    text-transform: uppercase;
+                    border: 1px solid rgba(59, 130, 246, 0.12);
+                }
+                .pb-outpass-type-indicator.emergency {
+                    background: rgba(239, 68, 68, 0.08);
+                    color: #EF4444;
+                    border-color: rgba(239, 68, 68, 0.12);
+                }
+                .pb-status-badge {
+                    font-size: 0.75rem;
+                    font-weight: 700;
+                    padding: 3px 10px;
+                    border-radius: 99px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.03em;
+                }
+                .pb-status-approved { background: rgba(16, 185, 129, 0.08); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.15); }
+                .pb-status-rejected { background: rgba(239, 68, 68, 0.08); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.15); }
+                .pb-status-pending { background: rgba(245, 158, 11, 0.08); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.15); }
 
-                /* ── DESKTOP VIEWS (RETAINED) ── */
-                .outpass-details-page { background: var(--bg); }
-                .page-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-6); flex-wrap: wrap; gap: var(--space-4); }
-                .page-subtitle { font-size: 0.95rem; color: var(--text-3); }
-                .back-link-wrapper { margin-bottom: var(--space-4); }
-                .btn-back { background: none; border: none; color: var(--primary); font-size: 0.9rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: var(--radius-sm); transition: var(--transition-fast); }
-                .btn-back:hover { background: var(--primary-light); color: var(--primary-dark); }
-                .tab-filters-container { display: flex; gap: 8px; background: var(--bg-elevated); padding: 4px; border-radius: var(--radius-md); margin-bottom: 24px; width: fit-content; }
-                .tab-filter-btn { border: none; background: transparent; padding: 8px 16px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; color: var(--text-3); cursor: pointer; transition: var(--transition-fast); }
-                .tab-filter-btn:hover { color: var(--text-1); }
-                .tab-filter-btn.active { background: var(--surface); color: var(--primary-dark); box-shadow: var(--shadow-sm); }
-                .outpass-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 20px; }
-                .outpass-item-card { display: flex; flex-direction: column; gap: 16px; min-height: 220px; }
-                .card-top-row { display: flex; justify-content: space-between; align-items: center; }
-                .outpass-type-indicator { font-size: 0.75rem; padding: 2px 10px; border-radius: var(--radius-full); background: var(--primary-light); color: var(--primary-dark); font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; }
-                .outpass-type-indicator.emergency { background: var(--danger-light); color: var(--danger); }
-                .card-mid-section { display: flex; flex-direction: column; gap: 12px; flex: 1; }
-                .duration-row { display: flex; gap: 10px; align-items: flex-start; }
-                .duration-row .icon { font-size: 1.2rem; margin-top: 2px; }
-                .time-details { display: flex; flex-direction: column; }
-                .time-label { font-size: 0.65rem; font-weight: 800; color: var(--text-4); letter-spacing: 0.05em; }
-                .time-value { font-size: 0.85rem; font-weight: 600; color: var(--text-1); }
-                .reason-row { font-size: 0.88rem; color: var(--text-2); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
-                .card-bottom-row { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 12px; }
-                .applied-on { font-size: 0.75rem; color: var(--text-4); }
-                .empty-state-card { text-align: center; padding: var(--space-12) var(--space-6) !important; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; max-width: 480px; margin: 40px auto; }
-                .empty-state-icon { font-size: 3rem; }
-                .empty-state-card p { color: var(--text-3); font-size: 0.9rem; margin-bottom: 8px; }
-                .details-layout-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 32px; align-items: start; }
-                .outpass-meta-card { display: flex; flex-direction: column; gap: 16px; }
-                .meta-info-list { display: flex; flex-direction: column; gap: 12px; }
-                .meta-info-item { display: flex; justify-content: space-between; align-items: flex-start; font-size: 0.9rem; border-bottom: 1px dashed var(--border); padding-bottom: 8px; gap: 16px; }
-                .meta-info-item:last-child { border-bottom: none; }
-                .meta-info-item .label { color: var(--text-3); font-weight: 500; flex-shrink: 0; }
-                .meta-info-item .val { color: var(--text-1); font-weight: 600; text-align: right; }
-                .meta-info-item .val.reason-text { text-align: left; font-style: italic; color: var(--text-2); font-weight: 500; }
-                .proof-action-box { display: flex; justify-content: space-between; align-items: center; background: var(--bg-elevated); padding: 12px var(--space-4); border-radius: var(--radius-md); margin-top: var(--space-4); gap: 12px; }
-                .proof-text-details { display: flex; flex-direction: column; gap: 2px; }
-                .proof-text-details strong { font-size: 0.85rem; color: var(--text-1); }
-                .proof-text-details span { font-size: 0.75rem; color: var(--text-4); }
-                .timeline-stepper { display: flex; flex-direction: column; position: relative; margin-left: 20px; padding-left: 20px; border-left: 2px solid var(--border); }
-                .timeline-item { position: relative; margin-bottom: 24px; }
-                .timeline-item:last-child { margin-bottom: 0; }
-                .timeline-indicator { position: absolute; left: -36px; top: 12px; width: 30px; height: 30px; border-radius: 50%; background: var(--surface); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; z-index: 2; transition: var(--transition); }
-                .timeline-icon { font-size: 0.9rem; }
-                .timeline-connector { position: absolute; left: -22px; top: 42px; bottom: -20px; width: 2px; background: var(--border); z-index: 1; }
-                .timeline-item:last-child .timeline-connector { display: none; }
-                .timeline-card { padding: var(--space-4) var(--space-5) !important; }
-                .timeline-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px; gap: 12px; }
-                .timeline-title { font-size: 0.95rem; color: var(--text-1); margin: 0; }
-                .timeline-details-list { display: flex; flex-direction: column; gap: 6px; }
-                .timeline-details-list .detail-item { display: flex; gap: 8px; font-size: 0.8rem; }
-                .timeline-details-list .detail-item .label { color: var(--text-3); font-weight: 600; flex-shrink: 0; width: 70px; }
-                .timeline-details-list .detail-item .val { color: var(--text-1); font-weight: 500; }
-                .timeline-details-list .remarks-item .val { font-style: italic; color: var(--text-2); }
-                .timeline-waiting { font-size: 0.78rem; color: var(--text-4); font-style: italic; }
-                .timeline-approved .timeline-indicator { border-color: var(--success); background: var(--success-light); box-shadow: 0 0 0 4px var(--success-mid); }
-                .timeline-rejected .timeline-indicator { border-color: var(--danger); background: var(--danger-light); box-shadow: 0 0 0 4px var(--danger-mid); }
-                .timeline-pending .timeline-indicator { border-color: var(--warning); background: var(--warning-light); box-shadow: 0 0 0 4px var(--warning-mid); }
+                .pb-card-mid-section {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                    flex: 1;
+                }
+                .pb-duration-row {
+                    display: flex;
+                    gap: 12px;
+                    align-items: flex-start;
+                }
+                .pb-duration-icon {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 32px;
+                    height: 32px;
+                    background: rgba(59, 130, 246, 0.05);
+                    border: 1px solid rgba(59, 130, 246, 0.08);
+                    color: var(--pb-primary);
+                    border-radius: 8px;
+                    flex-shrink: 0;
+                }
+                .pb-time-details {
+                    display: flex;
+                    flex-direction: column;
+                }
+                .pb-time-label {
+                    font-size: 0.65rem;
+                    font-weight: 800;
+                    color: var(--pb-text-4);
+                    letter-spacing: 0.06em;
+                }
+                .pb-time-value {
+                    font-size: 0.85rem;
+                    font-weight: 600;
+                    color: var(--pb-text);
+                }
+                .pb-reason-row {
+                    font-size: 0.84rem;
+                    color: var(--pb-text-2);
+                    line-height: 1.45;
+                    display: -webkit-box;
+                    -webkit-line-clamp: 2;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .pb-card-bottom-row {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-top: 1px solid rgba(59, 130, 246, 0.08);
+                    padding-top: 12px;
+                }
+                .pb-applied-on {
+                    font-size: 0.72rem;
+                    color: var(--pb-text-4);
+                    font-weight: 500;
+                }
+                .pb-track-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    background: transparent;
+                    border: none;
+                    color: var(--pb-primary);
+                    font-size: 0.82rem;
+                    font-weight: 700;
+                    cursor: pointer;
+                    transition: var(--pb-transition);
+                }
+                .pb-track-btn:hover {
+                    color: var(--pb-primary-dark);
+                    transform: translateX(2px);
+                }
+                
+                .pb-empty-state-card {
+                    text-align: center;
+                    padding: 48px 24px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 12px;
+                    max-width: 480px;
+                    margin: 40px auto;
+                    background: var(--pb-card);
+                    border: 1px solid var(--pb-card-border);
+                    border-radius: var(--pb-radius);
+                    box-shadow: var(--pb-shadow);
+                    backdrop-filter: blur(20px);
+                }
+                .pb-empty-state-icon {
+                    width: 56px;
+                    height: 56px;
+                    background: rgba(59, 130, 246, 0.05);
+                    border: 1px solid rgba(59, 130, 246, 0.08);
+                    color: var(--pb-primary);
+                    border-radius: 16px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin-bottom: 8px;
+                }
+                .pb-empty-state-card h3 {
+                    font-size: 1.15rem;
+                    font-weight: 700;
+                    color: var(--pb-text);
+                    margin: 0;
+                }
+                .pb-empty-state-card p {
+                    color: var(--pb-text-3);
+                    font-size: 0.88rem;
+                    margin: 0;
+                }
+
+                /* DETAIL VIEW */
+                .pb-outpass-detail-view {
+                    animation: pbFadeIn 0.35s ease-out;
+                }
+                .pb-details-layout-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1.2fr;
+                    gap: 32px;
+                    align-items: start;
+                }
+                @media (max-width: 992px) {
+                    .pb-details-layout-grid {
+                        grid-template-columns: 1fr;
+                        gap: 24px;
+                    }
+                }
+                .pb-detail-info-card {
+                    background: var(--pb-card);
+                    border: 1px solid var(--pb-card-border);
+                    border-radius: var(--pb-radius);
+                    box-shadow: var(--pb-shadow);
+                    padding: 24px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 20px;
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
+                }
+                .pb-section-title {
+                    font-size: 1.05rem;
+                    font-weight: 750;
+                    color: var(--pb-text);
+                    margin: 0;
+                    letter-spacing: -0.01em;
+                }
+                .pb-meta-info-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 14px;
+                }
+                .pb-meta-info-item {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    font-size: 0.88rem;
+                    border-bottom: 1px dashed rgba(59, 130, 246, 0.08);
+                    padding-bottom: 10px;
+                    gap: 16px;
+                }
+                .pb-meta-info-item:last-child {
+                    border-bottom: none;
+                    padding-bottom: 0;
+                }
+                .pb-meta-info-item .label {
+                    color: var(--pb-text-3);
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    font-size: 0.72rem;
+                    letter-spacing: 0.05em;
+                    flex-shrink: 0;
+                    margin-top: 2px;
+                }
+                .pb-meta-info-item .val {
+                    color: var(--pb-text);
+                    font-weight: 600;
+                    text-align: right;
+                }
+                .pb-meta-info-item .val.reason-text {
+                    text-align: left;
+                    font-style: italic;
+                    color: var(--pb-text-2);
+                    font-weight: 500;
+                }
+                .pb-proof-action-box {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    background: rgba(59, 130, 246, 0.04);
+                    border: 1px solid rgba(59, 130, 246, 0.08);
+                    padding: 14px 18px;
+                    border-radius: 14px;
+                    margin-top: 8px;
+                    gap: 12px;
+                }
+                .pb-proof-text-details {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                }
+                .pb-proof-text-details strong {
+                    font-size: 0.85rem;
+                    color: var(--pb-text);
+                }
+                .pb-proof-text-details span {
+                    font-size: 0.72rem;
+                    color: var(--pb-text-4);
+                    font-weight: 500;
+                }
+                .pb-view-proof-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    height: 36px;
+                    padding: 0 14px;
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                    background: var(--pb-secondary);
+                    color: var(--pb-primary);
+                    border: none;
+                    border-radius: 10px;
+                    cursor: pointer;
+                    transition: var(--pb-transition);
+                }
+                .pb-view-proof-btn:hover {
+                    background: var(--pb-primary);
+                    color: #fff;
+                }
+
+                /* QR CARD */
+                .pb-qr-card-container {
+                    margin-top: 24px;
+                    align-items: center;
+                }
+                .pb-qr-wrapper {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 16px;
+                    padding: 12px 0;
+                }
+                .pb-qr-box {
+                    padding: 16px;
+                    background: #fff;
+                    border-radius: 16px;
+                    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.08);
+                    border: 1px solid rgba(59, 130, 246, 0.08);
+                    display: inline-block;
+                }
+                .pb-qr-tip {
+                    color: var(--pb-text-2);
+                    font-size: 0.85rem;
+                    text-align: center;
+                    line-height: 1.45;
+                    margin: 0;
+                }
+                .pb-qr-tip small {
+                    color: var(--pb-text-4);
+                    font-weight: 500;
+                }
+                .pb-qr-expired {
+                    text-align: center;
+                    padding: 24px;
+                    background: rgba(239, 68, 68, 0.04);
+                    border: 1px solid rgba(239, 68, 68, 0.08);
+                    color: #EF4444;
+                    border-radius: 14px;
+                    width: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 10px;
+                }
+                .pb-qr-expired p {
+                    color: var(--pb-text-2);
+                    font-size: 0.85rem;
+                    line-height: 1.45;
+                    margin: 0;
+                }
+
+                /* TIMELINE DESKTOP */
+                .pb-timeline-stepper {
+                    display: flex;
+                    flex-direction: column;
+                    position: relative;
+                    margin-left: 20px;
+                    padding-left: 24px;
+                    border-left: 2px dashed rgba(59, 130, 246, 0.15);
+                }
+                .pb-timeline-step-item {
+                    position: relative;
+                    margin-bottom: 24px;
+                }
+                .pb-timeline-step-item:last-child {
+                    margin-bottom: 0;
+                }
+                .pb-timeline-indicator {
+                    position: absolute;
+                    left: -41px;
+                    top: 14px;
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    background: #fff;
+                    border: 2px solid rgba(203, 213, 225, 0.8);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 2;
+                    transition: var(--pb-transition);
+                    color: var(--pb-text-3);
+                    box-shadow: var(--pb-shadow);
+                }
+                .pb-timeline-icon-wrapper {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .pb-timeline-connector {
+                    position: absolute;
+                    left: -26px;
+                    top: 46px;
+                    bottom: -20px;
+                    width: 2px;
+                    background: rgba(203, 213, 225, 0.8);
+                    z-index: 1;
+                }
+                .pb-timeline-step-item:last-child .pb-timeline-connector {
+                    display: none;
+                }
+                .pb-timeline-card {
+                    background: var(--pb-card);
+                    border: 1px solid var(--pb-card-border);
+                    border-radius: 16px;
+                    padding: 16px 20px;
+                    box-shadow: var(--pb-shadow);
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
+                }
+                .pb-timeline-header-row {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 12px;
+                    border-bottom: 1px solid rgba(59, 130, 246, 0.06);
+                    padding-bottom: 8px;
+                    gap: 12px;
+                }
+                .pb-timeline-title {
+                    font-size: 0.92rem;
+                    font-weight: 750;
+                    color: var(--pb-text);
+                    margin: 0;
+                }
+                .pb-step-badge {
+                    font-size: 0.68rem;
+                    font-weight: 700;
+                    padding: 2px 8px;
+                    border-radius: 99px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.03em;
+                }
+                .pb-badge-green { background: rgba(16, 185, 129, 0.08); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.15); }
+                .pb-badge-red { background: rgba(239, 68, 68, 0.08); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.15); }
+                .pb-badge-amber { background: rgba(245, 158, 11, 0.08); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.15); }
+
+                .pb-timeline-details-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                }
+                .pb-timeline-details-list .pb-detail-item {
+                    display: flex;
+                    gap: 8px;
+                    font-size: 0.8rem;
+                    align-items: baseline;
+                }
+                .pb-timeline-details-list .pb-detail-item .pb-label {
+                    color: var(--pb-text-4);
+                    font-weight: 700;
+                    flex-shrink: 0;
+                    width: 76px;
+                    font-size: 0.65rem;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                    margin-bottom: 0;
+                }
+                .pb-timeline-details-list .pb-detail-item .pb-val {
+                    color: var(--pb-text);
+                    font-weight: 600;
+                }
+                .pb-timeline-details-list .pb-remarks-item .pb-val {
+                    font-style: italic;
+                    color: var(--pb-text-2);
+                    font-weight: 500;
+                }
+                .pb-timeline-waiting {
+                    font-size: 0.78rem;
+                    color: var(--pb-text-4);
+                    font-style: italic;
+                    font-weight: 500;
+                }
+                .pb-timeline-approved .pb-timeline-indicator {
+                    border-color: #10B981;
+                    background: rgba(16, 185, 129, 0.05);
+                    color: #10B981;
+                }
+                .pb-timeline-approved .pb-timeline-connector {
+                    background: #10B981;
+                }
+                .pb-timeline-rejected .pb-timeline-indicator {
+                    border-color: #EF4444;
+                    background: rgba(239, 68, 68, 0.05);
+                    color: #EF4444;
+                }
 
                 /* ── DESKTOP / MOBILE SPLIT ── */
                 .lux-desktop-view { display: block; }
                 .lux-mobile-view  { display: none; }
                 @media (max-width: 768px) {
                     .lux-desktop-view { display: none !important; }
-                    .lux-mobile-view  { display: flex !important; flex-direction: column; min-height: 100vh; background: linear-gradient(135deg, #F7F3E6 0%, #E8EEF5 45%, #C8D9F2 100%); font-family: 'Inter', -apple-system, sans-serif; }
+                    .lux-mobile-view  { display: flex !important; flex-direction: column; min-height: 100vh; background: var(--pb-bg); }
                 }
 
                 /* ==========================================
-                   CRED PREMIUM MOBILE STYLES (OUTPASS)
+                   PREMIUM MOBILE STYLES (OUTPASS)
                    ========================================== */
-                .mob-page-header { display:flex; align-items:center; gap:12px; padding:16px 16px 12px; background:rgba(255,255,255,0.85); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); position:sticky; top:0; z-index:50; border-bottom: 1px solid rgba(226,232,240,0.6); }
-                .mob-back-btn { width:36px; height:36px; border-radius:10px; background:#FFFFFF; border:1px solid #E2E8F0; color:#1E293B; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; transition:transform 0.2s; }
-                .mob-back-btn:active { transform:scale(0.9); }
-                .mob-header-text { flex:1; }
-                .mob-apply-fab { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg, #1E3A8A, #0F172A); border:none; color:#FFFFFF; font-size:22px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow: 0 4px 12px rgba(15,23,42,0.25); }
+                .pb-mob-page-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 16px;
+                    background: rgba(255, 255, 255, 0.85);
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
+                    position: sticky;
+                    top: 0;
+                    z-index: 50;
+                    border-bottom: 1px solid rgba(59, 130, 246, 0.08);
+                }
+                .pb-mob-back-btn {
+                    width: 36px;
+                    height: 36px;
+                    border-radius: 10px;
+                    background: #fff;
+                    border: 1px solid rgba(59, 130, 246, 0.12);
+                    color: var(--pb-text);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    flex-shrink: 0;
+                    transition: transform 0.2s;
+                }
+                .pb-mob-back-btn:active { transform: scale(0.9); }
+                .pb-mob-header-text { flex: 1; }
+                .pb-mob-header-title {
+                    font-size: 1.1rem;
+                    font-weight: 800;
+                    color: var(--pb-text);
+                    letter-spacing: -0.01em;
+                }
+                .pb-mob-apply-fab {
+                    width: 36px;
+                    height: 36px;
+                    border-radius: 50%;
+                    background: linear-gradient(135deg, var(--pb-primary), var(--pb-primary-dark));
+                    border: none;
+                    color: #fff;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+                    cursor: pointer;
+                }
+                .pb-mob-apply-fab:active { transform: scale(0.9); }
 
-                .mob-scroll-body { flex:1; overflow-y:auto; padding:24px 16px 100px; display:flex; flex-direction:column; gap:20px; }
+                .pb-mob-scroll-body {
+                    flex: 1;
+                    overflow-y: auto;
+                    padding: 16px 16px 90px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                }
 
-                /* Tabs */
-                .mob-tab-row { display:flex; gap:12px; overflow-x:auto; padding-bottom:4px; }
-                .mob-tab-btn { background:rgba(255,255,255,0.7); border:1px solid rgba(226,232,240,0.8); border-radius:24px; padding:8px 20px; font-size:13px; font-weight:600; color:#64748B; cursor:pointer; white-space:nowrap; transition:all 0.2s; flex-shrink:0; }
-                .mob-tab-active { background:#FFFFFF; border-color:var(--cred-gold); color:var(--cred-gold); box-shadow: 0 4px 12px rgba(184,134,11,0.15); }
-
-                .mob-empty-card { padding:40px 20px; display:flex; flex-direction:column; align-items:center; gap:16px; }
-
-                /* List Cards */
-                .mob-outpass-card { padding:16px; display:flex; flex-direction:column; gap:16px; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:transform 0.15s; }
-                .mob-outpass-card:active { transform:scale(0.98); }
-                .mob-op-top { display:flex; justify-content:space-between; align-items:center; }
-                .mob-op-type-tag { background:rgba(37, 99, 235, 0.1); color:#2563EB; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; border-radius:6px; border: 1px solid rgba(37, 99, 235, 0.2); }
-                .mob-history-badge-info    { background:rgba(37,99,235,0.1); color:#2563EB; border:1px solid rgba(37,99,235,0.2); }
-                .mob-op-emergency { background:rgba(220, 38, 38, 0.1); color:#DC2626; border-color: rgba(220, 38, 38, 0.2); }
+                .pb-mob-tab-row {
+                    display: flex;
+                    gap: 8px;
+                    overflow-x: auto;
+                    padding-bottom: 4px;
+                    scrollbar-width: none;
+                }
+                .pb-mob-tab-row::-webkit-scrollbar { display: none; }
                 
-                .text-success { color: var(--cred-success); }
-                .text-danger { color: var(--cred-danger); }
-                .text-warning { color: var(--cred-warning); }
-                .cred-gold-text { color: var(--cred-gold); }
+                .pb-mob-tab-btn {
+                    background: rgba(255, 255, 255, 0.6);
+                    border: 1px solid rgba(59, 130, 246, 0.1);
+                    border-radius: 20px;
+                    padding: 6px 16px;
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                    color: var(--pb-text-3);
+                    cursor: pointer;
+                    white-space: nowrap;
+                    transition: all 0.2s;
+                }
+                .pb-mob-tab-btn.active {
+                    background: #fff;
+                    border-color: var(--pb-primary);
+                    color: var(--pb-primary);
+                    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.1);
+                }
 
-                .mob-op-dates { display:flex; align-items:center; gap:16px; background:#F8FAFC; border-radius:12px; padding:12px; border: 1px solid rgba(226,232,240,0.8); }
-                .mob-op-date-item { flex:1; display:flex; flex-direction:column; gap:4px; }
-                .mob-op-date-divider { width:1px; height: 30px; background:rgba(226,232,240,0.8); }
-                .mob-op-footer { display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(226,232,240,0.8); padding-top:12px; }
+                .pb-mob-empty-card {
+                    padding: 40px 20px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 16px;
+                    background: var(--pb-card);
+                    border: 1px solid var(--pb-card-border);
+                    border-radius: var(--pb-radius);
+                    color: var(--pb-text-3);
+                }
+                .pb-mob-empty-card span {
+                    font-size: 0.85rem;
+                    font-weight: 500;
+                }
+                .pb-mob-cta-btn {
+                    width: 100%;
+                    background: linear-gradient(135deg, var(--pb-primary), var(--pb-primary-dark));
+                    color: #fff;
+                    border: none;
+                    border-radius: 12px;
+                    padding: 12px;
+                    font-size: 0.88rem;
+                    font-weight: 700;
+                    cursor: pointer;
+                    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+                }
+                .pb-mob-cta-btn:active { transform: scale(0.97); }
 
-                /* Detail Card */
-                .mob-form-card { padding:20px; }
-                .mob-detail-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid var(--cred-border); }
-                .mob-detail-row { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; padding:12px 0; border-bottom:1px solid var(--cred-border); }
+                /* List Cards Mobile */
+                .pb-mob-outpass-card {
+                    padding: 16px;
+                    background: var(--pb-card);
+                    border: 1px solid var(--pb-card-border);
+                    border-radius: var(--pb-radius);
+                    box-shadow: var(--pb-shadow);
+                    display: flex;
+                    flex-direction: column;
+                    gap: 14px;
+                    cursor: pointer;
+                    -webkit-tap-highlight-color: transparent;
+                    transition: transform 0.15s;
+                }
+                .pb-mob-outpass-card:active { transform: scale(0.98); }
+                .pb-mob-op-top {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                .pb-mob-op-dates {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    background: rgba(59, 130, 246, 0.03);
+                    border-radius: 12px;
+                    padding: 8px 12px;
+                    border: 1px solid rgba(59, 130, 246, 0.06);
+                }
+                .pb-mob-op-date-item {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                }
+                .pb-mob-op-date-divider {
+                    width: 1px;
+                    height: 24px;
+                    background: rgba(59, 130, 246, 0.1);
+                }
+                .pb-mob-op-reason {
+                    font-size: 0.8rem;
+                    font-style: italic;
+                    color: var(--pb-text-2);
+                    margin: 0;
+                }
+                .pb-mob-op-footer {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-top: 1px solid rgba(59, 130, 246, 0.06);
+                    padding-top: 10px;
+                }
+                .pb-mob-op-footer .pb-date {
+                    font-size: 0.72rem;
+                    color: var(--pb-text-4);
+                    font-weight: 500;
+                }
+                .pb-mob-op-footer .pb-track-link {
+                    font-size: 0.78rem;
+                    font-weight: 750;
+                    color: var(--pb-primary);
+                }
 
-                /* Timeline */
-                .mob-timeline { display:flex; flex-direction:column; gap:0; margin-top: 8px; }
-                .mob-timeline-step { display:flex; gap:16px; }
-                .mob-timeline-left { display:flex; flex-direction:column; align-items:center; width:28px; flex-shrink:0; }
-                .mob-timeline-dot { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; z-index: 2; border: 2px solid var(--cred-bg); }
-                .mob-dot-approved { background:var(--cred-success); }
-                .mob-dot-rejected { background:var(--cred-danger); }
-                .mob-dot-pending  { background:var(--cred-surface-2); border-color: var(--cred-border); }
-                .mob-dot-inner { width:8px; height:8px; border-radius:50%; background:var(--cred-border); }
-                .mob-timeline-line { flex:1; width:2px; background:var(--cred-border); margin:0; min-height:24px; position:relative; top:-4px; z-index: 1; }
-                .mob-line-approved { background:var(--cred-success); }
-                .mob-timeline-card { flex:1; padding:16px; margin-bottom:16px; }
-                .mob-tl-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+                /* Mobile Detail Card */
+                .pb-mob-detail-card {
+                    padding: 18px;
+                    background: var(--pb-card);
+                    border: 1px solid var(--pb-card-border);
+                    border-radius: var(--pb-radius);
+                    box-shadow: var(--pb-shadow);
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                }
+                .pb-mob-detail-top {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 8px;
+                    padding-bottom: 10px;
+                    border-bottom: 1px solid rgba(59, 130, 246, 0.06);
+                }
+                .pb-mob-detail-row {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    gap: 16px;
+                    padding: 10px 0;
+                    border-bottom: 1px solid rgba(59, 130, 246, 0.06);
+                }
+                .pb-mob-view-proof-btn {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: var(--pb-secondary);
+                    color: var(--pb-primary);
+                    border: none;
+                    border-radius: 10px;
+                    padding: 10px;
+                    font-size: 0.8rem;
+                    font-weight: 700;
+                    cursor: pointer;
+                    margin-top: 10px;
+                    width: 100%;
+                }
+                
+                .pb-mob-qr-container {
+                    align-items: center;
+                    padding: 20px;
+                    margin-top: 16px;
+                }
+                .pb-mob-section-title {
+                    font-size: 0.95rem;
+                    font-weight: 800;
+                    color: var(--pb-text);
+                    margin: 0 0 14px 0;
+                    align-self: flex-start;
+                }
+                .pb-mob-qr-box {
+                    padding: 12px;
+                    background: #fff;
+                    border-radius: 12px;
+                    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
+                }
+                .pb-mob-qr-expired {
+                    text-align: center;
+                    padding: 16px;
+                    background: rgba(239, 68, 68, 0.04);
+                    border: 1px solid rgba(239, 68, 68, 0.08);
+                    color: #EF4444;
+                    border-radius: 12px;
+                    width: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 6px;
+                }
+                .pb-mob-qr-expired p {
+                    margin: 0;
+                    font-size: 0.78rem;
+                    color: var(--pb-text-2);
+                    line-height: 1.4;
+                }
 
-                .mob-cta-btn { width:100%; background:linear-gradient(135deg, #1E3A8A, #0F172A); color:#FFFFFF; border:none; border-radius:16px; padding:16px; font-size:16px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:transform 0.2s; box-shadow: 0 8px 24px rgba(15,23,42,0.25); }
-                .mob-cta-btn:active { transform:scale(0.96); }
-                .mob-btn-secondary { background:#FFFFFF; color:#0F172A; border:1px solid rgba(226,232,240,0.8); border-radius:12px; padding:14px 20px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; transition: background 0.2s; box-shadow: 0 4px 12px rgba(15,23,42,0.08); }
-                .mob-btn-secondary:active { background: #F1F5F9; }
+                .pb-mob-section-header {
+                    font-size: 0.95rem;
+                    font-weight: 800;
+                    color: var(--pb-text);
+                    margin: 16px 0 8px 0;
+                }
 
-                .document-viewer-modal { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; }
-                .document-modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(2px); }
-                .document-modal-card { position: relative; width: min(920px, calc(100% - 32px)); max-height: min(90vh, 820px); overflow: hidden; padding: 0; border-radius: 24px; background: var(--bg); box-shadow: 0 40px 90px rgba(0,0,0,0.18); z-index: 1; }
-                .document-modal-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 20px 24px; border-bottom: 1px solid var(--border); }
-                .document-modal-header h3 { margin: 0; font-size: 1rem; }
-                .document-modal-header p { margin: 0; color: var(--text-3); font-size: 0.9rem; }
-                .btn-icon { border: none; background: transparent; color: var(--text-1); font-size: 1.1rem; cursor: pointer; padding: 6px; border-radius: 10px; transition: background 0.2s; }
-                .btn-icon:hover { background: rgba(0,0,0,0.05); }
-                .document-modal-body { width: 100%; min-height: 320px; max-height: calc(90vh - 110px); display: flex; align-items: center; justify-content: center; background: var(--surface); }
-                .document-iframe { width: 100%; height: 100%; border: none; }
-                .document-image { width: 100%; height: 100%; object-fit: contain; }
+                /* Mobile Timeline */
+                .pb-mob-timeline {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0;
+                    margin-top: 4px;
+                }
+                .pb-mob-timeline-step {
+                    display: flex;
+                    gap: 12px;
+                }
+                .pb-mob-timeline-left {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    width: 24px;
+                    flex-shrink: 0;
+                }
+                .pb-mob-timeline-dot {
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                    z-index: 2;
+                    border: 2px solid #fff;
+                    box-shadow: var(--pb-shadow);
+                }
+                .pb-dot-approved { background: #10B981; }
+                .pb-dot-rejected { background: #EF4444; }
+                .pb-dot-pending  { background: #E2E8F0; border-color: #CBD5E1; }
+                .pb-dot-inner { width: 6px; height: 6px; border-radius: 50%; background: #94A3B8; }
+                
+                .pb-mob-timeline-line {
+                    flex: 1;
+                    width: 2px;
+                    background: #E2E8F0;
+                    margin: 0;
+                    min-height: 24px;
+                    position: relative;
+                    top: -4px;
+                    z-index: 1;
+                }
+                .pb-line-approved { background: #10B981; }
+                
+                .pb-mob-timeline-card {
+                    flex: 1;
+                    padding: 12px 14px;
+                    margin-bottom: 14px;
+                    background: var(--pb-card);
+                    border: 1px solid var(--pb-card-border);
+                    border-radius: var(--pb-radius-sm);
+                    box-shadow: var(--pb-shadow);
+                }
+                .pb-mob-tl-top {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 6px;
+                }
+                .pb-tl-title {
+                    font-size: 0.85rem;
+                    font-weight: 750;
+                    color: var(--pb-text);
+                }
+                .pb-tl-text {
+                    font-size: 0.76rem;
+                    color: var(--pb-text-3);
+                    margin: 2px 0 0 0;
+                    font-weight: 500;
+                }
+                .pb-tl-remarks {
+                    font-size: 0.76rem;
+                    font-style: italic;
+                    color: var(--pb-text-2);
+                    margin: 4px 0 0 0;
+                    font-weight: 500;
+                }
+
+                /* MODAL VIEW DOCUMENT */
+                .pb-document-viewer-modal {
+                    position: fixed;
+                    inset: 0;
+                    z-index: 9999;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .pb-document-modal-backdrop {
+                    position: absolute;
+                    inset: 0;
+                    background: rgba(15, 23, 42, 0.45);
+                    backdrop-filter: blur(4px);
+                    -webkit-backdrop-filter: blur(4px);
+                }
+                .pb-document-modal-card {
+                    position: relative;
+                    width: min(920px, calc(100% - 32px));
+                    max-height: min(90vh, 820px);
+                    overflow: hidden;
+                    padding: 0;
+                    border-radius: var(--pb-radius);
+                    background: #fff;
+                    box-shadow: var(--pb-shadow-lg);
+                    z-index: 1;
+                    border: 1px solid rgba(255, 255, 255, 0.8);
+                }
+                .pb-document-modal-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 16px;
+                    padding: 16px 24px;
+                    border-bottom: 1px solid rgba(59, 130, 246, 0.08);
+                }
+                .pb-document-modal-header h3 {
+                    margin: 0;
+                    font-size: 1rem;
+                    font-weight: 750;
+                    color: var(--pb-text);
+                }
+                .pb-document-modal-header p {
+                    margin: 2px 0 0 0;
+                    color: var(--pb-text-3);
+                    font-size: 0.78rem;
+                }
+                .pb-close-modal-btn {
+                    border: none;
+                    background: transparent;
+                    color: var(--pb-text-3);
+                    cursor: pointer;
+                    padding: 6px;
+                    border-radius: 8px;
+                    transition: var(--pb-transition);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .pb-close-modal-btn:hover {
+                    background: var(--pb-secondary);
+                    color: var(--pb-primary);
+                }
+                .pb-document-modal-body {
+                    width: 100%;
+                    min-height: 320px;
+                    height: 60vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: #F8FAFC;
+                }
+                .pb-document-iframe {
+                    width: 100%;
+                    height: 100%;
+                    border: none;
+                }
+                .pb-document-image {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: contain;
+                    padding: 16px;
+                }
+
+                /* ANIMATIONS */
+                @keyframes pbFadeIn {
+                    from { opacity: 0; transform: translateY(8px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                .pb-animate-stagger-1 { animation: pbFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: 0.05s; }
+                .pb-animate-stagger-2 { animation: pbFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: 0.1s; }
+                .pb-animate-stagger-3 { animation: pbFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: 0.15s; }
+                .pb-animate-stagger-4 { animation: pbFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: 0.2s; }
+                .pb-animate-stagger-5 { animation: pbFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: 0.25s; }
+                .pb-animate-stagger-6 { animation: pbFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: 0.3s; }
+                .pb-card-remarks-box {
+                    margin-top: 8px;
+                    padding: 8px 12px;
+                    background: rgba(239, 68, 68, 0.05);
+                    border-left: 3px solid #EF4444;
+                    border-radius: 6px;
+                    font-size: 0.8rem;
+                    color: #DC2626;
+                    text-align: left;
+                }
+                .pb-mob-card-remarks-box {
+                    margin-top: 6px;
+                    padding: 6px 10px;
+                    background: rgba(239, 68, 68, 0.05);
+                    border-left: 3px solid #EF4444;
+                    border-radius: 6px;
+                    font-size: 0.76rem;
+                    color: #DC2626;
+                    text-align: left;
+                }
             `}</style>
         </div>
     );

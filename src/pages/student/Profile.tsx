@@ -6,6 +6,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import ImageCropper from '../../components/ImageCropper';
 import imageCompression from 'browser-image-compression';
+
 import StudentHeader from '../../components/StudentHeader';
 import StudentBottomNav from '../../components/StudentBottomNav';
 
@@ -198,542 +199,413 @@ const Profile: React.FC = () => {
     };
 
     return (
-        <div className="student-page profile-page-view animate-page-enter">
+        <div className="pb-profile-page">
             <ToastContainer position="bottom-right" />
 
             {/* ── DESKTOP VIEW ── */}
             <div className="lux-desktop-view">
-            <StudentHeader />
+                <StudentHeader />
+                <main className="student-content">
+                    {showToast && (
+                        <Toast
+                            message="Profile updated successfully!"
+                            type="success"
+                            onClose={() => setShowToast(false)}
+                        />
+                    )}
 
-            {showToast && (
-                <Toast
-                    message="Profile updated successfully!"
-                    type="success"
-                    onClose={() => setShowToast(false)}
-                />
-            )}
-
-            <div className="content-wrapper">
-                {/* Back link */}
-                <div className="back-link-wrapper" style={{ marginBottom: '24px' }}>
-                    <button className="btn-back" onClick={() => navigate('/dashboard')}>
-                        <span className="icon">←</span> Back to Dashboard
-                    </button>
-                </div>
-
-                {/* Profile Completion Panel */}
-                <div className="completion-card card animate-stagger-1">
-                    <div className="completion-flex">
-                        <div className="completion-info">
-                            <h3>Profile Verification Status</h3>
-                            <p className="completion-desc">
-                                {completionPercentage === 100
-                                    ? "Your profile is fully complete and verified. You have access to all system features."
-                                    : "Please fill out all missing details to complete your registration."}
-                            </p>
-                        </div>
-                        <div className="completion-tracker">
-                            <div className="progress-circle-wrap">
-                                <svg className="progress-circle" viewBox="0 0 36 36">
-                                    <path
-                                        className="circle-bg"
-                                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                    />
-                                    <path
-                                        className="circle"
-                                        strokeDasharray={`${completionPercentage}, 100`}
-                                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                        style={{ stroke: completionPercentage === 100 ? 'var(--success)' : 'var(--primary)' }}
-                                    />
-                                    <text x="18" y="20.35" className="percentage-text">{completionPercentage}%</text>
+                    <div className="content-wrapper">
+                        {/* Back link */}
+                        <div className="pb-back-link-wrapper">
+                            <button className="pb-btn-back" onClick={() => navigate('/dashboard')}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                    <line x1="19" y1="12" x2="5" y2="12" />
+                                    <polyline points="12 19 5 12 12 5" />
                                 </svg>
-                            </div>
+                                Back to Dashboard
+                            </button>
                         </div>
-                    </div>
-                </div>
 
-                <div className="profile-card-layout">
-                    {/* LEFT COLUMN */}
-                    <div className="profile-left-col">
-                        <div className="card profile-main-card animate-stagger-2">
-                            <div className="avatar-uploader-container">
-                                <div className="avatar-wrapper">
-                                    {!imageError && user.photo ? (
-                                        <img
-                                            src={user.photo.startsWith("blob:") || user.photo.startsWith("data:") || user.photo.startsWith("http")
-                                                ? user.photo
-                                                : `${import.meta.env.VITE_CDN_URL || ''}${user.photo.startsWith('/') ? user.photo.slice(1) : user.photo}`
-                                            }
-                                            alt="Profile Avatar"
-                                            className="avatar-img"
-                                            onError={() => setImageError(true)}
-                                        />
-                                    ) : (
-                                        <div className="profile-initials-avatar" style={{
-                                            width: '100%',
-                                            height: '100%',
-                                            borderRadius: '50%',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)',
-                                            color: 'white',
-                                            fontSize: '3rem',
-                                            fontWeight: '800',
-                                            textTransform: 'uppercase'
-                                        }}>
-                                            {user.name ? user.name.charAt(0) : 'S'}
-                                        </div>
-                                    )}
-                                    {isEditing && (
-                                        <label className="avatar-edit-trigger" title="Upload new photo">
-                                            <span className="icon">📷</span>
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={handleImageUpload}
-                                                style={{ display: 'none' }}
+                        {/* Profile Completion Panel */}
+                        <div className="pb-completion-card pb-animate-stagger-1">
+                            <div className="pb-completion-flex">
+                                <div className="pb-completion-info">
+                                    <h3>Profile Verification Status</h3>
+                                    <p className="pb-completion-desc">
+                                        {completionPercentage === 100
+                                            ? "Your profile is fully complete and verified. You have access to all system features."
+                                            : "Please fill out all missing details to complete your registration."}
+                                    </p>
+                                </div>
+                                <div className="pb-completion-tracker">
+                                    <div className="pb-progress-circle-wrap">
+                                        <svg className="pb-progress-circle" viewBox="0 0 36 36">
+                                            <path
+                                                className="pb-circle-bg"
+                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                                             />
-                                        </label>
-                                    )}
-                                </div>
-                                <h2 className="user-title-name">{user.name || 'Student Name'}</h2>
-                                <span className="badge badge-purple" style={{ marginTop: '8px' }}>Student</span>
-                            </div>
-
-                            <div className="sidebar-actions-box">
-                                {!isEditing ? (
-                                    <button onClick={() => setIsEditing(true)} className="btn btn-primary btn-block">
-                                        Edit Details
-                                    </button>
-                                ) : (
-                                    <div className="editing-actions">
-                                        <button onClick={handleSave} className="btn btn-success btn-block">
-                                            Save Changes
-                                        </button>
-                                        <button onClick={() => setIsEditing(false)} className="btn btn-surface btn-block">
-                                            Cancel
-                                        </button>
+                                            <path
+                                                className="pb-circle"
+                                                strokeDasharray={`${completionPercentage}, 100`}
+                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                                style={{ stroke: completionPercentage === 100 ? '#10B981' : 'var(--pb-primary)' }}
+                                            />
+                                            <text x="18" y="20.35" className="pb-percentage-text">{completionPercentage}%</text>
+                                        </svg>
                                     </div>
-                                )}
+                                </div>
                             </div>
                         </div>
 
-                        {/* Recent Downloads & Activity */}
-                        <div className="card activity-sidebar-card">
-                            <h3 className="section-title">⏱️ History Log</h3>
-                            <div className="recent-download-list">
-                                {RECENT_DOWNLOADS.slice(0, 3).map(item => (
-                                    <div key={item.id} className="download-item">
-                                        <span className="dl-icon">📥</span>
-                                        <div className="dl-info">
-                                            <p className="dl-title">Downloaded <strong>{item.title}</strong></p>
-                                            <span className="dl-date">{item.date}</span>
+                        <div className="pb-profile-layout-grid">
+                            {/* LEFT COLUMN */}
+                            <div className="pb-profile-left-col">
+                                <div className="pb-profile-main-card pb-animate-stagger-2">
+                                    <div className="pb-avatar-uploader-container">
+                                        <div className="pb-avatar-ring-outer">
+                                            <div className="pb-avatar-wrapper">
+                                                {!imageError && user.photo ? (
+                                                    <img
+                                                        src={user.photo.startsWith("blob:") || user.photo.startsWith("data:") || user.photo.startsWith("http")
+                                                            ? user.photo
+                                                            : `${import.meta.env.VITE_CDN_URL || ''}${user.photo.startsWith('/') ? user.photo.slice(1) : user.photo}`
+                                                        }
+                                                        alt="Profile Avatar"
+                                                        className="pb-avatar-img"
+                                                        onError={() => setImageError(true)}
+                                                    />
+                                                ) : (
+                                                    <div className="pb-initials-avatar">
+                                                        {user.name ? user.name.charAt(0) : 'S'}
+                                                    </div>
+                                                )}
+                                                {isEditing && (
+                                                    <label className="pb-avatar-edit-trigger" title="Upload new photo">
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                                                            <circle cx="12" cy="13" r="4" />
+                                                        </svg>
+                                                        <input
+                                                            type="file"
+                                                            accept="image/*"
+                                                            onChange={handleImageUpload}
+                                                            style={{ display: 'none' }}
+                                                        />
+                                                    </label>
+                                                )}
+                                            </div>
                                         </div>
+                                        <h2 className="pb-user-title-name">{user.name || 'Student Name'}</h2>
+                                        <span className="pb-role-badge">Student</span>
                                     </div>
-                                ))}
+
+                                    <div className="pb-sidebar-actions-box">
+                                        {!isEditing ? (
+                                            <button onClick={() => setIsEditing(true)} className="pb-primary-action-btn">
+                                                Edit Details
+                                            </button>
+                                        ) : (
+                                            <div className="pb-editing-actions">
+                                                <button onClick={handleSave} className="pb-save-action-btn">
+                                                    Save Changes
+                                                </button>
+                                                <button onClick={() => setIsEditing(false)} className="pb-cancel-action-btn">
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Recent Downloads & Activity */}
+                                <div className="pb-profile-main-card pb-activity-sidebar-card pb-animate-stagger-3">
+                                    <h3 className="pb-section-title">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '6px', verticalAlign: 'middle' }}>
+                                            <circle cx="12" cy="12" r="10" />
+                                            <polyline points="12 6 12 12 16 14" />
+                                        </svg>
+                                        History Log
+                                    </h3>
+                                    <div className="pb-recent-download-list">
+                                        {RECENT_DOWNLOADS.slice(0, 3).map(item => (
+                                            <div key={item.id} className="pb-download-item">
+                                                <div className="pb-dl-icon">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                                        <polyline points="7 10 12 15 17 10" />
+                                                        <line x1="12" y1="15" x2="12" y2="3" />
+                                                    </svg>
+                                                </div>
+                                                <div className="pb-dl-info">
+                                                    <p className="pb-dl-title">Downloaded <strong>{item.title}</strong></p>
+                                                    <span className="pb-dl-date">{item.date}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
 
-                    {/* Right Main Form details */}
-                    <div className="profile-details-col">
-                        <div className="card form-details-card">
-                            {/* Academic Details (Read Only) */}
-                            <fieldset className="form-section-fieldset">
-                                <legend className="form-section-legend">🎓 Academic Records</legend>
-                                <div className="grid-2">
-                                    <div className="form-group">
-                                        <label className="form-label">Register Number</label>
-                                        <input
-                                            type="text"
-                                            value={user.registerNumber}
-                                            disabled
-                                            className="input"
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="form-label">Department</label>
-                                        <input
-                                            type="text"
-                                            value={user.department}
-                                            disabled
-                                            className="input"
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="form-label">CGPA</label>
-                                        <input
-                                            type="text"
-                                            value={user.cgpa || '8.25'}
-                                            disabled
-                                            className="input"
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="form-label">Active Arrears</label>
-                                        <input
-                                            type="text"
-                                            value={user.arrears || '0'}
-                                            disabled
-                                            className="input"
-                                        />
-                                    </div>
-                                </div>
-                            </fieldset>
+                            {/* Right Main Form details */}
+                            <div className="pb-profile-details-col">
+                                <div className="pb-form-details-card">
+                                    {/* Academic Details (Read Only) */}
+                                    <fieldset className="pb-form-section-fieldset">
+                                        <legend className="pb-form-section-legend">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '8px' }}>
+                                                <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                                                <path d="M6 12v5c3 3 9 3 12 0v-5" />
+                                            </svg>
+                                            Academic Records
+                                        </legend>
+                                        <div className="pb-grid-2">
+                                            <div className="pb-form-group">
+                                                <label className="pb-label">Register Number</label>
+                                                <input
+                                                    type="text"
+                                                    value={user.registerNumber}
+                                                    disabled
+                                                    className="pb-input"
+                                                />
+                                            </div>
+                                            <div className="pb-form-group">
+                                                <label className="pb-label">Department</label>
+                                                <input
+                                                    type="text"
+                                                    value={user.department}
+                                                    disabled
+                                                    className="pb-input"
+                                                />
+                                            </div>
+                                            <div className="pb-form-group">
+                                                <label className="pb-label">CGPA</label>
+                                                <input
+                                                    type="text"
+                                                    value={user.cgpa || '8.25'}
+                                                    disabled
+                                                    className="pb-input"
+                                                />
+                                            </div>
+                                            <div className="pb-form-group">
+                                                <label className="pb-label">Active Arrears</label>
+                                                <input
+                                                    type="text"
+                                                    value={user.arrears || '0'}
+                                                    disabled
+                                                    className="pb-input"
+                                                />
+                                            </div>
+                                        </div>
+                                    </fieldset>
 
-                            {/* Contact Details (Editable) */}
-                            <fieldset className="form-section-fieldset" style={{ marginTop: '32px' }}>
-                                <legend className="form-section-legend">👤 Personal & Contact Info</legend>
-                                <div className="grid-2">
-                                    <div className="form-group">
-                                        <label className="form-label">Full Name</label>
-                                        <input
-                                            type="text"
-                                            name="name"
-                                            value={user.name}
-                                            onChange={handleChange}
-                                            disabled={!isEditing}
-                                            className="input"
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="form-label">Gender</label>
-                                        <select
-                                            name="gender"
-                                            value={user.gender}
-                                            onChange={handleChange}
-                                            disabled={!isEditing}
-                                            className="input"
-                                        >
-                                            <option value="male">Male</option>
-                                            <option value="female">Female</option>
-                                        </select>
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="form-label">Email Address</label>
-                                        <input
-                                            type="email"
-                                            name="email"
-                                            value={user.email}
-                                            onChange={handleChange}
-                                            disabled={!isEditing}
-                                            className="input"
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="form-label">Phone Number</label>
-                                        <input
-                                            type="tel"
-                                            name="phone"
-                                            value={user.phone}
-                                            onChange={handleChange}
-                                            disabled={!isEditing}
-                                            className="input"
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="form-label">Parent's Phone Number</label>
-                                        <input
-                                            type="tel"
-                                            name="parentnumber"
-                                            value={user.parentnumber}
-                                            onChange={handleChange}
-                                            disabled={!isEditing}
-                                            className="input"
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="form-label">Year of Study</label>
-                                        <select
-                                            name="year"
-                                            value={user.year}
-                                            onChange={handleChange}
-                                            disabled={!isEditing}
-                                            className="input"
-                                        >
-                                            <option value="">Select Year</option>
-                                            <option value="1st Year">1st Year</option>
-                                            <option value="2nd Year">2nd Year</option>
-                                            <option value="3rd Year">3rd Year</option>
-                                            <option value="4th Year">4th Year</option>
-                                        </select>
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="form-label">Semester</label>
-                                        <input
-                                            type="number"
-                                            name="semester"
-                                            value={user.semester}
-                                            onChange={handleChange}
-                                            disabled={!isEditing}
-                                            className="input"
-                                            min="1"
-                                            max="8"
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="form-label">Batch</label>
-                                        <select
-                                            name="batch"
-                                            value={user.batch}
-                                            onChange={handleChange}
-                                            disabled={!isEditing}
-                                            className="input"
-                                        >
-                                            <option value="">Select Batch</option>
-                                            <option value="2022-2026">2022-2026</option>
-                                            <option value="2023-2027">2023-2027</option>
-                                            <option value="2024-2028">2024-2028</option>
-                                            <option value="2025-2029">2025-2029</option>
-                                            <option value="2026-2030">2026-2030</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </fieldset>
-
-                            {/* Residence Details (Editable) */}
-                            <fieldset className="form-section-fieldset" style={{ marginTop: '32px' }}>
-                                <legend className="form-section-legend">🏠 Residence & Commute</legend>
-                                <div className="grid-2">
-                                    <div className="form-group">
-                                        <label className="form-label">Residence Type</label>
-                                        <select
-                                            name="residencetype"
-                                            value={user.residencetype}
-                                            onChange={handleChange}
-                                            disabled={!isEditing}
-                                            className="input"
-                                        >
-                                            <option value="">Select Residence Type</option>
-                                            <option value="day scholar">Day Scholar</option>
-                                            <option value="hostel">Hostel</option>
-                                        </select>
-                                    </div>
-
-                                    {user.residencetype === 'hostel' && (
-                                        <>
-                                            <div className="form-group">
-                                                <label className="form-label">Hostel Name</label>
-                                                <select
-                                                    name="hostelname"
-                                                    value={user.hostelname}
+                                    {/* Contact Details (Editable) */}
+                                    <fieldset className="pb-form-section-fieldset" style={{ marginTop: '24px' }}>
+                                        <legend className="pb-form-section-legend">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '8px' }}>
+                                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                                <circle cx="12" cy="7" r="4" />
+                                            </svg>
+                                            Personal & Contact Info
+                                        </legend>
+                                        <div className="pb-grid-2">
+                                            <div className="pb-form-group">
+                                                <label className="pb-label">Full Name</label>
+                                                <input
+                                                    type="text"
+                                                    name="name"
+                                                    value={user.name}
                                                     onChange={handleChange}
                                                     disabled={!isEditing}
-                                                    className="input"
+                                                    className="pb-input"
+                                                />
+                                            </div>
+                                            <div className="pb-form-group">
+                                                <label className="pb-label">Gender</label>
+                                                <select
+                                                    name="gender"
+                                                    value={user.gender}
+                                                    onChange={handleChange}
+                                                    disabled={!isEditing}
+                                                    className="pb-select"
                                                 >
-                                                    <option value="">Select Hostel</option>
-                                                    <option value="M.G.R">M.G.R illam</option>
-                                                    <option value="Janaki ammal">Janaki ammal illam</option>
+                                                    <option value="male">Male</option>
+                                                    <option value="female">Female</option>
                                                 </select>
                                             </div>
-                                            <div className="form-group">
-                                                <label className="form-label">Room Number</label>
+                                            <div className="pb-form-group">
+                                                <label className="pb-label">Email Address</label>
                                                 <input
-                                                    type="text"
-                                                    name="hostelroomno"
-                                                    value={user.hostelroomno}
+                                                    type="email"
+                                                    name="email"
+                                                    value={user.email}
                                                     onChange={handleChange}
                                                     disabled={!isEditing}
-                                                    className="input"
+                                                    className="pb-input"
                                                 />
                                             </div>
-                                        </>
-                                    )}
+                                            <div className="pb-form-group">
+                                                <label className="pb-label">Phone Number</label>
+                                                <input
+                                                    type="tel"
+                                                    name="phone"
+                                                    value={user.phone}
+                                                    onChange={handleChange}
+                                                    disabled={!isEditing}
+                                                    className="pb-input"
+                                                />
+                                            </div>
+                                            <div className="pb-form-group">
+                                                <label className="pb-label">Parent's Phone Number</label>
+                                                <input
+                                                    type="tel"
+                                                    name="parentnumber"
+                                                    value={user.parentnumber}
+                                                    onChange={handleChange}
+                                                    disabled={!isEditing}
+                                                    className="pb-input"
+                                                />
+                                            </div>
+                                            <div className="pb-form-group">
+                                                <label className="pb-label">Year of Study</label>
+                                                <select
+                                                    name="year"
+                                                    value={user.year}
+                                                    onChange={handleChange}
+                                                    disabled={!isEditing}
+                                                    className="pb-select"
+                                                >
+                                                    <option value="">Select Year</option>
+                                                    <option value="1st Year">1st Year</option>
+                                                    <option value="2nd Year">2nd Year</option>
+                                                    <option value="3rd Year">3rd Year</option>
+                                                    <option value="4th Year">4th Year</option>
+                                                </select>
+                                            </div>
+                                            <div className="pb-form-group">
+                                                <label className="pb-label">Semester</label>
+                                                <input
+                                                    type="number"
+                                                    name="semester"
+                                                    value={user.semester}
+                                                    onChange={handleChange}
+                                                    disabled={!isEditing}
+                                                    className="pb-input"
+                                                    min="1"
+                                                    max="8"
+                                                />
+                                            </div>
+                                            <div className="pb-form-group">
+                                                <label className="pb-label">Batch</label>
+                                                <select
+                                                    name="batch"
+                                                    value={user.batch}
+                                                    onChange={handleChange}
+                                                    disabled={!isEditing}
+                                                    className="pb-select"
+                                                >
+                                                    <option value="">Select Batch</option>
+                                                    <option value="2022-2026">2022-2026</option>
+                                                    <option value="2023-2027">2023-2027</option>
+                                                    <option value="2024-2028">2024-2028</option>
+                                                    <option value="2025-2029">2025-2029</option>
+                                                    <option value="2026-2030">2026-2030</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </fieldset>
 
-                                    {user.residencetype === 'day scholar' && (
-                                        <>
-                                            <div className="form-group">
-                                                <label className="form-label">Bus Number</label>
-                                                <input
-                                                    type="text"
-                                                    name="busno"
-                                                    value={user.busno}
+                                    {/* Residence Details (Editable) */}
+                                    <fieldset className="pb-form-section-fieldset" style={{ marginTop: '24px' }}>
+                                        <legend className="pb-form-section-legend">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '8px' }}>
+                                                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                                                <polyline points="9 22 9 12 15 12 15 22" />
+                                            </svg>
+                                            Residence & Commute
+                                        </legend>
+                                        <div className="pb-grid-2">
+                                            <div className="pb-form-group">
+                                                <label className="pb-label">Residence Type</label>
+                                                <select
+                                                    name="residencetype"
+                                                    value={user.residencetype}
                                                     onChange={handleChange}
                                                     disabled={!isEditing}
-                                                    className="input"
-                                                />
+                                                    className="pb-select"
+                                                >
+                                                    <option value="">Select Residence Type</option>
+                                                    <option value="day scholar">Day Scholar</option>
+                                                    <option value="hostel">Hostel</option>
+                                                </select>
                                             </div>
-                                            <div className="form-group">
-                                                <label className="form-label">Boarding Point</label>
-                                                <input
-                                                    type="text"
-                                                    name="boardingpoint"
-                                                    value={user.boardingpoint}
-                                                    onChange={handleChange}
-                                                    disabled={!isEditing}
-                                                    className="input"
-                                                />
-                                            </div>
-                                        </>
-                                    )}
+
+                                            {user.residencetype === 'hostel' && (
+                                                <>
+                                                    <div className="pb-form-group">
+                                                        <label className="pb-label">Hostel Name</label>
+                                                        <select
+                                                            name="hostelname"
+                                                            value={user.hostelname}
+                                                            onChange={handleChange}
+                                                            disabled={!isEditing}
+                                                            className="pb-select"
+                                                        >
+                                                            <option value="">Select Hostel</option>
+                                                            <option value="M.G.R">M.G.R illam</option>
+                                                            <option value="Janaki ammal">Janaki ammal illam</option>
+                                                        </select>
+                                                    </div>
+                                                    <div className="pb-form-group">
+                                                        <label className="pb-label">Room Number</label>
+                                                        <input
+                                                            type="text"
+                                                            name="hostelroomno"
+                                                            value={user.hostelroomno}
+                                                            onChange={handleChange}
+                                                            disabled={!isEditing}
+                                                            className="pb-input"
+                                                        />
+                                                    </div>
+                                                </>
+                                            )}
+
+                                            {user.residencetype === 'day scholar' && (
+                                                <>
+                                                    <div className="pb-form-group">
+                                                        <label className="pb-label">Bus Number</label>
+                                                        <input
+                                                            type="text"
+                                                            name="busno"
+                                                            value={user.busno}
+                                                            onChange={handleChange}
+                                                            disabled={!isEditing}
+                                                            className="pb-input"
+                                                        />
+                                                    </div>
+                                                    <div className="pb-form-group">
+                                                        <label className="pb-label">Boarding Point</label>
+                                                        <input
+                                                            type="text"
+                                                            name="boardingpoint"
+                                                            value={user.boardingpoint}
+                                                            onChange={handleChange}
+                                                            disabled={!isEditing}
+                                                            className="pb-input"
+                                                        />
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    </fieldset>
                                 </div>
-                            </fieldset>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
+                </main>
             </div>{/* end desktop */}
 
-            {/* ── MOBILE VIEW ── */}
-            <div className="lux-mobile-view cred-page-bg">
-                {/* Hero */}
-                <div className="mob-profile-hero animate-cred-enter cred-stagger-1">
-                    <div className="mob-hero-avatar-wrap">
-                        {!imageError && user?.photo ? (
-                            <img
-                                src={user.photo.startsWith('blob:') || user.photo.startsWith('data:') || user.photo.startsWith('http')
-                                    ? user.photo
-                                    : `${import.meta.env.VITE_CDN_URL || ''}${user.photo.startsWith('/') ? user.photo.slice(1) : user.photo}`}
-                                alt="Profile"
-                                className="mob-hero-img"
-                                onError={() => setImageError(true)}
-                                style={{border: '3px solid #D4AF37', boxShadow: '0 0 20px rgba(212,175,55,0.3)', padding: '4px'}}
-                            />
-                        ) : (
-                            <div className="mob-hero-initials" style={{background: 'linear-gradient(135deg, #1E3A8A, #0F172A)', color: '#FFFFFF', border: '3px solid rgba(255,255,255,0.15)'}}>{user.name ? user.name.charAt(0).toUpperCase() : 'S'}</div>
-                        )}
-                        {isEditing && (
-                            <label className="mob-avatar-edit" style={{background: '#D4AF37'}}>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0F172A" strokeWidth="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                                <input type="file" accept="image/*" onChange={handleImageUpload} style={{display:'none'}} />
-                            </label>
-                        )}
-                    </div>
-                    <h1 className="cred-h2" style={{color: 'white', margin: '12px 0 0 0'}}>{user.name || 'Student Name'}</h1>
-                    <p className="cred-gold-text" style={{fontSize: '13px', fontWeight: '600', margin: '4px 0'}}>{user.department || 'Department'} &bull; {user.year || 'Year'}</p>
-
-                    {/* Completion bar */}
-                    <div className="mob-completion-bar-wrap" style={{marginTop: '12px'}}>
-                        <div className="mob-completion-bar-track">
-                            <div className="mob-completion-bar-fill" style={{width: `${completionPercentage}%`, background: 'linear-gradient(90deg, #D4AF37, #FBBF24)'}} />
-                        </div>
-                        <span className="mob-completion-pct" style={{color: '#D4AF37'}}>{completionPercentage}% Complete</span>
-                    </div>
-
-                    {/* Edit / Save */}
-                    {!isEditing ? (
-                        <button onClick={() => setIsEditing(true)} className="mob-edit-btn" style={{marginTop: '16px'}}>Edit Profile</button>
-                    ) : (
-                        <div className="mob-edit-actions" style={{marginTop: '16px'}}>
-                            <button onClick={handleSave} className="mob-save-btn">Save Changes</button>
-                            <button onClick={() => setIsEditing(false)} className="mob-cancel-btn">Cancel</button>
-                        </div>
-                    )}
-                </div>
-
-                <div className="mob-scroll-body">
-                    {/* Academic Section */}
-                    <div className="cred-card mob-section-card animate-cred-enter cred-stagger-2">
-                        <h3 className="mob-section-head">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cred-gold)" strokeWidth="2.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-                            Academic Records
-                        </h3>
-                        <div className="mob-field-row"><span className="mob-field-lbl">Register No</span><span className="mob-field-val cred-text-primary">{user.registerNumber || '—'}</span></div>
-                        <div className="mob-field-row"><span className="mob-field-lbl">Department</span><span className="mob-field-val cred-text-primary">{user.department || '—'}</span></div>
-                        <div className="mob-field-row"><span className="mob-field-lbl">CGPA</span><span className="mob-field-val cred-text-primary">{user.cgpa || '8.25'}</span></div>
-                        <div className="mob-field-row" style={{borderBottom: 'none'}}><span className="mob-field-lbl">Arrears</span><span className="mob-field-val cred-text-primary">{user.arrears || '0'}</span></div>
-                    </div>
-
-                    {/* Personal Section */}
-                    <div className="cred-card mob-section-card animate-cred-enter cred-stagger-3">
-                        <h3 className="mob-section-head">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cred-gold)" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            Personal & Contact
-                        </h3>
-                        <div className="mob-form-group">
-                            <label className="mob-label">Full Name</label>
-                            <input type="text" name="name" value={user.name} onChange={handleChange} disabled={!isEditing} className="mob-input" />
-                        </div>
-                        <div className="mob-form-group">
-                            <label className="mob-label">Email</label>
-                            <input type="email" name="email" value={user.email} onChange={handleChange} disabled={!isEditing} className="mob-input" />
-                        </div>
-                        <div className="mob-form-group">
-                            <label className="mob-label">Phone</label>
-                            <input type="tel" name="phone" value={user.phone} onChange={handleChange} disabled={!isEditing} className="mob-input" />
-                        </div>
-                        <div className="mob-form-group">
-                            <label className="mob-label">Parent's Phone</label>
-                            <input type="tel" name="parentnumber" value={user.parentnumber} onChange={handleChange} disabled={!isEditing} className="mob-input" />
-                        </div>
-                        <div className="mob-form-group">
-                            <label className="mob-label">Gender</label>
-                            <select name="gender" value={user.gender} onChange={handleChange} disabled={!isEditing} className="mob-select">
-                                <option value="male">Male</option>
-                                <option value="female">Female</option>
-                            </select>
-                        </div>
-                        <div className="mob-form-group">
-                            <label className="mob-label">Year</label>
-                            <select name="year" value={user.year} onChange={handleChange} disabled={!isEditing} className="mob-select">
-                                <option value="">Select Year</option>
-                                <option value="1st Year">1st Year</option>
-                                <option value="2nd Year">2nd Year</option>
-                                <option value="3rd Year">3rd Year</option>
-                                <option value="4th Year">4th Year</option>
-                            </select>
-                        </div>
-                        <div className="mob-form-group">
-                            <label className="mob-label">Batch</label>
-                            <select name="batch" value={user.batch} onChange={handleChange} disabled={!isEditing} className="mob-select">
-                                <option value="">Select Batch</option>
-                                <option value="2022-2026">2022-2026</option>
-                                <option value="2023-2027">2023-2027</option>
-                                <option value="2024-2028">2024-2028</option>
-                                <option value="2025-2029">2025-2029</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* Residence Section */}
-                    <div className="cred-card mob-section-card animate-cred-enter cred-stagger-4">
-                        <h3 className="mob-section-head">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cred-gold)" strokeWidth="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                            Residence & Commute
-                        </h3>
-                        <div className="mob-form-group">
-                            <label className="mob-label">Residence Type</label>
-                            <select name="residencetype" value={user.residencetype} onChange={handleChange} disabled={!isEditing} className="mob-select">
-                                <option value="">Select Type</option>
-                                <option value="day scholar">Day Scholar</option>
-                                <option value="hostel">Hostel</option>
-                            </select>
-                        </div>
-                        {user.residencetype === 'hostel' && (
-                            <>
-                                <div className="mob-form-group">
-                                    <label className="mob-label">Hostel Name</label>
-                                    <select name="hostelname" value={user.hostelname} onChange={handleChange} disabled={!isEditing} className="mob-select">
-                                        <option value="">Select Hostel</option>
-                                        <option value="M.G.R">M.G.R illam</option>
-                                        <option value="Janaki ammal">Janaki ammal illam</option>
-                                    </select>
-                                </div>
-                                <div className="mob-form-group">
-                                    <label className="mob-label">Room Number</label>
-                                    <input type="text" name="hostelroomno" value={user.hostelroomno} onChange={handleChange} disabled={!isEditing} className="mob-input" />
-                                </div>
-                            </>
-                        )}
-                        {user.residencetype === 'day scholar' && (
-                            <>
-                                <div className="mob-form-group">
-                                    <label className="mob-label">Bus Number</label>
-                                    <input type="text" name="busno" value={user.busno} onChange={handleChange} disabled={!isEditing} className="mob-input" />
-                                </div>
-                                <div className="mob-form-group">
-                                    <label className="mob-label">Boarding Point</label>
-                                    <input type="text" name="boardingpoint" value={user.boardingpoint} onChange={handleChange} disabled={!isEditing} className="mob-input" />
-                                </div>
-                            </>
-                        )}
-                    </div>
-                </div>
-
-                {/* Bottom Nav */}
-                <StudentBottomNav activeTab="profile" />
-            </div>{/* end mobile */}
+            {/* Bottom Nav */}
+            <StudentBottomNav activeTab="profile" />
 
             {showCropper && tempImage && (
                 <ImageCropper
@@ -744,249 +616,378 @@ const Profile: React.FC = () => {
             )}
 
             <style>{`
-                .profile-page-view {
-                    background: var(--bg);
+                .pb-profile-page {
+                    min-height: 100vh;
+                    background: var(--pb-bg);
                 }
-                .btn-back {
-                    background: none;
-                    border: none;
-                    color: var(--primary);
-                    font-size: 0.9rem;
-                    font-weight: 600;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    padding: 8px 12px;
-                    border-radius: var(--radius-sm);
-                    transition: var(--transition-fast);
-                }
-                .btn-back:hover {
-                    background: var(--primary-light);
-                    color: var(--primary-dark);
-                }
-
-                /* Completion Card Circular tracker */
-                .completion-card {
+                /* Completion Card */
+                .pb-completion-card {
+                    background: var(--pb-card);
+                    border: 1px solid var(--pb-card-border);
+                    border-radius: var(--pb-radius);
+                    box-shadow: var(--pb-shadow);
+                    padding: 24px;
                     margin-bottom: 24px;
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
                 }
-                .completion-flex {
+                .pb-completion-flex {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
                     gap: 24px;
                 }
-                .completion-info h3 {
+                .pb-completion-info h3 {
                     font-size: 1.15rem;
-                    margin-bottom: 6px;
-                    color: var(--text-1);
+                    font-weight: 800;
+                    margin: 0 0 6px 0;
+                    color: var(--pb-text);
+                    letter-spacing: -0.01em;
                 }
-                .completion-desc {
+                .pb-completion-desc {
                     font-size: 0.88rem;
-                    color: var(--text-3);
+                    color: var(--pb-text-3);
                     margin: 0;
                     max-width: 600px;
                 }
-                .progress-circle-wrap {
+                .pb-progress-circle-wrap {
                     width: 72px;
                     height: 72px;
                     flex-shrink: 0;
                 }
-                .progress-circle {
+                .pb-progress-circle {
                     width: 100%;
                     height: 100%;
                 }
-                .circle-bg {
+                .pb-circle-bg {
                     fill: none;
-                    stroke: var(--bg-elevated);
+                    stroke: rgba(59, 130, 246, 0.05);
                     stroke-width: 3.5;
                 }
-                .circle {
+                .pb-circle {
                     fill: none;
                     stroke-width: 3.5;
                     stroke-linecap: round;
                     transition: stroke-dasharray 0.3s ease;
                 }
-                .percentage-text {
+                .pb-percentage-text {
                     font-family: inherit;
                     font-size: 8px;
                     font-weight: 800;
                     text-anchor: middle;
-                    fill: var(--text-1);
+                    fill: var(--pb-text);
                 }
 
-                /* Layout details */
-                .profile-layout-grid {
+                /* Layout Grid */
+                .pb-profile-layout-grid {
                     display: grid;
-                    grid-template-columns: 320px 1fr;
+                    grid-template-columns: 300px 1fr;
                     gap: 24px;
                     align-items: start;
                 }
-                .profile-image-card {
+                @media (max-width: 992px) {
+                    .pb-profile-layout-grid {
+                        grid-template-columns: 1fr;
+                        gap: 20px;
+                    }
+                }
+                .pb-profile-left-col {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 20px;
+                }
+                .pb-profile-main-card {
+                    background: var(--pb-card);
+                    border: 1px solid var(--pb-card-border);
+                    border-radius: var(--pb-radius);
+                    box-shadow: var(--pb-shadow);
+                    padding: 24px;
                     display: flex;
                     flex-direction: column;
                     align-items: center;
-                    text-align: center;
-                    gap: 24px;
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
                 }
-                .avatar-uploader-container {
+                .pb-avatar-uploader-container {
                     display: flex;
                     flex-direction: column;
                     align-items: center;
                     width: 100%;
                 }
-                .avatar-wrapper {
-                    position: relative;
-                    width: 130px;
-                    height: 130px;
+                .pb-avatar-ring-outer {
+                    width: 120px;
+                    height: 120px;
                     border-radius: 50%;
-                    border: 4px solid var(--surface);
-                    box-shadow: var(--shadow-md);
-                    margin-bottom: 12px;
+                    background: linear-gradient(135deg, var(--pb-primary), var(--pb-primary-light));
+                    padding: 3px;
+                    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
+                    margin-bottom: 16px;
                 }
-                .avatar-img {
+                .pb-avatar-wrapper {
+                    position: relative;
+                    width: 100%;
+                    height: 100%;
+                    border-radius: 50%;
+                    background: #fff;
+                    overflow: visible;
+                }
+                .pb-avatar-img {
                     width: 100%;
                     height: 100%;
                     border-radius: 50%;
                     object-fit: cover;
                 }
-                .avatar-edit-trigger {
+                .pb-initials-avatar {
+                    width: 100%;
+                    height: 100%;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: var(--pb-secondary);
+                    color: var(--pb-primary);
+                    font-size: 3rem;
+                    font-weight: 800;
+                    text-transform: uppercase;
+                }
+                .pb-avatar-edit-trigger {
                     position: absolute;
                     bottom: 0;
                     right: 0;
-                    background: var(--primary);
-                    color: white;
-                    width: 36px;
-                    height: 36px;
+                    background: var(--pb-primary);
+                    color: #fff;
+                    width: 32px;
+                    height: 32px;
                     border-radius: 50%;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     cursor: pointer;
-                    border: 2.5px solid var(--surface);
-                    box-shadow: var(--shadow-sm);
-                    transition: var(--spring);
+                    border: 2px solid #fff;
+                    box-shadow: var(--pb-shadow);
+                    transition: var(--pb-spring);
                 }
-                .avatar-edit-trigger:hover {
+                .pb-avatar-edit-trigger:hover {
                     transform: scale(1.1);
-                    background: var(--primary-dark);
+                    background: var(--pb-primary-dark);
                 }
-                .user-title-name {
-                    font-size: 1.25rem;
+                .pb-user-title-name {
+                    font-size: 1.2rem;
                     font-weight: 800;
-                    color: var(--text-1);
+                    color: var(--pb-text);
                     margin: 0;
+                    letter-spacing: -0.01e;
+                    text-align: center;
                 }
-                
-                .sidebar-actions-box {
+                .pb-role-badge {
+                    margin-top: 8px;
+                    font-size: 0.72rem;
+                    font-weight: 600;
+                    color: var(--pb-primary);
+                    background: var(--pb-secondary);
+                    padding: 2px 10px;
+                    border-radius: 99px;
+                }
+
+                .pb-sidebar-actions-box {
                     width: 100%;
-                    border-top: 1px solid var(--border);
+                    border-top: 1px solid rgba(59, 130, 246, 0.08);
                     padding-top: 16px;
+                    margin-top: 16px;
                 }
-                .editing-actions {
+                .pb-primary-action-btn {
+                    width: 100%;
+                    height: 40px;
+                    background: linear-gradient(135deg, var(--pb-primary), var(--pb-primary-dark));
+                    color: #fff;
+                    font-weight: 600;
+                    border: none;
+                    border-radius: 10px;
+                    cursor: pointer;
+                    transition: var(--pb-transition);
+                    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+                }
+                .pb-primary-action-btn:hover {
+                    transform: translateY(-1px);
+                    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.25);
+                }
+                .pb-editing-actions {
                     display: flex;
                     flex-direction: column;
                     gap: 8px;
+                    width: 100%;
                 }
+                .pb-save-action-btn {
+                    width: 100%;
+                    height: 40px;
+                    background: #10B981;
+                    color: #fff;
+                    font-weight: 600;
+                    border: none;
+                    border-radius: 10px;
+                    cursor: pointer;
+                    transition: var(--pb-transition);
+                }
+                .pb-save-action-btn:hover { background: #059669; }
+                .pb-cancel-action-btn {
+                    width: 100%;
+                    height: 40px;
+                    background: rgba(59, 130, 246, 0.05);
+                    border: 1px solid rgba(59, 130, 246, 0.1);
+                    color: var(--pb-text-2);
+                    font-weight: 600;
+                    border-radius: 10px;
+                    cursor: pointer;
+                    transition: var(--pb-transition);
+                }
+                .pb-cancel-action-btn:hover { background: rgba(59, 130, 246, 0.1); }
 
-                .activity-sidebar-card {
-                    margin-top: 24px;
+                /* Downloads Panel */
+                .pb-activity-sidebar-card {
+                    align-items: flex-start;
                 }
-                .recent-download-list {
+                .pb-recent-download-list {
                     display: flex;
                     flex-direction: column;
-                    gap: 16px;
-                    margin-top: 12px;
+                    gap: 14px;
+                    margin-top: 14px;
+                    width: 100%;
                 }
-                .download-item {
+                .pb-download-item {
                     display: flex;
                     align-items: flex-start;
                     gap: 12px;
                 }
-                .dl-icon {
-                    font-size: 1.2rem;
-                    line-height: 1;
-                    padding: 6px;
-                    background: var(--bg-elevated);
+                .pb-dl-icon {
+                    width: 30px;
+                    height: 30px;
+                    background: rgba(59, 130, 246, 0.05);
+                    border: 1px solid rgba(59, 130, 246, 0.08);
+                    color: var(--pb-primary);
                     border-radius: 8px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
                 }
-                .dl-info {
+                .pb-dl-info {
                     flex: 1;
                 }
-                .dl-title {
-                    font-size: 0.85rem;
+                .pb-dl-title {
+                    font-size: 0.8rem;
                     margin: 0;
-                    color: var(--text-2);
+                    color: var(--pb-text-2);
+                    line-height: 1.35;
                 }
-                .dl-date {
+                .pb-dl-date {
                     font-size: 0.72rem;
-                    color: var(--text-4);
+                    color: var(--pb-text-4);
                 }
 
-                .form-details-card {
-                    padding: var(--space-8) var(--space-6) !important;
+                /* Form Details Card */
+                .pb-form-details-card {
+                    background: var(--pb-card);
+                    border: 1px solid var(--pb-card-border);
+                    border-radius: var(--pb-radius);
+                    box-shadow: var(--pb-shadow);
+                    padding: 28px;
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
                 }
-
-                /* Fieldset styles */
-                .form-section-fieldset {
+                .pb-form-section-fieldset {
                     border: none;
                     margin: 0;
                     padding: 0;
                 }
-                .form-section-legend {
+                .pb-form-section-legend {
                     font-size: 1.05rem;
                     font-weight: 800;
-                    color: var(--text-1);
+                    color: var(--pb-text);
                     margin-bottom: 20px;
-                    border-bottom: 2px solid var(--bg-elevated);
+                    border-bottom: 1px solid rgba(59, 130, 246, 0.08);
                     padding-bottom: 8px;
                     width: 100%;
+                    display: flex;
+                    align-items: center;
+                    letter-spacing: -0.01em;
                 }
 
-                /* ── DESKTOP / MOBILE SPLIT ── */
-                .lux-desktop-view { display: block; }
-                .lux-mobile-view  { display: none; }
-                @media (max-width: 768px) {
-                    .lux-desktop-view { display: none !important; }
-                    .lux-mobile-view  { display: flex !important; flex-direction: column; min-height: 100vh; background: linear-gradient(135deg, #F7F3E6 0%, #E8EEF5 45%, #C8D9F2 100%); font-family: 'Inter', -apple-system, sans-serif; }
+                .pb-grid-2 {
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 16px;
+                }
+                @media (max-width: 576px) {
+                    .pb-grid-2 {
+                        grid-template-columns: 1fr;
+                        gap: 14px;
+                    }
+                }
+                .pb-form-group {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 6px;
+                }
+                .pb-label {
+                    font-size: 0.72rem;
+                    font-weight: 700;
+                    color: var(--pb-text-3);
+                    text-transform: uppercase;
+                    letter-spacing: 0.06em;
+                    margin-bottom: 0;
+                }
+                .pb-input, .pb-select {
+                    width: 100%;
+                    height: 40px;
+                    padding: 0 12px;
+                    border-radius: 10px;
+                    border: 1.5px solid rgba(59, 130, 246, 0.12);
+                    background: #fff;
+                    font-size: 0.88rem;
+                    font-family: inherit;
+                    color: var(--pb-text);
+                    transition: var(--pb-transition);
+                    box-sizing: border-box;
+                    outline: none;
+                }
+                .pb-input:focus, .pb-select:focus {
+                    border-color: var(--pb-primary);
+                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
+                }
+                .pb-input:disabled, .pb-select:disabled {
+                    background: rgba(241, 245, 249, 0.7);
+                    color: var(--pb-text-4);
+                    cursor: not-allowed;
+                    border-color: rgba(59, 130, 246, 0.06);
+                }
+                .pb-select {
+                    appearance: none;
+                    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394A3B8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+                    background-repeat: no-repeat;
+                    background-position: right 10px center;
+                    background-size: 14px;
+                    padding-right: 32px;
                 }
 
-                /* ==========================================
-                   CRED PREMIUM MOBILE STYLES (PROFILE)
-                   ========================================== */
-                /* Profile hero — dark luxury panel for identity-card look */
-                .mob-profile-hero { padding:28px 20px 24px; display:flex; flex-direction:column; align-items:center; gap:10px; text-align:center; position: relative; z-index: 10; background: linear-gradient(180deg, #1E293B 0%, #0F172A 100%); }
-                .mob-hero-avatar-wrap { position:relative; width:100px; height:100px; }
-                .mob-hero-img { width:100px; height:100px; border-radius:50%; object-fit:cover; }
-                .mob-hero-initials { width:100px; height:100px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:36px; font-weight:800; }
-                .mob-avatar-edit { position:absolute; bottom:0; right:0; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border: 2px solid #FFFFFF; }
-                .mob-hero-name { font-size:20px; font-weight:800; color:#FFFFFF; margin:0; }
-                .mob-hero-sub  { font-size:13px; color:#94A3B8; margin:0; }
-                .mob-completion-bar-wrap { width:100%; display:flex; align-items:center; gap:12px; }
-                .mob-completion-bar-track { flex:1; height:8px; border-radius:10px; overflow:hidden; background:rgba(255,255,255,0.1) !important; border:none !important; }
-                .mob-completion-bar-fill { height:100%; border-radius:10px; transition:width 0.4s; }
-                .mob-completion-pct { font-size:12px; font-weight:800; white-space:nowrap; }
-                .mob-edit-btn { border:none; border-radius:12px; padding:12px 28px; font-size:15px; font-weight:800; cursor:pointer; font-family:inherit; transition: transform 0.2s; background: linear-gradient(135deg, #D4AF37, #FBBF24); color: #0F172A; }
-                .mob-edit-btn:active { transform: scale(0.96); }
-                .mob-edit-actions { display:flex; gap:12px; width: 100%; justify-content: center; }
-                .mob-save-btn { border:none; border-radius:12px; padding:12px 24px; font-size:15px; font-weight:800; cursor:pointer; font-family:inherit; transition: transform 0.2s; flex: 1; background: linear-gradient(135deg, #D4AF37, #FBBF24); color: #0F172A; }
-                .mob-save-btn:active { transform: scale(0.96); }
-                .mob-cancel-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius:12px; padding:12px 24px; font-size:15px; font-weight:800; cursor:pointer; font-family:inherit; color:#FFFFFF; transition: transform 0.2s; flex: 1; }
-                .mob-cancel-btn:active { transform: scale(0.96); }
-
-                .mob-scroll-body { flex:1; overflow-y:auto; padding:24px 16px 100px; display:flex; flex-direction:column; gap:16px; }
-
-                .mob-section-card { padding:20px; display:flex; flex-direction:column; gap:12px; }
-                .mob-section-head { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:800; color:#0F172A; margin:0 0 8px; padding-bottom:12px; border-bottom:1px solid rgba(226,232,240,0.8); }
-                .mob-field-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(226,232,240,0.6); }
-                .mob-field-lbl { font-size:13px; font-weight:600; color:#64748B; }
-                .mob-field-val { font-size:14px; font-weight:700; color:#0F172A; text-align:right; }
-
-                .mob-form-group { display:flex; flex-direction:column; gap:8px; margin-bottom: 4px; }
-                .mob-label { font-size:12px; font-weight:700; color:#64748B; text-transform: uppercase; letter-spacing: 0.5px; }
-                .mob-input, .mob-select { width:100%; padding:14px 16px; border:1px solid rgba(226,232,240,0.8); border-radius:12px; font-size:15px; font-weight:600; color:#0F172A; background:#FFFFFF; font-family:inherit; outline:none; box-sizing:border-box; transition:all 0.2s; }
-                .mob-input:focus, .mob-select:focus { border-color:var(--cred-gold); background:#FFFFFF; box-shadow: 0 0 0 3px rgba(184,134,11,0.12); }
-                .mob-input:disabled, .mob-select:disabled { opacity:0.6; cursor:not-allowed; background:#F8FAFC; border-color: rgba(226,232,240,0.5); }
+                @media (max-width: 850px) {
+                    .pb-profile-page .student-content {
+                        padding-top: 88px !important;
+                    }
+                    .pb-profile-page {
+                        padding-bottom: 100px;
+                    }
+                }
+                @media (max-width: 576px) {
+                    .pb-form-details-card {
+                        padding: 16px;
+                    }
+                    .pb-profile-main-card {
+                        padding: 16px;
+                    }
+                    .pb-completion-card {
+                        padding: 16px;
+                    }
+                }
             `}</style>
         </div>
     );
