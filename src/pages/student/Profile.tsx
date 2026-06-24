@@ -363,8 +363,10 @@ const Profile: React.FC = () => {
                                                 <label className="pb-label">Register Number</label>
                                                 <input
                                                     type="text"
+                                                    name="registerNumber"
                                                     value={user.registerNumber}
-                                                    disabled
+                                                    onChange={handleChange}
+                                                    disabled={!isEditing}
                                                     className="pb-input"
                                                 />
                                             </div>
@@ -380,18 +382,26 @@ const Profile: React.FC = () => {
                                             <div className="pb-form-group">
                                                 <label className="pb-label">CGPA</label>
                                                 <input
-                                                    type="text"
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    max="10"
+                                                    name="cgpa"
                                                     value={user.cgpa || '8.25'}
-                                                    disabled
+                                                    onChange={handleChange}
+                                                    disabled={!isEditing}
                                                     className="pb-input"
                                                 />
                                             </div>
                                             <div className="pb-form-group">
                                                 <label className="pb-label">Active Arrears</label>
                                                 <input
-                                                    type="text"
+                                                    type="number"
+                                                    min="0"
+                                                    name="arrears"
                                                     value={user.arrears || '0'}
-                                                    disabled
+                                                    onChange={handleChange}
+                                                    disabled={!isEditing}
                                                     className="pb-input"
                                                 />
                                             </div>

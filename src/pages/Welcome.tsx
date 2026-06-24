@@ -11,29 +11,45 @@ function useScrollReveal() {
       (entries) =>
         entries.forEach((e) => {
           if (e.isIntersecting) {
-            e.target.classList.add('wlc-revealed');
+            e.target.classList.add('jit-revealed');
             obs.unobserve(e.target);
           }
         }),
-      { threshold: 0.08 }
+      { threshold: 0.06 }
     );
-    el.querySelectorAll('.wlc-reveal').forEach((n) => obs.observe(n));
+    el.querySelectorAll('.jit-reveal').forEach((n) => obs.observe(n));
     return () => obs.disconnect();
   }, []);
   return ref;
 }
 
+/* ─── Animated Counter ─── */
+function useCounter(target: number, duration = 1800, start = false) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    if (!start) return;
+    let startTime: number | null = null;
+    const step = (ts: number) => {
+      if (!startTime) startTime = ts;
+      const pct = Math.min((ts - startTime) / duration, 1);
+      const ease = 1 - Math.pow(1 - pct, 3);
+      setVal(Math.floor(ease * target));
+      if (pct < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, [start, target, duration]);
+  return val;
+}
+
 /* ─── Data ─── */
-const roles = [
+const portals = [
   {
     id: 'student',
-    title: 'Student',
-    desc: 'Academics, outpass & attendance',
+    title: 'Student Portal',
+    desc: 'Your gateway to academics, resources, and campus life.',
     route: '/student-login',
-    accent: '#1E6FD9',
-    bg: 'rgba(234,244,255,0.9)',
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
         <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
         <path d="M6 12v5c3 3 9 3 12 0v-5" />
       </svg>
@@ -41,13 +57,11 @@ const roles = [
   },
   {
     id: 'faculty',
-    title: 'Faculty',
-    desc: 'Classes, grades & communication',
+    title: 'Faculty Portal',
+    desc: 'Manage classes, students, and academic workflows.',
     route: '/staff-login',
-    accent: '#4338CA',
-    bg: 'rgba(238,236,255,0.9)',
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
         <circle cx="9" cy="7" r="4" />
         <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
@@ -55,172 +69,143 @@ const roles = [
     ),
   },
   {
-    id: 'warden',
-    title: 'Warden',
-    desc: 'Hostel management & outpass',
-    route: '/warden-login',
-    accent: '#047857',
-    bg: 'rgba(236,253,245,0.9)',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-        <polyline points="9 22 9 12 15 12 15 22" />
-      </svg>
-    ),
-  },
-  {
     id: 'yearincharge',
     title: 'Year Incharge',
-    desc: 'Administrative oversight',
+    desc: 'Oversee year activities, approvals, and monitoring.',
     route: '/year-incharge-login',
-    accent: '#B45309',
-    bg: 'rgba(255,251,235,0.9)',
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
         <rect x="2" y="3" width="20" height="14" rx="2" />
         <path d="M8 21h8M12 17v4" />
       </svg>
     ),
   },
   {
-    id: 'security',
-    title: 'Security',
-    desc: 'Gate control & verification',
-    route: '/watchmanlogin',
-    accent: '#B91C1C',
-    bg: 'rgba(254,242,242,0.9)',
+    id: 'warden',
+    title: 'Warden Portal',
+    desc: 'Manage systems, users, and institutional settings.',
+    route: '/wardenlogin',
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
+        <path d="M12 2v2m0 16v2M2 12h2m16 0h2" />
+      </svg>
+    ),
+  },
+  {
+    id: 'security',
+    title: 'Security Portal',
+    desc: 'Monitor security, visitors, and campus safety.',
+    route: '/watchmanlogin',
+    icon: (
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
       </svg>
     ),
   },
 ];
 
-const stats = [
-  { value: '1,200+', label: 'Students', sub: 'Active learners enrolled', icon: '🎓' },
-  { value: '85+', label: 'Faculty', sub: 'Expert educators & mentors', icon: '👨‍🏫' },
-  { value: '8', label: 'Departments', sub: 'Academic divisions', icon: '🏛️' },
-  { value: '100%', label: 'Paperless', sub: 'Fully digital operations', icon: '♻️' },
+const statsData = [
+  { label: 'Students', value: 1200, suffix: '+', prefix: '', icon: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+  )},
+  { label: 'Faculty Members', value: 85, suffix: '+', prefix: '', icon: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+  )},
+  { label: 'Departments', value: 8, suffix: '+', prefix: '', icon: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="9" width="18" height="11" rx="2"/><path d="M3 9l9-6 9 6"/></svg>
+  )},
+  { label: 'Placement Rate', value: 98, suffix: '%', prefix: '', icon: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+  )},
+  { label: 'Years of Excellence', value: 15, suffix: '+', prefix: '', icon: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+  )},
 ];
 
 const features = [
   {
-    title: 'Outpass Management',
+    title: 'Academic Management',
+    desc: 'Centralized marks, grades, timetables and performance analytics for every stakeholder.',
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+      </svg>
+    ),
+  },
+  {
+    title: 'Digital Outpass',
     desc: 'End-to-end digital leave management from request to gate clearance with real-time notifications.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-        <polyline points="14 2 14 8 20 8" />
-        <line x1="16" y1="13" x2="8" y2="13" />
-        <line x1="16" y1="17" x2="8" y2="17" />
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
       </svg>
     ),
-    color: '#1E6FD9',
-    size: 'large',
   },
   {
-    title: 'Attendance Tracking',
-    desc: 'Live attendance insights across all subjects with department-level analytics.',
+    title: 'Faculty Collaboration',
+    desc: 'Seamless communication between faculty, year incharges and administration in real time.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
       </svg>
     ),
-    color: '#4338CA',
-    size: 'medium',
   },
   {
-    title: 'Academic Records',
-    desc: 'Centralised marks, grades and performance analytics for every stakeholder.',
+    title: 'Campus Administration',
+    desc: 'Instant institutional circulars, approvals and operations managed campus-wide with receipts.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="18" y1="20" x2="18" y2="10" />
-        <line x1="12" y1="20" x2="12" y2="4" />
-        <line x1="6" y1="20" x2="6" y2="14" />
+        <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
       </svg>
     ),
-    color: '#047857',
-    size: 'medium',
   },
   {
-    title: 'Circular Management',
-    desc: 'Instant institutional circulars distributed campus-wide with read receipts.',
+    title: 'Security Monitoring',
+    desc: 'Gate control, visitor tracking and outpass verification with real-time status updates.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
       </svg>
     ),
-    color: '#7C3AED',
-    size: 'medium',
   },
   {
-    title: 'Campus Notifications',
-    desc: 'Smart push alerts for every event, approval, and campus update.',
+    title: 'Transport Tracking',
+    desc: 'Live campus transport schedules, route management and student tracking in one dashboard.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        <rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
       </svg>
     ),
-    color: '#D97706',
-    size: 'medium',
-  },
-  {
-    title: 'Student Support',
-    desc: 'Hostel, library, transport — all unified in one premium digital ecosystem.',
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-        <circle cx="9" cy="7" r="4" />
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-      </svg>
-    ),
-    color: '#DC2626',
-    size: 'large',
   },
 ];
 
-const reasons = [
-  { icon: '⚡', title: 'Fast', desc: 'Sub-second response times across all campus services.' },
-  { icon: '🔒', title: 'Secure', desc: 'Enterprise-grade data protection and role-based access.' },
-  { icon: '🔗', title: 'Unified', desc: 'One platform for every stakeholder on campus.' },
-  { icon: '📱', title: 'Mobile First', desc: 'Flawless experience on any device, any screen size.' },
-  { icon: '🤖', title: 'AI Ready', desc: 'Built for intelligent automation and smart analytics.' },
-];
-
-const journey = [
-  { step: '01', title: 'Login', desc: 'Secure, role-based authentication' },
-  { step: '02', title: 'Dashboard', desc: 'Personalised campus overview' },
-  { step: '03', title: 'Services', desc: 'Access all digital campus tools' },
-  { step: '04', title: 'Approvals', desc: 'Instant multi-level sign-offs' },
-  { step: '05', title: 'Success', desc: 'Seamless academic journey' },
-];
-
-const testimonials = [
-  {
-    quote: "The outpass system changed everything. No more paper queues — approvals happen in minutes, right from my phone.",
-    name: 'Arjun Krishnaswamy',
-    role: 'B.Tech CSE, Semester VI',
-    initials: 'AK',
-    color: '#1E6FD9',
-  },
-  {
-    quote: "Managing attendance and grade uploads used to take hours. Now it's done before class even ends. Exceptional platform.",
-    name: 'Dr. Priya Sundaram',
-    role: 'Associate Professor, ECE',
-    initials: 'PS',
-    color: '#4338CA',
-  },
-  {
-    quote: "Hostel monitoring is entirely digital now. I can track outpass status, approve requests and generate reports instantly.",
-    name: 'Mr. Rajan Murugesan',
-    role: 'Chief Warden, JIT Hostels',
-    initials: 'RM',
-    color: '#047857',
-  },
-];
+/* ─── StatCard with counter ─── */
+function StatCard({ stat, index }: { stat: typeof statsData[0]; index: number }) {
+  const [started, setStarted] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) { setStarted(true); obs.disconnect(); } },
+      { threshold: 0.5 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  const count = useCounter(stat.value, 1600, started);
+  return (
+    <div className="jit-stat-item" ref={ref} style={{ animationDelay: `${index * 0.1}s` }}>
+      <div className="jit-stat-icon">{stat.icon}</div>
+      <div className="jit-stat-number">
+        {stat.prefix}{count}{stat.suffix}
+      </div>
+      <div className="jit-stat-label">{stat.label}</div>
+    </div>
+  );
+}
 
 /* ─── Main Welcome Component ─── */
 const Welcome: React.FC = () => {
@@ -228,492 +213,365 @@ const Welcome: React.FC = () => {
   const pageRef = useScrollReveal();
   const [scrolled, setScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [testimonialIdx, setTestimonialIdx] = useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [heroMouse, setHeroMouse] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), 80);
+    const timer = setTimeout(() => setMounted(true), 60);
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 60);
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (totalHeight > 0) {
+        setScrollProgress((window.scrollY / totalHeight) * 100);
+      }
+    };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  /* Auto-rotate testimonials */
-  useEffect(() => {
-    const iv = setInterval(() => setTestimonialIdx((i) => (i + 1) % testimonials.length), 4500);
-    return () => clearInterval(iv);
-  }, []);
-
   const scrollTo = useCallback((id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    setMobileMenuOpen(false);
   }, []);
 
+  const handleHeroMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left - rect.width / 2) / (rect.width / 2);
+    const y = (e.clientY - rect.top - rect.height / 2) / (rect.height / 2);
+    setHeroMouse({ x, y });
+  }, []);
+
+  const handleHeroMouseLeave = useCallback(() => {
+    setHeroMouse({ x: 0, y: 0 });
+  }, []);
+
+  const handleCardMouseMove = useCallback((e: React.MouseEvent<HTMLButtonElement | HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    e.currentTarget.style.setProperty('--mouse-x', `${x}px`);
+    e.currentTarget.style.setProperty('--mouse-y', `${y}px`);
+  }, []);
+
+  const handleCardMouseLeave = useCallback((e: React.MouseEvent<HTMLButtonElement | HTMLDivElement>) => {
+    e.currentTarget.style.setProperty('--mouse-x', `-999px`);
+    e.currentTarget.style.setProperty('--mouse-y', `-999px`);
+  }, []);
+
+  const navLinks = ['Home', 'Services', 'Campus', 'About', 'Contact'];
+
   return (
-    <div className="wlc-root" ref={pageRef}>
+    <div className="jit-root" ref={pageRef}>
+      <div className={`jit-page${mounted ? ' jit-page-in' : ''}`}>
 
-      {/* ── Page load fade-in wrapper ── */}
-      <div className={`wlc-page-wrap${mounted ? ' wlc-page-visible' : ''}`}>
-
-        {/* ════════════════ NAV ════════════════ */}
-        <header className={`wlc-nav-wrap${scrolled ? ' wlc-nav-scrolled' : ''}`}>
-          <nav className="wlc-nav wlc-container">
-            <div className="wlc-nav-brand">
-              <div className="wlc-nav-logo">
-                <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect width="38" height="38" rx="11" fill="url(#navLogoGrad)" />
-                  <path d="M10 28L19 11L28 28H10Z" fill="white" fillOpacity="0.96" />
-                  <rect x="16" y="21" width="6" height="6" rx="2" fill="url(#navLogoGrad)" />
+        {/* ══════════ NAV ══════════ */}
+        <header className={`jit-nav-wrap${scrolled ? ' jit-nav-scrolled' : ''}`}>
+          <div className="jit-scroll-progress" style={{ width: `${scrollProgress}%` }} />
+          <div className="jit-nav-inner">
+            {/* Logo */}
+            <div className="jit-logo">
+              <div className="jit-logo-box">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                  <rect width="32" height="32" rx="9" fill="url(#logoG)"/>
+                  <path d="M8 24L16 9L24 24H8Z" fill="white" fillOpacity="0.95"/>
+                  <rect x="13" y="18" width="6" height="5" rx="1.5" fill="url(#logoG)"/>
                   <defs>
-                    <linearGradient id="navLogoGrad" x1="0" y1="0" x2="38" y2="38" gradientUnits="userSpaceOnUse">
-                      <stop stopColor="#3B82F6" />
-                      <stop offset="1" stopColor="#1D4ED8" />
+                    <linearGradient id="logoG" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#3B82F6"/>
+                      <stop offset="1" stopColor="#1D4ED8"/>
                     </linearGradient>
                   </defs>
                 </svg>
               </div>
-              <div className="wlc-nav-brand-text">
-                <span className="wlc-nav-name">JIT Campus One</span>
-                <span className="wlc-nav-inst">Jeppiaar Institute of Technology</span>
+              <div className="jit-logo-text">
+                <span className="jit-logo-title">JIT PERMIGO</span>
+            
               </div>
             </div>
-            <div className="wlc-nav-right">
-              <span className="wlc-nav-tag">Digital Campus Platform</span>
-              <button className="wlc-nav-cta" onClick={() => scrollTo('portals-section')}>
-                Get Started
+
+            {/* Center nav */}
+            <nav className="jit-nav-center">
+              {navLinks.map((link, i) => (
+                <button
+                  key={link}
+                  className={`jit-nav-link${i === 0 ? ' jit-nav-link-active' : ''}`}
+                  onClick={() => i === 1 ? scrollTo('portals-section') : i === 2 ? scrollTo('features-section') : undefined}
+                >
+                  {link}
+                  {i === 0 && <span className="jit-nav-underline"/>}
+                </button>
+              ))}
+            </nav>
+
+            {/* Right CTA */}
+            <div className="jit-nav-right">
+              <button className="jit-nav-btn" onClick={() => scrollTo('portals-section')}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+                Login / Signup
+              </button>
+              <button className="jit-hamburger" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Menu">
+                <span/><span/><span/>
               </button>
             </div>
-          </nav>
+          </div>
+
+          {/* Mobile drawer */}
+          <div className={`jit-mobile-menu${mobileMenuOpen ? ' jit-mobile-open' : ''}`}>
+            {navLinks.map((link) => (
+              <button key={link} className="jit-mobile-link" onClick={() => scrollTo('portals-section')}>{link}</button>
+            ))}
+            <button className="jit-nav-btn jit-mobile-cta" onClick={() => scrollTo('portals-section')}>Login / Signup</button>
+          </div>
         </header>
 
         <main>
-          {/* ════════════════ HERO ════════════════ */}
-          <section className="wlc-hero">
-            {/* Floating background blobs */}
-            <div className="wlc-blob wlc-blob-1" aria-hidden="true" />
-            <div className="wlc-blob wlc-blob-2" aria-hidden="true" />
-            <div className="wlc-blob wlc-blob-3" aria-hidden="true" />
+          {/* ══════════ HERO ══════════ */}
+          <section className="jit-hero" onMouseMove={handleHeroMouseMove} onMouseLeave={handleHeroMouseLeave}>
+            <div className="jit-hero-bg">
+              <div className="jit-hero-blob jit-blob-1"/>
+              <div className="jit-hero-blob jit-blob-2"/>
+              <div className="jit-hero-blob jit-blob-3"/>
+              <div className="jit-hero-grid"/>
+            </div>
 
-            <div className="wlc-container wlc-hero-inner">
-              <div className="wlc-hero-left">
-                <div className="wlc-hero-eyebrow wlc-reveal wlc-fade-up">
-                  <span className="wlc-eyebrow-dot" />
-                  JIT Campus One · Trusted · Established
+            <div className="jit-container jit-hero-inner">
+              {/* Left */}
+              <div className="jit-hero-left">
+                <div className="jit-hero-badge jit-reveal jit-fade-up">
+                  <span className="jit-badge-dot"/>
+                  Empowering Education. Elevating Excellence.
                 </div>
-                <h1 className="wlc-hero-h1 wlc-reveal wlc-fade-up wlc-delay-1">
-                  One Campus.<br />
-                  <span className="wlc-h1-accent">One Digital</span><br />
-                  Experience.
+
+                <h1 className="jit-hero-h1 jit-reveal jit-fade-up jit-d1">
+                  Welcome to<br/>
+                  <span className="jit-h1-blue">JIT PERMIGO</span>
                 </h1>
-                <p className="wlc-hero-p wlc-reveal wlc-fade-up wlc-delay-2">
-                  A unified smart campus platform empowering students, faculty, wardens, and administration — from outpass to academics, all in one seamless ecosystem.
+
+                <p className="jit-hero-sub jit-reveal jit-fade-up jit-d2">
+                  Digital Campus Platform for Students, Faculty,<br/>
+                  Administration &amp; Campus Services
                 </p>
-                <div className="wlc-hero-actions wlc-reveal wlc-fade-up wlc-delay-3">
-                  <button
-                    className="wlc-btn-primary"
-                    id="hero-get-started"
-                    onClick={() => scrollTo('portals-section')}
-                  >
-                    Get Started
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M5 12h14M12 5l7 7-7 7" />
+
+                <p className="jit-hero-desc jit-reveal jit-fade-up jit-d3">
+                  Streamlined solutions for forward-thinking institutions. Experience a dynamic ecosystem built for efficiency, transparency, and collaboration.
+                </p>
+
+                <div className="jit-hero-actions jit-reveal jit-fade-up jit-d4">
+                  <button className="jit-btn-primary" id="hero-access-portals" onClick={() => scrollTo('portals-section')}>
+                    Access Portals
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12h14M12 5l7 7-7 7"/>
                     </svg>
                   </button>
-                  <button
-                    className="wlc-btn-ghost"
-                    id="hero-explore"
-                    onClick={() => scrollTo('features-section')}
-                  >
+                  <button className="jit-btn-outline" id="hero-explore" onClick={() => scrollTo('features-section')}>
+                    <span className="jit-play-circle">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3"/>
+                      </svg>
+                    </span>
                     Explore Features
                   </button>
                 </div>
-
-                {/* Live badge */}
-                <div className="wlc-hero-badge wlc-reveal wlc-fade-up wlc-delay-4">
-                  <span className="wlc-badge-pulse" />
-                  Campus Systems Live
-                  <span className="wlc-badge-sep">·</span>
-                  1,024 Active Users
-                </div>
               </div>
 
-              {/* Right: Floating glass card cluster */}
-              <div className="wlc-hero-right wlc-reveal wlc-fade-up wlc-delay-1">
-                <div className="wlc-glass-cluster">
-                  {/* Main card */}
-                  <div className="wlc-gcard wlc-gcard-main">
-                    <div className="wlc-gcard-header">
-                      <div className="wlc-gcard-dot wlc-dot-green" />
-                      <span>Student Dashboard</span>
-                    </div>
-                    <div className="wlc-gcard-row">
-                      <span className="wlc-gcard-label">Attendance</span>
-                      <div className="wlc-gcard-bar-wrap">
-                        <div className="wlc-gcard-bar" style={{ width: '82%', background: 'linear-gradient(90deg, #3B82F6, #1D4ED8)' }} />
-                      </div>
-                      <span className="wlc-gcard-val">82%</span>
-                    </div>
-                    <div className="wlc-gcard-row">
-                      <span className="wlc-gcard-label">CGPA</span>
-                      <div className="wlc-gcard-bar-wrap">
-                        <div className="wlc-gcard-bar" style={{ width: '88%', background: 'linear-gradient(90deg, #4338CA, #7C3AED)' }} />
-                      </div>
-                      <span className="wlc-gcard-val">8.8</span>
-                    </div>
-                    <div className="wlc-gcard-row">
-                      <span className="wlc-gcard-label">Outpass</span>
-                      <div className="wlc-gcard-bar-wrap">
-                        <div className="wlc-gcard-bar" style={{ width: '60%', background: 'linear-gradient(90deg, #059669, #047857)' }} />
-                      </div>
-                      <span className="wlc-gcard-val">Approved</span>
+              {/* Right — 3D Orb Visual */}
+              <div 
+                className="jit-hero-right jit-reveal jit-fade-up jit-d1"
+                style={{
+                  '--hero-mouse-x': heroMouse.x,
+                  '--hero-mouse-y': heroMouse.y,
+                } as React.CSSProperties}
+              >
+                <div className="jit-orb-scene">
+                  {/* Interactive SVG Orbit rings */}
+                  <svg className="jit-orbit-svg jit-orbit-outer" viewBox="0 0 400 400">
+                    <defs>
+                      <linearGradient id="orbitG-out" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.8"/>
+                        <stop offset="50%" stopColor="#60A5FA" stopOpacity="0.2"/>
+                        <stop offset="100%" stopColor="#1D4ED8" stopOpacity="0.8"/>
+                      </linearGradient>
+                    </defs>
+                    <circle cx="200" cy="200" r="180" className="jit-orbit-track" />
+                    <circle cx="200" cy="200" r="180" className="jit-orbit-flow-1" />
+                    <circle cx="200" cy="200" r="180" className="jit-orbit-flow-2" />
+                  </svg>
+                  <svg className="jit-orbit-svg jit-orbit-mid" viewBox="0 0 300 300">
+                    <defs>
+                      <linearGradient id="orbitG-mid" x1="100%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="#60A5FA" stopOpacity="0.8"/>
+                        <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.3"/>
+                      </linearGradient>
+                    </defs>
+                    <circle cx="150" cy="150" r="130" className="jit-orbit-track" />
+                    <circle cx="150" cy="150" r="130" className="jit-orbit-flow-mid" />
+                  </svg>
+
+                  {/* Core sphere */}
+                  <div className="jit-orb-float-wrapper">
+                    <div className="jit-orb-core">
+                      <span className="jit-orb-label">JIT</span>
                     </div>
                   </div>
 
-                  {/* Float card top-right */}
-                  <div className="wlc-gcard wlc-gcard-float wlc-gcard-tr">
-                    <div className="wlc-mini-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#1E6FD9' }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                      </svg>
+                  {/* Floating feature chips */}
+                  <div className="jit-chip jit-chip-tl">
+                    <div className="jit-chip-inner">
+                      <div className="jit-chip-icon">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="9" width="18" height="11" rx="2"/><path d="M3 9l9-6 9 6"/></svg>
+                      </div>
+                      <div>
+                        <div className="jit-chip-title">outpass Management</div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="wlc-mini-title">Live Attendance</div>
-                      <div className="wlc-mini-sub">Updated now</div>
+                  </div>
+                  <div className="jit-chip jit-chip-tr">
+                    <div className="jit-chip-inner">
+                      <div className="jit-chip-icon">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                      </div>
+                      <div>
+                        <div className="jit-chip-title">Documentation</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="jit-chip jit-chip-br">
+                    <div className="jit-chip-inner">
+                      <div className="jit-chip-icon">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                      </div>
+                      <div>
+                        <div className="jit-chip-title">Easy Access</div>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Float card bottom-left */}
-                  <div className="wlc-gcard wlc-gcard-float wlc-gcard-bl">
-                    <div className="wlc-mini-icon" style={{ background: 'rgba(5,150,105,0.1)', color: '#047857' }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                        <polyline points="22 4 12 14.01 9 11.01" />
-                      </svg>
-                    </div>
-                    <div>
-                      <div className="wlc-mini-title">Outpass Approved</div>
-                      <div className="wlc-mini-sub">2 mins ago</div>
-                    </div>
+                  {/* Floating spheres */}
+                  <div className="jit-sphere jit-sphere-1">
+                    <div className="jit-sphere-inner" />
                   </div>
-
-                  {/* Float card bottom-right */}
-                  <div className="wlc-gcard wlc-gcard-float wlc-gcard-br">
-                    <div className="wlc-mini-icon" style={{ background: 'rgba(124,58,237,0.1)', color: '#7C3AED' }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                      </svg>
-                    </div>
-                    <div>
-                      <div className="wlc-mini-title">New Circular</div>
-                      <div className="wlc-mini-sub">Exam Schedule</div>
-                    </div>
+                  <div className="jit-sphere jit-sphere-2">
+                    <div className="jit-sphere-inner" />
+                  </div>
+                  <div className="jit-sphere jit-sphere-3">
+                    <div className="jit-sphere-inner" />
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Scroll cue */}
-            <div className="wlc-scroll-cue" aria-hidden="true">
-              <div className="wlc-scroll-line" />
             </div>
           </section>
 
-          {/* ════════════════ STATS ════════════════ */}
-          <section className="wlc-stats-section">
-            <div className="wlc-container">
-              <div className="wlc-stats-grid">
-                {stats.map((s, i) => (
-                  <div
-                    key={s.label}
-                    className="wlc-stat-card wlc-reveal wlc-fade-up"
-                    style={{ transitionDelay: `${0.1 * i}s` }}
-                  >
-                    <div className="wlc-stat-icon">{s.icon}</div>
-                    <div className="wlc-stat-val">{s.value}</div>
-                    <div className="wlc-stat-label">{s.label}</div>
-                    <div className="wlc-stat-sub">{s.sub}</div>
-                  </div>
+          {/* ══════════ STATS BAR ══════════ */}
+          <section className="jit-stats-section">
+            <div className="jit-container">
+              <div className="jit-stats-bar">
+                {statsData.map((stat, i) => (
+                  <React.Fragment key={stat.label}>
+                    <StatCard stat={stat} index={i} />
+                    {i < statsData.length - 1 && <div className="jit-stats-divider"/>}
+                  </React.Fragment>
                 ))}
               </div>
             </div>
           </section>
 
-          {/* ════════════════ PORTAL ACCESS ════════════════ */}
-          <section id="portals-section" className="wlc-portals-section">
-            <div className="wlc-container">
-              <div className="wlc-section-head wlc-reveal wlc-fade-up">
-                <div className="wlc-eyebrow">
-                  <span className="wlc-eyebrow-bar" />
-                  Portal Access
+          {/* ══════════ PORTAL ACCESS ══════════ */}
+          <section id="portals-section" className="jit-portals-section">
+            <div className="jit-container">
+              <div className="jit-section-intro jit-reveal jit-fade-up">
+                <span className="jit-eyebrow-tag">ONE PLATFORM. ENDLESS POSSIBILITIES.</span>
+                <div className="jit-section-head-row">
+                  <div>
+                    <h2 className="jit-section-h2">Portal Access</h2>
+                    <div className="jit-h2-bar"/>
+                  </div>
+                  <p className="jit-section-desc">Access your portal with ease and manage everything in one place.</p>
                 </div>
-                <h2 className="wlc-section-h2">Choose Your Role</h2>
-                <p className="wlc-section-sub">Select your portal to enter the JIT digital campus ecosystem.</p>
               </div>
-              <div className="wlc-portals-grid">
-                {roles.map((r, idx) => (
+
+              <div className="jit-portals-grid">
+                {portals.map((p, i) => (
                   <button
-                    key={r.id}
-                    id={`portal-${r.id}`}
-                    className="wlc-portal-card wlc-reveal wlc-fade-up"
-                    style={{
-                      transitionDelay: `${0.08 * idx}s`,
-                      '--portal-accent': r.accent,
-                      '--portal-bg': r.bg,
-                    } as React.CSSProperties}
-                    onClick={() => navigate(r.route)}
+                    key={p.id}
+                    id={`portal-${p.id}`}
+                    className="jit-portal-card jit-reveal jit-fade-up"
+                    style={{ transitionDelay: `${0.07 * i}s` }}
+                    onClick={() => navigate(p.route)}
+                    onMouseMove={handleCardMouseMove}
+                    onMouseLeave={handleCardMouseLeave}
                   >
-                    <div className="wlc-portal-shine" />
-                    <div className="wlc-portal-icon-wrap" style={{ background: r.bg }}>
-                      <span style={{ color: r.accent }}>{r.icon}</span>
+                    <div className="jit-portal-shine"/>
+                    <div className="jit-portal-icon">
+                      {p.icon}
                     </div>
-                    <div className="wlc-portal-info">
-                      <span className="wlc-portal-title">{r.title} Portal</span>
-                      <span className="wlc-portal-desc">{r.desc}</span>
-                    </div>
-                    <div className="wlc-portal-arrow">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M5 12h14M12 5l7 7-7 7" />
+                    <div className="jit-portal-title">{p.title}</div>
+                    <div className="jit-portal-desc">{p.desc}</div>
+                    <div className="jit-portal-arrow">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
                       </svg>
                     </div>
-                    <div className="wlc-portal-bar" />
+                    <div className="jit-portal-bottom-line"/>
                   </button>
                 ))}
               </div>
             </div>
           </section>
 
-          {/* ════════════════ FEATURES BENTO ════════════════ */}
-          <section id="features-section" className="wlc-features-section">
-            <div className="wlc-container">
-              <div className="wlc-section-head wlc-reveal wlc-fade-up">
-                <div className="wlc-eyebrow">
-                  <span className="wlc-eyebrow-bar" />
-                  Platform Capabilities
-                </div>
-                <h2 className="wlc-section-h2">Everything Your Campus Needs</h2>
-                <p className="wlc-section-sub">Built for modern institutions. Designed for every stakeholder.</p>
+          {/* ══════════ FEATURE SHOWCASE ══════════ */}
+          <section id="features-section" className="jit-features-section">
+            <div className="jit-container">
+              <div className="jit-section-center jit-reveal jit-fade-up">
+                <span className="jit-eyebrow-tag">PLATFORM CAPABILITIES</span>
+                <h2 className="jit-section-h2">Everything Your Campus Needs</h2>
+                <div className="jit-h2-bar jit-bar-center"/>
+                <p className="jit-feat-intro">Built for modern institutions. Designed for every stakeholder on campus.</p>
               </div>
-              <div className="wlc-bento-grid">
+
+              <div className="jit-features-grid">
                 {features.map((f, i) => (
                   <div
                     key={f.title}
-                    className={`wlc-bento-card wlc-bento-${f.size} wlc-reveal wlc-fade-up`}
-                    style={{
-                      transitionDelay: `${0.07 * i}s`,
-                      '--feat-color': f.color,
-                    } as React.CSSProperties}
+                    className="jit-feat-card jit-reveal jit-fade-up"
+                    style={{ transitionDelay: `${0.08 * i}s` }}
+                    onMouseMove={handleCardMouseMove}
+                    onMouseLeave={handleCardMouseLeave}
                   >
-                    <div className="wlc-bento-shine" />
-                    <div className="wlc-bento-icon" style={{ background: `${f.color}15`, color: f.color }}>
-                      {f.icon}
-                    </div>
-                    <h3 className="wlc-bento-title">{f.title}</h3>
-                    <p className="wlc-bento-desc">{f.desc}</p>
-                    <div className="wlc-bento-learn">
-                      <span>Learn more</span>
+                    <div className="jit-feat-shine"/>
+                    <div className="jit-feat-icon">{f.icon}</div>
+                    <h3 className="jit-feat-title">{f.title}</h3>
+                    <p className="jit-feat-desc">{f.desc}</p>
+                    <div className="jit-feat-link">
+                      Learn more
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M5 12h14M12 5l7 7-7 7" />
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
                       </svg>
                     </div>
-                    <div className="wlc-bento-bar" />
                   </div>
                 ))}
               </div>
             </div>
           </section>
 
-          {/* ════════════════ DIGITAL CAMPUS EXPERIENCE ════════════════ */}
-          <section className="wlc-experience-section">
-            <div className="wlc-container">
-              <div className="wlc-experience-split">
-                {/* Left */}
-                <div className="wlc-exp-left">
-                  <div className="wlc-eyebrow wlc-reveal wlc-fade-up">
-                    <span className="wlc-eyebrow-bar" />
-                    Digital Experience
-                  </div>
-                  <h2 className="wlc-section-h2 wlc-reveal wlc-fade-up wlc-delay-1">
-                    A Campus Platform<br />Built for Everyone
-                  </h2>
-                  <p className="wlc-section-sub wlc-exp-sub wlc-reveal wlc-fade-up wlc-delay-2">
-                    JIT Campus One connects every role — from student to administrator — in one clean, fast digital environment.
-                  </p>
-                  <div className="wlc-exp-blocks">
-                    {[
-                      { icon: '🎯', title: 'Precision Workflows', desc: 'Every process is streamlined for minimal clicks and maximum clarity.' },
-                      { icon: '🌐', title: 'Always Connected', desc: 'Real-time sync across all portals ensures everyone stays on the same page.' },
-                      { icon: '📊', title: 'Rich Analytics', desc: 'Administrators get powerful insights; students get personalised dashboards.' },
-                    ].map((b, i) => (
-                      <div
-                        key={b.title}
-                        className="wlc-exp-block wlc-reveal wlc-fade-up"
-                        style={{ transitionDelay: `${0.1 * (i + 3)}s` }}
-                      >
-                        <div className="wlc-exp-block-icon">{b.icon}</div>
-                        <div>
-                          <div className="wlc-exp-block-title">{b.title}</div>
-                          <div className="wlc-exp-block-desc">{b.desc}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Right: Layered glass UI mockup */}
-                <div className="wlc-exp-right wlc-reveal wlc-fade-up wlc-delay-1">
-                  <div className="wlc-mockup-wrap">
-                    <div className="wlc-mockup-card wlc-mockup-back">
-                      <div className="wlc-mock-label">Faculty View</div>
-                      <div className="wlc-mock-row"><div className="wlc-mock-bar" style={{ width: '75%' }} /><span>CSE-A</span></div>
-                      <div className="wlc-mock-row"><div className="wlc-mock-bar" style={{ width: '88%' }} /><span>ECE-B</span></div>
-                      <div className="wlc-mock-row"><div className="wlc-mock-bar" style={{ width: '60%' }} /><span>MECH-C</span></div>
-                    </div>
-                    <div className="wlc-mockup-card wlc-mockup-front">
-                      <div className="wlc-mock-label">Student Portal</div>
-                      <div className="wlc-mock-chip wlc-chip-green">✓ Outpass Approved</div>
-                      <div className="wlc-mock-chip wlc-chip-blue">📅 Timetable Updated</div>
-                      <div className="wlc-mock-chip wlc-chip-purple">🔔 New Circular</div>
-                      <div className="wlc-mock-stat-row">
-                        <div className="wlc-mock-mini-stat">
-                          <span className="wlc-mms-val">82%</span>
-                          <span className="wlc-mms-lbl">Attendance</span>
-                        </div>
-                        <div className="wlc-mock-mini-stat">
-                          <span className="wlc-mms-val">8.8</span>
-                          <span className="wlc-mms-lbl">CGPA</span>
-                        </div>
-                        <div className="wlc-mock-mini-stat">
-                          <span className="wlc-mms-val">3</span>
-                          <span className="wlc-mms-lbl">Pending</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* ════════════════ WHY CHOOSE ════════════════ */}
-          <section className="wlc-why-section">
-            <div className="wlc-container">
-              <div className="wlc-section-head wlc-reveal wlc-fade-up">
-                <div className="wlc-eyebrow">
-                  <span className="wlc-eyebrow-bar" />
-                  Why Choose Us
-                </div>
-                <h2 className="wlc-section-h2">Built on Principles<br />That Matter</h2>
-              </div>
-              <div className="wlc-why-grid">
-                {reasons.map((r, i) => (
-                  <div
-                    key={r.title}
-                    className="wlc-why-card wlc-reveal wlc-fade-up"
-                    style={{ transitionDelay: `${0.1 * i}s` }}
-                  >
-                    <div className="wlc-why-icon">{r.icon}</div>
-                    <div className="wlc-why-title">{r.title}</div>
-                    <div className="wlc-why-desc">{r.desc}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* ════════════════ JOURNEY TIMELINE ════════════════ */}
-          <section className="wlc-timeline-section">
-            <div className="wlc-container">
-              <div className="wlc-section-head wlc-reveal wlc-fade-up">
-                <div className="wlc-eyebrow">
-                  <span className="wlc-eyebrow-bar" />
-                  Student Journey
-                </div>
-                <h2 className="wlc-section-h2">From Login to Success</h2>
-                <p className="wlc-section-sub">Five seamless steps to your complete digital campus experience.</p>
-              </div>
-              <div className="wlc-timeline">
-                {journey.map((j, i) => (
-                  <div
-                    key={j.step}
-                    className="wlc-timeline-item wlc-reveal wlc-fade-up"
-                    style={{ transitionDelay: `${0.12 * i}s` }}
-                  >
-                    <div className="wlc-tl-node">
-                      <div className="wlc-tl-step">{j.step}</div>
-                      {i < journey.length - 1 && <div className="wlc-tl-line" />}
-                    </div>
-                    <div className="wlc-tl-content">
-                      <div className="wlc-tl-title">{j.title}</div>
-                      <div className="wlc-tl-desc">{j.desc}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* ════════════════ TESTIMONIALS ════════════════ */}
-          <section className="wlc-testimonials-section">
-            <div className="wlc-container">
-              <div className="wlc-section-head wlc-reveal wlc-fade-up">
-                <div className="wlc-eyebrow">
-                  <span className="wlc-eyebrow-bar" />
-                  Voices from Campus
-                </div>
-                <h2 className="wlc-section-h2">Trusted by the Community</h2>
-              </div>
-              <div className="wlc-testimonials-carousel wlc-reveal wlc-fade-up wlc-delay-1">
-                {testimonials.map((t, i) => (
-                  <div
-                    key={i}
-                    className={`wlc-tcard${i === testimonialIdx ? ' wlc-tcard-active' : ''}`}
-                  >
-                    <div className="wlc-tcard-quote">"</div>
-                    <p className="wlc-tcard-text">{t.quote}</p>
-                    <div className="wlc-tcard-author">
-                      <div className="wlc-tcard-avatar" style={{ background: `${t.color}20`, color: t.color }}>
-                        {t.initials}
-                      </div>
-                      <div>
-                        <div className="wlc-tcard-name">{t.name}</div>
-                        <div className="wlc-tcard-role">{t.role}</div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                <div className="wlc-tcard-dots">
-                  {testimonials.map((_, i) => (
-                    <button
-                      key={i}
-                      className={`wlc-tcard-dot${i === testimonialIdx ? ' wlc-tcard-dot-active' : ''}`}
-                      onClick={() => setTestimonialIdx(i)}
-                      aria-label={`Testimonial ${i + 1}`}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* ════════════════ FINAL CTA ════════════════ */}
-          <section className="wlc-cta-section">
-            <div className="wlc-cta-bg-blob-1" aria-hidden="true" />
-            <div className="wlc-cta-bg-blob-2" aria-hidden="true" />
-            <div className="wlc-container wlc-cta-inner">
-              <h2 className="wlc-cta-h2 wlc-reveal wlc-fade-up">
-                Start Your Digital<br />Campus Journey
-              </h2>
-              <p className="wlc-cta-sub wlc-reveal wlc-fade-up wlc-delay-1">
-                Join 1,200+ students and 85+ faculty members already on JIT Campus One.
-              </p>
-              <div className="wlc-cta-actions wlc-reveal wlc-fade-up wlc-delay-2">
-                <button className="wlc-btn-primary wlc-btn-lg" id="cta-get-started" onClick={() => scrollTo('portals-section')}>
+          {/* ══════════ CTA BANNER ══════════ */}
+          <section className="jit-cta-section">
+            <div className="jit-cta-blob-1"/>
+            <div className="jit-cta-blob-2"/>
+            <div className="jit-container jit-cta-inner">
+              <div className="jit-cta-content jit-reveal jit-fade-up">
+                <h2 className="jit-cta-h2">Start Your Digital Campus Journey</h2>
+                <p className="jit-cta-sub">Join 1,200+ students and 85+ faculty members already on JIT Campus One.</p>
+                <button className="jit-btn-primary jit-btn-lg" id="cta-access" onClick={() => scrollTo('portals-section')}>
                   Access Your Portal
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
                   </svg>
                 </button>
               </div>
@@ -721,1328 +579,809 @@ const Welcome: React.FC = () => {
           </section>
         </main>
 
-        {/* ════════════════ FOOTER ════════════════ */}
-        <footer className="wlc-footer">
-          <div className="wlc-container wlc-footer-inner">
-            <div className="wlc-footer-brand">
-              <svg width="24" height="24" viewBox="0 0 38 38" fill="none">
-                <rect width="38" height="38" rx="11" fill="url(#ftLogoGrad)" />
-                <path d="M10 28L19 11L28 28H10Z" fill="white" fillOpacity="0.96" />
-                <rect x="16" y="21" width="6" height="6" rx="2" fill="url(#ftLogoGrad)" />
+        {/* ══════════ FOOTER ══════════ */}
+        <footer className="jit-footer">
+          <div className="jit-container jit-footer-inner">
+            <div className="jit-footer-brand">
+              <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
+                <rect width="32" height="32" rx="9" fill="url(#ftG)"/>
+                <path d="M8 24L16 9L24 24H8Z" fill="white" fillOpacity="0.95"/>
+                <rect x="13" y="18" width="6" height="5" rx="1.5" fill="url(#ftG)"/>
                 <defs>
-                  <linearGradient id="ftLogoGrad" x1="0" y1="0" x2="38" y2="38" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#3B82F6" />
-                    <stop offset="1" stopColor="#1D4ED8" />
+                  <linearGradient id="ftG" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#3B82F6"/><stop offset="1" stopColor="#1D4ED8"/>
                   </linearGradient>
                 </defs>
               </svg>
-              <span className="wlc-footer-name">JIT Campus One</span>
+              <span className="jit-footer-name">JIT Campus One</span>
             </div>
-            <span className="wlc-footer-copy">© 2025 Jeppiaar Institute of Technology. All rights reserved.</span>
-            <span className="wlc-footer-badge">v2.0 · Digital Campus Platform</span>
+            <span className="jit-footer-copy">© 2025 Jeppiaar Institute of Technology. All rights reserved.</span>
+            <span className="jit-footer-tag">v2.0 · Digital Campus Platform</span>
           </div>
         </footer>
+      </div>
 
-      </div>{/* end page-wrap */}
-
-      {/* ════════════════ STYLES ════════════════ */}
+      {/* ══════════ STYLES ══════════ */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
         /* ── Reset ── */
-        .wlc-root *, .wlc-root *::before, .wlc-root *::after {
-          box-sizing: border-box; margin: 0; padding: 0;
+        .jit-root *, .jit-root *::before, .jit-root *::after {
+          box-sizing: border-box; margin: 0; padding: 0; border: 0;
         }
-
-        .wlc-root {
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-          background: #F5F7FA;
+        .jit-root {
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+          background: #F8FBFF;
           color: #0F172A;
           min-height: 100vh;
           overflow-x: hidden;
           -webkit-font-smoothing: antialiased;
-          -moz-osx-font-smoothing: grayscale;
         }
 
-        /* ── Page load animation ── */
-        .wlc-page-wrap {
-          opacity: 0;
-          transform: translateY(12px);
-          transition: opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
-                      transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-        .wlc-page-visible {
-          opacity: 1;
-          transform: none;
-        }
+        /* ── Page enter ── */
+        .jit-page { opacity: 0; transform: translateY(10px); transition: opacity 0.6s ease, transform 0.6s ease; }
+        .jit-page-in { opacity: 1; transform: none; }
 
         /* ── Container ── */
-        .wlc-container {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 0 48px;
-          position: relative;
-        }
+        .jit-container { max-width: 1200px; margin: 0 auto; padding: 0 40px; position: relative; }
 
         /* ══════════════════════════════
            NAV
         ══════════════════════════════ */
-        .wlc-nav-wrap {
-          position: fixed;
-          top: 0; left: 0; right: 0;
-          z-index: 200;
-          background: rgba(255,255,255,0.5);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          border-bottom: 1px solid rgba(255,255,255,0.4);
-          transition: background 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease;
+        .jit-nav-wrap {
+          position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+          width: calc(100% - 80px); max-width: 1160px;
+          z-index: 300;
+          background: rgba(255,255,255,0.72);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+          border: 1px solid rgba(255,255,255,0.8);
+          border-radius: 18px;
+          box-shadow: 0 4px 24px rgba(15,23,42,0.06), 0 1px 0 rgba(255,255,255,0.9) inset;
+          transition: background 0.3s ease, box-shadow 0.3s ease, top 0.3s ease;
         }
-        .wlc-nav-wrap.wlc-nav-scrolled {
-          background: rgba(255,255,255,0.88);
-          box-shadow: 0 1px 0 rgba(255,255,255,0.9), 0 8px 24px -8px rgba(15,23,42,0.07);
-          border-bottom-color: rgba(214,233,255,0.8);
+        .jit-scroll-progress {
+          position: absolute; top: 0; left: 0;
+          height: 3px; background: linear-gradient(90deg, #3B82F6, #60A5FA, #3B82F6);
+          border-radius: 18px 18px 0 0;
+          transition: width 0.1s ease-out;
+          z-index: 10;
         }
-        .wlc-nav {
-          height: 74px;
-          display: flex;
-          align-items: center;
+        .jit-nav-wrap.jit-nav-scrolled {
+          top: 10px;
+          background: rgba(255,255,255,0.92);
+          box-shadow: 0 8px 32px rgba(15,23,42,0.1), 0 1px 0 rgba(255,255,255,0.9) inset;
+        }
+        .jit-nav-inner {
+          display: flex; align-items: center;
+          height: 68px; padding: 0 24px; gap: 16px;
           justify-content: space-between;
         }
-        .wlc-nav-brand {
-          display: flex;
-          align-items: center;
-          gap: 14px;
+        /* Logo */
+        .jit-logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .jit-logo-box { filter: drop-shadow(0 2px 8px rgba(59,130,246,0.2)); }
+        .jit-logo-text { display: flex; flex-direction: column; line-height: 1.1; }
+        .jit-logo-title { font-size: 18px; font-weight: 900; color: #0F172A; letter-spacing: -0.5px; }
+        .jit-logo-sub { font-size: 9px; font-weight: 600; color: #64748B; letter-spacing: 0.2px; text-transform: uppercase; }
+        /* Center nav */
+        .jit-nav-center { display: flex; align-items: center; gap: 4px; }
+        .jit-nav-link {
+          position: relative;
+          font-size: 14px; font-weight: 600; color: #475569;
+          background: none; cursor: pointer;
+          padding: 8px 16px; border-radius: 10px;
+          transition: color 0.2s, background 0.2s;
+          white-space: nowrap;
         }
-        .wlc-nav-logo {
-          filter: drop-shadow(0 2px 8px rgba(59,130,246,0.18));
-          flex-shrink: 0;
+        .jit-nav-link:hover { color: #0F172A; background: rgba(59,130,246,0.05); }
+        .jit-nav-link-active { color: #0F172A; font-weight: 700; }
+        .jit-nav-underline {
+          position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%);
+          width: 22px; height: 2.5px;
+          background: #3B82F6; border-radius: 2px;
         }
-        .wlc-nav-brand-text {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-        }
-        .wlc-nav-name {
-          font-size: 17px;
-          font-weight: 800;
-          color: #0F172A;
-          letter-spacing: -0.5px;
-          line-height: 1.2;
-        }
-        .wlc-nav-inst {
-          font-size: 11px;
-          font-weight: 500;
-          color: #64748B;
-          letter-spacing: 0.1px;
-        }
-        .wlc-nav-right {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-        }
-        .wlc-nav-tag {
-          font-size: 12px;
-          font-weight: 600;
-          color: #1E6FD9;
-          background: rgba(30,111,217,0.07);
-          border: 1px solid rgba(30,111,217,0.14);
-          border-radius: 100px;
-          padding: 6px 16px;
-        }
-        .wlc-nav-cta {
-          font-size: 13px;
-          font-weight: 700;
-          color: #ffffff;
+        /* Right */
+        .jit-nav-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+        .jit-nav-btn {
+          display: inline-flex; align-items: center; gap: 8px;
           background: linear-gradient(135deg, #3B82F6, #1D4ED8);
-          border: none;
-          border-radius: 10px;
-          padding: 9px 22px;
-          cursor: pointer;
-          box-shadow: 0 4px 14px rgba(37,99,235,0.2);
-          transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s ease;
+          color: #fff; font-size: 13.5px; font-weight: 700;
+          padding: 10px 22px; border-radius: 12px; cursor: pointer;
+          box-shadow: 0 4px 14px rgba(37,99,235,0.25);
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+          white-space: nowrap;
+          position: relative;
+          overflow: hidden;
         }
-        .wlc-nav-cta:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 22px rgba(37,99,235,0.28);
+        .jit-nav-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,99,235,0.32); }
+        .jit-nav-btn::after {
+          content: '';
+          position: absolute;
+          top: 0; left: -150%;
+          width: 50%; height: 100%;
+          background: linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.35) 50%,
+            rgba(255, 255, 255, 0) 100%
+          );
+          transform: skewX(-25deg);
+          animation: jitBtnShimmer 6s infinite ease-in-out;
+          animation-delay: 2s;
         }
+        .jit-hamburger {
+          display: none; flex-direction: column; gap: 5px;
+          background: none; cursor: pointer; padding: 4px;
+        }
+        .jit-hamburger span {
+          display: block; width: 22px; height: 2px;
+          background: #0F172A; border-radius: 2px; transition: 0.3s;
+        }
+        .jit-mobile-menu {
+          display: none; flex-direction: column; gap: 4px;
+          padding: 0 16px 16px; overflow: hidden; max-height: 0;
+          transition: max-height 0.35s ease, padding 0.35s ease;
+        }
+        .jit-mobile-menu.jit-mobile-open { max-height: 360px; display: flex; padding: 8px 16px 18px; }
+        .jit-mobile-link {
+          font-size: 15px; font-weight: 600; color: #475569;
+          padding: 12px 14px; border-radius: 10px; cursor: pointer;
+          text-align: left; background: none;
+          transition: background 0.2s, color 0.2s;
+        }
+        .jit-mobile-link:hover { background: rgba(59,130,246,0.06); color: #0F172A; }
+        .jit-mobile-cta { margin-top: 8px; justify-content: center; }
 
         /* ══════════════════════════════
            HERO
-        ══════════════════════════════ */
-        .wlc-hero {
-          position: relative;
-          min-height: 100vh;
-          background: linear-gradient(160deg, #EAF4FF 0%, #D6E9FF 30%, #F0F7FF 60%, #FFFFFF 100%);
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          padding-top: 110px;
-          padding-bottom: 80px;
-          overflow: hidden;
+         ══════════════════════════════ */
+        .jit-hero {
+          position: relative; min-height: 100vh;
+          display: flex; align-items: center;
+          padding: 120px 0 80px; overflow: hidden;
+          background: linear-gradient(135deg, #DBEAFE 0%, #EFF6FF 50%, #F8FBFF 100%);
         }
-        /* Background blobs */
-        .wlc-blob {
-          position: absolute;
-          border-radius: 50%;
-          pointer-events: none;
-          filter: blur(80px);
+        .jit-hero-bg { position: absolute; inset: 0; pointer-events: none; }
+        .jit-hero-blob {
+          position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.7;
         }
-        .wlc-blob-1 {
-          width: 600px; height: 600px;
-          background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%);
-          top: -150px; left: -100px;
-          animation: wlcBlobFloat1 18s ease-in-out infinite;
+        .jit-blob-1 {
+          width: 700px; height: 700px;
+          background: radial-gradient(circle, rgba(59,130,246,0.14) 0%, transparent 65%);
+          top: -200px; left: -150px;
+          animation: jitBlob1 20s ease-in-out infinite;
         }
-        .wlc-blob-2 {
+        .jit-blob-2 {
           width: 500px; height: 500px;
-          background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%);
+          background: radial-gradient(circle, rgba(96,165,250,0.1) 0%, transparent 65%);
           bottom: -100px; right: -100px;
-          animation: wlcBlobFloat2 22s ease-in-out infinite;
+          animation: jitBlob2 24s ease-in-out infinite;
         }
-        .wlc-blob-3 {
-          width: 300px; height: 300px;
-          background: radial-gradient(circle, rgba(214,233,255,0.5) 0%, transparent 70%);
-          top: 40%; left: 50%;
-          animation: wlcBlobFloat1 14s ease-in-out infinite reverse;
+        .jit-blob-3 {
+          width: 350px; height: 350px;
+          background: radial-gradient(circle, rgba(219,234,254,0.6) 0%, transparent 65%);
+          top: 40%; left: 45%;
+          animation: jitBlob1 16s ease-in-out infinite reverse;
         }
-        @keyframes wlcBlobFloat1 {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33%       { transform: translate(40px, -30px) scale(1.05); }
-          66%       { transform: translate(-20px, 20px) scale(0.97); }
+        @keyframes jitBlob1 {
+          0%, 100% { transform: translate(0,0) scale(1); }
+          33% { transform: translate(30px,-20px) scale(1.04); }
+          66% { transform: translate(-15px,15px) scale(0.97); }
         }
-        @keyframes wlcBlobFloat2 {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          50%       { transform: translate(-50px, 30px) scale(1.08); }
+        @keyframes jitBlob2 {
+          0%, 100% { transform: translate(0,0) scale(1); }
+          50% { transform: translate(-40px,25px) scale(1.06); }
+        }
+        .jit-hero-grid {
+          position: absolute; inset: 0;
+          background-image:
+            linear-gradient(rgba(59,130,246,0.04) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(59,130,246,0.04) 1px, transparent 1px);
+          background-size: 48px 48px;
         }
 
-        .wlc-hero-inner {
-          display: grid;
-          grid-template-columns: 1.1fr 1fr;
-          gap: 64px;
-          align-items: center;
+        .jit-hero-inner {
+          display: grid; grid-template-columns: 1fr 1fr;
+          gap: 60px; align-items: center;
         }
-        .wlc-hero-left {
-          position: relative;
-          z-index: 2;
-        }
-        .wlc-hero-eyebrow {
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          font-size: 11px;
-          font-weight: 700;
-          color: #1E6FD9;
-          text-transform: uppercase;
-          letter-spacing: 2px;
-          margin-bottom: 28px;
-        }
-        .wlc-eyebrow-dot {
-          width: 8px; height: 8px;
-          background: #3B82F6;
-          border-radius: 50%;
-          flex-shrink: 0;
-          animation: wlcDotPulse 2.5s ease-in-out infinite;
-        }
-        @keyframes wlcDotPulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(59,130,246,0.4); }
-          50%       { box-shadow: 0 0 0 6px rgba(59,130,246,0); }
-        }
-        .wlc-hero-h1 {
-          font-size: clamp(40px, 5vw, 68px);
-          font-weight: 900;
-          line-height: 1.06;
-          letter-spacing: -2.5px;
-          color: #0F172A;
-          margin-bottom: 26px;
-        }
-        .wlc-h1-accent {
-          background: linear-gradient(135deg, #1E6FD9 0%, #3B82F6 50%, #60A5FA 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          background-size: 200% 200%;
-          animation: wlcAccentShift 5s ease-in-out infinite;
-        }
-        @keyframes wlcAccentShift {
-          0%, 100% { background-position: 0% 50%; }
-          50%       { background-position: 100% 50%; }
-        }
-        .wlc-hero-p {
-          font-size: 17px;
-          color: #475569;
-          line-height: 1.75;
-          max-width: 480px;
-          margin-bottom: 38px;
-        }
-        .wlc-hero-actions {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          flex-wrap: wrap;
-          margin-bottom: 36px;
-        }
-        .wlc-btn-primary {
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          padding: 15px 34px;
-          background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
-          color: #ffffff;
-          font-size: 15px;
-          font-weight: 700;
-          border: none;
-          border-radius: 14px;
-          cursor: pointer;
-          letter-spacing: -0.2px;
-          box-shadow: 0 4px 18px rgba(37,99,235,0.22), 0 14px 34px rgba(37,99,235,0.12);
-          transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s ease;
-        }
-        .wlc-btn-primary:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 10px 28px rgba(37,99,235,0.3), 0 22px 48px rgba(37,99,235,0.18);
-        }
-        .wlc-btn-primary:active {
-          transform: translateY(0) scale(0.98);
-        }
-        .wlc-btn-lg {
-          font-size: 16px;
-          padding: 17px 40px;
-        }
-        .wlc-btn-ghost {
-          display: inline-flex;
-          align-items: center;
-          padding: 15px 32px;
-          background: rgba(255,255,255,0.7);
-          color: #0F172A;
-          font-size: 15px;
-          font-weight: 600;
-          border: 1px solid rgba(30,111,217,0.18);
-          border-radius: 14px;
-          cursor: pointer;
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          transition: background 0.25s ease, border-color 0.25s ease, transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
-        }
-        .wlc-btn-ghost:hover {
-          background: rgba(255,255,255,0.92);
-          border-color: rgba(30,111,217,0.35);
-          transform: translateY(-2px);
-        }
-        .wlc-hero-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          background: rgba(255,255,255,0.7);
-          border: 1px solid rgba(59,130,246,0.12);
-          border-radius: 100px;
-          padding: 8px 20px;
-          font-size: 12.5px;
-          font-weight: 600;
-          color: #475569;
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          box-shadow: 0 4px 16px rgba(59,130,246,0.05);
-        }
-        .wlc-badge-pulse {
-          width: 8px; height: 8px;
-          background: #22C55E;
-          border-radius: 50%;
-          flex-shrink: 0;
-          box-shadow: 0 0 0 3px rgba(34,197,94,0.2);
-          animation: wlcBadgePulse 2s ease-in-out infinite;
-        }
-        @keyframes wlcBadgePulse {
-          0%, 100% { box-shadow: 0 0 0 3px rgba(34,197,94,0.2); }
-          50%       { box-shadow: 0 0 0 7px rgba(34,197,94,0.01); }
-        }
-        .wlc-badge-sep { opacity: 0.4; }
+        .jit-hero-left { position: relative; z-index: 2; }
 
-        /* ── Glass Card Cluster ── */
-        .wlc-hero-right {
-          position: relative;
-          z-index: 2;
-        }
-        .wlc-glass-cluster {
-          position: relative;
-          width: 100%;
-          min-height: 380px;
-        }
-        .wlc-gcard {
+        .jit-hero-badge {
+          display: inline-flex; align-items: center; gap: 8px;
           background: rgba(255,255,255,0.75);
-          border: 1px solid rgba(255,255,255,0.8);
-          border-radius: 22px;
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
-          box-shadow: 0 8px 32px rgba(15,23,42,0.06), 0 24px 56px rgba(15,23,42,0.04), inset 0 1px 0 rgba(255,255,255,0.9);
-          transition: transform 0.4s cubic-bezier(0.25,0.8,0.25,1), box-shadow 0.4s ease;
+          border: 1px solid rgba(59,130,246,0.2);
+          border-radius: 100px; padding: 7px 18px;
+          font-size: 12px; font-weight: 600; color: #3B82F6;
+          backdrop-filter: blur(12px);
+          margin-bottom: 28px;
+          box-shadow: 0 2px 12px rgba(59,130,246,0.08);
         }
-        .wlc-gcard:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 16px 48px rgba(15,23,42,0.1), 0 32px 72px rgba(15,23,42,0.06), inset 0 1px 0 rgba(255,255,255,0.9);
+        .jit-badge-dot {
+          width: 7px; height: 7px; border-radius: 50%;
+          background: #3B82F6; flex-shrink: 0;
+          box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+          animation: jitDotPulse 2.5s ease-in-out infinite;
         }
-        .wlc-gcard-main {
-          padding: 28px 28px 24px;
-          position: absolute;
-          top: 50%; left: 50%;
-          transform: translate(-50%, -50%);
-          width: 88%;
-          animation: wlcCardFloat 6s ease-in-out infinite;
+        @keyframes jitDotPulse {
+          0%, 100% { box-shadow: 0 0 0 3px rgba(59,130,246,0.2); }
+          50% { box-shadow: 0 0 0 7px rgba(59,130,246,0); }
         }
-        @keyframes wlcCardFloat {
-          0%, 100% { transform: translate(-50%, -50%) translateY(0); }
-          50%       { transform: translate(-50%, -50%) translateY(-8px); }
-        }
-        .wlc-gcard-header {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 12px;
-          font-weight: 700;
-          color: #475569;
-          letter-spacing: 0.5px;
-          text-transform: uppercase;
-          margin-bottom: 20px;
-        }
-        .wlc-gcard-dot {
-          width: 8px; height: 8px;
-          border-radius: 50%;
-          flex-shrink: 0;
-        }
-        .wlc-dot-green { background: #22C55E; box-shadow: 0 0 0 3px rgba(34,197,94,0.2); }
-        .wlc-gcard-row {
-          display: flex;
-          align-items: center;
-          gap: 10px;
+
+        .jit-hero-h1 {
+          font-size: clamp(38px, 4.8vw, 64px);
+          font-weight: 900; line-height: 1.07;
+          letter-spacing: -2px; color: #0F172A;
           margin-bottom: 14px;
         }
-        .wlc-gcard-label {
-          font-size: 12.5px;
-          font-weight: 600;
-          color: #64748B;
-          width: 72px;
-          flex-shrink: 0;
+        .jit-h1-blue {
+          background: linear-gradient(135deg, #1D4ED8 0%, #3B82F6 50%, #60A5FA 100%);
+          -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+          background-clip: text;
+          background-size: 200% 200%;
+          animation: jitBlueShift 5s ease-in-out infinite;
         }
-        .wlc-gcard-bar-wrap {
-          flex: 1;
-          height: 7px;
-          background: #EFF6FF;
-          border-radius: 100px;
+        @keyframes jitBlueShift {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+        .jit-hero-sub {
+          font-size: 17px; font-weight: 500; color: #334155;
+          line-height: 1.6; margin-bottom: 16px;
+        }
+        .jit-hero-desc {
+          font-size: 15px; color: #64748B; line-height: 1.75;
+          max-width: 480px; margin-bottom: 36px;
+        }
+        .jit-hero-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+
+        .jit-btn-primary {
+          display: inline-flex; align-items: center; gap: 9px;
+          background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+          color: #fff; font-size: 15px; font-weight: 700;
+          padding: 14px 32px; border-radius: 13px; cursor: pointer;
+          box-shadow: 0 4px 18px rgba(37,99,235,0.25), 0 12px 32px rgba(37,99,235,0.12);
+          transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s ease;
+          letter-spacing: -0.2px;
+          position: relative;
           overflow: hidden;
         }
-        .wlc-gcard-bar {
-          height: 100%;
-          border-radius: 100px;
-          transition: width 1s ease;
+        .jit-btn-primary:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(37,99,235,0.32), 0 22px 48px rgba(37,99,235,0.18); }
+        .jit-btn-primary:active { transform: translateY(0) scale(0.98); }
+        .jit-btn-primary::after {
+          content: '';
+          position: absolute;
+          top: 0; left: -150%;
+          width: 50%; height: 100%;
+          background: linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.3) 50%,
+            rgba(255, 255, 255, 0) 100%
+          );
+          transform: skewX(-25deg);
+          animation: jitBtnShimmer 6s infinite ease-in-out;
         }
-        .wlc-gcard-val {
-          font-size: 12px;
-          font-weight: 700;
-          color: #0F172A;
-          width: 58px;
-          text-align: right;
-          flex-shrink: 0;
+        @keyframes jitBtnShimmer {
+          0% { left: -150%; }
+          15% { left: 150%; }
+          100% { left: 150%; }
+        }
+        .jit-btn-lg { font-size: 16px; padding: 16px 38px; }
+
+        .jit-btn-outline {
+          display: inline-flex; align-items: center; gap: 10px;
+          background: rgba(255,255,255,0.72);
+          color: #0F172A; font-size: 15px; font-weight: 600;
+          padding: 14px 28px; border-radius: 13px; cursor: pointer;
+          border: 1px solid rgba(59,130,246,0.2);
+          backdrop-filter: blur(12px);
+          transition: background 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+        }
+        .jit-btn-outline:hover { background: rgba(255,255,255,0.9); transform: translateY(-2px); border-color: rgba(59,130,246,0.35); }
+        .jit-play-circle {
+          width: 28px; height: 28px; border-radius: 50%;
+          background: rgba(59,130,246,0.1); color: #3B82F6;
+          display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
 
-        /* Floating mini cards */
-        .wlc-gcard-float {
+        /* ── ORB VISUAL ── */
+        .jit-hero-right {
+          position: relative; z-index: 2; display: flex; justify-content: center;
+          transform-style: preserve-3d;
+        }
+        .jit-orb-scene {
+          position: relative; width: 420px; height: 420px;
+          display: flex; align-items: center; justify-content: center;
+          perspective: 1000px;
+          transform-style: preserve-3d;
+          transform: rotateX(calc(var(--hero-mouse-y, 0) * -12deg)) rotateY(calc(var(--hero-mouse-x, 0) * 12deg));
+          transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        /* Interactive Orbit SVGs */
+        .jit-orbit-svg {
           position: absolute;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 14px 18px;
-          border-radius: 18px;
-          min-width: 170px;
+          pointer-events: none;
+          transform-style: preserve-3d;
         }
-        .wlc-gcard-tr {
-          top: -10px; right: -10px;
-          animation: wlcFloatTR 7s ease-in-out infinite;
+        .jit-orbit-outer {
+          width: 380px; height: 380px;
+          transform: rotateX(60deg) rotateY(0deg);
+          animation: jitRingRotateOut 28s linear infinite;
         }
-        .wlc-gcard-bl {
-          bottom: 20px; left: -20px;
-          animation: wlcFloatBL 8s ease-in-out infinite;
+        .jit-orbit-mid {
+          width: 280px; height: 280px;
+          transform: rotateX(60deg) rotateY(0deg);
+          animation: jitRingRotateMid 20s linear infinite reverse;
         }
-        .wlc-gcard-br {
-          bottom: -10px; right: 10px;
-          animation: wlcFloatBR 6.5s ease-in-out infinite;
+        .jit-orbit-track {
+          fill: none;
+          stroke: rgba(59, 130, 246, 0.12);
+          stroke-width: 1.5;
         }
-        @keyframes wlcFloatTR {
-          0%, 100% { transform: translateY(0) rotate(1deg); }
-          50%       { transform: translateY(-10px) rotate(-1deg); }
+        .jit-orbit-flow-1 {
+          fill: none;
+          stroke: url(#orbitG-out);
+          stroke-width: 2.5;
+          stroke-dasharray: 60 300;
+          stroke-linecap: round;
+          animation: jitFlow1 8s linear infinite;
         }
-        @keyframes wlcFloatBL {
-          0%, 100% { transform: translateY(0) rotate(-2deg); }
-          50%       { transform: translateY(-12px) rotate(1deg); }
+        .jit-orbit-flow-2 {
+          fill: none;
+          stroke: url(#orbitG-out);
+          stroke-width: 2;
+          stroke-dasharray: 40 400;
+          stroke-linecap: round;
+          animation: jitFlow2 12s linear infinite;
         }
-        @keyframes wlcFloatBR {
+        .jit-orbit-flow-mid {
+          fill: none;
+          stroke: url(#orbitG-mid);
+          stroke-width: 2.5;
+          stroke-dasharray: 50 200;
+          stroke-linecap: round;
+          animation: jitFlow1 6s linear infinite reverse;
+        }
+        @keyframes jitRingRotateOut {
+          from { transform: rotate(0deg) rotateX(60deg); }
+          to { transform: rotate(360deg) rotateX(60deg); }
+        }
+        @keyframes jitRingRotateMid {
+          from { transform: rotate(0deg) rotateX(60deg); }
+          to { transform: rotate(360deg) rotateX(60deg); }
+        }
+        @keyframes jitFlow1 {
+          from { stroke-dashoffset: 360; }
+          to { stroke-dashoffset: 0; }
+        }
+        @keyframes jitFlow2 {
+          from { stroke-dashoffset: 0; }
+          to { stroke-dashoffset: 440; }
+        }
+
+        .jit-orb-float-wrapper {
+          position: absolute;
+          z-index: 10;
+          animation: jitOrbFloat 5s ease-in-out infinite;
+          transform-style: preserve-3d;
+        }
+        @keyframes jitOrbFloat {
           0%, 100% { transform: translateY(0); }
-          50%       { transform: translateY(-7px) rotate(1deg); }
+          50% { transform: translateY(-12px); }
         }
-        .wlc-mini-icon {
-          width: 36px; height: 36px;
-          border-radius: 10px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
+        .jit-orb-core {
+          width: 140px; height: 140px; border-radius: 50%;
+          background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.95), rgba(219,234,254,0.8) 50%, rgba(147,197,253,0.6));
+          border: 2px solid rgba(255,255,255,0.9);
+          box-shadow:
+            0 20px 60px rgba(59,130,246,0.25),
+            0 8px 24px rgba(59,130,246,0.15),
+            inset 0 2px 8px rgba(255,255,255,0.8),
+            inset 0 -4px 12px rgba(59,130,246,0.1);
+          display: flex; align-items: center; justify-content: center;
+          transform: translateZ(30px) translateY(calc(var(--hero-mouse-y, 0) * -12px)) translateX(calc(var(--hero-mouse-x, 0) * -12px));
+          transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
         }
-        .wlc-mini-title {
-          font-size: 12.5px;
-          font-weight: 700;
-          color: #0F172A;
+        .jit-orb-label {
+          font-size: 28px; font-weight: 900; letter-spacing: -1px;
+          background: linear-gradient(135deg, #1D4ED8, #3B82F6);
+          -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        /* Chips */
+        .jit-chip {
+          position: absolute; z-index: 20;
           white-space: nowrap;
         }
-        .wlc-mini-sub {
-          font-size: 11px;
-          color: #64748B;
-          font-weight: 500;
+        .jit-chip-inner {
+          display: flex; align-items: center; gap: 8px;
+          background: rgba(255,255,255,0.88);
+          border: 1px solid rgba(255,255,255,0.9);
+          border-radius: 14px; padding: 10px 14px;
+          box-shadow: 0 8px 28px rgba(15,23,42,0.08), 0 2px 8px rgba(59,130,246,0.06);
+          backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+          white-space: nowrap;
+          transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), background 0.3s, border-color 0.3s;
         }
-
-        /* ── Scroll cue ── */
-        .wlc-scroll-cue {
-          position: absolute;
-          bottom: 32px; left: 50%;
-          transform: translateX(-50%);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-        }
-        .wlc-scroll-line {
-          width: 1.5px; height: 52px;
-          background: linear-gradient(to bottom, rgba(30,111,217,0.5), transparent);
-          animation: wlcScrollDrop 2s ease-in-out infinite;
-        }
-        @keyframes wlcScrollDrop {
-          0% { opacity: 0; transform: scaleY(0); transform-origin: top; }
-          50% { opacity: 1; transform: scaleY(1); transform-origin: top; }
-          100% { opacity: 0; transform: scaleY(1); transform-origin: bottom; }
-        }
-
-        /* ══════════════════════════════
-           STATS
-        ══════════════════════════════ */
-        .wlc-stats-section {
-          padding: 80px 0;
-          background: #FFFFFF;
-        }
-        .wlc-stats-grid {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 24px;
-        }
-        .wlc-stat-card {
-          background: linear-gradient(145deg, #EAF4FF 0%, #FFFFFF 100%);
-          border: 1px solid rgba(214,233,255,0.8);
-          border-radius: 24px;
-          padding: 40px 28px;
-          text-align: center;
-          transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease;
-          box-shadow: 0 4px 20px rgba(15,23,42,0.03), 0 1px 4px rgba(30,111,217,0.04);
-        }
-        .wlc-stat-card:hover {
-          transform: translateY(-6px);
-          box-shadow: 0 16px 40px rgba(30,111,217,0.1), 0 4px 16px rgba(15,23,42,0.06);
+        .jit-chip-inner:hover {
+          background: rgba(255,255,255,0.98);
           border-color: rgba(59,130,246,0.25);
         }
-        .wlc-stat-icon {
-          font-size: 28px;
-          margin-bottom: 16px;
-          display: block;
+        .jit-chip-icon {
+          width: 30px; height: 30px; border-radius: 9px;
+          background: rgba(59,130,246,0.1); color: #3B82F6;
+          display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
-        .wlc-stat-val {
-          display: block;
-          font-size: 44px;
-          font-weight: 900;
-          letter-spacing: -2px;
-          background: linear-gradient(135deg, #0F172A 0%, #1E6FD9 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          line-height: 1;
-          margin-bottom: 10px;
+        .jit-chip-title { font-size: 12px; font-weight: 700; color: #0F172A; }
+        .jit-chip-tl { top: 30px; right: 30px; animation: jitChipFloat1 7s ease-in-out infinite; }
+        .jit-chip-tr { left: 0px; top: 90px; animation: jitChipFloat2 8s ease-in-out infinite; }
+        .jit-chip-br { bottom: 50px; right: 20px; animation: jitChipFloat3 6.5s ease-in-out infinite; }
+
+        .jit-chip-tl .jit-chip-inner {
+          transform: translateZ(50px) translateY(calc(var(--hero-mouse-y, 0) * -22px)) translateX(calc(var(--hero-mouse-x, 0) * -22px));
         }
-        .wlc-stat-label {
-          display: block;
-          font-size: 16px;
-          font-weight: 800;
-          color: #0F172A;
-          letter-spacing: -0.3px;
-          margin-bottom: 6px;
+        .jit-chip-tr .jit-chip-inner {
+          transform: translateZ(40px) translateY(calc(var(--hero-mouse-y, 0) * -18px)) translateX(calc(var(--hero-mouse-x, 0) * -18px));
         }
-        .wlc-stat-sub {
-          display: block;
-          font-size: 12.5px;
-          color: #64748B;
-          font-weight: 500;
-          line-height: 1.4;
+        .jit-chip-br .jit-chip-inner {
+          transform: translateZ(60px) translateY(calc(var(--hero-mouse-y, 0) * -26px)) translateX(calc(var(--hero-mouse-x, 0) * -26px));
+        }
+
+        @keyframes jitChipFloat1 { 0%,100%{transform:translateY(0) rotate(1deg)} 50%{transform:translateY(-12px) rotate(-1deg)} }
+        @keyframes jitChipFloat2 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-9px)} }
+        @keyframes jitChipFloat3 { 0%,100%{transform:translateY(0) rotate(-1deg)} 50%{transform:translateY(-8px) rotate(1deg)} }
+
+        /* Spheres */
+        .jit-sphere {
+          position: absolute; border-radius: 50%;
+        }
+        .jit-sphere-inner {
+          width: 100%; height: 100%; border-radius: 50%;
+          background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.9), rgba(147,197,253,0.6));
+          border: 1px solid rgba(255,255,255,0.7);
+          box-shadow: 0 8px 24px rgba(59,130,246,0.15), inset 0 2px 4px rgba(255,255,255,0.7);
+          transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .jit-sphere-1 { width: 40px; height: 40px; top: 10px; left: 20px; animation: jitSphere1 9s ease-in-out infinite; }
+        .jit-sphere-2 { width: 24px; height: 24px; bottom: 80px; left: 30px; animation: jitSphere2 11s ease-in-out infinite; }
+        .jit-sphere-3 { width: 32px; height: 32px; top: 50%; right: -10px; animation: jitSphere3 8s ease-in-out infinite; }
+
+        .jit-sphere-1 .jit-sphere-inner {
+          transform: translateZ(25px) translateY(calc(var(--hero-mouse-y, 0) * -12px)) translateX(calc(var(--hero-mouse-x, 0) * -12px));
+        }
+        .jit-sphere-2 .jit-sphere-inner {
+          transform: translateZ(15px) translateY(calc(var(--hero-mouse-y, 0) * -8px)) translateX(calc(var(--hero-mouse-x, 0) * -8px));
+        }
+        .jit-sphere-3 .jit-sphere-inner {
+          transform: translateZ(35px) translateY(calc(var(--hero-mouse-y, 0) * -16px)) translateX(calc(var(--hero-mouse-x, 0) * -16px));
+        }
+
+        @keyframes jitSphere1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(8px,-12px)} }
+        @keyframes jitSphere2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-6px,-10px)} }
+        @keyframes jitSphere3 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(5px,-8px)} }
+
+
+        /* ══════════════════════════════
+           STATS BAR
+        ══════════════════════════════ */
+        .jit-stats-section { padding: 0; background: #fff; }
+        .jit-stats-bar {
+          display: flex; align-items: center; justify-content: space-between;
+          background: #fff;
+          border: 1px solid rgba(219,234,254,0.9);
+          border-radius: 20px;
+          padding: 32px 40px;
+          box-shadow: 0 4px 28px rgba(15,23,42,0.04), 0 1px 4px rgba(59,130,246,0.05);
+          margin: -1px 0;
+          position: relative; z-index: 1;
+        }
+        .jit-stat-item {
+          display: flex; flex-direction: column; align-items: center;
+          gap: 6px; flex: 1; text-align: center;
+          padding: 0 12px;
+          animation: jitFadeInUp 0.6s ease both;
+        }
+        @keyframes jitFadeInUp { from {opacity:0;transform:translateY(12px)} to {opacity:1;transform:none} }
+        .jit-stat-icon { color: #3B82F6; margin-bottom: 2px; }
+        .jit-stat-number {
+          font-size: 30px; font-weight: 900; letter-spacing: -1.5px; line-height: 1;
+          background: linear-gradient(135deg, #0F172A 0%, #1D4ED8 100%);
+          -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .jit-stat-label { font-size: 13px; font-weight: 600; color: #64748B; }
+        .jit-stats-divider {
+          width: 1px; height: 48px; flex-shrink: 0;
+          background: linear-gradient(to bottom, transparent, rgba(219,234,254,1), transparent);
         }
 
         /* ══════════════════════════════
            PORTALS
         ══════════════════════════════ */
-        .wlc-portals-section {
-          padding: 100px 0;
-          background: linear-gradient(180deg, #F5F7FA 0%, #EAF4FF 50%, #F5F7FA 100%);
+        .jit-portals-section {
+          padding: 80px 0 100px;
+          background: linear-gradient(180deg, #F8FBFF 0%, #EFF6FF 50%, #F8FBFF 100%);
         }
-        .wlc-portals-grid {
-          display: grid;
-          grid-template-columns: repeat(5, 1fr);
-          gap: 18px;
+        .jit-section-intro { margin-bottom: 40px; }
+        .jit-eyebrow-tag {
+          display: block;
+          font-size: 11px; font-weight: 700; letter-spacing: 2px;
+          color: #3B82F6; text-transform: uppercase; margin-bottom: 14px;
         }
-        .wlc-portal-card {
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          gap: 14px;
-          padding: 28px 16px 24px;
-          background: rgba(255,255,255,0.65);
-          border: 1px solid rgba(255,255,255,0.7);
-          border-radius: 24px;
-          cursor: pointer;
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
-          overflow: hidden;
-          transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease;
-          box-shadow: 0 4px 24px rgba(15,23,42,0.04), 0 20px 40px rgba(15,23,42,0.04), inset 0 1px 0 rgba(255,255,255,0.7);
+        .jit-section-head-row {
+          display: flex; align-items: flex-end; justify-content: space-between; gap: 20px;
         }
-        .wlc-portal-shine {
-          position: absolute; inset: 0;
-          background: linear-gradient(135deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%);
-          transform: translateX(-120%) rotate(25deg);
-          transition: transform 0.65s ease;
-          pointer-events: none;
+        .jit-section-h2 {
+          font-size: clamp(26px, 3.5vw, 42px); font-weight: 900;
+          letter-spacing: -1.5px; color: #0F172A; line-height: 1.1;
+          margin-bottom: 8px;
         }
-        .wlc-portal-card:hover .wlc-portal-shine {
-          transform: translateX(200%) rotate(25deg);
-        }
-        .wlc-portal-card:hover {
-          border-color: rgba(var(--portal-accent), 0.3);
-          background: rgba(255,255,255,0.85);
-          transform: translateY(-6px) scale(1.02);
-          box-shadow: 0 16px 40px rgba(30,111,217,0.1), 0 32px 64px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.95);
-        }
-        .wlc-portal-card:active { transform: translateY(-2px) scale(0.99); }
-        .wlc-portal-icon-wrap {
-          width: 52px; height: 52px;
-          border-radius: 14px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
-        }
-        .wlc-portal-card:hover .wlc-portal-icon-wrap {
-          transform: scale(1.1) rotate(-3deg);
-        }
-        .wlc-portal-info {
-          display: flex;
-          flex-direction: column;
-          gap: 5px;
-          position: relative;
-          z-index: 1;
-        }
-        .wlc-portal-title {
-          font-size: 13.5px;
-          font-weight: 800;
-          color: #0F172A;
-          letter-spacing: -0.3px;
-        }
-        .wlc-portal-desc {
-          font-size: 11px;
-          color: #64748B;
-          line-height: 1.4;
-        }
-        .wlc-portal-arrow {
-          color: #94A3B8;
-          transition: color 0.2s, transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
-          position: relative; z-index: 1;
-        }
-        .wlc-portal-card:hover .wlc-portal-arrow {
-          color: #1E6FD9;
-          transform: translateX(3px);
-        }
-        .wlc-portal-bar {
-          position: absolute;
-          bottom: 0; left: 0; right: 0;
-          height: 3px;
-          background: var(--portal-accent);
-          border-radius: 0 0 24px 24px;
-          transform: scaleX(0);
-          transform-origin: left;
-          transition: transform 0.35s ease;
-        }
-        .wlc-portal-card:hover .wlc-portal-bar { transform: scaleX(1); }
-
-        /* ══════════════════════════════
-           SECTION HEADING
-        ══════════════════════════════ */
-        .wlc-section-head {
-          text-align: center;
-          margin-bottom: 64px;
-        }
-        .wlc-eyebrow {
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          font-size: 11px;
-          font-weight: 700;
-          color: #1E6FD9;
-          text-transform: uppercase;
-          letter-spacing: 1.8px;
-          margin-bottom: 16px;
-        }
-        .wlc-eyebrow-bar {
-          display: inline-block;
-          width: 22px; height: 2px;
+        .jit-h2-bar {
+          width: 36px; height: 3px;
           background: linear-gradient(90deg, #3B82F6, #93C5FD);
           border-radius: 2px;
+        }
+        .jit-bar-center { margin: 12px auto 0; }
+        .jit-section-desc {
+          font-size: 15px; color: #64748B; line-height: 1.65;
+          max-width: 380px; text-align: right;
           flex-shrink: 0;
         }
-        .wlc-section-h2 {
-          font-size: clamp(28px, 3.5vw, 46px);
-          font-weight: 900;
-          letter-spacing: -1.5px;
-          color: #0F172A;
-          line-height: 1.1;
-          margin-bottom: 16px;
+
+        .jit-portals-grid {
+          display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px;
         }
-        .wlc-section-sub {
-          font-size: 17px;
-          color: #64748B;
-          line-height: 1.65;
-          max-width: 520px;
-          margin: 0 auto;
+        .jit-portal-card {
+          position: relative;
+          display: flex; flex-direction: column; align-items: flex-start;
+          gap: 12px; padding: 28px 22px 24px;
+          background: rgba(255,255,255,0.75);
+          border: 1px solid rgba(255,255,255,0.85);
+          border-radius: 20px; cursor: pointer;
+          backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+          overflow: hidden; text-align: left;
+          box-shadow: 0 2px 16px rgba(15,23,42,0.04), 0 12px 32px rgba(15,23,42,0.03), inset 0 1px 0 rgba(255,255,255,0.8);
+          transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease;
         }
+        .jit-portal-card::before {
+          content: '';
+          position: absolute; inset: 0;
+          background: radial-gradient(circle 180px at var(--mouse-x, -999px) var(--mouse-y, -999px), rgba(59, 130, 246, 0.11), transparent 80%);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          pointer-events: none;
+          z-index: 0;
+        }
+        .jit-portal-card:hover::before {
+          opacity: 1;
+        }
+        .jit-portal-shine {
+          position: absolute; inset: 0; pointer-events: none;
+          background: linear-gradient(130deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.65) 50%, rgba(255,255,255,0) 100%);
+          transform: translateX(-120%) rotate(25deg);
+          transition: transform 0.6s ease;
+          z-index: 1;
+        }
+        .jit-portal-card:hover .jit-portal-shine { transform: translateX(200%) rotate(25deg); }
+        .jit-portal-card:hover {
+          background: rgba(255,255,255,0.92);
+          transform: translateY(-6px) scale(1.02);
+          box-shadow: 0 16px 40px rgba(59,130,246,0.12), 0 32px 60px rgba(15,23,42,0.07), inset 0 1px 0 rgba(255,255,255,0.98);
+          border-color: rgba(59,130,246,0.2);
+        }
+        .jit-portal-card:active { transform: translateY(-2px) scale(0.99); }
+        .jit-portal-icon {
+          width: 52px; height: 52px; border-radius: 14px;
+          background: rgba(59,130,246,0.08); color: #3B82F6;
+          display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0;
+          transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), background 0.3s ease;
+          position: relative; z-index: 2;
+        }
+        .jit-portal-card:hover .jit-portal-icon {
+          transform: scale(1.1) rotate(-4deg);
+          background: rgba(59,130,246,0.14);
+        }
+        .jit-portal-title { font-size: 14px; font-weight: 800; color: #0F172A; letter-spacing: -0.3px; position: relative; z-index: 2; }
+        .jit-portal-desc { font-size: 12px; color: #64748B; line-height: 1.5; position: relative; z-index: 2; }
+        .jit-portal-arrow {
+          color: #CBD5E1; margin-top: 4px;
+          transition: color 0.2s, transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+          position: relative; z-index: 2;
+        }
+        .jit-portal-card:hover .jit-portal-arrow { color: #3B82F6; transform: translateX(4px); }
+        .jit-portal-bottom-line {
+          position: absolute; bottom: 0; left: 0; right: 0;
+          height: 3px; background: linear-gradient(90deg, #3B82F6, #60A5FA);
+          border-radius: 0 0 20px 20px;
+          transform: scaleX(0); transform-origin: left;
+          transition: transform 0.35s ease;
+          z-index: 2;
+        }
+        .jit-portal-card:hover .jit-portal-bottom-line { transform: scaleX(1); }
 
         /* ══════════════════════════════
-           FEATURES BENTO
+           FEATURES
         ══════════════════════════════ */
-        .wlc-features-section {
-          padding: 100px 0;
-          background: #FFFFFF;
+        .jit-features-section { padding: 80px 0 100px; background: #fff; }
+        .jit-section-center { text-align: center; margin-bottom: 52px; }
+        .jit-feat-intro { font-size: 16px; color: #64748B; max-width: 480px; margin: 16px auto 0; line-height: 1.7; }
+
+        .jit-features-grid {
+          display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
         }
-        .wlc-bento-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          grid-template-rows: auto auto;
-          gap: 20px;
-        }
-        .wlc-bento-card {
+        .jit-feat-card {
           position: relative;
-          background: linear-gradient(145deg, #F8FAFF 0%, #FFFFFF 100%);
-          border: 1px solid rgba(214,233,255,0.9);
-          border-radius: 24px;
-          padding: 36px 32px;
+          background: linear-gradient(145deg, #F0F7FF 0%, #fff 100%);
+          border: 1px solid rgba(219,234,254,0.9);
+          border-radius: 20px; padding: 36px 28px;
           overflow: hidden;
           transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease, border-color 0.3s ease;
-          box-shadow: 0 4px 20px rgba(15,23,42,0.03);
+          box-shadow: 0 2px 16px rgba(15,23,42,0.03);
         }
-        .wlc-bento-large { grid-column: span 1; }
-        .wlc-bento-medium { grid-column: span 1; }
-        .wlc-bento-grid .wlc-bento-card:nth-child(1) { grid-column: span 2; }
-        .wlc-bento-grid .wlc-bento-card:nth-child(6) { grid-column: span 2; }
-        .wlc-bento-shine {
+        .jit-feat-card::before {
+          content: '';
           position: absolute; inset: 0;
+          background: radial-gradient(circle 180px at var(--mouse-x, -999px) var(--mouse-y, -999px), rgba(59, 130, 246, 0.11), transparent 80%);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          pointer-events: none;
+          z-index: 0;
+        }
+        .jit-feat-card:hover::before {
+          opacity: 1;
+        }
+        .jit-feat-card:hover {
+          transform: translateY(-6px);
+          border-color: rgba(59,130,246,0.22);
+          box-shadow: 0 20px 48px rgba(59,130,246,0.09), 0 8px 24px rgba(15,23,42,0.05);
+        }
+        .jit-feat-shine {
+          position: absolute; inset: 0; pointer-events: none;
           background: linear-gradient(135deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0) 100%);
           transform: translateX(-120%) rotate(25deg);
           transition: transform 0.6s ease;
-          pointer-events: none;
-        }
-        .wlc-bento-card:hover .wlc-bento-shine { transform: translateX(200%) rotate(25deg); }
-        .wlc-bento-card:hover {
-          transform: translateY(-5px);
-          border-color: rgba(59,130,246,0.2);
-          box-shadow: 0 20px 48px rgba(30,111,217,0.08), 0 8px 24px rgba(15,23,42,0.06);
-        }
-        .wlc-bento-icon {
-          width: 56px; height: 56px;
-          border-radius: 16px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-bottom: 22px;
-          transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
-        }
-        .wlc-bento-card:hover .wlc-bento-icon { transform: scale(1.12) rotate(-4deg); }
-        .wlc-bento-title {
-          font-size: 17px;
-          font-weight: 800;
-          color: #0F172A;
-          margin-bottom: 10px;
-          letter-spacing: -0.4px;
-        }
-        .wlc-bento-desc {
-          font-size: 14px;
-          color: #475569;
-          line-height: 1.7;
-          margin-bottom: 22px;
-        }
-        .wlc-bento-learn {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          font-size: 12.5px;
-          font-weight: 700;
-          color: var(--feat-color, #1E6FD9);
-          transition: gap 0.2s ease;
-        }
-        .wlc-bento-card:hover .wlc-bento-learn { gap: 10px; }
-        .wlc-bento-bar {
-          position: absolute;
-          bottom: 0; left: 0; right: 0;
-          height: 3px;
-          background: var(--feat-color, #1E6FD9);
-          border-radius: 0 0 24px 24px;
-          transform: scaleX(0);
-          transform-origin: left;
-          transition: transform 0.35s ease;
-        }
-        .wlc-bento-card:hover .wlc-bento-bar { transform: scaleX(1); }
-
-        /* ══════════════════════════════
-           EXPERIENCE SPLIT
-        ══════════════════════════════ */
-        .wlc-experience-section {
-          padding: 100px 0;
-          background: linear-gradient(180deg, #EAF4FF 0%, #F5F7FA 100%);
-        }
-        .wlc-experience-split {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 80px;
-          align-items: center;
-        }
-        .wlc-exp-sub { text-align: left; margin: 0 0 36px 0; }
-        .wlc-exp-blocks { display: flex; flex-direction: column; gap: 24px; }
-        .wlc-exp-block {
-          display: flex;
-          align-items: flex-start;
-          gap: 18px;
-          padding: 22px 24px;
-          background: rgba(255,255,255,0.7);
-          border: 1px solid rgba(214,233,255,0.8);
-          border-radius: 18px;
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease;
-          box-shadow: 0 2px 12px rgba(15,23,42,0.03);
-        }
-        .wlc-exp-block:hover {
-          transform: translateX(6px);
-          box-shadow: 0 8px 28px rgba(30,111,217,0.08);
-          border-color: rgba(59,130,246,0.2);
-        }
-        .wlc-exp-block-icon {
-          font-size: 22px;
-          flex-shrink: 0;
-          margin-top: 2px;
-        }
-        .wlc-exp-block-title {
-          font-size: 15px;
-          font-weight: 800;
-          color: #0F172A;
-          letter-spacing: -0.3px;
-          margin-bottom: 4px;
-        }
-        .wlc-exp-block-desc {
-          font-size: 13.5px;
-          color: #475569;
-          line-height: 1.6;
-        }
-
-        /* Mockup Right */
-        .wlc-exp-right { position: relative; }
-        .wlc-mockup-wrap { position: relative; min-height: 380px; }
-        .wlc-mockup-card {
-          background: rgba(255,255,255,0.8);
-          border: 1px solid rgba(214,233,255,0.9);
-          border-radius: 22px;
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
-          box-shadow: 0 8px 36px rgba(15,23,42,0.06), 0 24px 64px rgba(15,23,42,0.04), inset 0 1px 0 rgba(255,255,255,0.9);
-          padding: 28px;
-          transition: transform 0.4s ease, box-shadow 0.4s ease;
-        }
-        .wlc-mockup-back {
-          position: absolute;
-          top: 0; left: 0;
-          width: 88%;
-          transform: rotate(-2.5deg);
-          opacity: 0.85;
-          animation: wlcMockBack 7s ease-in-out infinite;
-        }
-        @keyframes wlcMockBack {
-          0%, 100% { transform: rotate(-2.5deg) translateY(0); }
-          50%       { transform: rotate(-2.5deg) translateY(-6px); }
-        }
-        .wlc-mockup-front {
-          position: absolute;
-          bottom: 0; right: 0;
-          width: 90%;
-          animation: wlcMockFront 8s ease-in-out infinite;
-        }
-        @keyframes wlcMockFront {
-          0%, 100% { transform: translateY(0); }
-          50%       { transform: translateY(-10px); }
-        }
-        .wlc-mock-label {
-          font-size: 11px;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 1.5px;
-          color: #64748B;
-          margin-bottom: 18px;
-        }
-        .wlc-mock-row {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          margin-bottom: 12px;
-        }
-        .wlc-mock-row span {
-          font-size: 11.5px;
-          font-weight: 600;
-          color: #64748B;
-          width: 56px;
-          text-align: right;
-          flex-shrink: 0;
-        }
-        .wlc-mock-bar {
-          height: 7px;
-          background: linear-gradient(90deg, #3B82F6, #60A5FA);
-          border-radius: 100px;
-          flex: 1;
-          transition: width 1s ease;
-        }
-        .wlc-mock-chip {
-          display: inline-block;
-          font-size: 12px;
-          font-weight: 600;
-          padding: 7px 14px;
-          border-radius: 100px;
-          margin-bottom: 10px;
-          margin-right: 6px;
-        }
-        .wlc-chip-green { background: rgba(5,150,105,0.08); color: #047857; border: 1px solid rgba(5,150,105,0.15); }
-        .wlc-chip-blue  { background: rgba(59,130,246,0.08); color: #1D4ED8; border: 1px solid rgba(59,130,246,0.15); }
-        .wlc-chip-purple { background: rgba(124,58,237,0.08); color: #7C3AED; border: 1px solid rgba(124,58,237,0.15); }
-        .wlc-mock-stat-row {
-          display: flex;
-          gap: 16px;
-          margin-top: 14px;
-          padding-top: 14px;
-          border-top: 1px solid rgba(214,233,255,0.7);
-        }
-        .wlc-mock-mini-stat { flex: 1; text-align: center; }
-        .wlc-mms-val { display: block; font-size: 20px; font-weight: 900; color: #0F172A; letter-spacing: -0.5px; }
-        .wlc-mms-lbl { display: block; font-size: 10.5px; font-weight: 600; color: #64748B; margin-top: 2px; }
-
-        /* ══════════════════════════════
-           WHY CHOOSE
-        ══════════════════════════════ */
-        .wlc-why-section {
-          padding: 100px 0;
-          background: #FFFFFF;
-        }
-        .wlc-why-grid {
-          display: grid;
-          grid-template-columns: repeat(5, 1fr);
-          gap: 20px;
-        }
-        .wlc-why-card {
-          background: linear-gradient(145deg, #EAF4FF 0%, #FFFFFF 100%);
-          border: 1px solid rgba(214,233,255,0.9);
-          border-radius: 24px;
-          padding: 36px 24px;
-          text-align: center;
-          transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease, border-color 0.3s ease;
-          box-shadow: 0 2px 12px rgba(15,23,42,0.03);
-        }
-        .wlc-why-card:hover {
-          transform: translateY(-7px);
-          border-color: rgba(59,130,246,0.25);
-          box-shadow: 0 20px 50px rgba(30,111,217,0.1);
-        }
-        .wlc-why-icon {
-          font-size: 32px;
-          margin-bottom: 16px;
-          display: block;
-        }
-        .wlc-why-title {
-          font-size: 15px;
-          font-weight: 800;
-          color: #0F172A;
-          letter-spacing: -0.3px;
-          margin-bottom: 8px;
-        }
-        .wlc-why-desc {
-          font-size: 12.5px;
-          color: #64748B;
-          line-height: 1.55;
-        }
-
-        /* ══════════════════════════════
-           TIMELINE
-        ══════════════════════════════ */
-        .wlc-timeline-section {
-          padding: 100px 0;
-          background: linear-gradient(180deg, #EAF4FF 0%, #F5F7FA 100%);
-        }
-        .wlc-timeline {
-          display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-          gap: 0;
-          position: relative;
-        }
-        .wlc-timeline::before {
-          content: '';
-          position: absolute;
-          top: 28px;
-          left: 4%;
-          right: 4%;
-          height: 2px;
-          background: linear-gradient(90deg, #3B82F6, #93C5FD, #3B82F6);
-          background-size: 200% 100%;
-          animation: wlcTimelineShift 4s linear infinite;
-          z-index: 0;
-        }
-        @keyframes wlcTimelineShift {
-          0% { background-position: 0% 0%; }
-          100% { background-position: 200% 0%; }
-        }
-        .wlc-timeline-item {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          position: relative;
           z-index: 1;
         }
-        .wlc-tl-node { position: relative; }
-        .wlc-tl-step {
-          width: 56px; height: 56px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #3B82F6, #1D4ED8);
-          color: #ffffff;
-          font-size: 14px;
-          font-weight: 900;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 8px 24px rgba(37,99,235,0.25);
-          margin: 0 auto 20px;
-          transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease;
+        .jit-feat-card:hover .jit-feat-shine { transform: translateX(200%) rotate(25deg); }
+        .jit-feat-icon {
+          width: 54px; height: 54px; border-radius: 15px;
+          background: rgba(59,130,246,0.08); color: #3B82F6;
+          display: flex; align-items: center; justify-content: center;
+          margin-bottom: 20px;
+          transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), background 0.3s;
+          position: relative; z-index: 2;
         }
-        .wlc-timeline-item:hover .wlc-tl-step {
-          transform: scale(1.15);
-          box-shadow: 0 14px 36px rgba(37,99,235,0.35);
+        .jit-feat-card:hover .jit-feat-icon { transform: scale(1.1) rotate(-4deg); background: rgba(59,130,246,0.13); }
+        .jit-feat-title { font-size: 16px; font-weight: 800; color: #0F172A; letter-spacing: -0.4px; margin-bottom: 10px; position: relative; z-index: 2; }
+        .jit-feat-desc { font-size: 14px; color: #475569; line-height: 1.7; margin-bottom: 20px; position: relative; z-index: 2; }
+        .jit-feat-link {
+          display: flex; align-items: center; gap: 6px;
+          font-size: 13px; font-weight: 700; color: #3B82F6;
+          transition: gap 0.2s ease;
+          position: relative; z-index: 2;
         }
-        .wlc-tl-content { padding: 0 12px; }
-        .wlc-tl-title {
-          font-size: 15px;
-          font-weight: 800;
-          color: #0F172A;
-          letter-spacing: -0.3px;
-          margin-bottom: 6px;
-        }
-        .wlc-tl-desc {
-          font-size: 12.5px;
-          color: #64748B;
-          line-height: 1.5;
-        }
+        .jit-feat-card:hover .jit-feat-link { gap: 10px; }
 
         /* ══════════════════════════════
-           TESTIMONIALS
+           CTA
         ══════════════════════════════ */
-        .wlc-testimonials-section {
-          padding: 100px 0;
-          background: #FFFFFF;
+        .jit-cta-section {
+          padding: 100px 0; text-align: center;
+          background: linear-gradient(135deg, #DBEAFE 0%, #EFF6FF 50%, #F8FBFF 100%);
+          position: relative; overflow: hidden;
         }
-        .wlc-testimonials-carousel {
-          position: relative;
-          min-height: 260px;
+        .jit-cta-blob-1, .jit-cta-blob-2 {
+          position: absolute; border-radius: 50%; filter: blur(90px); pointer-events: none;
         }
-        .wlc-tcard {
-          position: absolute;
-          top: 0; left: 50%;
-          transform: translateX(-50%) scale(0.94);
-          width: 100%;
-          max-width: 700px;
-          background: linear-gradient(145deg, #EAF4FF 0%, #FFFFFF 100%);
-          border: 1px solid rgba(214,233,255,0.9);
-          border-radius: 28px;
-          padding: 44px 48px;
-          opacity: 0;
-          transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.25,0.8,0.25,1);
-          box-shadow: 0 8px 36px rgba(15,23,42,0.05), 0 24px 64px rgba(15,23,42,0.04);
-          pointer-events: none;
-        }
-        .wlc-tcard-active {
-          opacity: 1;
-          transform: translateX(-50%) scale(1);
-          pointer-events: auto;
-        }
-        .wlc-tcard-quote {
-          font-size: 72px;
-          line-height: 0.6;
-          color: #BFDBFE;
-          font-family: Georgia, serif;
-          margin-bottom: 18px;
-        }
-        .wlc-tcard-text {
-          font-size: 17px;
-          color: #334155;
-          line-height: 1.75;
-          font-weight: 500;
-          margin-bottom: 28px;
-        }
-        .wlc-tcard-author {
-          display: flex;
-          align-items: center;
-          gap: 14px;
-        }
-        .wlc-tcard-avatar {
-          width: 48px; height: 48px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 14px;
-          font-weight: 800;
-          flex-shrink: 0;
-        }
-        .wlc-tcard-name {
-          font-size: 14.5px;
-          font-weight: 800;
-          color: #0F172A;
-          letter-spacing: -0.3px;
-        }
-        .wlc-tcard-role {
-          font-size: 12.5px;
-          color: #64748B;
-          font-weight: 500;
-          margin-top: 2px;
-        }
-        .wlc-tcard-dots {
-          display: flex;
-          justify-content: center;
-          gap: 8px;
-          margin-top: 280px;
-        }
-        .wlc-tcard-dot {
-          width: 8px; height: 8px;
-          border-radius: 50%;
-          background: rgba(30,111,217,0.2);
-          border: none;
-          cursor: pointer;
-          transition: background 0.3s ease, transform 0.3s ease;
-          padding: 0;
-        }
-        .wlc-tcard-dot-active {
-          background: #1E6FD9;
-          transform: scale(1.3);
-        }
-
-        /* ══════════════════════════════
-           FINAL CTA
-        ══════════════════════════════ */
-        .wlc-cta-section {
-          padding: 120px 0;
-          background: linear-gradient(160deg, #EAF4FF 0%, #D6E9FF 40%, #EAF4FF 100%);
-          position: relative;
-          overflow: hidden;
-          text-align: center;
-        }
-        .wlc-cta-bg-blob-1, .wlc-cta-bg-blob-2 {
-          position: absolute;
-          border-radius: 50%;
-          filter: blur(80px);
-          pointer-events: none;
-        }
-        .wlc-cta-bg-blob-1 {
+        .jit-cta-blob-1 {
           width: 500px; height: 500px;
-          background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%);
+          background: radial-gradient(circle, rgba(59,130,246,0.14) 0%, transparent 65%);
           top: -150px; left: -100px;
         }
-        .wlc-cta-bg-blob-2 {
+        .jit-cta-blob-2 {
           width: 400px; height: 400px;
-          background: radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%);
-          bottom: -100px; right: -100px;
+          background: radial-gradient(circle, rgba(96,165,250,0.1) 0%, transparent 65%);
+          bottom: -100px; right: -80px;
         }
-        .wlc-cta-inner { position: relative; z-index: 2; }
-        .wlc-cta-h2 {
-          font-size: clamp(34px, 4.5vw, 60px);
-          font-weight: 900;
-          letter-spacing: -2px;
-          color: #0F172A;
-          line-height: 1.08;
-          margin-bottom: 20px;
+        .jit-cta-inner { position: relative; z-index: 2; }
+        .jit-cta-content { max-width: 600px; margin: 0 auto; }
+        .jit-cta-h2 {
+          font-size: clamp(30px, 4vw, 52px); font-weight: 900;
+          letter-spacing: -2px; color: #0F172A; line-height: 1.1; margin-bottom: 18px;
         }
-        .wlc-cta-sub {
-          font-size: 18px;
-          color: #475569;
-          line-height: 1.65;
-          max-width: 480px;
-          margin: 0 auto 40px;
-        }
-        .wlc-cta-actions {
-          display: flex;
-          justify-content: center;
-        }
+        .jit-cta-sub { font-size: 17px; color: #475569; line-height: 1.65; margin-bottom: 36px; }
 
         /* ══════════════════════════════
            FOOTER
         ══════════════════════════════ */
-        .wlc-footer {
-          border-top: 1px solid rgba(214,233,255,0.8);
-          background: #FFFFFF;
-          padding: 28px 0;
-        }
-        .wlc-footer-inner {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 16px;
-        }
-        .wlc-footer-brand {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          flex-shrink: 0;
-        }
-        .wlc-footer-name {
-          font-size: 14px;
-          font-weight: 800;
-          color: #0F172A;
-          letter-spacing: -0.3px;
-        }
-        .wlc-footer-copy {
-          font-size: 12.5px;
-          color: #64748B;
-          font-weight: 500;
-        }
-        .wlc-footer-badge {
-          background: rgba(30,111,217,0.05);
-          border: 1px solid rgba(30,111,217,0.12);
-          padding: 4px 14px;
-          border-radius: 100px;
-          font-size: 11.5px;
-          font-weight: 600;
-          color: #1E6FD9;
-          flex-shrink: 0;
+        .jit-footer { background: #fff; border-top: 1px solid rgba(219,234,254,0.8); padding: 26px 0; }
+        .jit-footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+        .jit-footer-brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .jit-footer-name { font-size: 14px; font-weight: 800; color: #0F172A; letter-spacing: -0.3px; }
+        .jit-footer-copy { font-size: 12.5px; color: #64748B; font-weight: 500; }
+        .jit-footer-tag {
+          background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.12);
+          padding: 4px 14px; border-radius: 100px;
+          font-size: 11.5px; font-weight: 600; color: #3B82F6; flex-shrink: 0;
         }
 
         /* ══════════════════════════════
            SCROLL REVEAL
         ══════════════════════════════ */
-        .wlc-reveal {
+        .jit-reveal {
           opacity: 0;
-          transition: opacity 0.75s cubic-bezier(0.16,1,0.3,1), transform 0.75s cubic-bezier(0.16,1,0.3,1);
+          transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1), transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .wlc-fade-up { transform: translateY(30px); }
-        .wlc-reveal.wlc-revealed { opacity: 1; transform: none; }
-        .wlc-delay-1 { transition-delay: 0.10s; }
-        .wlc-delay-2 { transition-delay: 0.20s; }
-        .wlc-delay-3 { transition-delay: 0.30s; }
-        .wlc-delay-4 { transition-delay: 0.40s; }
+        .jit-fade-up { transform: translateY(32px) scale(0.985); }
+        .jit-reveal.jit-revealed { opacity: 1; transform: none; }
+        .jit-d1 { transition-delay: 0.10s; }
+        .jit-d2 { transition-delay: 0.20s; }
+        .jit-d3 { transition-delay: 0.30s; }
+        .jit-d4 { transition-delay: 0.40s; }
 
         /* ══════════════════════════════
            RESPONSIVE
         ══════════════════════════════ */
         @media (max-width: 1100px) {
-          .wlc-hero-inner {
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-          }
-          .wlc-portals-grid {
-            grid-template-columns: repeat(3, 1fr);
-          }
-          .wlc-portals-grid .wlc-portal-card:nth-child(4),
-          .wlc-portals-grid .wlc-portal-card:nth-child(5) {
-            grid-column: span 1;
-          }
-          .wlc-why-grid {
-            grid-template-columns: repeat(3, 1fr);
-          }
+          .jit-nav-wrap { width: calc(100% - 48px); }
+          .jit-hero-inner { gap: 40px; }
+          .jit-orb-scene { width: 340px; height: 340px; }
+          .jit-orbit-outer { width: 310px; height: 310px; }
+          .jit-orbit-mid { width: 230px; height: 230px; }
+          .jit-portals-grid { grid-template-columns: repeat(3, 1fr); }
+          .jit-features-grid { grid-template-columns: repeat(2, 1fr); }
         }
 
         @media (max-width: 900px) {
-          .wlc-container { padding: 0 28px; }
-          .wlc-hero-inner {
-            grid-template-columns: 1fr;
-            gap: 48px;
-            text-align: center;
-          }
-          .wlc-hero-left {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-          }
-          .wlc-hero-eyebrow { justify-content: center; }
-          .wlc-hero-p { max-width: 100%; }
-          .wlc-hero-actions { justify-content: center; }
-          .wlc-stats-grid { grid-template-columns: repeat(2, 1fr); }
-          .wlc-portals-grid { grid-template-columns: repeat(2, 1fr); }
-          .wlc-bento-grid { grid-template-columns: 1fr 1fr; }
-          .wlc-bento-grid .wlc-bento-card:nth-child(1) { grid-column: span 2; }
-          .wlc-bento-grid .wlc-bento-card:nth-child(6) { grid-column: span 2; }
-          .wlc-experience-split { grid-template-columns: 1fr; gap: 48px; }
-          .wlc-exp-sub { text-align: left; }
-          .wlc-why-grid { grid-template-columns: repeat(3, 1fr); }
-          .wlc-timeline { flex-direction: column; gap: 28px; }
-          .wlc-timeline::before { display: none; }
-          .wlc-timeline-item { flex-direction: row; text-align: left; gap: 20px; }
-          .wlc-tl-step { margin: 0; }
-          .wlc-tcard-dots { margin-top: 300px; }
+          .jit-nav-center { display: none; }
+          .jit-hamburger { display: flex; }
+          .jit-nav-wrap { top: 12px; width: calc(100% - 32px); border-radius: 14px; }
+          .jit-container { padding: 0 24px; }
+          .jit-hero { padding: 110px 0 70px; }
+          .jit-hero-inner { grid-template-columns: 1fr; gap: 48px; text-align: center; }
+          .jit-hero-left { display: flex; flex-direction: column; align-items: center; }
+          .jit-hero-desc { max-width: 100%; }
+          .jit-hero-right { justify-content: center; }
+          .jit-orb-scene { width: 320px; height: 320px; }
+          .jit-orbit-outer { width: 290px; height: 290px; }
+          .jit-orbit-mid { width: 210px; height: 210px; }
+          .jit-stats-bar { flex-wrap: wrap; gap: 20px; padding: 28px 24px; }
+          .jit-stats-divider { display: none; }
+          .jit-stat-item { min-width: calc(33% - 20px); }
+          .jit-portals-grid { grid-template-columns: repeat(3, 1fr); }
+          .jit-section-head-row { flex-direction: column; align-items: flex-start; gap: 12px; }
+          .jit-section-desc { text-align: left; max-width: 100%; }
+          .jit-features-grid { grid-template-columns: repeat(2, 1fr); }
         }
 
         @media (max-width: 640px) {
-          .wlc-container { padding: 0 18px; }
-          .wlc-nav-inst { display: none; }
-          .wlc-nav-tag { display: none; }
-          .wlc-nav { height: 58px; }
-          .wlc-hero { padding-top: 80px; padding-bottom: 60px; }
-          .wlc-hero-h1 { font-size: 36px; letter-spacing: -1.5px; }
-          .wlc-hero-p { font-size: 15px; }
-          .wlc-hero-actions { flex-direction: column; width: 100%; max-width: 320px; }
-          .wlc-btn-primary, .wlc-btn-ghost {
-            width: 100%;
-            justify-content: center;
-            padding: 16px 24px;
-          }
-          .wlc-stats-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
-          .wlc-stat-card { padding: 28px 16px; }
-          .wlc-stat-val { font-size: 34px; }
-          .wlc-portals-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-          .wlc-bento-grid { grid-template-columns: 1fr; }
-          .wlc-bento-grid .wlc-bento-card:nth-child(1),
-          .wlc-bento-grid .wlc-bento-card:nth-child(6) { grid-column: span 1; }
-          .wlc-why-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
-          .wlc-why-card { padding: 24px 16px; }
-          .wlc-tcard { padding: 28px 24px; }
-          .wlc-tcard-text { font-size: 15px; }
-          .wlc-tcard-dots { margin-top: 340px; }
-          .wlc-scroll-cue { display: none; }
-          .wlc-glass-cluster { min-height: 300px; }
-          .wlc-gcard-float { display: none; }
-          .wlc-gcard-main {
-            width: 95%;
-            position: relative;
-            top: auto; left: auto;
-            transform: none;
-            margin: 40px auto 0;
-            animation: wlcCardFloatMob 6s ease-in-out infinite;
-          }
-          @keyframes wlcCardFloatMob {
-            0%, 100% { transform: translateY(0); }
-            50%       { transform: translateY(-6px); }
-          }
-          .wlc-footer-inner { flex-direction: column; text-align: center; gap: 10px; }
-          .wlc-cta-h2 { font-size: 32px; letter-spacing: -1.2px; }
-          .wlc-cta-sub { font-size: 15px; }
+          .jit-nav-wrap { top: 8px; width: calc(100% - 24px); border-radius: 12px; }
+          .jit-nav-inner { padding: 0 16px; height: 58px; }
+          .jit-logo-sub { display: none; }
+          .jit-container { padding: 0 16px; }
+          .jit-hero { padding: 90px 0 60px; }
+          .jit-hero-h1 { font-size: 34px; letter-spacing: -1.5px; }
+          .jit-hero-sub { font-size: 15px; }
+          .jit-hero-desc { font-size: 14px; }
+          .jit-hero-actions { flex-direction: column; width: 100%; max-width: 300px; }
+          .jit-btn-primary, .jit-btn-outline { width: 100%; justify-content: center; }
+          .jit-orb-scene { width: 280px; height: 280px; }
+          .jit-orbit-outer { width: 250px; height: 250px; }
+          .jit-orbit-mid { width: 180px; height: 180px; }
+          .jit-orb-core { width: 110px; height: 110px; }
+          .jit-chip-tl, .jit-chip-tr { display: none; }
+          .jit-chip-br { bottom: 20px; right: 10px; }
+          .jit-stats-bar { padding: 22px 18px; border-radius: 16px; }
+          .jit-stat-number { font-size: 24px; }
+          .jit-stat-item { min-width: calc(50% - 12px); }
+          .jit-portals-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+          .jit-portal-card { padding: 22px 16px 18px; }
+          .jit-features-grid { grid-template-columns: 1fr; }
+          .jit-footer-inner { flex-direction: column; text-align: center; gap: 10px; }
+          .jit-cta-h2 { font-size: 28px; letter-spacing: -1px; }
+          .jit-cta-sub { font-size: 15px; }
         }
       `}</style>
     </div>

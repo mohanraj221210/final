@@ -1,5 +1,12 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { IncomingMessage } from 'http'
+
+const htmlBypass = (req: IncomingMessage) => {
+  if (req.headers.accept?.includes('text/html')) {
+    return '/index.html';
+  }
+};
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -15,26 +22,31 @@ export default defineConfig({
         target: 'https://api.jit.college',
         changeOrigin: true,
         secure: false,
+        bypass: htmlBypass,
       },
       '^/incharge/.*': {
         target: 'https://api.jit.college',
         changeOrigin: true,
         secure: false,
+        bypass: htmlBypass,
       },
       '^/watchman/.*': {
         target: 'https://api.jit.college',
         changeOrigin: true,
         secure: false,
+        bypass: htmlBypass,
       },
       '^/warden/.*': {
         target: 'https://api.jit.college',
         changeOrigin: true,
         secure: false,
+        bypass: htmlBypass,
       },
       '^/admin/.*': {
         target: 'https://api.jit.college',
         changeOrigin: true,
         secure: false,
+        bypass: htmlBypass,
       },
       '/socket.io': {
         target: 'https://api.jit.college',

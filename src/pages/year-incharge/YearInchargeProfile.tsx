@@ -116,7 +116,7 @@ const YearInchargeProfile: React.FC = () => {
     }, []);
 
     const calculateCompletion = (data: YearIncharge) => {
-        const fields = ['name', 'email', 'phone', 'gender', 'year', 'photo', 'handlingyears', 'handlingbatches', 'handlingdepartments'];
+        const fields = ['name', 'email', 'phone', 'gender', 'photo', 'handlingyears', 'handlingbatches', 'handlingdepartments'];
         let completed = 0;
 
         fields.forEach(field => {

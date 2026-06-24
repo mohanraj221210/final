@@ -16,8 +16,6 @@ import {
     X,
     Building2,
     ChevronRight,
-    UserCircle,
-    Settings,
     Palette,
     Moon,
     Sun,
