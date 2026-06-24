@@ -26,7 +26,7 @@ const LoadingSpinner: React.FC = () => {
                 {/* Text */}
                 <div style={{ textAlign: 'center', gap: '4px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     <span className="pb-loading-text">Loading your portal...</span>
-                    <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>JIT Campus One</span>
+                    <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>JIT PERMIGO</span>
                 </div>
             </div>
 
