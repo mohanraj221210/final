@@ -52,7 +52,11 @@ const StudentDetails: React.FC = () => {
     const fetchStudentDetails = async () => {
         try {
             const token = localStorage.getItem('token');
+<<<<<<< HEAD
             // Changed from POST to GET to fix 'Student not found' issue, typically REST APIs use GET for fetching details by ID
+=======
+            // Using POST with body { id } as per requirements
+>>>>>>> 1bde721ea18b8657feb140eec25a56949b0eee7d
             const response = await axios.get(`${API_URL}/staff/student/${id}`,
                 { headers: { 'Authorization': `Bearer ${token}` } }
             );
@@ -79,7 +83,7 @@ const StudentDetails: React.FC = () => {
     const handleUpdate = async () => {
         try {
             const token = localStorage.getItem('token');
-            await axios.post(`${API_URL}/staff/student/update/${id}`, formData, {
+            await axios.put(`${API_URL}/staff/student/update/${id}`, formData, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             toast.success("Student updated successfully");

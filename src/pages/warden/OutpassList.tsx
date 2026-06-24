@@ -13,27 +13,47 @@ const OutpassList: React.FC = () => {
   const [outpasses, setOutpasses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<'All' | 'Approved' | 'Rejected'>('All');
-  const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'yesterday' | 'this_week' | 'this_month'>('all');
+  const [dateFilter, setDateFilter] = useState<'total' | 'today' | 'weekly' | 'monthly'>('total');
+  const [typeFilter, setTypeFilter] = useState<'All' | 'Home' | 'Outing' | 'OD' | 'Emergency'>('All');
   const [showDocumentModal, setShowDocumentModal] = useState(false);
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
   const [documentType, setDocumentType] = useState<'image' | 'pdf'>('image');
   const [searchTerm, setSearchTerm] = useState("");
+  const [isLast, setIsLast] = useState(true);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
 
   const itemsPerPage = 8;
 
   useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setCurrentPage(1);
+    }, 300);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
+
+  useEffect(() => {
     fetchOutpasses();
-  }, []);
+  }, [debouncedSearchTerm, currentPage, filterStatus, dateFilter, typeFilter]);
 
   const fetchOutpasses = async () => {
+    setLoading(true);
     try {
       const token = localStorage.getItem("token");
+      const statusParam = filterStatus === 'All' ? '' : filterStatus.toLowerCase();
+      const filterParam = typeFilter === 'All' ? '' : typeFilter;
 
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/warden/outpass/list`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}/warden/outpass/list?search=${debouncedSearchTerm}&page=${currentPage}&appliedDate=${dateFilter}&status=${statusParam}&filter=${filterParam}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       const outpassData = res.data.outpasses || res.data.data || res.data || [];
       const list = Array.isArray(outpassData) ? outpassData : [];
@@ -48,9 +68,9 @@ const OutpassList: React.FC = () => {
         return new Date(b.createdAt || Date.now()).getTime() - new Date(a.createdAt || Date.now()).getTime();
       });
       setOutpasses(sortedList);
+      setIsLast(res.data.isLast ?? true);
     } catch (err: any) {
       console.error("Failed to fetch outpasses", err);
-      // Error handling...
     } finally {
       setLoading(false);
     }
@@ -68,60 +88,8 @@ const OutpassList: React.FC = () => {
     setShowDocumentModal(true);
   };
 
-  // Filter logic
-  const filteredOutpasses = outpasses.filter((item) => {
-    // Use warden nested status object
-    const wardenStatus = item.warden?.status?.toLowerCase() || '';
-    const overallStatus = item.status?.toLowerCase() || '';
-    const status = wardenStatus || overallStatus;
-
-    let matchesStatus = false;
-    if (filterStatus === 'All') matchesStatus = true;
-    else if (filterStatus === 'Approved') matchesStatus = status === 'approved';
-    else if (filterStatus === 'Rejected') matchesStatus = status === 'rejected' || status === 'declined';
-    else matchesStatus = true;
-
-    let matchesDate = true;
-    if (dateFilter !== 'all') {
-      const appliedDate = new Date(item.createdAt || Date.now());
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      if (dateFilter === 'today') matchesDate = appliedDate >= today;
-      else if (dateFilter === 'yesterday') {
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-        matchesDate = appliedDate >= yesterday && appliedDate < today;
-      }
-      else if (dateFilter === 'this_week') {
-        const thisWeek = new Date(today);
-        thisWeek.setDate(today.getDate() - today.getDay());
-        matchesDate = appliedDate >= thisWeek;
-      }
-      else if (dateFilter === 'this_month') {
-        const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        matchesDate = appliedDate >= thisMonth;
-      }
-    }
-
-    const appliedDate = new Date(item.createdAt || Date.now());
-    const dateStr = appliedDate.toLocaleDateString();
-
-    // student is an object (not array) in this API
-    const studentName = item.student?.name || item.studentName || '';
-    const registerNo = item.student?.registerNumber || item.registerNumber || '';
-
-    const matchesSearch = searchTerm === '' ||
-      studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      registerNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      dateStr.includes(searchTerm.toLowerCase());
-
-    return matchesStatus && matchesDate && matchesSearch;
-  });
-
-  const totalPages = Math.ceil(filteredOutpasses.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentData = filteredOutpasses.slice(startIndex, startIndex + itemsPerPage);
+  const currentData = outpasses;
 
   const capitalize = (str: any) => {
     if (!str) return "Pending";
@@ -181,11 +149,43 @@ const OutpassList: React.FC = () => {
                   minWidth: '150px'
                 }}
               >
-                <option value="all">All Time</option>
+                <option value="total">All Time</option>
                 <option value="today">Today</option>
-                <option value="yesterday">Yesterday</option>
-                <option value="this_week">This Week</option>
-                <option value="this_month">This Month</option>
+                <option value="weekly">This Week</option>
+                <option value="monthly">This Month</option>
+              </select>
+              <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '10px', pointerEvents: 'none' }}>
+                ▼
+              </span>
+            </div>
+            <div style={{ position: 'relative', display: 'inline-block' }}>
+              <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '14px', pointerEvents: 'none' }}>
+                🏷️
+              </span>
+              <select
+                className="type-filter-select"
+                value={typeFilter}
+                onChange={(e) => { setTypeFilter(e.target.value as any); setCurrentPage(1); }}
+                style={{
+                  padding: '10px 32px 10px 36px',
+                  borderRadius: '12px',
+                  border: '1px solid #cbd5e1',
+                  background: 'white',
+                  color: '#1e293b',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  outline: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                  appearance: 'none',
+                  minWidth: '150px'
+                }}
+              >
+                <option value="All">All Types</option>
+                <option value="Home">Home</option>
+                <option value="Outing">Outing</option>
+                <option value="OD">OD</option>
+                <option value="Emergency">Emergency</option>
               </select>
               <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '10px', pointerEvents: 'none' }}>
                 ▼
@@ -356,7 +356,7 @@ const OutpassList: React.FC = () => {
         </div>
 
         {/* Pagination logic ... */}
-        {!loading && outpasses.length > 0 && (
+        {!loading && (outpasses.length > 0 || currentPage > 1) && (
           <div className="pagination">
             <button
               disabled={currentPage === 1}
@@ -366,11 +366,11 @@ const OutpassList: React.FC = () => {
             </button>
 
             <span>
-              Page {currentPage} of {totalPages}
+              Page {currentPage}
             </span>
 
             <button
-              disabled={currentPage === totalPages}
+              disabled={isLast}
               onClick={() => setCurrentPage((p) => p + 1)}
             >
               Next

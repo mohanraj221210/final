@@ -59,8 +59,28 @@ const WardenStudentView: React.FC = () => {
     setShowModal(true);
   };
 
+  const handleApprove = async () => {
+    if (!window.confirm("Are you sure you want to approve this outpass request?")) {
+      return;
+    }
+    try {
+      const token = localStorage.getItem("token");
+      await axios.get(
+        `${import.meta.env.VITE_API_URL}/warden/outpass/approve/${id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      toast.success("Outpass approved successfully!");
+      fetchStudent();
+    } catch (err: any) {
+      console.error("Failed to update status:", err);
+      toast.error("Failed to update status");
+    }
+  };
+
   const handleConfirmAction = async () => {
-    if (!modalType || !remarks.trim()) return;
+    if (!modalType) return;
+    if (modalType === 'rejected' && !remarks.trim()) return;
 
     try {
       const token = localStorage.getItem("token");
@@ -135,6 +155,7 @@ const WardenStudentView: React.FC = () => {
   }
 
   const s = student.studentid || {};
+  const wardenStatus = student.warden?.status || student.wardenapprovalstatus;
 
   return (
     <div className="page-container warden-view-page">
@@ -342,23 +363,23 @@ const WardenStudentView: React.FC = () => {
           {/* <div className="step-connector"></div>
 
             <div className="workflow-step">
-              <div className={`step-icon ${student.wardenapprovalstatus === 'approved' ? 'success' : (student.wardenapprovalstatus === 'rejected' ? 'error' : 'pending')}`}>
-                {student.wardenapprovalstatus === 'approved' ? '✓' : (student.wardenapprovalstatus === 'rejected' ? '✕' : '•')}
+              <div className={`step-icon ${wardenStatus === 'approved' ? 'success' : (wardenStatus === 'rejected' ? 'error' : 'pending')}`}>
+                {wardenStatus === 'approved' ? '✓' : (wardenStatus === 'rejected' ? '✕' : '•')}
               </div>
               <div className="step-content">
                 <span className="step-title">Warden Approval</span>
-                <span className={`status-pill ${student.wardenapprovalstatus || 'pending'}`}>
-                  {student.wardenapprovalstatus || 'pending'}
+                <span className={`status-pill ${wardenStatus || 'pending'}`}>
+                  {wardenStatus || 'pending'}
                 </span>
               </div>
             </div> */}
 
           {/* Action Buttons if Pending */}
-          {(!student.wardenapprovalstatus || student.wardenapprovalstatus === 'pending') && (
+          {(!wardenStatus || wardenStatus === 'pending') && (
             <div className="workflow-actions">
               <button
                 className="btn-approve"
-                onClick={() => openConfirmation("approved")}
+                onClick={handleApprove}
               >
                 Approve Request
               </button>

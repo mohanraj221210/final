@@ -4,15 +4,17 @@ import axios from 'axios';
 export const API_ENDPOINTS = {
     YEAR_INCHARGE: {
         STATS: '/incharge/outpass/stats',
-        OUTPASS_LIST: '/incharge/outpass/list?',
+        OUTPASS_LIST: '/incharge/outpass/list',
         PENDING_LIST: '/incharge/pending/outpass/list',
         DETAILS: (id: string) => `/incharge/outpass/${id}`,
         APPROVE: (id: string) => `/incharge/outpass/approve/${id}`,
         REJECT: (id: string) => `/incharge/outpass/reject/${id}`,
+        PROFILE: '/incharge/profile',
+        PROFILE_UPDATE: '/incharge/profile/update',
     }
 };
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.jit.college';
 
 // Create Axios client with authentication interceptor
 const api = axios.create({
@@ -109,6 +111,21 @@ export interface MappedStats {
     pending: number;
     approved: number;
     rejected: number;
+}
+
+export interface MappedYearIncharge {
+    name: string;
+    email: string;
+    phone: string;
+    gender: string;
+    photo: string;
+    year: string;
+    role: string;
+    handlingyears: string[];
+    handlingbatches: string[];
+    handlingdepartments: string[];
+    registerNumber?: string;
+    department?: string;
 }
 
 export interface PaginatedResult<T> {
@@ -238,41 +255,227 @@ export function mapPaginatedResponse<T>(data: any, mapper: (item: any) => T): Pa
     };
 }
 
+export function mapProfileResponse(data: any): MappedYearIncharge {
+    const rawData = data?.yearincharge || data?.user || data || {};
+    return {
+        name: rawData.name || '',
+        email: rawData.email || '',
+        phone: rawData.phone || '',
+        gender: rawData.gender || 'male',
+        photo: rawData.photo || '',
+        year: rawData.year || '',
+        role: rawData.role || '',
+        handlingyears: Array.isArray(rawData.handlingyears) ? rawData.handlingyears : rawData.handlingyears ? [rawData.handlingyears] : [],
+        handlingbatches: Array.isArray(rawData.handlingbatches) ? rawData.handlingbatches : rawData.handlingbatches ? [rawData.handlingbatches] : [],
+        handlingdepartments: Array.isArray(rawData.handlingdepartments) ? rawData.handlingdepartments : rawData.handlingdepartments ? [rawData.handlingdepartments] : [],
+        registerNumber: rawData.registerNumber,
+        department: rawData.department,
+    };
+}
+
 // 4. Year Incharge Service Methods
 export const YearInchargeService = {
     getStats: async (filter?: string) => {
-        const url = filter 
+        const url = filter && filter !== 'total'
             ? `${API_ENDPOINTS.YEAR_INCHARGE.STATS}?filter=${filter}` 
             : API_ENDPOINTS.YEAR_INCHARGE.STATS;
-        const response = await api.get(url);
-        return mapStatsResponse(response.data);
+        console.log(`[YearInchargeService.getStats] Request: Method: GET, URL: ${url}, Token: ${localStorage.getItem('token') ? 'Bearer present' : 'Missing'}`);
+        try {
+            const response = await api.get(url);
+            console.log(`[YearInchargeService.getStats] Response: Status: ${response.status}, Raw Data:`, response.data);
+            return mapStatsResponse(response.data);
+        } catch (error: any) {
+            console.error(`[YearInchargeService.getStats] Error: Status: ${error.response?.status}, Data:`, error.response?.data || error.message);
+            throw error;
+        }
     },
 
-    getOutpasses: async (page: number) => {
-        const response = await api.get(`${API_ENDPOINTS.YEAR_INCHARGE.OUTPASS_LIST}?page=${page}`);
-        return mapPaginatedResponse<MappedOutpass>(response.data, mapOutpassResponse);
+    getOutpasses: async (page: number, filter?: string) => {
+        const filterParam = filter && filter !== 'total' ? `&filter=${filter}` : '';
+        const url = `${API_ENDPOINTS.YEAR_INCHARGE.OUTPASS_LIST}?page=${page}&limit=10${filterParam}`;
+        console.log('Filter Changed:', filter || 'total');
+        console.log('API Request:', url);
+        try {
+            const response = await api.get(url);
+            console.log('API Response:', response.data);
+            return mapPaginatedResponse<MappedOutpass>(response.data, mapOutpassResponse);
+        } catch (error: any) {
+            console.error(`[YearInchargeService.getOutpasses] Error: Status: ${error.response?.status}, Data:`, error.response?.data || error.message);
+            throw error;
+        }
     },
 
-    getPendingOutpasses: async (page: number, limit: number) => {
-        const response = await api.get(`${API_ENDPOINTS.YEAR_INCHARGE.PENDING_LIST}?page=${page}&limit=${limit}`);
-        return mapPaginatedResponse<MappedOutpass>(response.data, mapOutpassResponse);
+    getPendingOutpasses: async (page: number, limit: number, filter?: string) => {
+        const filterParam = filter && filter !== 'total' ? `&filter=${filter}` : '';
+        const url = `${API_ENDPOINTS.YEAR_INCHARGE.PENDING_LIST}?page=${page}&limit=${limit}${filterParam}`;
+        console.log('Filter Changed:', filter || 'total');
+        console.log('API Request:', url);
+        try {
+            const response = await api.get(url);
+            console.log('API Response:', response.data);
+            return mapPaginatedResponse<MappedOutpass>(response.data, mapOutpassResponse);
+        } catch (error: any) {
+            if (error.response?.status === 404) {
+                // TEMPORARY FALLBACK
+                // Backend pending endpoint currently returns 404.
+                // Remove this fallback once backend provides a dedicated pending API.
+                console.warn(
+                    "Using fallback pending-outpass implementation because backend endpoint returned 404"
+                );
+
+                // Fetch outpasses from fallback endpoint — include filter param if provided
+                const fallbackFilterParam = filter && filter !== 'total' ? `&filter=${filter}` : '';
+                const fallbackUrl = `${API_ENDPOINTS.YEAR_INCHARGE.OUTPASS_LIST}?page=1&limit=200${fallbackFilterParam}`;
+                console.log('API Request (Fallback):', fallbackUrl);
+
+                const fallbackResponse = await api.get(fallbackUrl);
+                console.log('API Response (Fallback):', fallbackResponse.data);
+
+                const rawList = fallbackResponse.data.outpasses ||
+                                  fallbackResponse.data.outpasslist ||
+                                  fallbackResponse.data.filterOutpass ||
+                                  fallbackResponse.data.data ||
+                                  (Array.isArray(fallbackResponse.data) ? fallbackResponse.data : []);
+
+                // Apply client-side date filter if backend does not support filter param
+                const now = new Date();
+                const dateFilteredList = rawList.filter((o: any) => {
+                    if (!filter || filter === 'total') return true;
+                    const created = o.createdAt ? new Date(o.createdAt) : null;
+                    if (!created) return false;
+                    if (filter === 'today') {
+                        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                        return created >= start;
+                    }
+                    if (filter === 'weekly') {
+                        const start = new Date(now);
+                        start.setDate(now.getDate() - 6);
+                        start.setHours(0, 0, 0, 0);
+                        return created >= start;
+                    }
+                    if (filter === 'monthly') {
+                        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+                        return created >= start;
+                    }
+                    return true;
+                });
+
+                const totalOutpasses = dateFilteredList.length;
+
+                // Inspect actual status field
+                let actualStatusField = 'none';
+                if (totalOutpasses > 0) {
+                    const firstItem = dateFilteredList[0];
+                    if (firstItem.yearinchargeapprovalstatus !== undefined) {
+                        actualStatusField = 'yearinchargeapprovalstatus';
+                    } else if (firstItem.yearincharge?.status !== undefined) {
+                        actualStatusField = 'yearincharge.status';
+                    } else if (firstItem.status !== undefined) {
+                        actualStatusField = 'status';
+                    }
+                }
+
+                // Filter for pending status locally
+                const pendingRawList = dateFilteredList.filter((o: any) => {
+                    const statusVal = o.yearinchargeapprovalstatus || o.yearincharge?.status || o.status;
+                    return typeof statusVal === 'string' && statusVal.toLowerCase() === 'pending';
+                });
+
+                const pendingCount = pendingRawList.length;
+
+                console.log(`[YearInchargeService.getPendingOutpasses] Fallback Analysis:`, {
+                    totalOutpasses,
+                    pendingCountDerived: pendingCount,
+                    actualStatusFieldUsed: actualStatusField,
+                    appliedFilter: filter || 'total',
+                    failedEndpoint: url
+                });
+
+                const mappedPending = pendingRawList.map(mapOutpassResponse);
+                const startIndex = (page - 1) * limit;
+                const paginatedData = mappedPending.slice(startIndex, startIndex + limit);
+                const totalPages = Math.max(1, Math.ceil(pendingCount / limit));
+
+                return {
+                    data: paginatedData,
+                    totalPages,
+                    currentPage: page,
+                    totalResults: pendingCount
+                };
+            }
+            console.error(`[YearInchargeService.getPendingOutpasses] Error: Status: ${error.response?.status}, Data:`, error.response?.data || error.message);
+            throw error;
+        }
     },
 
     getOutpassDetails: async (id: string) => {
-        const response = await api.get(API_ENDPOINTS.YEAR_INCHARGE.DETAILS(id));
-        // Some backends return nested outpass object, some return direct
-        const data = response.data.outpass || response.data.filterOutpass?.[0] || response.data;
-        return mapOutpassResponse(data);
+        const url = API_ENDPOINTS.YEAR_INCHARGE.DETAILS(id);
+        console.log(`[YearInchargeService.getOutpassDetails] Request: Method: GET, URL: ${url}, Token: ${localStorage.getItem('token') ? 'Bearer present' : 'Missing'}`);
+        try {
+            const response = await api.get(url);
+            console.log(`[YearInchargeService.getOutpassDetails] Response: Status: ${response.status}, Raw Data:`, response.data);
+            const data = response.data.outpass || response.data.filterOutpass?.[0] || response.data;
+            return mapOutpassResponse(data);
+        } catch (error: any) {
+            console.error(`[YearInchargeService.getOutpassDetails] Error: Status: ${error.response?.status}, Data:`, error.response?.data || error.message);
+            throw error;
+        }
     },
 
     approveOutpass: async (id: string) => {
-        const response = await api.get(API_ENDPOINTS.YEAR_INCHARGE.APPROVE(id));
-        return response.data;
+        const url = API_ENDPOINTS.YEAR_INCHARGE.APPROVE(id);
+        console.log(`[YearInchargeService.approveOutpass] Request: Method: GET, URL: ${url}, Token: ${localStorage.getItem('token') ? 'Bearer present' : 'Missing'}`);
+        try {
+            const response = await api.get(url);
+            console.log(`[YearInchargeService.approveOutpass] Response: Status: ${response.status}, Raw Data:`, response.data);
+            return response.data;
+        } catch (error: any) {
+            console.error(`[YearInchargeService.approveOutpass] Error: Status: ${error.response?.status}, Data:`, error.response?.data || error.message);
+            throw error;
+        }
     },
 
     rejectOutpass: async (id: string, remarks?: string) => {
+        const url = API_ENDPOINTS.YEAR_INCHARGE.REJECT(id);
         const payload = remarks ? { remarks } : {};
-        const response = await api.put(API_ENDPOINTS.YEAR_INCHARGE.REJECT(id), payload);
-        return response.data;
+        console.log(`[YearInchargeService.rejectOutpass] Request: Method: PUT, URL: ${url}, Payload:`, payload, `, Token: ${localStorage.getItem('token') ? 'Bearer present' : 'Missing'}`);
+        try {
+            const response = await api.put(url, payload);
+            console.log(`[YearInchargeService.rejectOutpass] Response: Status: ${response.status}, Raw Data:`, response.data);
+            return response.data;
+        } catch (error: any) {
+            console.error(`[YearInchargeService.rejectOutpass] Error: Status: ${error.response?.status}, Data:`, error.response?.data || error.message);
+            throw error;
+        }
+    },
+
+    getProfile: async () => {
+        const url = API_ENDPOINTS.YEAR_INCHARGE.PROFILE;
+        console.log(`[YearInchargeService.getProfile] Request: Method: GET, URL: ${url}, Token: ${localStorage.getItem('token') ? 'Bearer present' : 'Missing'}`);
+        try {
+            const response = await api.get(url);
+            console.log(`[YearInchargeService.getProfile] Response: Status: ${response.status}, Raw Data:`, response.data);
+            return mapProfileResponse(response.data);
+        } catch (error: any) {
+            console.error(`[YearInchargeService.getProfile] Error: Status: ${error.response?.status}, Data:`, error.response?.data || error.message);
+            throw error;
+        }
+    },
+
+    updateProfile: async (formData: FormData) => {
+        const url = API_ENDPOINTS.YEAR_INCHARGE.PROFILE_UPDATE;
+        console.log(`[YearInchargeService.updateProfile] Request: Method: PUT, URL: ${url}, Token: ${localStorage.getItem('token') ? 'Bearer present' : 'Missing'}`);
+        try {
+            const response = await api.put(url, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            console.log(`[YearInchargeService.updateProfile] Response: Status: ${response.status}, Raw Data:`, response.data);
+            return response.data;
+        } catch (error: any) {
+            console.error(`[YearInchargeService.updateProfile] Error: Status: ${error.response?.status}, Data:`, error.response?.data || error.message);
+            throw error;
+        }
     }
 };

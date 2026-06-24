@@ -1,11 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import YearInchargeNav from "../../components/YearInchargeNav";
 import { YearInchargeService } from "../../services/yearInchargeService";
 
-
-
-
+type ApiFilter = 'total' | 'today' | 'weekly' | 'monthly';
+const FILTER_OPTIONS: { value: ApiFilter; label: string }[] = [
+    { value: 'total', label: 'Total' },
+    { value: 'today', label: 'Today' },
+    { value: 'weekly', label: 'Weekly' },
+    { value: 'monthly', label: 'Monthly' },
+];
 
 const YearInchargePendingOutpass: React.FC = () => {
     const [pendingOutpasses, setPendingOutpasses] = useState<any[]>([]);
@@ -15,6 +19,7 @@ const YearInchargePendingOutpass: React.FC = () => {
     const [documentUrl, setDocumentUrl] = useState<string | null>(null);
     const [documentType, setDocumentType] = useState<'image' | 'pdf'>('image');
     const [searchTerm, setSearchTerm] = useState("");
+    const [apiFilter, setApiFilter] = useState<ApiFilter>('total');
     const navigate = useNavigate();
 
     // Pagination & Error states
@@ -22,11 +27,20 @@ const YearInchargePendingOutpass: React.FC = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [error, setError] = useState<string | null>(null);
 
+    // Re-fetch when page changes
     useEffect(() => {
-        fetchPendingOutpasses();
+        fetchPendingOutpasses(currentPage, apiFilter);
     }, [currentPage]);
 
-    const fetchPendingOutpasses = async () => {
+    // Re-fetch when API filter changes — reset to page 1
+    const isFirstRender = useRef(true);
+    useEffect(() => {
+        if (isFirstRender.current) { isFirstRender.current = false; return; }
+        setCurrentPage(1);
+        fetchPendingOutpasses(1, apiFilter);
+    }, [apiFilter]);
+
+    const fetchPendingOutpasses = async (page: number = currentPage, filter: ApiFilter = apiFilter) => {
         const token = localStorage.getItem("token");
         if (!token) {
             navigate('/year-incharge-login');
@@ -36,8 +50,10 @@ const YearInchargePendingOutpass: React.FC = () => {
         setLoading(true);
         setError(null);
 
+        console.log('Filter Changed:', filter);
+
         try {
-            const result = await YearInchargeService.getPendingOutpasses(currentPage, 10);
+            const result = await YearInchargeService.getPendingOutpasses(page, 10, filter);
             
             // Sort Emergency first
             const sorted = result.data.sort((a: any, b: any) => {
@@ -122,9 +138,42 @@ const YearInchargePendingOutpass: React.FC = () => {
                 <button className="back-btn" onClick={() => navigate('/year-incharge-dashboard')}>
                     ← Back to Dashboard
                 </button>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
                     <h1 style={{ margin: 0 }}>Pending Approvals</h1>
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                </div>
+
+                {/* ── API Filter Pills ── */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>Show:</span>
+                    {FILTER_OPTIONS.map(opt => {
+                        const active = apiFilter === opt.value;
+                        return (
+                            <button
+                                key={opt.value}
+                                onClick={() => setApiFilter(opt.value)}
+                                style={{
+                                    padding: '7px 18px', borderRadius: 20, fontSize: 13, fontWeight: 600,
+                                    border: active ? '2px solid #0047AB' : '2px solid #e2e8f0',
+                                    background: active ? '#0047AB' : 'white',
+                                    color: active ? 'white' : '#475569',
+                                    cursor: 'pointer', transition: 'all 0.2s',
+                                    boxShadow: active ? '0 4px 12px rgba(0,71,171,0.25)' : 'none',
+                                }}
+                            >
+                                {opt.label}
+                            </button>
+                        );
+                    })}
+                    {loading && (
+                        <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', border: '2px solid #0047AB', borderTopColor: 'transparent', animation: 'spin 0.7s linear infinite' }} />
+                            Loading...
+                        </span>
+                    )}
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', width: '100%', justifyContent: 'flex-start' }}>
                         <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
                             <span className="search-icon" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }}>🔍</span>
                             <input
@@ -196,7 +245,7 @@ const YearInchargePendingOutpass: React.FC = () => {
                         <div style={{ textAlign: 'center', padding: '40px', background: 'white', borderRadius: '16px', border: '1px solid #cbd5e1' }}>
                             <span style={{ fontSize: '36px', display: 'block', marginBottom: '12px' }}>⚠️</span>
                             <p style={{ color: '#ef4444', fontWeight: 'bold', marginBottom: '16px' }}>{error}</p>
-                            <button onClick={fetchPendingOutpasses} className="back-btn" style={{ margin: 0, padding: '8px 16px', background: '#0047AB', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
+                            <button onClick={() => fetchPendingOutpasses(currentPage, apiFilter)} className="back-btn" style={{ margin: 0, padding: '8px 16px', background: '#0047AB', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
                                 🔄 Retry
                             </button>
                         </div>
@@ -492,6 +541,10 @@ const YearInchargePendingOutpass: React.FC = () => {
                 justify-content: space-between;
                 margin-left: 0;
             }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
       `}</style>
             </div>

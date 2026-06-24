@@ -48,7 +48,7 @@ const StudentRegistration: React.FC = () => {
     const [studentsList, setStudentsList] = useState<Student[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
+    const [isLastPage, setIsLastPage] = useState(true);
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -102,16 +102,16 @@ const StudentRegistration: React.FC = () => {
         try {
             const token = localStorage.getItem('token');
             // Assuming API filters by staff ID from token
-            const response = await axios.get(`${API_URL}/staff/students/list?page=${currentPage}`, {
+            const response = await axios.get(`${API_URL}/staff/students/list?page=${currentPage}&limit=20`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (response.status === 200) {
                 // Handle the nested { students: [] } structure
                 const allStudents = response.data.students || response.data.data || [];
-                if (response.data.totalPages) {
-                    setTotalPages(response.data.totalPages);
+                if (response.data.hasOwnProperty('isLast')) {
+                    setIsLastPage(response.data.isLast);
                 } else {
-                    setTotalPages(1);
+                    setIsLastPage(allStudents.length < 20);
                 }
                 console.log('Fetched All Students:', allStudents);
 
@@ -436,6 +436,7 @@ if (!appReady) return <PremiumStaffLoader isDataReady={true} onComplete={() => s
                                         <option value="Mechanical Engineering">Mechanical Engineering</option>
                                         <option value="Artificial Intelligence and Data Science">Artificial Intelligence and Data Science</option>
                                         <option value="Master of Business Administration">Master of Business Administration</option>
+                                        <option value="Computer Science and Business System">Computer Science and Business System</option>
                                     </select>
                                 </div>
                                 <div className="form-group">
@@ -578,7 +579,7 @@ if (!appReady) return <PremiumStaffLoader isDataReady={true} onComplete={() => s
                                     </div>
                                 )}
 
-                                {studentsList.length > 0 && totalPages > 1 && (
+                                {studentsList.length > 0 && (
                                     <div className="pagination-controls">
                                         <button
                                             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
@@ -587,10 +588,10 @@ if (!appReady) return <PremiumStaffLoader isDataReady={true} onComplete={() => s
                                         >
                                             &lt; Previous
                                         </button>
-                                        <span className="pag-label">Page {currentPage} of {totalPages}</span>
+                                        <span className="pag-label">Page {currentPage}</span>
                                         <button
-                                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                            disabled={currentPage === totalPages}
+                                            onClick={() => setCurrentPage(prev => prev + 1)}
+                                            disabled={isLastPage}
                                             className="btn-pag"
                                         >
                                             Next &gt;

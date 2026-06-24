@@ -8,7 +8,7 @@ import StudentBottomNav from '../../components/StudentBottomNav';
 
 const Outpass: React.FC = () => {
     const navigate = useNavigate();
-    
+
     // Core state
     const [formData, setFormData] = useState({
         outpasstype: 'Outing',
@@ -155,23 +155,23 @@ const Outpass: React.FC = () => {
         e.preventDefault();
         setIsSubmitting(true);
 
-        if (!isEmergency && !isPortalOpen) {
-            toast.error("Portal is open from 6:00 AM to 10:00 AM only.");
-            setIsSubmitting(false);
-            return;
-        }
+        // if (!isEmergency && !isPortalOpen) {
+        //     toast.error("Portal is open from 6:00 AM to 10:00 AM only.");
+        //     setIsSubmitting(false);
+        //     return;
+        // }
 
-        if (!isEmergency && formData.fromDate) {
-            const selectedDate = new Date(formData.fromDate);
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            tomorrow.setHours(0, 0, 0, 0);
-            if (selectedDate < tomorrow) {
-                toast.error("Non-emergency outpass must be applied at least one day in advance.");
-                setIsSubmitting(false);
-                return;
-            }
-        }
+        // if (!isEmergency && formData.fromDate) {
+        //     const selectedDate = new Date(formData.fromDate);
+        //     const tomorrow = new Date();
+        //     tomorrow.setDate(tomorrow.getDate() + 1);
+        //     tomorrow.setHours(0, 0, 0, 0);
+        //     if (selectedDate < tomorrow) {
+        //         toast.error("Non-emergency outpass must be applied at least one day in advance.");
+        //         setIsSubmitting(false);
+        //         return;
+        //     }
+        // }
 
         try {
             const token = localStorage.getItem('token');
@@ -278,7 +278,7 @@ const Outpass: React.FC = () => {
                                 /* STEP 1: TYPE & TIMING */
                                 <div className="pb-step-container">
                                     <h3 className="pb-step-title">Step 1: Select Type & Schedule</h3>
-                                    
+
                                     <div className="pb-form-group">
                                         <label className="pb-label">Outpass Type</label>
                                         <select
@@ -341,7 +341,7 @@ const Outpass: React.FC = () => {
                                     </div>
 
                                     {/* Notifications / Warn Panels */}
-                                    {!isEmergency && !isPortalOpen && (
+                                    {/* {!isEmergency && !isPortalOpen && (
                                         <div className="pb-notice-panel pb-panel-warning" style={{ marginTop: '24px' }}>
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '8px', flexShrink: 0 }}>
                                                 <circle cx="12" cy="12" r="10" />
@@ -350,7 +350,7 @@ const Outpass: React.FC = () => {
                                             </svg>
                                             <span><strong>Portal Closed:</strong> Outpass submissions (except Emergency) are strictly open from 6:00 AM to 10:00 AM daily.</span>
                                         </div>
-                                    )}
+                                    )} */}
 
                                     {hasPendingOutpass && (
                                         <div className="pb-notice-panel pb-panel-danger" style={{ marginTop: '24px' }}>
@@ -365,9 +365,9 @@ const Outpass: React.FC = () => {
 
                                     <div className="pb-form-navigation" style={{ marginTop: '32px' }}>
                                         <div></div>
-                                        <button 
-                                            type="button" 
-                                            onClick={handleNextStep} 
+                                        <button
+                                            type="button"
+                                            onClick={handleNextStep}
                                             className="pb-continue-btn"
                                         >
                                             Continue
@@ -431,7 +431,7 @@ const Outpass: React.FC = () => {
                                     {formData.outpasstype === 'OD' && (
                                         <div className="pb-form-group" style={{ marginTop: '24px' }}>
                                             <label className="pb-label">Upload Supporting Document (PDF under 200KB)</label>
-                                            <div 
+                                            <div
                                                 className={`pb-dropzone-box ${dragActive ? 'drag-active' : ''} ${selectedFile ? 'has-file' : ''}`}
                                                 onDragEnter={handleDrag}
                                                 onDragOver={handleDrag}
@@ -446,7 +446,7 @@ const Outpass: React.FC = () => {
                                                     required={formData.outpasstype === 'OD'}
                                                     style={{ display: 'none' }}
                                                 />
-                                                
+
                                                 {!selectedFile ? (
                                                     <label htmlFor="file-upload-input" className="pb-dropzone-label">
                                                         <span className="pb-dropzone-icon">
@@ -471,9 +471,9 @@ const Outpass: React.FC = () => {
                                                             <span className="pb-file-name">{selectedFile.name}</span>
                                                             <span className="pb-file-size">{(selectedFile.size / 1024).toFixed(1)} KB</span>
                                                         </div>
-                                                        <button 
-                                                            type="button" 
-                                                            onClick={() => setSelectedFile(null)} 
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setSelectedFile(null)}
                                                             className="pb-btn-remove-file"
                                                             title="Remove File"
                                                         >
@@ -487,9 +487,9 @@ const Outpass: React.FC = () => {
 
                                     {/* Submit / Back Controls */}
                                     <div className="pb-form-navigation" style={{ marginTop: '32px' }}>
-                                        <button 
-                                            type="button" 
-                                            onClick={() => setActiveStep(1)} 
+                                        <button
+                                            type="button"
+                                            onClick={() => setActiveStep(1)}
                                             className="pb-back-btn"
                                         >
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '6px' }}>
@@ -498,12 +498,12 @@ const Outpass: React.FC = () => {
                                             </svg>
                                             Back
                                         </button>
-                                        <button 
-                                            type="submit" 
-                                            className="pb-submit-action-btn" 
-                                            disabled={isSubmitting || hasPendingOutpass || (!isEmergency && !isPortalOpen)}
+                                        <button
+                                            type="submit"
+                                            className="pb-submit-action-btn"
+                                            disabled={isSubmitting || hasPendingOutpass}
                                         >
-                                            {isSubmitting ? 'Submitting...' : (hasPendingOutpass ? 'Pending Request Active' : (!isEmergency && !isPortalOpen ? 'Portal Closed' : 'Submit Outpass'))}
+                                            {isSubmitting ? 'Submitting...' : (hasPendingOutpass ? 'Pending Request Active' : 'Submit Outpass')}
                                         </button>
                                     </div>
                                 </form>
@@ -518,13 +518,13 @@ const Outpass: React.FC = () => {
                 {/* Mobile Header */}
                 <div className="pb-mob-page-header">
                     <button className="pb-mob-back-btn" onClick={() => navigate('/dashboard')}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
                     </button>
                     <div className="pb-mob-header-text">
                         <span className="pb-mob-header-title">Apply Outpass</span>
                         <span className="pb-mob-header-subtitle">Official exit request</span>
                     </div>
-                    <div style={{width: 36}} />
+                    <div style={{ width: 36 }} />
                 </div>
 
                 <div className="pb-mob-scroll-body">
@@ -544,14 +544,14 @@ const Outpass: React.FC = () => {
                     {/* Portal Status Banner */}
                     {!isEmergency && !isPortalOpen && (
                         <div className="pb-mob-alert-card pb-alert-warning pb-animate-stagger-2">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
                             <span>Portal is open <strong>6:00 AM – 10:00 AM</strong> only (except Emergency)</span>
                         </div>
                     )}
 
                     {hasPendingOutpass && (
                         <div className="pb-mob-alert-card pb-alert-danger pb-animate-stagger-2">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
                             <span>You have an active pending outpass request</span>
                         </div>
                     )}
@@ -584,7 +584,7 @@ const Outpass: React.FC = () => {
                                 <p className="pb-mob-form-hint">Only OD & Emergency allowed for Day Scholars</p>
                             )}
 
-                            <h3 className="pb-mob-form-section-title" style={{marginTop: 24}}>Schedule</h3>
+                            <h3 className="pb-mob-form-section-title" style={{ marginTop: 24 }}>Schedule</h3>
                             <div className="pb-mob-form-group">
                                 <label className="pb-label">From Date & Time</label>
                                 <input
@@ -614,10 +614,10 @@ const Outpass: React.FC = () => {
                                 type="button"
                                 onClick={handleNextStep}
                                 className="pb-mob-cta-btn"
-                                style={{marginTop: 24}}
+                                style={{ marginTop: 24 }}
                             >
                                 Continue
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginLeft: '6px' }}><polyline points="9 18 15 12 9 6"/></svg>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginLeft: '6px' }}><polyline points="9 18 15 12 9 6" /></svg>
                             </button>
                         </div>
                     ) : (
@@ -637,7 +637,7 @@ const Outpass: React.FC = () => {
                                 />
                                 <p className="pb-char-counter">{formData.reason.length} / 250</p>
 
-                                <h3 className="pb-mob-form-section-title" style={{marginTop: 20}}>Verification</h3>
+                                <h3 className="pb-mob-form-section-title" style={{ marginTop: 20 }}>Verification</h3>
                                 <div className="pb-mob-form-group">
                                     <label className="pb-label">SkillRack Problems Solved</label>
                                     <input type="text" name="skillrack" value={formData.skillrack} onChange={handleChange} placeholder="Enter count" className="pb-mob-input" />
@@ -657,16 +657,16 @@ const Outpass: React.FC = () => {
                                             onDragLeave={handleDrag}
                                             onDrop={handleDrop}
                                         >
-                                            <input type="file" id="mob-file-input" accept=".pdf" onChange={handleFileChange} required={formData.outpasstype === 'OD'} style={{display:'none'}} />
+                                            <input type="file" id="mob-file-input" accept=".pdf" onChange={handleFileChange} required={formData.outpasstype === 'OD'} style={{ display: 'none' }} />
                                             {!selectedFile ? (
                                                 <label htmlFor="mob-file-input" className="pb-mob-dropzone-label">
-                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
                                                     <span className="pb-primary-text">Tap to upload PDF</span>
                                                     <span className="pb-secondary-text">Only PDF • Max 200KB</span>
                                                 </label>
                                             ) : (
                                                 <div className="pb-mob-file-preview">
-                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
                                                     <span className="pb-file-name">{selectedFile.name}</span>
                                                     <button type="button" onClick={() => setSelectedFile(null)} className="pb-mob-file-remove">✕</button>
                                                 </div>
@@ -680,10 +680,10 @@ const Outpass: React.FC = () => {
                                     <button
                                         type="submit"
                                         className="pb-mob-cta-btn"
-                                        disabled={isSubmitting || hasPendingOutpass || (!isEmergency && !isPortalOpen)}
-                                        style={{flex: 1}}
+                                        disabled={isSubmitting || hasPendingOutpass}
+                                        style={{ flex: 1 }}
                                     >
-                                        {isSubmitting ? 'Submitting…' : hasPendingOutpass ? 'Request Active' : (!isEmergency && !isPortalOpen ? 'Portal Closed' : 'Submit')}
+                                        {isSubmitting ? 'Submitting…' : hasPendingOutpass ? 'Request Active' : 'Submit'}
                                     </button>
                                 </div>
                             </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import YearInchargeNav from '../../components/YearInchargeNav';
-import axios from 'axios';
+import { YearInchargeService } from '../../services/yearInchargeService';
 import { toast, ToastContainer } from 'react-toastify';
 import ImageCropper from '../../components/ImageCropper';
 import imageCompression from 'browser-image-compression';
@@ -14,7 +14,6 @@ interface YearIncharge {
     phone: string;
     gender: string;
     photo: string;
-    year: string;
     role: string;
     handlingyears: string[];
     handlingbatches: string[];
@@ -97,7 +96,6 @@ const YearInchargeProfile: React.FC = () => {
         phone: '',
         gender: '',
         photo: '',
-        year: '',
         role: '',
         handlingyears: [],
         handlingbatches: [],
@@ -116,7 +114,7 @@ const YearInchargeProfile: React.FC = () => {
     }, []);
 
     const calculateCompletion = (data: YearIncharge) => {
-        const fields = ['name', 'email', 'phone', 'gender', 'year', 'photo', 'handlingyears', 'handlingbatches', 'handlingdepartments'];
+        const fields = ['name', 'email', 'phone', 'gender', 'photo', 'handlingyears', 'handlingbatches', 'handlingdepartments'];
         let completed = 0;
 
         fields.forEach(field => {
@@ -139,27 +137,10 @@ const YearInchargeProfile: React.FC = () => {
         }
 
         try {
-            const response = await axios.get(`${import.meta.env.VITE_API_URL}/incharge/profile`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (response.status === 200) {
-                // Handle the nested yearincharge object structure
-                const data = response.data.yearincharge || response.data;
-                const profileData = {
-                    name: data.name || '',
-                    email: data.email || '',
-                    phone: data.phone || '',
-                    gender: data.gender || 'male',
-                    photo: data.photo || '',
-                    year: data.year || '',
-                    role: data.role || '',
-                    handlingyears: Array.isArray(data.handlingyears) ? data.handlingyears : data.handlingyears ? [data.handlingyears] : [],
-                    handlingbatches: Array.isArray(data.handlingbatches) ? data.handlingbatches : data.handlingbatches ? [data.handlingbatches] : [],
-                    handlingdepartments: Array.isArray(data.handlingdepartments) ? data.handlingdepartments : data.handlingdepartments ? [data.handlingdepartments] : []
-                };
+            const profileData = await YearInchargeService.getProfile();
+            if (profileData) {
                 setProfile(profileData);
-                setPreviewImage(data.photo || '');
+                setPreviewImage(profileData.photo || '');
                 calculateCompletion(profileData);
             }
         } catch (error) {
@@ -206,7 +187,6 @@ const YearInchargeProfile: React.FC = () => {
             return;
         }
 
-        const token = localStorage.getItem('token');
         try {
             const formData = new FormData();
             formData.append('name', profile.name);
@@ -218,33 +198,20 @@ const YearInchargeProfile: React.FC = () => {
             profile.handlingyears.forEach(val => formData.append('handlingyears', val));
             profile.handlingbatches.forEach(val => formData.append('handlingbatches', val));
             profile.handlingdepartments.forEach(val => formData.append('handlingdepartments', val));
-            formData.append('year', profile.year);
             // Role is typically immutable by the user, so not appending it
 
             if (selectedFile) {
                 formData.append('photo', selectedFile);
             }
 
-            // Using FormData for single request update including image
-            const response = await axios.put(
-                `${import.meta.env.VITE_API_URL}/incharge/profile/update`,
-                formData,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'multipart/form-data'
-                    }
-                }
-            );
+            await YearInchargeService.updateProfile(formData);
 
-            if (response.status === 200) {
-                toast.success("Profile updated successfully");
-                setIsEditing(false);
-                setSelectedFile(null);
-                setImageError("");
-                // Optionally refresh to get the returned URLs/data ensuring consistency
-                fetchProfile();
-            }
+            toast.success("Profile updated successfully");
+            setIsEditing(false);
+            setSelectedFile(null);
+            setImageError("");
+            // Optionally refresh to get the returned URLs/data ensuring consistency
+            fetchProfile();
         } catch (error) {
             console.error("Update error:", error);
             toast.error("Failed to update profile");
@@ -496,7 +463,7 @@ const YearInchargeProfile: React.FC = () => {
                                             >
                                                 <option value="" disabled>+ Add Department</option>
                                                 {[
-                                                    'Computer Science and Engineering', 'Electrical and Electronics Engineering', 'Mechanical Engineering', 'Information Technology', 'Artificial Intelligence and Data Science', 'Master of Business Administration'
+                                                    'Computer Science and Engineering', 'Electronics and Communication Engineering', 'Mechanical Engineering', 'Information Technology', 'Artificial Intelligence and Data Science', 'Master of Business Administration', 'Computer Science and Business System'
                                                 ]
                                                     .filter(opt => !profile.handlingdepartments.includes(opt))
                                                     .map(opt => (

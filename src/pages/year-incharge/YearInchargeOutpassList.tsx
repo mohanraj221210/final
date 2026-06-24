@@ -1,12 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import YearInchargeNav from '../../components/YearInchargeNav';
 import { YearInchargeService } from '../../services/yearInchargeService';
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 
-
-
-
+type ApiFilter = 'total' | 'today' | 'weekly' | 'monthly';
+const FILTER_OPTIONS: { value: ApiFilter; label: string }[] = [
+    { value: 'total', label: 'Total' },
+    { value: 'today', label: 'Today' },
+    { value: 'weekly', label: 'Weekly' },
+    { value: 'monthly', label: 'Monthly' },
+];
 
 const YearInchargeOutpassList: React.FC = () => {
     const [outpasses, setOutpasses] = useState<any[]>([]);
@@ -19,6 +23,7 @@ const YearInchargeOutpassList: React.FC = () => {
     const [documentUrl, setDocumentUrl] = useState<string | null>(null);
     const [documentType, setDocumentType] = useState<'image' | 'pdf'>('image');
     const [expandedRow, setExpandedRow] = useState<string | null>(null);
+    const [apiFilter, setApiFilter] = useState<ApiFilter>('total');
 
     // Pagination & Error states
     const [currentPage, setCurrentPage] = useState(1);
@@ -27,7 +32,7 @@ const YearInchargeOutpassList: React.FC = () => {
 
     const navigate = useNavigate();
 
-    const fetchOutpasses = async () => {
+    const fetchOutpasses = async (page: number = currentPage, filter: ApiFilter = apiFilter) => {
         const token = localStorage.getItem('token');
         if (!token) {
             navigate('/year-incharge-login');
@@ -37,8 +42,10 @@ const YearInchargeOutpassList: React.FC = () => {
         setLoading(true);
         setError(null);
 
+        console.log('Filter Changed:', filter);
+
         try {
-            const result = await YearInchargeService.getOutpasses(currentPage);
+            const result = await YearInchargeService.getOutpasses(page, filter);
             // Sort Emergency first, then newest first
             const sortedList = result.data.sort((a: any, b: any) => {
                 const isAEmergency = a.outpasstype?.toLowerCase() === 'emergency';
@@ -50,21 +57,30 @@ const YearInchargeOutpassList: React.FC = () => {
             setOutpasses(sortedList);
             setTotalPages(result.totalPages);
         } catch (err: any) {
-            console.error("Error fetching outpasses:", err);
+            console.error('Error fetching outpasses:', err);
             if (err?.response?.status === 401 || err?.response?.status === 403) {
                 navigate('/year-incharge-login');
                 return;
             }
-            setError("Failed to fetch outpass list");
-            toast.error("Failed to fetch outpass list");
+            setError('Failed to fetch outpass list');
+            toast.error('Failed to fetch outpass list');
         } finally {
             setLoading(false);
         }
     };
 
+    // Re-fetch when page changes
     useEffect(() => {
-        fetchOutpasses();
-    }, [navigate, currentPage]);
+        fetchOutpasses(currentPage, apiFilter);
+    }, [currentPage]);
+
+    // Re-fetch when API filter changes — reset to page 1
+    const isFirstRender = useRef(true);
+    useEffect(() => {
+        if (isFirstRender.current) { isFirstRender.current = false; return; }
+        setCurrentPage(1);
+        fetchOutpasses(1, apiFilter);
+    }, [apiFilter]);
 
     const handleViewDocument = (url: string | null) => {
         if (!url) return;
@@ -163,6 +179,36 @@ const YearInchargeOutpassList: React.FC = () => {
                     <p className="subtitle">View history of all student outpasses</p>
                 </div>
 
+                {/* ── API Filter Pills ── */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>Show:</span>
+                    {FILTER_OPTIONS.map(opt => {
+                        const active = apiFilter === opt.value;
+                        return (
+                            <button
+                                key={opt.value}
+                                onClick={() => setApiFilter(opt.value)}
+                                style={{
+                                    padding: '7px 18px', borderRadius: 20, fontSize: 13, fontWeight: 600,
+                                    border: active ? '2px solid #0047AB' : '2px solid #e2e8f0',
+                                    background: active ? '#0047AB' : 'white',
+                                    color: active ? 'white' : '#475569',
+                                    cursor: 'pointer', transition: 'all 0.2s',
+                                    boxShadow: active ? '0 4px 12px rgba(0,71,171,0.25)' : 'none',
+                                }}
+                            >
+                                {opt.label}
+                            </button>
+                        );
+                    })}
+                    {loading && (
+                        <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', border: '2px solid #0047AB', borderTopColor: 'transparent', animation: 'spin 0.7s linear infinite' }} />
+                            Loading...
+                        </span>
+                    )}
+                </div>
+
                 {/* Filters */}
                 <div className="filters-container">
                     <div className="search-wrapper">
@@ -257,7 +303,7 @@ const YearInchargeOutpassList: React.FC = () => {
                                     <td colSpan={6} className="text-center py-8">
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '20px 0' }}>
                                             <span style={{ color: '#ef4444', fontWeight: 600 }}>⚠️ {error}</span>
-                                            <button onClick={fetchOutpasses} className="back-btn" style={{ margin: 0, padding: '6px 12px', background: '#eff6ff', border: '1px solid #3b82f6', color: '#3b82f6', borderRadius: '6px', fontSize: '0.85rem', cursor: 'pointer' }}>
+                                            <button onClick={() => fetchOutpasses(currentPage, apiFilter)} className="back-btn" style={{ margin: 0, padding: '6px 12px', background: '#eff6ff', border: '1px solid #3b82f6', color: '#3b82f6', borderRadius: '6px', fontSize: '0.85rem', cursor: 'pointer' }}>
                                                 🔄 Retry
                                             </button>
                                         </div>
