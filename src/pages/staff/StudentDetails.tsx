@@ -53,8 +53,7 @@ const StudentDetails: React.FC = () => {
         try {
             const token = localStorage.getItem('token');
             // Using POST with body { id } as per requirements
-            const response = await axios.post(`${API_URL}/staff/student`,
-                { id },
+            const response = await axios.get(`${API_URL}/staff/student/${id}`,
                 { headers: { 'Authorization': `Bearer ${token}` } }
             );
 
@@ -80,7 +79,7 @@ const StudentDetails: React.FC = () => {
     const handleUpdate = async () => {
         try {
             const token = localStorage.getItem('token');
-            await axios.post(`${API_URL}/staff/student/update/${id}`, formData, {
+            await axios.put(`${API_URL}/staff/student/update/${id}`, formData, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             toast.success("Student updated successfully");
