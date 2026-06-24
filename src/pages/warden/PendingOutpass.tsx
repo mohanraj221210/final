@@ -44,7 +44,7 @@ const PendingOutpass: React.FC = () => {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/warden/outpass/list`,
+        `${import.meta.env.VITE_API_URL}/warden/pending/outpass/list`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
