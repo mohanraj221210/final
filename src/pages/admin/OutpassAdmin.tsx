@@ -95,10 +95,10 @@ const OutpassAdmin: React.FC = () => {
     const getStudentDept = (op: Outpass) => op.department || op.studentid?.department || op.student?.department || '-';
     const getStudentYear = (op: Outpass) => op.semester ? `Sem ${op.semester}` : (op.studentid?.year || op.student?.year || '-');
 
-    const getStudentType = (op: Outpass) => {
-        const type = op.studentid?.studentType || op.studentid?.residenceType || 'Hosteller';
-        return type;
-    };
+<<<<<<< HEAD
+
+=======
+>>>>>>> 1bde721ea18b8657feb140eec25a56949b0eee7d
 
     const getType = (op: Outpass): string => {
         // @ts-ignore
@@ -111,12 +111,10 @@ const OutpassAdmin: React.FC = () => {
     const getStatus = (op: Outpass) => op.status || op.outpassStatus || '-';
 
     const getFromDate = (op: Outpass) => op.fromDate || op.outDate || op.createdAt || '';
-    const getToDate = (op: Outpass) => op.toDate || op.inDate || '';
+<<<<<<< HEAD
 
-    // Approval Status Helpers - Try lowercase first as seen in other files
-    const getStaffStatus = (op: Outpass) => op.staffapprovalstatus || op.staffApprovalStatus || 'Pending';
-    const getWardenStatus = (op: Outpass) => op.wardenapprovalstatus || op.wardenApprovalStatus || 'Pending';
-    const getYearInchargeStatus = (op: Outpass) => op.yearinchargeapprovalstatus || op.yearInchargeApprovalStatus || 'Pending';
+=======
+>>>>>>> 1bde721ea18b8657feb140eec25a56949b0eee7d
 
 
     // Helper to check date ranges

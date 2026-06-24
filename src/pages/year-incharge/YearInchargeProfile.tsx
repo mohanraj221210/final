@@ -14,7 +14,6 @@ interface YearIncharge {
     phone: string;
     gender: string;
     photo: string;
-    year: string;
     role: string;
     handlingyears: string[];
     handlingbatches: string[];
@@ -97,7 +96,6 @@ const YearInchargeProfile: React.FC = () => {
         phone: '',
         gender: '',
         photo: '',
-        year: '',
         role: '',
         handlingyears: [],
         handlingbatches: [],
@@ -465,7 +463,7 @@ const YearInchargeProfile: React.FC = () => {
                                             >
                                                 <option value="" disabled>+ Add Department</option>
                                                 {[
-                                                    'Computer Science and Engineering', 'Electrical and Electronics Engineering', 'Mechanical Engineering', 'Information Technology', 'Artificial Intelligence and Data Science', 'Master of Business Administration', 'Computer Science and Business System'
+                                                    'Computer Science and Engineering', 'Electronics and Communication Engineering', 'Mechanical Engineering', 'Information Technology', 'Artificial Intelligence and Data Science', 'Master of Business Administration', 'Computer Science and Business System'
                                                 ]
                                                     .filter(opt => !profile.handlingdepartments.includes(opt))
                                                     .map(opt => (

@@ -113,6 +113,15 @@ const WatchmanDashboard: React.FC = () => {
                                     <span className="action-text">Outpass List</span>
                                 </div>
 
+                                {/* Scan QR */}
+                                <div
+                                    className={`action-card ${zoomingPath === '/watchman/scan' ? 'zooming' : ''}`}
+                                    onClick={() => handleQuickAction('/watchman/scan')}
+                                >
+                                    <span className="action-icon">📷</span>
+                                    <span className="action-text">Scan QR</span>
+                                </div>
+
                             </div>
 
                         </section>

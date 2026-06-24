@@ -35,6 +35,7 @@ import WatchmanLogin from './pages/watchman/WatchmanLogin'
 import WatchmanDashboard from './pages/watchman/WatchmanDashboard'
 import WatchmanOutpassList from './pages/watchman/WatchmanOutpassList'
 import WatchmanStudentView from './pages/watchman/WatchmanStudentView'
+import WatchmanScanQR from './pages/watchman/WatchmanScanQR'
 import YearInchargeLogin from './pages/year-incharge/YearInchargeLogin'
 import YearInchargeDashboard from './pages/year-incharge/YearInchargeDashboard'
 import YearInchargePendingOutpass from './pages/year-incharge/YearInchargePendingOutpass'
@@ -189,6 +190,11 @@ createRoot(document.getElementById('root')!).render(
       <Route path="/watchman/student/:id" element={
         <ProtectedRoute>
           <WatchmanStudentView />
+        </ProtectedRoute>
+      } />
+      <Route path="/watchman/scan" element={
+        <ProtectedRoute>
+          <WatchmanScanQR />
         </ProtectedRoute>
       } />
       <Route path="/warden/pending-outpass" element={

@@ -169,7 +169,7 @@ const WelcomeLoader: React.FC<WelcomeLoaderProps> = ({ onDone }) => {
 
   return (
     <div
-      aria-label="Loading JIT Campus One"
+      aria-label="Loading JIT PERMIGO"
       role="status"
       style={{
         position:       'fixed',
@@ -314,7 +314,7 @@ const WelcomeLoader: React.FC<WelcomeLoaderProps> = ({ onDone }) => {
           letterSpacing:'-0.7px', lineHeight:1.1,
           marginBottom:6, textAlign:'center',
         }}>
-          JIT Campus One
+          JIT PERMIGO
         </h1>
 
         {/* Subtitle */}
