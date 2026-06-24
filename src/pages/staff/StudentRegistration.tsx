@@ -436,6 +436,7 @@ if (!appReady) return <PremiumStaffLoader isDataReady={true} onComplete={() => s
                                         <option value="Mechanical Engineering">Mechanical Engineering</option>
                                         <option value="Artificial Intelligence and Data Science">Artificial Intelligence and Data Science</option>
                                         <option value="Master of Business Administration">Master of Business Administration</option>
+                                        <option value="Computer Science and Business System">Computer Science and Business System</option>
                                     </select>
                                 </div>
                                 <div className="form-group">

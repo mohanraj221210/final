@@ -140,9 +140,14 @@ const StaffHeader: React.FC<StaffHeaderProps> = ({ activeMenu }) => {
                         )}
 
                         {/* Profile Avatar Trigger */}
-                        <button className="sfh-avatar-btn" onClick={toggleProfile} aria-label="Profile Menu">
-                            {staffInitial}
-                        </button>
+                        <div className="sfh-avatar-wrapper" onClick={toggleProfile} aria-label="Profile Menu">
+                            <button className="sfh-avatar-btn" style={{ pointerEvents: 'none' }}>
+                                {staffInitial}
+                            </button>
+                            <svg className={`sfh-avatar-chevron ${isProfileOpen ? 'sfh-chevron-rotated' : ''}`} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                        </div>
 
                         {isProfileOpen && (
                             <div className="sfh-dropdown" onClick={e => e.stopPropagation()}>
@@ -328,6 +333,28 @@ const StaffHeader: React.FC<StaffHeaderProps> = ({ activeMenu }) => {
                     justify-content: center;
                     border: 2px solid #FFFFFF;
                 }
+                .sfh-avatar-wrapper {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    cursor: pointer;
+                    padding: 2px var(--space-2) 2px 2px;
+                    border-radius: 99px;
+                    transition: all 0.2s ease;
+                }
+                .sfh-avatar-wrapper:hover {
+                    background: rgba(37, 99, 235, 0.05);
+                }
+                .sfh-avatar-chevron {
+                    color: var(--text-3);
+                    transition: transform 0.2s ease, color 0.2s ease;
+                }
+                .sfh-avatar-wrapper:hover .sfh-avatar-chevron {
+                    color: var(--primary);
+                }
+                .sfh-chevron-rotated {
+                    transform: rotate(180deg);
+                }
                 .sfh-avatar-btn {
                     width: 40px;
                     height: 40px;
@@ -337,8 +364,9 @@ const StaffHeader: React.FC<StaffHeaderProps> = ({ activeMenu }) => {
                     font-weight: 700;
                     font-size: 1rem;
                     box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+                    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
                 }
-                .sfh-avatar-btn:hover {
+                .sfh-avatar-wrapper:hover .sfh-avatar-btn {
                     transform: translateY(-1px) scale(1.03);
                     box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
                 }

@@ -466,7 +466,7 @@ const YearInchargeProfile: React.FC = () => {
                                             >
                                                 <option value="" disabled>+ Add Department</option>
                                                 {[
-                                                    'Computer Science and Engineering', 'Electrical and Electronics Engineering', 'Mechanical Engineering', 'Information Technology', 'Artificial Intelligence and Data Science', 'Master of Business Administration'
+                                                    'Computer Science and Engineering', 'Electrical and Electronics Engineering', 'Mechanical Engineering', 'Information Technology', 'Artificial Intelligence and Data Science', 'Master of Business Administration', 'Computer Science and Business System'
                                                 ]
                                                     .filter(opt => !profile.handlingdepartments.includes(opt))
                                                     .map(opt => (

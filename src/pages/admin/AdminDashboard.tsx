@@ -23,7 +23,8 @@ const DEPARTMENTS = [
     'Artificial Intelligence and Data Science',
     'Electronics and Communication Engineering',
     'Mechanical Engineering',
-    'Master of Business Administration'
+    'Master of Business Administration',
+    'Computer Science and Business System'
 ];
 
 // Enterprise Colors
@@ -312,7 +313,7 @@ const AdminDashboard: React.FC = () => {
                                                     dataKey="value"
                                                     stroke="none"
                                                 >
-                                                    {studentChartData.map((entry, index) => (
+                                                    {studentChartData.map((_, index) => (
                                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                                     ))}
                                                 </Pie>

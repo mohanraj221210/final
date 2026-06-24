@@ -18,6 +18,24 @@ interface Student {
     name?: string;
     registerNumber?: string;
     year?: string;
+  } | string;
+  student?: {
+    _id?: string;
+    name?: string;
+    department?: string;
+    semester?: number;
+    email?: string;
+    registerNumber?: string;
+    year?: string;
+    batch?: string;
+    cgpa?: number;
+    gender?: string;
+    hostelname?: string;
+    hostelroomno?: string;
+    parentnumber?: string;
+    phone?: string;
+    photo?: string;
+    residencetype?: string;
   };
   outpasstype?: string;
   proof?: string;
@@ -32,19 +50,31 @@ const PendingOutpass: React.FC = () => {
   const [showDocumentModal, setShowDocumentModal] = useState(false);
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
   const [documentType, setDocumentType] = useState<'image' | 'pdf'>('image');
-  const itemsPerPage = 8;
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [isLast, setIsLast] = useState(true);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setPage(1);
+    }, 300);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
 
   useEffect(() => {
     fetchStudents();
-  }, []);
+  }, [debouncedSearchTerm, page]);
 
   const fetchStudents = async () => {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/warden/pending/outpass/list`,
+        `${import.meta.env.VITE_API_URL}/warden/pending/outpass/list?search=${debouncedSearchTerm}&page=${page}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -73,9 +103,9 @@ const PendingOutpass: React.FC = () => {
       });
 
       setStudents(pendingData);
+      setIsLast(res.data.isLast ?? true);
     } catch (error) {
       console.error("Failed to fetch data", error);
-    } finally {
     }
   };
 
@@ -115,13 +145,7 @@ const PendingOutpass: React.FC = () => {
       }
     }
 
-    const dateStr = appliedDate ? appliedDate.toLocaleDateString() : '';
-    const nameMatch = s.studentName?.toLowerCase().includes(searchTerm.toLowerCase()) || s.studentid?.name?.toLowerCase().includes(searchTerm.toLowerCase()) || '';
-    const regMatch = s.register_number?.toLowerCase().includes(searchTerm.toLowerCase()) || s.studentid?.registerNumber?.toLowerCase().includes(searchTerm.toLowerCase()) || '';
-
-    const matchesSearch = searchTerm === "" || nameMatch || regMatch || dateStr.includes(searchTerm.toLowerCase());
-
-    return matchesDate && matchesSearch;
+    return matchesDate;
   });
 
   return (
@@ -190,114 +214,124 @@ const PendingOutpass: React.FC = () => {
 
         <div className="student-list">
           {(
-            filteredStudents.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((s) => (
-              <div
-                key={s._id || s.id}
-                className="student-card"
-                onClick={() => navigate(`/warden/student/${s._id || s.id}`)}
-              >
-                <div className="student-card-main">
-                  <div className="student-id-highlight">
-                    {s.studentid?.registerNumber || s.register_number || 'N/A'}
+            filteredStudents.map((s) => {
+              const registerNumber = s.student?.registerNumber || (typeof s.studentid === 'object' ? s.studentid?.registerNumber : undefined) || s.register_number || 'N/A';
+              const studentName = s.student?.name || (typeof s.studentid === 'object' ? s.studentid?.name : undefined) || s.studentName || s.name;
+              const studentYear = s.student?.year || (typeof s.studentid === 'object' ? s.studentid?.year : undefined);
+              return (
+                <div
+                  key={s._id || s.id}
+                  className="student-card"
+                  onClick={() => navigate(`/warden/student/${s._id || s.id}`)}
+                >
+                  <div className="student-card-main">
+                    <div className="student-id-highlight">
+                      {registerNumber}
+                    </div>
+                    <div className="student-info">
+                      <div className="student-name">
+                        {studentName}
+                        {s.outpasstype === 'Emergency' && <span className="emergency-badge">EMERGENCY</span>}
+                      </div>
+                      <div className="student-meta">
+                        {studentYear ? `Year ${studentYear} • ` : ''} {s.outpasstype || 'General'} • Applied on {new Date(s.createdAt || s.outDate || Date.now()).toLocaleDateString()}
+                      </div>
+                    </div>
                   </div>
-                  <div className="student-info">
-                    <div className="student-name">
-                      {s.studentid?.name || s.studentName || s.name}
-                      {s.outpasstype === 'Emergency' && <span className="emergency-badge">EMERGENCY</span>}
-                    </div>
-                    <div className="student-meta">
-                      {s.studentid?.year ? `Year ${s.studentid.year} • ` : ''} {s.outpasstype || 'General'} • Applied on {new Date(s.createdAt || s.outDate || Date.now()).toLocaleDateString()}
-                    </div>
+                  <div className="student-card-action">
+                    <span className="status-badge" style={{ color: '#f59e0b', backgroundColor: '#fef3c7', border: '2px solid #f59e0b' }}>
+                      <span className="status-dot">●</span>
+                      Pending
+                    </span>
+                    {(s.proof || s.document || s.file || (s as any).outpassdoc) && (
+                      <button
+                        className="view-doc-btn-list"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const url = (s.proof || s.document || s.file || (s as any).outpassdoc)!;
+                          handleViewDocument(url);
+                        }}
+                        style={{
+                          padding: '8px 16px',
+                          background: '#eff6ff',
+                          border: '1px solid #3b82f6',
+                          borderRadius: '8px',
+                          color: '#3b82f6',
+                          fontSize: '0.85rem',
+                          fontWeight: '600',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        📄 View Doc
+                      </button>
+                    )}
+                    <span className="view-arrow">View →</span>
                   </div>
                 </div>
-                <div className="student-card-action">
-                  <span className="status-badge" style={{ color: '#f59e0b', backgroundColor: '#fef3c7', border: '2px solid #f59e0b' }}>
-                    <span className="status-dot">●</span>
-                    Pending
-                  </span>
-                  {(s.proof || s.document || s.file || (s as any).outpassdoc) && (
-                    <button
-                      className="view-doc-btn-list"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const url = (s.proof || s.document || s.file || (s as any).outpassdoc)!;
-                        handleViewDocument(url);
-                      }}
-                      style={{
-                        padding: '8px 16px',
-                        background: '#eff6ff',
-                        border: '1px solid #3b82f6',
-                        borderRadius: '8px',
-                        color: '#3b82f6',
-                        fontSize: '0.85rem',
-                        fontWeight: '600',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      📄 View Doc
-                    </button>
-                  )}
-                  <span className="view-arrow">View →</span>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 
         {filteredStudents.length > 0 && (
           <div className="mobile-cards-view">
-            {filteredStudents.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((s) => (
-              <div className="mobile-card" key={s._id || s.id}>
-                <div className="card-badge">
-                  {s.studentid?.registerNumber || s.register_number || s.department || "N/A"}
-                </div>
-                <h3 className="card-name">
-                  {s.studentid?.name || s.studentName || s.name}
-                  {s.outpasstype === 'Emergency' && <span className="mobile-emergency-label"> (EMERGENCY)</span>}
-                </h3>
-                <p className="card-details">
-                  {s.studentid?.year ? `Year ${s.studentid.year} • ` : ''}
-                  {s.outpasstype || 'General'} •
-                  Applied on {new Date(s.createdAt || s.outDate || Date.now()).toLocaleDateString()}
-                  {s.outpasstype?.toLowerCase() === 'emergency' && (
-                    <div className="emergency-badge mobile">🚨 EMERGENCY</div>
-                  )}
-                </p>
+            {filteredStudents.map((s) => {
+              const registerNumber = s.student?.registerNumber || (typeof s.studentid === 'object' ? s.studentid?.registerNumber : undefined) || s.register_number || s.department || "N/A";
+              const studentName = s.student?.name || (typeof s.studentid === 'object' ? s.studentid?.name : undefined) || s.studentName || s.name;
+              const studentYear = s.student?.year || (typeof s.studentid === 'object' ? s.studentid?.year : undefined);
+              return (
+                <div className="mobile-card" key={s._id || s.id}>
+                  <div className="card-badge">
+                    {registerNumber}
+                  </div>
+                  <h3 className="card-name">
+                    {studentName}
+                    {s.outpasstype === 'Emergency' && <span className="mobile-emergency-label"> (EMERGENCY)</span>}
+                  </h3>
+                  <p className="card-details">
+                    {studentYear ? `Year ${studentYear} • ` : ''}
+                    {s.outpasstype || 'General'} •
+                    Applied on {new Date(s.createdAt || s.outDate || Date.now()).toLocaleDateString()}
+                    {s.outpasstype?.toLowerCase() === 'emergency' && (
+                      <div className="emergency-badge mobile">🚨 EMERGENCY</div>
+                    )}
+                  </p>
 
-                <div className="card-footer" style={{ gap: '8px', flexWrap: 'wrap' }}>
-                  <span className="status-pill status-pending">
-                    • Pending
-                  </span>
-                  {(s.proof || s.document || s.file || (s as any).outpassdoc) && (
+                  <div className="card-footer" style={{ gap: '8px', flexWrap: 'wrap' }}>
+                    <span className="status-pill status-pending">
+                      • Pending
+                    </span>
+                    {(s.proof || s.document || s.file || (s as any).outpassdoc) && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const url = (s.proof || s.document || s.file || (s as any).outpassdoc)!;
+                          handleViewDocument(url);
+                        }}
+                        style={{
+                          padding: '4px 8px',
+                          background: '#eff6ff',
+                          border: '1px solid #3b82f6',
+                          borderRadius: '6px',
+                          color: '#3b82f6',
+                          fontSize: '0.75rem',
+                          fontWeight: '600',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        📄 Doc
+                      </button>
+                    )}
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const url = (s.proof || s.document || s.file || (s as any).outpassdoc)!;
-                        handleViewDocument(url);
-                      }}
-                      style={{
-                        padding: '4px 8px',
-                        background: '#eff6ff',
-                        border: '1px solid #3b82f6',
-                        borderRadius: '6px',
-                        color: '#3b82f6',
-                        fontSize: '0.75rem',
-                        fontWeight: '600',
-                        cursor: 'pointer'
-                      }}
+                      className="card-view-link"
+                      onClick={() => navigate(`/warden/student/${s._id || s.id}`)}
                     >
-                      📄 Doc
+                      View →
                     </button>
-                  )}
-                  <button
-                    className="card-view-link"
-                    onClick={() => navigate(`/warden/student/${s._id || s.id}`)}
-                  >
-                    View →
-                  </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -311,7 +345,7 @@ const PendingOutpass: React.FC = () => {
         )}
 
         {/* Pagination logic ... */}
-        {filteredStudents.length > 0 && (
+        {(students.length > 0 || page > 1) && (
           <div className="pagination">
             <button
               disabled={page === 1}
@@ -321,11 +355,11 @@ const PendingOutpass: React.FC = () => {
             </button>
 
             <span>
-              Page {page} of {Math.ceil(filteredStudents.length / itemsPerPage)}
+              Page {page}
             </span>
 
             <button
-              disabled={page === Math.ceil(filteredStudents.length / itemsPerPage)}
+              disabled={isLast}
               onClick={() => setPage((p) => p + 1)}
             >
               Next
