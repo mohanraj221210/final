@@ -67,6 +67,7 @@ const PassApproval: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'yesterday' | 'this_week' | 'this_month'>('all');
+    const [typeFilter, setTypeFilter] = useState<'all' | 'Home' | 'Outing' | 'Emergency' | 'OD'>('all');
     const [showActionModal, setShowActionModal] = useState(false);
     const [actionType, setActionType] = useState<'approve' | 'reject'>('approve');
     const [actionRemarks, setActionRemarks] = useState('');
@@ -156,74 +157,91 @@ const PassApproval: React.FC = () => {
     };
 
     useEffect(() => {
-        const fetchRequests = async () => {
-            try {
-                const endpoint = filterStatus === 'pending'
-                    ? `/staff/pending/outpass/list?page=${currentPage}`
-                    : `/staff/outpass/list?page=${currentPage}`;
+        const handler = setTimeout(() => {
+            const fetchRequests = async () => {
+                try {
+                    const baseEndpoint = filterStatus === 'pending'
+                        ? `/staff/pending/outpass/list?page=${currentPage}`
+                        : `/staff/outpass/list?page=${currentPage}`;
 
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}${endpoint}`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
+                    let appliedDate = '';
+                    if (dateFilter === 'today') appliedDate = 'today';
+                    else if (dateFilter === 'this_week') appliedDate = 'weekly';
+                    else if (dateFilter === 'this_month') appliedDate = 'monthly';
 
-                if (response.status === 200) {
-                    const data = response.data;
-                    const outpassList = data.outpasses || data.filterOutpass || data.data || [];
+                    const params = new URLSearchParams();
+                    if (appliedDate) params.append('appliedDate', appliedDate);
+                    if (searchQuery) params.append('search', searchQuery);
+                    if (typeFilter && typeFilter !== 'all') params.append('filter', typeFilter);
 
-                    if (data.totalPages) {
-                        setTotalPages(data.totalPages);
-                    } else {
-                        setTotalPages(1);
-                    }
+                    const qs = params.toString();
+                    const endpoint = qs ? `${baseEndpoint}&${qs}` : baseEndpoint;
 
-                    const mappedStudents = outpassList
-                        .map((item: any) => {
-                            const studentDetails = item.studentid || {};
-                            return {
-                                id: item._id,
-                                studentId: studentDetails.registerNumber || 'N/A',
-                                registerNumber: studentDetails.registerNumber || 'N/A',
-                                studentname: studentDetails.name || 'Student',
-                                year: studentDetails.year || 'N/A',
-                                section: 'N/A',
-                                department: studentDetails.department || 'N/A',
-                                mobile: studentDetails.phone || 'N/A',
-                                appliedDate: item.createdAt,
-                                photo: studentDetails.photo || 'Student',
-                                parentContact: studentDetails.parentnumber || 'N/A',
-                                hostelName: 'N/A',
-                                roomNumber: 'N/A',
-                                reason: item.reason,
-                                fromDate: item.fromDate,
-                                toDate: item.toDate,
-                                staffApproval: item.staff?.status || item.staffapprovalstatus || 'pending',
-                                yearInchargeApproval: item.yearincharge?.status || item.yearinchargeapprovalstatus || 'pending',
-                                wardenApproval: item.warden?.status || item.wardenapprovalstatus || 'pending',
-                                outpasstype: item.outpasstype,
-                                residencetype: studentDetails.residencetype || 'dayScholar',
-                                document: item.proof || item.document || item.file || null
-                            };
-                        });
-
-                    // Sort: Emergency first
-                    mappedStudents.sort((a: any, b: any) => {
-                        if (a.outpasstype === 'Emergency' && b.outpasstype !== 'Emergency') return -1;
-                        if (a.outpasstype !== 'Emergency' && b.outpasstype === 'Emergency') return 1;
-                        return 0;
+                    const response = await axios.get(`${import.meta.env.VITE_API_URL}${endpoint}`, {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        }
                     });
 
-                    setStudents(mappedStudents);
-                }
-            } catch (error) {
-                console.error("Error fetching pass requests:", error);
-                toast.error("Failed to load outpass requests");
-            }
-        };
+                    if (response.status === 200) {
+                        const data = response.data;
+                        const outpassList = data.outpasses || data.filterOutpass || data.data || [];
 
-        fetchRequests();
-    }, [currentPage, filterStatus]);
+                        if (data.totalPages) {
+                            setTotalPages(data.totalPages);
+                        } else {
+                            setTotalPages(1);
+                        }
+
+                        const mappedStudents = outpassList
+                            .map((item: any) => {
+                                const studentDetails = item.studentid || {};
+                                return {
+                                    id: item._id,
+                                    studentId: studentDetails.registerNumber || 'N/A',
+                                    registerNumber: studentDetails.registerNumber || 'N/A',
+                                    studentname: studentDetails.name || 'Student',
+                                    year: studentDetails.year || 'N/A',
+                                    section: 'N/A',
+                                    department: studentDetails.department || 'N/A',
+                                    mobile: studentDetails.phone || 'N/A',
+                                    appliedDate: item.createdAt,
+                                    photo: studentDetails.photo || 'Student',
+                                    parentContact: studentDetails.parentnumber || 'N/A',
+                                    hostelName: 'N/A',
+                                    roomNumber: 'N/A',
+                                    reason: item.reason,
+                                    fromDate: item.fromDate,
+                                    toDate: item.toDate,
+                                    staffApproval: item.staff?.status || item.staffapprovalstatus || 'pending',
+                                    yearInchargeApproval: item.yearincharge?.status || item.yearinchargeapprovalstatus || 'pending',
+                                    wardenApproval: item.warden?.status || item.wardenapprovalstatus || 'pending',
+                                    outpasstype: item.outpasstype,
+                                    residencetype: studentDetails.residencetype || 'dayScholar',
+                                    document: item.proof || item.document || item.file || null
+                                };
+                            });
+
+                        // Sort: Emergency first
+                        mappedStudents.sort((a: any, b: any) => {
+                            if (a.outpasstype === 'Emergency' && b.outpasstype !== 'Emergency') return -1;
+                            if (a.outpasstype !== 'Emergency' && b.outpasstype === 'Emergency') return 1;
+                            return 0;
+                        });
+
+                        setStudents(mappedStudents);
+                    }
+                } catch (error) {
+                    console.error("Error fetching pass requests:", error);
+                    toast.error("Failed to load outpass requests");
+                }
+            };
+
+            fetchRequests();
+        }, 500);
+
+        return () => clearTimeout(handler);
+    }, [currentPage, filterStatus, dateFilter, searchQuery, typeFilter]);
 
     if (!appReady) return <PremiumStaffLoader isDataReady={true} onComplete={() => setAppReady(true)} />;
 
@@ -449,7 +467,7 @@ const PassApproval: React.FC = () => {
                                     type="text"
                                     placeholder="Search by name, ID, or date..."
                                     value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                                 />
                             </div>
 
@@ -468,6 +486,19 @@ const PassApproval: React.FC = () => {
                                         <option value="yesterday">Yesterday</option>
                                         <option value="this_week">This Week</option>
                                         <option value="this_month">This Month</option>
+                                    </select>
+                                </div>
+                                <div className="pa-date-select-wrap" style={{ marginLeft: '10px' }}>
+                                    <select
+                                        className="pa-date-select"
+                                        value={typeFilter}
+                                        onChange={(e) => { setTypeFilter(e.target.value as any); setCurrentPage(1); }}
+                                    >
+                                        <option value="all">All Types</option>
+                                        <option value="Home">Home</option>
+                                        <option value="Outing">Outing</option>
+                                        <option value="Emergency">Emergency</option>
+                                        <option value="OD">OD</option>
                                     </select>
                                 </div>
 

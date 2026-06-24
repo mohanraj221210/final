@@ -28,11 +28,18 @@ const YearInchargeOutpassList: React.FC = () => {
     // Pagination & Error states
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const [isLastPage, setIsLastPage] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     const navigate = useNavigate();
 
-    const fetchOutpasses = async (page: number = currentPage, filter: ApiFilter = apiFilter) => {
+    const fetchOutpasses = async (
+        page: number = currentPage,
+        appliedDate: string = apiFilter,
+        status: string = statusFilter,
+        search: string = searchTerm,
+        filter: string = typeFilter
+    ) => {
         const token = localStorage.getItem('token');
         if (!token) {
             navigate('/year-incharge-login');
@@ -42,10 +49,10 @@ const YearInchargeOutpassList: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        console.log('Filter Changed:', filter);
+        console.log('Filter Changed:', { appliedDate, status, search, filter });
 
         try {
-            const result = await YearInchargeService.getOutpasses(page, filter);
+            const result = await YearInchargeService.getOutpasses(page, appliedDate, status, search, filter);
             // Sort Emergency first, then newest first
             const sortedList = result.data.sort((a: any, b: any) => {
                 const isAEmergency = a.outpasstype?.toLowerCase() === 'emergency';
@@ -56,6 +63,7 @@ const YearInchargeOutpassList: React.FC = () => {
             });
             setOutpasses(sortedList);
             setTotalPages(result.totalPages);
+            setIsLastPage(result.isLast ?? (sortedList.length < 10));
         } catch (err: any) {
             console.error('Error fetching outpasses:', err);
             if (err?.response?.status === 401 || err?.response?.status === 403) {
@@ -71,16 +79,22 @@ const YearInchargeOutpassList: React.FC = () => {
 
     // Re-fetch when page changes
     useEffect(() => {
-        fetchOutpasses(currentPage, apiFilter);
+        fetchOutpasses(currentPage, apiFilter, statusFilter, searchTerm, typeFilter);
     }, [currentPage]);
 
-    // Re-fetch when API filter changes — reset to page 1
+    // Re-fetch when API filters change — reset to page 1
     const isFirstRender = useRef(true);
     useEffect(() => {
         if (isFirstRender.current) { isFirstRender.current = false; return; }
-        setCurrentPage(1);
-        fetchOutpasses(1, apiFilter);
-    }, [apiFilter]);
+
+        // Use a simple timeout for debouncing the search term
+        const handler = setTimeout(() => {
+            setCurrentPage(1);
+            fetchOutpasses(1, apiFilter, statusFilter, searchTerm, typeFilter);
+        }, 500);
+
+        return () => clearTimeout(handler);
+    }, [apiFilter, statusFilter, searchTerm, typeFilter]);
 
     const handleViewDocument = (url: string | null) => {
         if (!url) return;
@@ -643,7 +657,7 @@ const YearInchargeOutpassList: React.FC = () => {
                     </div>
                 )}
 
-                {totalPages > 1 && (
+                {outpasses.length > 0 && (
                     <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '24px', alignItems: 'center', paddingBottom: '20px' }}>
                         <button
                             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
@@ -652,11 +666,11 @@ const YearInchargeOutpassList: React.FC = () => {
                         >
                             &lt; Previous
                         </button>
-                        <span style={{ fontWeight: '600', color: '#64748b' }}>Page {currentPage} of {totalPages}</span>
+                        <span style={{ fontWeight: '600', color: '#64748b' }}>Page {currentPage}</span>
                         <button
-                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                            disabled={currentPage === totalPages}
-                            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: currentPage === totalPages ? '#f1f5f9' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', fontWeight: 600, color: '#475569' }}
+                            onClick={() => setCurrentPage(prev => prev + 1)}
+                            disabled={isLastPage}
+                            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: isLastPage ? '#f1f5f9' : 'white', cursor: isLastPage ? 'not-allowed' : 'pointer', fontWeight: 600, color: '#475569' }}
                         >
                             Next &gt;
                         </button>

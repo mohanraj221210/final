@@ -93,16 +93,20 @@ const StudentRegistration: React.FC = () => {
     // Fetch Students List
     useEffect(() => {
         if (activeTab === 'added-students') {
-            fetchStudents();
+            const handler = setTimeout(() => {
+                fetchStudents();
+            }, 500);
+            return () => clearTimeout(handler);
         }
-    }, [activeTab, currentStaffID, currentPage]);
+    }, [activeTab, currentStaffID, currentPage, searchQuery]);
 
     const fetchStudents = async () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
+            const searchParam = searchQuery ? `&search=${searchQuery}` : '';
             // Assuming API filters by staff ID from token
-            const response = await axios.get(`${API_URL}/staff/students/list?page=${currentPage}&limit=20`, {
+            const response = await axios.get(`${API_URL}/staff/students/list?page=${currentPage}&limit=20${searchParam}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (response.status === 200) {
@@ -327,7 +331,7 @@ const StudentRegistration: React.FC = () => {
     };
 
 
-if (!appReady) return <PremiumStaffLoader isDataReady={true} onComplete={() => setAppReady(true)} />;
+    if (!appReady) return <PremiumStaffLoader isDataReady={true} onComplete={() => setAppReady(true)} />;
 
     return (
         <div className="registration-page mobile-page-content">
@@ -477,7 +481,10 @@ if (!appReady) return <PremiumStaffLoader isDataReady={true} onComplete={() => s
                                             type="text"
                                             placeholder="Search by name, email, or register number..."
                                             value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            onChange={(e) => {
+                                                setSearchQuery(e.target.value);
+                                                setCurrentPage(1);
+                                            }}
                                         />
                                     </div>
                                 </div>

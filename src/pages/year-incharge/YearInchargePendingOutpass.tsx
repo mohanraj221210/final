@@ -25,22 +25,32 @@ const YearInchargePendingOutpass: React.FC = () => {
     // Pagination & Error states
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const [isLastPage, setIsLastPage] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     // Re-fetch when page changes
     useEffect(() => {
-        fetchPendingOutpasses(currentPage, apiFilter);
+        fetchPendingOutpasses(currentPage, apiFilter, searchTerm);
     }, [currentPage]);
 
-    // Re-fetch when API filter changes — reset to page 1
+    // Re-fetch when filters change — reset to page 1
     const isFirstRender = useRef(true);
     useEffect(() => {
         if (isFirstRender.current) { isFirstRender.current = false; return; }
-        setCurrentPage(1);
-        fetchPendingOutpasses(1, apiFilter);
-    }, [apiFilter]);
 
-    const fetchPendingOutpasses = async (page: number = currentPage, filter: ApiFilter = apiFilter) => {
+        const handler = setTimeout(() => {
+            setCurrentPage(1);
+            fetchPendingOutpasses(1, apiFilter, searchTerm);
+        }, 500);
+
+        return () => clearTimeout(handler);
+    }, [apiFilter, searchTerm]);
+
+    const fetchPendingOutpasses = async (
+        page: number = currentPage,
+        appliedDate: ApiFilter = apiFilter,
+        search: string = searchTerm
+    ) => {
         const token = localStorage.getItem("token");
         if (!token) {
             navigate('/year-incharge-login');
@@ -50,11 +60,11 @@ const YearInchargePendingOutpass: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        console.log('Filter Changed:', filter);
+        console.log('Filter Changed:', { appliedDate, search });
 
         try {
-            const result = await YearInchargeService.getPendingOutpasses(page, 10, filter);
-            
+            const result = await YearInchargeService.getPendingOutpasses(page, 10, appliedDate, search);
+
             // Sort Emergency first
             const sorted = result.data.sort((a: any, b: any) => {
                 const aType = String(a.outpasstype || '').toLowerCase();
@@ -66,6 +76,7 @@ const YearInchargePendingOutpass: React.FC = () => {
 
             setPendingOutpasses(sorted);
             setTotalPages(result.totalPages);
+            setIsLastPage(result.isLast ?? (sorted.length < 10));
         } catch (err: any) {
             console.error("Error fetching pending outpasses:", err);
             if (err?.response?.status === 401 || err?.response?.status === 403) {
@@ -308,20 +319,20 @@ const YearInchargePendingOutpass: React.FC = () => {
                     )}
                 </div>
 
-                {totalPages > 1 && (
+                {pendingOutpasses.length > 0 && (
                     <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '24px', alignItems: 'center', paddingBottom: '20px' }}>
-                        <button 
-                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                             disabled={currentPage === 1}
                             style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: currentPage === 1 ? '#f1f5f9' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', fontWeight: 600, color: '#475569' }}
                         >
                             &lt; Previous
                         </button>
-                        <span style={{ fontWeight: '600', color: '#64748b' }}>Page {currentPage} of {totalPages}</span>
-                        <button 
-                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
-                            disabled={currentPage === totalPages}
-                            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: currentPage === totalPages ? '#f1f5f9' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', fontWeight: 600, color: '#475569' }}
+                        <span style={{ fontWeight: '600', color: '#64748b' }}>Page {currentPage}</span>
+                        <button
+                            onClick={() => setCurrentPage(prev => prev + 1)}
+                            disabled={isLastPage}
+                            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: isLastPage ? '#f1f5f9' : 'white', cursor: isLastPage ? 'not-allowed' : 'pointer', fontWeight: 600, color: '#475569' }}
                         >
                             Next &gt;
                         </button>

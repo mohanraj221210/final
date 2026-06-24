@@ -200,7 +200,6 @@ const YearInchargeProfile: React.FC = () => {
             profile.handlingyears.forEach(val => formData.append('handlingyears', val));
             profile.handlingbatches.forEach(val => formData.append('handlingbatches', val));
             profile.handlingdepartments.forEach(val => formData.append('handlingdepartments', val));
-            formData.append('year', profile.year);
             // Role is typically immutable by the user, so not appending it
 
             if (selectedFile) {
