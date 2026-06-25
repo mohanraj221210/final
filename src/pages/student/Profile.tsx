@@ -190,6 +190,10 @@ const Profile: React.FC = () => {
                 setShowToast(true);
                 setSelectedFile(null);
                 setIsEditing(false);
+                localStorage.setItem('userProfile', JSON.stringify(user));
+                setTimeout(() => {
+                    navigate('/dashboard');
+                }, 1000);
             }
         } catch (error) {
             toast.error("Failed to update profile");
