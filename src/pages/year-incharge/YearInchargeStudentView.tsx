@@ -88,7 +88,7 @@ const YearInchargeStudentView: React.FC = () => {
             toast.error("Document not found");
             return;
         }
-        const fullUrl = `${import.meta.env.VITE_CDN_URL}${url}`;
+        const fullUrl = url.startsWith('http') ? url : `${import.meta.env.VITE_CDN_URL}${url}`;
         setDocumentUrl(fullUrl);
         // Basic check for PDF
         if (url.toLowerCase().endsWith('.pdf')) {
@@ -502,22 +502,24 @@ const YearInchargeStudentView: React.FC = () => {
                                 onChange={(e) => setRemarks(e.target.value)}
                                 rows={3}
                             />
-                            <div className="action-buttons">
-                                <button
-                                    className="btn-reject"
-                                    onClick={() => handleAction('rejected')}
-                                    disabled={actionLoading}
-                                >
-                                    {actionLoading ? 'Processing...' : 'Reject Request'}
-                                </button>
-                                <button
-                                    className="btn-approve"
-                                    onClick={() => setShowApproveModal(true)}
-                                    disabled={actionLoading}
-                                >
-                                    {actionLoading ? 'Processing...' : 'Approve Request'}
-                                </button>
-                            </div>
+                            {outpass.outpasstype !== 'HostelEmergency' && (
+                                <div className="action-buttons">
+                                    <button
+                                        className="btn-reject"
+                                        onClick={() => handleAction('rejected')}
+                                        disabled={actionLoading}
+                                    >
+                                        {actionLoading ? 'Processing...' : 'Reject Request'}
+                                    </button>
+                                    <button
+                                        className="btn-approve"
+                                        onClick={() => setShowApproveModal(true)}
+                                        disabled={actionLoading}
+                                    >
+                                        {actionLoading ? 'Processing...' : 'Approve Request'}
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                         {/* Approval Confirmation Modal */}

@@ -27,7 +27,7 @@ const YearInchargeOutpassList: React.FC = () => {
 
     // Pagination & Error states
     const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
+    const [, setTotalPages] = useState(1);
     const [isLastPage, setIsLastPage] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -98,7 +98,7 @@ const YearInchargeOutpassList: React.FC = () => {
 
     const handleViewDocument = (url: string | null) => {
         if (!url) return;
-        const fullUrl = `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${url.replace(/^\//, '')}`;
+        const fullUrl = url.startsWith('http') ? url : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${url.replace(/^\//, '')}`;
         setDocumentUrl(fullUrl);
         if (url.toLowerCase().endsWith('.pdf')) {
             setDocumentType('pdf');
@@ -126,7 +126,8 @@ const YearInchargeOutpassList: React.FC = () => {
 
     const filteredOutpasses = outpasses.filter(outpass => {
         // Helper: get first student from array
-        const stu = outpass.student?.[0];
+        const studentObj = outpass.student || outpass.studentid;
+        const stu = Array.isArray(studentObj) ? studentObj[0] : (typeof studentObj === 'object' ? studentObj : undefined);
         const yiStatus = outpass.yearincharge?.status || 'pending';
 
         // Search filter
@@ -326,7 +327,8 @@ const YearInchargeOutpassList: React.FC = () => {
                             ) : filteredOutpasses.length > 0 ? (
                                 filteredOutpasses.map((outpass) => {
                                     // Resolve student from array
-                                    const stu = outpass.student?.[0];
+                                    const studentObj = outpass.student || outpass.studentid;
+                                    const stu = Array.isArray(studentObj) ? studentObj[0] : (typeof studentObj === 'object' ? studentObj : undefined);
                                     const yiStatus = outpass.yearincharge?.status || 'pending';
                                     const staffStatus: string = outpass.staff ? 'approved' : 'pending';
                                     const isHostel = stu?.residencetype?.toLowerCase() !== 'day scholar';
@@ -509,7 +511,8 @@ const YearInchargeOutpassList: React.FC = () => {
                 {!loading && filteredOutpasses.length > 0 && (
                     <div className="mobile-cards-view">
                         {filteredOutpasses.map((outpass) => {
-                            const stu = outpass.student?.[0];
+                            const studentObj = outpass.student || outpass.studentid;
+                            const stu = Array.isArray(studentObj) ? studentObj[0] : (typeof studentObj === 'object' ? studentObj : undefined);
                             const yiStatus = outpass.yearincharge?.status || 'pending';
                             const staffStatus: string = outpass.staff ? 'approved' : 'pending';
                             const isHostel = stu?.residencetype?.toLowerCase() !== 'day scholar';

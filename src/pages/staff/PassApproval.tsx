@@ -108,7 +108,8 @@ const PassApproval: React.FC = () => {
             if (response.status === 200) {
                 const data = response.data.outpass || (response.data.filterOutpass && response.data.filterOutpass[0]) || {};
                 const roomMatesData = response.data.roomMates || [];
-                const studentDetails = data.studentid || {};
+                const studentObj = data.student || data.studentid;
+                const studentDetails = Array.isArray(studentObj) ? studentObj[0] : (typeof studentObj === 'object' ? studentObj : {});
 
                 const mappedStudent: StudentOutpass = {
                     id: data._id,
@@ -195,7 +196,8 @@ const PassApproval: React.FC = () => {
 
                         const mappedStudents = outpassList
                             .map((item: any) => {
-                                const studentDetails = item.studentid || {};
+                                const studentObj = item.student || item.studentid;
+                                const studentDetails = Array.isArray(studentObj) ? studentObj[0] : (typeof studentObj === 'object' ? studentObj : {});
                                 return {
                                     id: item._id,
                                     studentId: studentDetails.registerNumber || 'N/A',
@@ -405,7 +407,7 @@ const PassApproval: React.FC = () => {
         setShowDocumentModal(true);
     };
 
-    const canApprove = selectedStudent && selectedStudent.staffApproval === 'pending';
+    const canApprove = selectedStudent && selectedStudent.staffApproval === 'pending' && selectedStudent.outpasstype !== 'HostelEmergency';
 
     const counts = {
         total: students.length,
@@ -553,7 +555,7 @@ const PassApproval: React.FC = () => {
                                                     <div className="pa-avatar">
                                                         {student.photo && student.photo !== 'Student' ? (
                                                             <img
-                                                                src={`${import.meta.env.VITE_CDN_URL}${student.photo}`}
+                                                                src={student.photo.startsWith('http') ? student.photo : `${import.meta.env.VITE_CDN_URL}${student.photo}`}
                                                                 alt={student.studentname}
                                                                 onError={(e) => {
                                                                     e.currentTarget.style.display = 'none';
@@ -701,7 +703,7 @@ const PassApproval: React.FC = () => {
                                 <div className="pa-hero-content">
                                     <div className="pa-hero-avatar-wrap">
                                         <img
-                                            src={`${import.meta.env.VITE_CDN_URL}${selectedStudent.photo}`}
+                                            src={selectedStudent.photo.startsWith('http') ? selectedStudent.photo : `${import.meta.env.VITE_CDN_URL}${selectedStudent.photo}`}
                                             alt={selectedStudent.studentname}
                                             className="pa-hero-avatar"
                                             onError={(e) => {
@@ -857,7 +859,7 @@ const PassApproval: React.FC = () => {
                                                         <div key={roommate._id} className="pa-roommate-card">
                                                             <div className="pa-roommate-avatar">
                                                                 <img
-                                                                    src={`${import.meta.env.VITE_CDN_URL}${roommate.photo}`}
+                                                                    src={roommate.photo.startsWith('http') ? roommate.photo : `${import.meta.env.VITE_CDN_URL}${roommate.photo}`}
                                                                     alt={roommate.name}
                                                                     onError={(e) => {
                                                                         e.currentTarget.src = `https://ui-avatars.com/api/?name=${roommate.name}&background=random`;

@@ -375,7 +375,7 @@ const WardenStudentView: React.FC = () => {
             </div> */}
 
           {/* Action Buttons if Pending */}
-          {(!wardenStatus || wardenStatus === 'pending') && (
+          {(!wardenStatus || wardenStatus === 'pending') && student.outpasstype !== 'HostelEmergency' && (
             <div className="workflow-actions">
               <button
                 className="btn-approve"

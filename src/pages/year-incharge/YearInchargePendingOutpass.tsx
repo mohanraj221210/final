@@ -24,7 +24,7 @@ const YearInchargePendingOutpass: React.FC = () => {
 
     // Pagination & Error states
     const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
+    const [, setTotalPages] = useState(1);
     const [isLastPage, setIsLastPage] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -91,7 +91,7 @@ const YearInchargePendingOutpass: React.FC = () => {
 
     const handleViewDocument = (url: string | null) => {
         if (!url) return;
-        const fullUrl = `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${url.replace(/^\//, '')}`;
+        const fullUrl = url.startsWith('http') ? url : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${url.replace(/^\//, '')}`;
         setDocumentUrl(fullUrl);
         if (url.toLowerCase().endsWith('.pdf')) {
             setDocumentType('pdf');
@@ -108,10 +108,12 @@ const YearInchargePendingOutpass: React.FC = () => {
         const dateStr3 = fromDateObj ? fromDateObj.toDateString() : '';
         const dateStr4 = item.fromDate ? item.fromDate.split('T')[0] : '';
 
+        const studentObj = item.student || item.studentid;
+        const studentDetails = Array.isArray(studentObj) ? studentObj[0] : (typeof studentObj === 'object' ? studentObj : {});
         const term = searchTerm.toLowerCase();
         const matchesSearch = searchTerm === '' ||
-            (item.studentid?.name?.toLowerCase().includes(term) || false) ||
-            (item.studentid?.registerNumber?.toLowerCase().includes(term) || false) ||
+            (studentDetails?.name?.toLowerCase().includes(term) || false) ||
+            (studentDetails?.registerNumber?.toLowerCase().includes(term) || false) ||
             dateStr1.toLowerCase().includes(term) ||
             dateStr2.toLowerCase().includes(term) ||
             dateStr3.toLowerCase().includes(term) ||
@@ -265,7 +267,10 @@ const YearInchargePendingOutpass: React.FC = () => {
                             No pending approvals found
                         </div>
                     ) : (
-                        filteredPending.map((item) => (
+                        filteredPending.map((item) => {
+                            const studentObj = item.student || item.studentid;
+                            const studentDetails = Array.isArray(studentObj) ? studentObj[0] : (typeof studentObj === 'object' ? studentObj : {});
+                            return (
                             <div
                                 key={item._id}
                                 className="student-card"
@@ -273,15 +278,15 @@ const YearInchargePendingOutpass: React.FC = () => {
                             >
                                 <div className="student-card-main">
                                     <div className="student-id-highlight">
-                                        {typeof item.studentid?.registerNumber === 'string' ? item.studentid.registerNumber : 'N/A'}
+                                        {typeof studentDetails?.registerNumber === 'string' ? studentDetails.registerNumber : 'N/A'}
                                     </div>
                                     <div className="student-info">
                                         <div className="student-name">
-                                            {typeof item.studentid?.name === 'string' ? item.studentid.name : 'Unknown Name'}
+                                            {typeof studentDetails?.name === 'string' ? studentDetails.name : 'Unknown Name'}
                                             {typeof item.outpasstype === 'string' && item.outpasstype?.toLowerCase() === 'emergency' && <span className="emergency-badge">EMERGENCY</span>}
                                         </div>
                                         <div className="student-meta">
-                                            Year {typeof item.studentid?.year === 'string' ? item.studentid.year : 'N/A'} • {typeof item.outpasstype === 'string' ? item.outpasstype : 'General'} • Applied on {new Date(item.fromDate).toLocaleDateString()}
+                                            Year {typeof studentDetails?.year === 'string' ? studentDetails.year : 'N/A'} • {typeof item.outpasstype === 'string' ? item.outpasstype : 'General'} • Applied on {new Date(item.fromDate).toLocaleDateString()}
                                         </div>
                                     </div>
                                 </div>
@@ -315,7 +320,8 @@ const YearInchargePendingOutpass: React.FC = () => {
                                     <span className="view-arrow">View →</span>
                                 </div>
                             </div>
-                        ))
+                            );
+                        })
                     )}
                 </div>
 

@@ -95,10 +95,6 @@ const OutpassAdmin: React.FC = () => {
     const getStudentDept = (op: Outpass) => op.department || op.studentid?.department || op.student?.department || '-';
     const getStudentYear = (op: Outpass) => op.semester ? `Sem ${op.semester}` : (op.studentid?.year || op.student?.year || '-');
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 1bde721ea18b8657feb140eec25a56949b0eee7d
 
     const getType = (op: Outpass): string => {
         // @ts-ignore
@@ -111,10 +107,6 @@ const OutpassAdmin: React.FC = () => {
     const getStatus = (op: Outpass) => op.status || op.outpassStatus || '-';
 
     const getFromDate = (op: Outpass) => op.fromDate || op.outDate || op.createdAt || '';
-<<<<<<< HEAD
-
-=======
->>>>>>> 1bde721ea18b8657feb140eec25a56949b0eee7d
 
 
     // Helper to check date ranges

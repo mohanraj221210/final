@@ -159,7 +159,7 @@ const WardenEmergencyOutpassList: React.FC = () => {
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                                     {item.studentid?.photo ? (
                                                         <img
-                                                            src={`${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${item.studentid.photo.replace(/^\//, '')}`}
+                                                            src={item.studentid.photo.startsWith('http') ? item.studentid.photo : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${item.studentid.photo.replace(/^\//, '')}`}
                                                             alt=""
                                                             style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover' }}
                                                         />
@@ -212,7 +212,7 @@ const WardenEmergencyOutpassList: React.FC = () => {
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                                         {item.studentid?.photo ? (
                                             <img
-                                                src={`${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${item.studentid.photo.replace(/^\//, '')}`}
+                                                src={item.studentid.photo.startsWith('http') ? item.studentid.photo : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${item.studentid.photo.replace(/^\//, '')}`}
                                                 alt=""
                                                 style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
                                             />
