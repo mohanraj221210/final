@@ -396,8 +396,7 @@ const Profile: React.FC = () => {
                                                     max="10"
                                                     name="cgpa"
                                                     value={user.cgpa || '8.25'}
-                                                    onChange={handleChange}
-                                                    disabled={!isEditing}
+                                                    disabled
                                                     className="pb-input"
                                                 />
                                             </div>
@@ -408,8 +407,7 @@ const Profile: React.FC = () => {
                                                     min="0"
                                                     name="arrears"
                                                     value={user.arrears || '0'}
-                                                    onChange={handleChange}
-                                                    disabled={!isEditing}
+                                                     disabled
                                                     className="pb-input"
                                                 />
                                             </div>
