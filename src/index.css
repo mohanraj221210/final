@@ -3027,3 +3027,17 @@ select.form-input {
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.04);
 }
 
+@media (max-width: 850px) {
+  .Toastify__toast-container--bottom-left,
+  .Toastify__toast-container--bottom-center,
+  .Toastify__toast-container--bottom-right {
+    bottom: 92px !important;
+  }
+  .toast {
+    bottom: 92px !important;
+    right: 16px !important;
+    left: 16px !important;
+    max-width: none !important;
+  }
+}
+

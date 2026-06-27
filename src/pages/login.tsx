@@ -529,7 +529,7 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
         /* ── Root ── */
         .lp-root {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-          min-height: 100vh;
+          height: 100vh; height: 100dvh;
           -webkit-font-smoothing: antialiased;
           position: relative;
           overflow: hidden;
@@ -999,7 +999,7 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
           .lp-layout {
             grid-template-columns: 1fr;
             padding: 0 16px;
-            min-height: 100vh;
+            height: 100%;
             align-items: center;
           }
           .lp-left {
@@ -1016,7 +1016,7 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
             width: 100%;
           }
           .lp-right {
-            padding: 32px 16px 16px;
+            padding: 5px 16px 16px;
             order: 1;
             width: 100%;
             display: flex;
