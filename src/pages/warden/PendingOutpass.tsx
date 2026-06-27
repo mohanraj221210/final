@@ -57,6 +57,7 @@ const PendingOutpass: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLast, setIsLast] = useState(true);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [totalPages, setTotalPages] = useState(1);
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -69,6 +70,41 @@ const PendingOutpass: React.FC = () => {
       clearTimeout(handler);
     };
   }, [searchTerm]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [dateFilter]);
+
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    const windowSize = 1;
+
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      pages.push(1);
+
+      let start = Math.max(2, page - windowSize);
+      let end = Math.min(totalPages - 1, page + windowSize);
+
+      if (start > 2) {
+        pages.push('...');
+      }
+
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+
+      if (end < totalPages - 1) {
+        pages.push('...');
+      }
+
+      pages.push(totalPages);
+    }
+    return pages;
+  };
 
   useEffect(() => {
     fetchStudents();
@@ -111,6 +147,9 @@ const PendingOutpass: React.FC = () => {
 
       setStudents(pendingData);
       setIsLast(res.data.isLast ?? true);
+      if (res.data.pages !== undefined) {
+        setTotalPages(res.data.pages);
+      }
     } catch (error) {
       console.error("Failed to fetch data", error);
       toast.error("Failed to fetch pending outpasses");
@@ -330,6 +369,16 @@ const PendingOutpass: React.FC = () => {
           {/* Pagination */}
           {!loading && (students.length > 0 || page > 1) && (
             <div className="wd-pagination">
+              {/* First */}
+              <button
+                disabled={page === 1}
+                onClick={() => setPage(1)}
+                className="wd-page-btn"
+              >
+                « First
+              </button>
+
+              {/* Prev */}
               <button
                 disabled={page === 1}
                 onClick={() => setPage((p) => p - 1)}
@@ -338,16 +387,40 @@ const PendingOutpass: React.FC = () => {
                 ← Prev
               </button>
 
-              <span className="wd-page-indicator">
-                Page <strong>{page}</strong>
-              </span>
+              {/* Page Numbers */}
+              <div className="wd-page-numbers">
+                {getPageNumbers().map((pNum, idx) => {
+                  if (pNum === '...') {
+                    return <span key={`dots-${idx}`} className="wd-pnum-dots">...</span>;
+                  }
+                  return (
+                    <button
+                      key={`p-${pNum}`}
+                      className={`wd-pnum-btn ${page === pNum ? 'active' : ''}`}
+                      onClick={() => setPage(pNum as number)}
+                    >
+                      {pNum}
+                    </button>
+                  );
+                })}
+              </div>
 
+              {/* Next */}
               <button
-                disabled={isLast}
+                disabled={page === totalPages || isLast}
                 onClick={() => setPage((p) => p + 1)}
                 className="wd-page-btn"
               >
                 Next →
+              </button>
+
+              {/* Last */}
+              <button
+                disabled={page === totalPages || isLast}
+                onClick={() => setPage(totalPages)}
+                className="wd-page-btn"
+              >
+                Last »
               </button>
             </div>
           )}
@@ -856,8 +929,52 @@ const PendingOutpass: React.FC = () => {
           display: flex;
           justify-content: center;
           align-items: center;
-          gap: 16px;
+          gap: 10px;
           margin-top: 16px;
+          flex-wrap: wrap;
+        }
+
+        .wd-page-numbers {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .wd-pnum-btn {
+          width: 36px;
+          height: 36px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 10px;
+          border: 1px solid rgba(0, 71, 171, 0.15);
+          background: #EFF6FF;
+          color: #0047AB;
+          font-weight: 700;
+          font-size: 0.82rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          font-family: inherit;
+        }
+
+        .wd-pnum-btn:hover {
+          background: #0047AB;
+          color: white;
+          box-shadow: 0 4px 10px rgba(0, 71, 171, 0.15);
+        }
+
+        .wd-pnum-btn.active {
+          background: #0047AB;
+          color: white;
+          border-color: #0047AB;
+          box-shadow: 0 4px 10px rgba(0, 71, 171, 0.15);
+        }
+
+        .wd-pnum-dots {
+          color: #94A3B8;
+          font-weight: 700;
+          padding: 0 4px;
+          font-size: 0.9rem;
         }
 
         .wd-page-btn {

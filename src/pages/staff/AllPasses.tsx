@@ -67,6 +67,7 @@ const AllPasses: React.FC = () => {
     );
     const [currentPage, setCurrentPage] = useState(1);
     const [isLastPage, setIsLastPage] = useState(true);
+    const [totalPages, setTotalPages] = useState(1);
     const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'yesterday' | 'this_week' | 'this_month'>('all');
     const [typeFilter, setTypeFilter] = useState<'all' | 'Home' | 'Outing' | 'Emergency' | 'OD'>('all');
     const [students, setStudents] = useState<StudentOutpass[]>([]);
@@ -209,6 +210,10 @@ const AllPasses: React.FC = () => {
                             setIsLastPage(true);
                         }
 
+                        if (data.pages !== undefined) {
+                            setTotalPages(data.pages);
+                        }
+
                         const mappedStudents = outpassList
                             .map((item: any) => {
                                 const studentObj = item.student || item.studentid;
@@ -259,6 +264,41 @@ const AllPasses: React.FC = () => {
 
         return () => clearTimeout(handler);
     }, [currentPage, filterStatus, dateFilter, searchQuery, typeFilter]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filterStatus, dateFilter, searchQuery, typeFilter]);
+
+    const getPageNumbers = () => {
+        const pages: (number | string)[] = [];
+        const windowSize = 1;
+
+        if (totalPages <= 5) {
+            for (let i = 1; i <= totalPages; i++) {
+                pages.push(i);
+            }
+        } else {
+            pages.push(1);
+
+            let start = Math.max(2, currentPage - windowSize);
+            let end = Math.min(totalPages - 1, currentPage + windowSize);
+
+            if (start > 2) {
+                pages.push('...');
+            }
+
+            for (let i = start; i <= end; i++) {
+                pages.push(i);
+            }
+
+            if (end < totalPages - 1) {
+                pages.push('...');
+            }
+
+            pages.push(totalPages);
+        }
+        return pages;
+    };
 
     if (!appReady) return <PremiumStaffLoader isDataReady={true} onComplete={() => setAppReady(true)} />;
 
@@ -597,30 +637,66 @@ const AllPasses: React.FC = () => {
                         </div>
 
                         {/* Pagination */}
-                        {students.length > 0 && (currentPage > 1 || !isLastPage) && (
+                        {students.length > 0 && (
                             <div className="pa-pagination">
+                                {/* First */}
+                                <button
+                                    className="pa-page-btn"
+                                    onClick={() => setCurrentPage(1)}
+                                    disabled={currentPage === 1}
+                                >
+                                    « First
+                                </button>
+
+                                {/* Previous */}
                                 <button
                                     className="pa-page-btn"
                                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                     disabled={currentPage === 1}
                                 >
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                         <polyline points="15 18 9 12 15 6" />
                                     </svg>
-                                    Previous
+                                    Prev
                                 </button>
-                                <div className="pa-page-info">
-                                    <span className="pa-page-current">Page {currentPage}</span>
+
+                                {/* Page Numbers */}
+                                <div className="pa-page-numbers">
+                                    {getPageNumbers().map((pNum, idx) => {
+                                        if (pNum === '...') {
+                                            return <span key={`dots-${idx}`} className="pa-pnum-dots">...</span>;
+                                        }
+                                        return (
+                                            <button
+                                                key={`p-${pNum}`}
+                                                className={`pa-pnum-btn ${currentPage === pNum ? 'active' : ''}`}
+                                                onClick={() => setCurrentPage(pNum as number)}
+                                            >
+                                                {pNum}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
+
+                                {/* Next */}
                                 <button
                                     className="pa-page-btn"
-                                    onClick={() => setCurrentPage(prev => prev + 1)}
-                                    disabled={isLastPage}
+                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                    disabled={currentPage === totalPages || isLastPage}
                                 >
                                     Next
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                         <polyline points="9 18 15 12 9 6" />
                                     </svg>
+                                </button>
+
+                                {/* Last */}
+                                <button
+                                    className="pa-page-btn"
+                                    onClick={() => setCurrentPage(totalPages)}
+                                    disabled={currentPage === totalPages || isLastPage}
+                                >
+                                    Last »
                                 </button>
                             </div>
                         )}
@@ -1561,8 +1637,51 @@ const AllPasses: React.FC = () => {
                     display: flex;
                     justify-content: center;
                     align-items: center;
-                    gap: 16px;
+                    gap: 10px;
                     margin-top: 28px;
+                    flex-wrap: wrap;
+                }
+
+                .pa-page-numbers {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+
+                .pa-pnum-btn {
+                    width: 38px;
+                    height: 38px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 10px;
+                    border: 1.5px solid #E2E8F0;
+                    background: rgba(255,255,255,0.92);
+                    color: #64748B;
+                    font-weight: 700;
+                    font-size: 0.85rem;
+                    cursor: pointer;
+                    transition: all 0.15s ease;
+                }
+
+                .pa-pnum-btn:hover {
+                    border-color: #93C5FD;
+                    color: #3B82F6;
+                    background: white;
+                }
+
+                .pa-pnum-btn.active {
+                    background: #3B82F6;
+                    color: white;
+                    border-color: #3B82F6;
+                    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.25);
+                }
+
+                .pa-pnum-dots {
+                    color: #94A3B8;
+                    font-weight: 700;
+                    padding: 0 4px;
+                    font-size: 0.9rem;
                 }
 
                 .pa-page-btn {

@@ -7,7 +7,6 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Login from './pages/login'
 import StaffDashboard from './pages/staff/StaffDashboard'
 import StaffProfile from './pages/staff/StaffProfile'
-import StaffNotices from './pages/staff/StaffNotices'
 import StudentDetails from './pages/staff/StudentDetails'
 import StudentRegistration from './pages/staff/StudentRegistration'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -234,12 +233,7 @@ createRoot(document.getElementById('root')!).render(
           <StaffDashboard />
         </ProtectedRoute>
       } />
-      <Route path="/staff-notice" element={
-        <ProtectedRoute>
-          <StaffNotices />
-        </ProtectedRoute>
-      } />
-      
+
       <Route path="/staff-profile" element={
         <ProtectedRoute>
           <StaffProfile />
@@ -335,11 +329,6 @@ createRoot(document.getElementById('root')!).render(
           <StaffDashboard />
         </ProtectedRoute>
       } />
-      <Route path="/staff-notice" element={
-        <ProtectedRoute>
-          <StaffNotices />
-        </ProtectedRoute>
-      } />
       <Route path="/staff-registration" element={
         <ProtectedRoute>
           <StudentRegistration />
@@ -350,7 +339,7 @@ createRoot(document.getElementById('root')!).render(
           <StudentDetails />
         </ProtectedRoute>
       } />
-    
+
       <Route path="/staff-profile" element={
         <ProtectedRoute>
           <StaffProfile />

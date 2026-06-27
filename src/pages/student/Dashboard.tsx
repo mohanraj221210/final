@@ -108,14 +108,11 @@ const Dashboard: React.FC = () => {
                     let checkedInCount = 0;
 
                     statsArray.forEach((group: any) => {
-                        const statusId = (group._id || '').toLowerCase().replace(/[-_ ]/g, '');
-                        const count = typeof group.total === 'number' ? group.total : (group[group._id] || 0);
-
-                        if (statusId === 'pending') pendingCount += count;
-                        else if (statusId === 'approved') approvedCount += count;
-                        else if (statusId === 'rejected') rejectedCount += count;
-                        else if (statusId === 'checkedout') checkedOutCount += count;
-                        else if (statusId === 'checkedin') checkedInCount += count;
+                        if (typeof group.pending === 'number') pendingCount += group.pending;
+                        if (typeof group.approved === 'number') approvedCount += group.approved;
+                        if (typeof group.rejected === 'number') rejectedCount += group.rejected;
+                        if (typeof group.out === 'number') checkedOutCount += group.out;
+                        if (typeof group.in === 'number') checkedInCount += group.in;
                     });
 
                     setOutpassStats({
@@ -186,7 +183,7 @@ const Dashboard: React.FC = () => {
 
     if (Loading) return <LoadingSpinner />;
 
-    const totalOutpasses = outpassStats.pending + outpassStats.approved + outpassStats.rejected + outpassStats.checkedOut + outpassStats.checkedIn;
+    const totalOutpasses = outpassStats.pending + outpassStats.approved + outpassStats.rejected;
 
     const getAvatarSrc = () => {
         if (!user.photo) return null;

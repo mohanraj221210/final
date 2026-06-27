@@ -24,9 +24,40 @@ const YearInchargePendingOutpass: React.FC = () => {
 
     // Pagination & Error states
     const [currentPage, setCurrentPage] = useState(1);
-    const [, setTotalPages] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
     const [isLastPage, setIsLastPage] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    const getPageNumbers = () => {
+        const pages: (number | string)[] = [];
+        const windowSize = 1;
+
+        if (totalPages <= 5) {
+            for (let i = 1; i <= totalPages; i++) {
+                pages.push(i);
+            }
+        } else {
+            pages.push(1);
+
+            let start = Math.max(2, currentPage - windowSize);
+            let end = Math.min(totalPages - 1, currentPage + windowSize);
+
+            if (start > 2) {
+                pages.push('...');
+            }
+
+            for (let i = start; i <= end; i++) {
+                pages.push(i);
+            }
+
+            if (end < totalPages - 1) {
+                pages.push('...');
+            }
+
+            pages.push(totalPages);
+        }
+        return pages;
+    };
 
     // Re-fetch when page changes
     useEffect(() => {
@@ -332,22 +363,76 @@ const YearInchargePendingOutpass: React.FC = () => {
                     )}
                 </div>
 
-                {pendingOutpasses.length > 0 && (
-                    <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '24px', alignItems: 'center', paddingBottom: '20px' }}>
+                 {pendingOutpasses.length > 0 && (
+                    <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '24px', alignItems: 'center', paddingBottom: '20px', flexWrap: 'wrap' }}>
+                        {/* First */}
+                        <button
+                            onClick={() => setCurrentPage(1)}
+                            disabled={currentPage === 1}
+                            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: currentPage === 1 ? '#f1f5f9' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', fontWeight: 600, color: '#475569' }}
+                        >
+                            « First
+                        </button>
+
+                        {/* Previous */}
                         <button
                             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                             disabled={currentPage === 1}
                             style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: currentPage === 1 ? '#f1f5f9' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', fontWeight: 600, color: '#475569' }}
                         >
-                            &lt; Previous
+                            &lt; Prev
                         </button>
-                        <span style={{ fontWeight: '600', color: '#64748b' }}>Page {currentPage}</span>
+
+                        {/* Page Numbers */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            {getPageNumbers().map((pNum, idx) => {
+                                if (pNum === '...') {
+                                    return <span key={`dots-${idx}`} style={{ color: '#94a3b8', fontWeight: 700, padding: '0 4px' }}>...</span>;
+                                }
+                                const isActive = String(currentPage) === String(pNum);
+                                return (
+                                    <button
+                                        key={`p-${pNum}`}
+                                        onClick={() => setCurrentPage(pNum as number)}
+                                        style={{
+                                            width: '36px',
+                                            height: '36px',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            borderRadius: '8px',
+                                            border: '1px solid #e2e8f0',
+                                            background: isActive ? '#3b82f6' : 'white',
+                                            color: isActive ? 'white' : '#64748b',
+                                            fontWeight: 700,
+                                            fontSize: '0.85rem',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.15s ease',
+                                            boxShadow: isActive ? '0 4px 10px rgba(59, 130, 246, 0.25)' : 'none'
+                                        }}
+                                    >
+                                        {pNum}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Next */}
                         <button
-                            onClick={() => setCurrentPage(prev => prev + 1)}
-                            disabled={isLastPage}
-                            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: isLastPage ? '#f1f5f9' : 'white', cursor: isLastPage ? 'not-allowed' : 'pointer', fontWeight: 600, color: '#475569' }}
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages || isLastPage}
+                            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: (currentPage === totalPages || isLastPage) ? '#f1f5f9' : 'white', cursor: (currentPage === totalPages || isLastPage) ? 'not-allowed' : 'pointer', fontWeight: 600, color: '#475569' }}
                         >
                             Next &gt;
+                        </button>
+
+                        {/* Last */}
+                        <button
+                            onClick={() => setCurrentPage(totalPages)}
+                            disabled={currentPage === totalPages || isLastPage}
+                            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: (currentPage === totalPages || isLastPage) ? '#f1f5f9' : 'white', cursor: (currentPage === totalPages || isLastPage) ? 'not-allowed' : 'pointer', fontWeight: 600, color: '#475569' }}
+                        >
+                            Last »
                         </button>
                     </div>
                 )}
