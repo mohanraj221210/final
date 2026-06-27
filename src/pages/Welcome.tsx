@@ -592,7 +592,11 @@ const Welcome: React.FC = () => {
               </svg>
               <span className="jit-footer-name">JIT Campus One</span>
             </div>
-            <span className="jit-footer-copy">© 2025 Jeppiaar Institute of Technology. All rights reserved.</span>
+            <span className="jit-footer-copy">
+              © 2025 Jeppiaar Institute of Technology. All rights reserved.
+              <span style={{ margin: '0 10px', color: '#CBD5E1' }}>|</span>
+              Support: <a href="mailto:jeppiaaroutpass@gmail.com" style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 600 }}>jeppiaaroutpass@gmail.com</a>
+            </span>
             <span className="jit-footer-tag">v2.0 · Digital Campus Platform</span>
           </div>
         </footer>
