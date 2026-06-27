@@ -53,10 +53,11 @@ interface StudentOutpass {
     residencetype?: string;
     skillrack?: string;
     attendance?: string;
-    document?: string;
+    document?: string | null;
+    remarks?: string;
 }
 
-const PassApproval: React.FC = () => {
+const AllPasses: React.FC = () => {
     const location = useLocation();
     const [selectedStudent, setSelectedStudent] = useState<StudentOutpass | null>(null);
     const [appReady, setAppReady] = useState(false);
@@ -65,27 +66,24 @@ const PassApproval: React.FC = () => {
         (location.state as any)?.filter || 'all'
     );
     const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
+    const [isLastPage, setIsLastPage] = useState(true);
     const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'yesterday' | 'this_week' | 'this_month'>('all');
     const [typeFilter, setTypeFilter] = useState<'all' | 'Home' | 'Outing' | 'Emergency' | 'OD'>('all');
-    const [showActionModal, setShowActionModal] = useState(false);
-    const [actionType, setActionType] = useState<'approve' | 'reject'>('approve');
-    const [actionRemarks, setActionRemarks] = useState('');
     const [students, setStudents] = useState<StudentOutpass[]>([]);
     const [roommates, setRoommates] = useState<any[]>([]);
     const [loadingRoommates, setLoadingRoommates] = useState(false);
-    const [currentStaffName, setCurrentStaffName] = useState('');
+    const [, setCurrentStaffName] = useState('');
     const [showDocumentModal, setShowDocumentModal] = useState(false);
     const [documentUrl, setDocumentUrl] = useState<string | null>(null);
     const [documentType, setDocumentType] = useState<'image' | 'pdf'>('image');
+    const [outpassStats, setOutpassStats] = useState<any>(null);
 
     useEffect(() => {
-        const fetchStaffProfile = async () => {
+        const fetchStaffProfileAndStats = async () => {
+            const token = localStorage.getItem('token');
             try {
                 const response = await axios.get(`${import.meta.env.VITE_API_URL}/staff/profile`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (response.status === 200) {
                     setCurrentStaffName(response.data.staff.name);
@@ -93,8 +91,23 @@ const PassApproval: React.FC = () => {
             } catch (error) {
                 console.error("Failed to fetch staff profile", error);
             }
+
+            try {
+                const statsResponse = await axios.get(`${import.meta.env.VITE_API_URL}/staff/outpass/stats`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (statsResponse.status === 200) {
+                    const statsArray = statsResponse.data.stats || [];
+                    const parsedStats = statsArray.length > 0 && statsArray[0].stats && statsArray[0].stats.length > 0
+                        ? statsArray[0].stats[0]
+                        : statsResponse.data;
+                    setOutpassStats(parsedStats);
+                }
+            } catch (error) {
+                console.error("Failed to fetch stats", error);
+            }
         };
-        fetchStaffProfile();
+        fetchStaffProfileAndStats();
     }, []);
 
     const fetchOutpassDetails = async (outpassId: string) => {
@@ -143,7 +156,8 @@ const PassApproval: React.FC = () => {
                     residencetype: studentDetails.residencetype || 'day scholar',
                     skillrack: data.skillrack || 'N/A',
                     attendance: data.attendance || 'N/A',
-                    document: data.proof || data.document || data.file || null
+                    document: data.proof || data.document || data.file || null,
+                    remarks: data.remarks || ''
                 };
 
                 setSelectedStudent(mappedStudent);
@@ -174,6 +188,7 @@ const PassApproval: React.FC = () => {
                     if (appliedDate) params.append('appliedDate', appliedDate);
                     if (searchQuery) params.append('search', searchQuery);
                     if (typeFilter && typeFilter !== 'all') params.append('filter', typeFilter);
+                    if (filterStatus === 'approved' || filterStatus === 'rejected') params.append('status', filterStatus);
 
                     const qs = params.toString();
                     const endpoint = qs ? `${baseEndpoint}&${qs}` : baseEndpoint;
@@ -188,10 +203,10 @@ const PassApproval: React.FC = () => {
                         const data = response.data;
                         const outpassList = data.outpasses || data.filterOutpass || data.data || [];
 
-                        if (data.totalPages) {
-                            setTotalPages(data.totalPages);
+                        if (data.isLast !== undefined) {
+                            setIsLastPage(data.isLast);
                         } else {
-                            setTotalPages(1);
+                            setIsLastPage(true);
                         }
 
                         const mappedStudents = outpassList
@@ -336,62 +351,6 @@ const PassApproval: React.FC = () => {
         );
     };
 
-    const handleApprove = () => {
-        setActionType('approve');
-        setShowActionModal(true);
-    };
-
-    const handleReject = () => {
-        setActionType('reject');
-        setShowActionModal(true);
-    };
-
-    const confirmAction = async () => {
-        if (!selectedStudent || !actionRemarks.trim()) return;
-
-        try {
-            const token = localStorage.getItem('token');
-            let response;
-
-            if (actionType === 'approve') {
-                response = await axios.get(
-                    `${import.meta.env.VITE_API_URL}/staff/outpass/approve/${selectedStudent.id}`,
-                    { headers: { 'Authorization': `Bearer ${token}` } }
-                );
-            } else {
-                response = await axios.put(
-                    `${import.meta.env.VITE_API_URL}/staff/outpass/reject/${selectedStudent.id}`,
-                    { remarks: actionRemarks },
-                    { headers: { 'Authorization': `Bearer ${token}` } }
-                );
-            }
-
-            if (response.status === 200) {
-                toast.success(response.data.message || `Outpass ${actionType}d successfully`);
-
-                const newStatus = actionType === 'approve' ? 'approved' : 'rejected';
-
-                setStudents(prev => prev.map(student =>
-                    student.id === selectedStudent.id
-                        ? { ...student, staffApproval: newStatus }
-                        : student
-                ));
-
-                setSelectedStudent(prev => prev ? ({
-                    ...prev,
-                    staffApproval: newStatus,
-                    staffApprovedBy: actionType === 'approve' ? currentStaffName : undefined
-                }) : null);
-
-                setShowActionModal(false);
-                setActionRemarks('');
-            }
-        } catch (error: any) {
-            console.error('Error updating outpass status:', error);
-            toast.error(error.response?.data?.message || 'Failed to update status');
-        }
-    };
-
     const handleViewDocument = (url: string | null) => {
         if (!url) {
             toast.error("Document not found");
@@ -407,18 +366,16 @@ const PassApproval: React.FC = () => {
         setShowDocumentModal(true);
     };
 
-    const canApprove = selectedStudent && selectedStudent.staffApproval === 'pending' && selectedStudent.outpasstype !== 'HostelEmergency';
-
     const counts = {
-        total: students.length,
-        pending: students.filter(s => s.staffApproval === 'pending').length,
-        approved: students.filter(s => s.staffApproval === 'approved').length,
-        rejected: students.filter(s => s.staffApproval === 'rejected').length,
+        total: outpassStats?.total || outpassStats?.Total || students.length,
+        pending: outpassStats?.pending || outpassStats?.Pending || 0,
+        approved: outpassStats?.approved || outpassStats?.Approved || 0,
+        rejected: outpassStats?.rejected || outpassStats?.Rejected || 0,
     };
 
     return (
         <div className="pa-page mobile-page-content">
-            <StaffHeader activeMenu="dashboard" />
+            <StaffHeader activeMenu="allpasses" />
             <ToastContainer position="bottom-right" />
 
             <div className="pa-content">
@@ -640,7 +597,7 @@ const PassApproval: React.FC = () => {
                         </div>
 
                         {/* Pagination */}
-                        {students.length > 0 && totalPages > 1 && (
+                        {students.length > 0 && (currentPage > 1 || !isLastPage) && (
                             <div className="pa-pagination">
                                 <button
                                     className="pa-page-btn"
@@ -653,14 +610,12 @@ const PassApproval: React.FC = () => {
                                     Previous
                                 </button>
                                 <div className="pa-page-info">
-                                    <span className="pa-page-current">{currentPage}</span>
-                                    <span className="pa-page-sep">of</span>
-                                    <span className="pa-page-total">{totalPages}</span>
+                                    <span className="pa-page-current">Page {currentPage}</span>
                                 </div>
                                 <button
                                     className="pa-page-btn"
-                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                    disabled={currentPage === totalPages}
+                                    onClick={() => setCurrentPage(prev => prev + 1)}
+                                    disabled={isLastPage}
                                 >
                                     Next
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -742,6 +697,14 @@ const PassApproval: React.FC = () => {
                                         <label className="pa-field-label">Reason</label>
                                         <div className="pa-field-value pa-reason-text">{selectedStudent.reason}</div>
                                     </div>
+                                    {selectedStudent.staffApproval === 'rejected' && selectedStudent.remarks && (
+                                        <div className="pa-field-group pa-field-full">
+                                            <label className="pa-field-label" style={{ color: '#ef4444' }}>Rejection Remarks</label>
+                                            <div className="pa-field-value pa-reason-text" style={{ color: '#ef4444', backgroundColor: '#fef2f2', padding: '12px', borderRadius: '8px' }}>
+                                                {selectedStudent.remarks}
+                                            </div>
+                                        </div>
+                                    )}
                                     <div className="pa-fields-row">
                                         <div className="pa-field-group">
                                             <label className="pa-field-label">From Date</label>
@@ -859,7 +822,7 @@ const PassApproval: React.FC = () => {
                                                         <div key={roommate._id} className="pa-roommate-card">
                                                             <div className="pa-roommate-avatar">
                                                                 <img
-                                                                    src={roommate.photo.startsWith('http') ? roommate.photo : `${import.meta.env.VITE_CDN_URL}${roommate.photo}`}
+                                                                    src={roommate.photo ? (roommate.photo.startsWith('http') ? roommate.photo : `${import.meta.env.VITE_CDN_URL}${roommate.photo}`) : `https://ui-avatars.com/api/?name=${roommate.name}&background=random`}
                                                                     alt={roommate.name}
                                                                     onError={(e) => {
                                                                         e.currentTarget.src = `https://ui-avatars.com/api/?name=${roommate.name}&background=random`;
@@ -1031,133 +994,45 @@ const PassApproval: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-
-                        {/* Sticky Action Footer */}
-                        {canApprove && (
-                            <div className="pa-sticky-actions">
-                                <div className="pa-sticky-inner">
-                                    <div className="pa-sticky-info">
-                                        <span className="pa-sticky-name">{selectedStudent.studentname}</span>
-                                        <span className="pa-sticky-sub">Staff approval pending for this request</span>
-                                    </div>
-                                    <div className="pa-sticky-btns">
-                                        <button className="pa-approve-btn" onClick={handleApprove}>
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                                <polyline points="20 6 9 17 4 12" />
-                                            </svg>
-                                            Approve
-                                        </button>
-                                        <button className="pa-reject-btn" onClick={handleReject}>
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                                            </svg>
-                                            Reject
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 )}
-            </div>
 
-            {/* Action Modal */}
-            {showActionModal && (
-                <div className="pa-modal-overlay" onClick={() => setShowActionModal(false)}>
-                    <div className="pa-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="pa-modal-header">
-                            <div className="pa-modal-title-wrap">
-                                <div className={`pa-modal-icon ${actionType === 'approve' ? 'pa-modal-icon-green' : 'pa-modal-icon-red'}`}>
-                                    {actionType === 'approve' ? (
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                            <polyline points="20 6 9 17 4 12" />
-                                        </svg>
-                                    ) : (
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                                        </svg>
-                                    )}
-                                </div>
-                                <div>
-                                    <h3 className="pa-modal-title">
-                                        {actionType === 'approve' ? 'Approve Outpass' : 'Reject Outpass'}
-                                    </h3>
-                                    <p className="pa-modal-sub">
-                                        {actionType === 'approve' ? 'Provide remarks to confirm approval' : 'Provide reason for rejection'}
-                                    </p>
-                                </div>
+                {/* Document Modal */}
+                {showDocumentModal && documentUrl && (
+                    <div className="pa-modal-overlay" onClick={() => setShowDocumentModal(false)}>
+                        <div className="pa-doc-modal" onClick={(e) => e.stopPropagation()}>
+                            <div className="pa-doc-modal-header">
+                                <h3>Document Preview</h3>
+                                <button className="pa-modal-close" onClick={() => setShowDocumentModal(false)}>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                                    </svg>
+                                </button>
                             </div>
-                            <button className="pa-modal-close" onClick={() => setShowActionModal(false)}>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                                </svg>
-                            </button>
-                        </div>
-                        <div className="pa-modal-body">
-                            <label className="pa-modal-label">Remarks <span className="pa-required">*</span></label>
-                            <textarea
-                                className="pa-modal-textarea"
-                                value={actionRemarks}
-                                onChange={(e) => setActionRemarks(e.target.value)}
-                                placeholder={actionType === 'approve'
-                                    ? 'Enter approval remarks...'
-                                    : 'Enter reason for rejection...'
-                                }
-                                rows={4}
-                            />
-                        </div>
-                        <div className="pa-modal-footer">
-                            <button className="pa-modal-cancel" onClick={() => setShowActionModal(false)}>
-                                Cancel
-                            </button>
-                            <button
-                                className={`pa-modal-confirm ${actionType === 'approve' ? 'pa-confirm-approve' : 'pa-confirm-reject'}`}
-                                onClick={confirmAction}
-                                disabled={!actionRemarks.trim()}
-                            >
-                                {actionType === 'approve' ? 'Confirm Approval' : 'Confirm Rejection'}
-                            </button>
+                            <div className="pa-doc-viewer">
+                                {documentType === 'pdf' ? (
+                                    <iframe src={documentUrl} style={{ width: '100%', height: '100%', border: 'none' }} title="Document" />
+                                ) : (
+                                    <img src={documentUrl} alt="Proof" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                                )}
+                            </div>
+                            <div className="pa-doc-modal-footer">
+                                <a
+                                    href={documentUrl}
+                                    download={`proof_document.${documentType === 'pdf' ? 'pdf' : 'jpg'}`}
+                                    className="pa-download-btn"
+                                >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+                                    </svg>
+                                    Download
+                                </a>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
 
-            {/* Document Modal */}
-            {showDocumentModal && documentUrl && (
-                <div className="pa-modal-overlay" onClick={() => setShowDocumentModal(false)}>
-                    <div className="pa-doc-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="pa-doc-modal-header">
-                            <h3>Document Preview</h3>
-                            <button className="pa-modal-close" onClick={() => setShowDocumentModal(false)}>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                                </svg>
-                            </button>
-                        </div>
-                        <div className="pa-doc-viewer">
-                            {documentType === 'pdf' ? (
-                                <iframe src={documentUrl} style={{ width: '100%', height: '100%', border: 'none' }} title="Document" />
-                            ) : (
-                                <img src={documentUrl} alt="Proof" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
-                            )}
-                        </div>
-                        <div className="pa-doc-modal-footer">
-                            <a
-                                href={documentUrl}
-                                download={`proof_document.${documentType === 'pdf' ? 'pdf' : 'jpg'}`}
-                                className="pa-download-btn"
-                            >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
-                                </svg>
-                                Download
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            <style>{`
+                <style>{`
                 /* ─────────────────────────────────────────
                    PASS APPROVAL — Premium Design System
                 ───────────────────────────────────────── */
@@ -2725,8 +2600,9 @@ const PassApproval: React.FC = () => {
                     .pa-approval-row { flex-wrap: wrap; gap: 8px; }
                 }
             `}</style>
+            </div>
         </div>
     );
 };
 
-export default PassApproval;
+export default AllPasses;

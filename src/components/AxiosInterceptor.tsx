@@ -16,6 +16,31 @@ const AxiosInterceptor = () => {
             (error) => {
                 const userType = localStorage.getItem('userType');
 
+                // Check for 429 Rate Limit in student module
+                if (error.response && error.response.status === 429) {
+                    const isStudent = userType === 'student' || 
+                        (error.config && error.config.url && (
+                            error.config.url.includes('/api/') || 
+                            error.config.url.startsWith('api/')
+                        )) ||
+                        (location.pathname !== '/' && 
+                         !location.pathname.startsWith('/staff') && 
+                         !location.pathname.startsWith('/warden') && 
+                         !location.pathname.startsWith('/watchman') && 
+                         !location.pathname.startsWith('/admin') && 
+                         !location.pathname.startsWith('/year-incharge'));
+
+                    if (isStudent) {
+                        if (!toast.isActive('rate-limit-student')) {
+                            toast.error("wait for 2 minutes and access", {
+                                toastId: 'rate-limit-student',
+                                position: "bottom-right",
+                                autoClose: 5000
+                            });
+                        }
+                    }
+                }
+
                 // Check for Unauthorized (401) or Forbidden (403)
                 if (error.response && (error.response.status === 401 || error.response.status === 403)) {
                     // Don't redirect if we are already on a login page

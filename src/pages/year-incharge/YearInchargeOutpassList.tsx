@@ -70,6 +70,13 @@ const YearInchargeOutpassList: React.FC = () => {
                 navigate('/year-incharge-login');
                 return;
             }
+            if (err?.response?.status === 404) {
+                setOutpasses([]);
+                setTotalPages(1);
+                setIsLastPage(true);
+                setError(null);
+                return;
+            }
             setError('Failed to fetch outpass list');
             toast.error('Failed to fetch outpass list');
         } finally {

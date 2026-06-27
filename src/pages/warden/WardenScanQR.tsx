@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import WatchmanNav from '../../components/WatchmanNav';
+import WardenNav from '../../components/WardenNav';
 import { useNavigate } from 'react-router-dom';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import { toast, ToastContainer } from 'react-toastify';
 import axios from 'axios';
 
-const WatchmanScanQR: React.FC = () => {
+const WardenScanQR: React.FC = () => {
     const navigate = useNavigate();
     const [scannedId, setScannedId] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
@@ -26,12 +26,12 @@ const WatchmanScanQR: React.FC = () => {
         setImageError(false);
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.get(`${import.meta.env.VITE_API_URL}/watchman/outpass/${id}`, {
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/warden/outpass/qr/${id}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (response.status === 200 && response.data.outpass) {
                 setOutpassData(response.data.outpass);
-                toast.success("Outpass Fetched Successfully");
+                toast.success("Outpass Fetched and Verified Successfully");
             }
         } catch (err: any) {
             console.error(err);
@@ -47,7 +47,7 @@ const WatchmanScanQR: React.FC = () => {
         if (!scannedId) return;
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.get(`${import.meta.env.VITE_API_URL}/watchman/outpass/${scannedId}/${type}`, {
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/warden/outpass/${scannedId}/${type}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (response.status === 200) {
@@ -68,16 +68,20 @@ const WatchmanScanQR: React.FC = () => {
     };
 
     // Calculate avatar source
-    const studentPhoto = outpassData?.studentid?.photo;
+    const studentPhoto = outpassData?.studentid?.photo || outpassData?.student?.photo;
     const avatarSrc = studentPhoto
         ? (studentPhoto.startsWith('http') || studentPhoto.startsWith('data:')
             ? studentPhoto
             : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${studentPhoto.replace(/^\//, '')}`)
         : null;
 
+    const studentName = outpassData?.studentid?.name || outpassData?.student?.name || "Student";
+    const registerNumber = outpassData?.studentid?.registerNumber || outpassData?.student?.registerNumber || "N/A";
+    const department = outpassData?.studentid?.department || outpassData?.student?.department || "-";
+
     return (
         <div className="sd-root">
-            <WatchmanNav />
+            <WardenNav />
             <ToastContainer position="top-center" />
             
             <main className="sd-main">
@@ -86,14 +90,14 @@ const WatchmanScanQR: React.FC = () => {
                     {/* Header Row */}
                     <div className="sd-header-row">
                         <div>
-                            <button className="sd-back-btn" onClick={() => navigate("/watchman-dashboard")}>
+                            <button className="sd-back-btn" onClick={() => navigate("/warden-dashboard")}>
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M19 12H5M12 5l-7 7 7 7"/>
                                 </svg>
                                 Back to Dashboard
                             </button>
-                            <h1 className="sd-title">Gate QR Verification</h1>
-                            <p className="sd-subtitle">Scan student outpass credentials to record entry and exit times</p>
+                            <h1 className="sd-title">Hostel QR Verification</h1>
+                            <p className="sd-subtitle">Scan student outpass QR code for exit and entry authorization</p>
                         </div>
                     </div>
 
@@ -134,7 +138,7 @@ const WatchmanScanQR: React.FC = () => {
                                 {error && !loading && (
                                     <div className="sd-result-error">
                                         <div className="sd-error-badge-large">❌</div>
-                                        <h2 className="sd-error-header">Access Denied / Failed</h2>
+                                        <h2 className="sd-error-header">Access Denied / Verification Failed</h2>
                                         <p className="sd-error-desc">{error}</p>
                                         <button onClick={resetScan} className="sd-action-btn sd-btn-retry">
                                             Scan Another QR
@@ -147,8 +151,8 @@ const WatchmanScanQR: React.FC = () => {
                                         <div className="sd-success-banner">
                                             <span className="sd-success-checkmark">✓</span>
                                             <div>
-                                                <h2 className="sd-success-title">Verified Outpass Approved</h2>
-                                                <p className="sd-success-subtitle">Gate Log Record Validated</p>
+                                                <h2 className="sd-success-title">Verified Approved Outpass</h2>
+                                                <p className="sd-success-subtitle">Hostel Gate Pass Validated</p>
                                             </div>
                                         </div>
 
@@ -166,14 +170,14 @@ const WatchmanScanQR: React.FC = () => {
                                                         />
                                                     ) : (
                                                         <div className="sd-student-initials">
-                                                            {outpassData.studentid?.name ? outpassData.studentid.name.charAt(0).toUpperCase() : "S"}
+                                                            {studentName.charAt(0).toUpperCase()}
                                                         </div>
                                                     )}
                                                 </div>
                                                 <div className="sd-student-identity">
-                                                    <h3 className="sd-student-name">{outpassData.studentid?.name || "Student"}</h3>
-                                                    <span className="sd-student-reg sd-mono">{outpassData.studentid?.registerNumber || "N/A"}</span>
-                                                    <span className="sd-student-dept">{outpassData.studentid?.department || "-"}</span>
+                                                    <h3 className="sd-student-name">{studentName}</h3>
+                                                    <span className="sd-student-reg sd-mono">{registerNumber}</span>
+                                                    <span className="sd-student-dept">{department}</span>
                                                 </div>
                                             </div>
 
@@ -187,8 +191,8 @@ const WatchmanScanQR: React.FC = () => {
                                                 </div>
                                                 <div className="sd-detail-item">
                                                     <span className="label">Status</span>
-                                                    <span className="value" style={{ color: outpassData.status === 'approved' ? '#10B981' : '#EA580C', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.88rem' }}>
-                                                        {outpassData.status || 'Pending'}
+                                                    <span className="value" style={{ color: '#10B981', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.88rem' }}>
+                                                        {outpassData.status || 'Approved'}
                                                     </span>
                                                 </div>
                                                 <div className="sd-detail-item full-width">
@@ -196,43 +200,40 @@ const WatchmanScanQR: React.FC = () => {
                                                     <p className="value-p">{outpassData.reason || "N/A"}</p>
                                                 </div>
                                                 <div className="sd-detail-item">
-                                                    <span className="label">Marked Out (Exit Gate)</span>
+                                                    <span className="label">Marked Out (Hostel Exit)</span>
                                                     <span className="value sd-timestamp">
                                                         {outpassData.out ? new Date(outpassData.out).toLocaleString() : 'Not Checked Out'}
                                                     </span>
                                                 </div>
                                                 <div className="sd-detail-item">
-                                                    <span className="label">Marked In (Entry Gate)</span>
+                                                    <span className="label">Marked In (Hostel Entry)</span>
                                                     <span className="value sd-timestamp">
                                                         {outpassData.in ? new Date(outpassData.in).toLocaleString() : 'Not Checked In'}
                                                     </span>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        {/* Verification Controls */}
-                                        <div className="sd-result-actions">
-                                            <button onClick={resetScan} className="sd-action-btn sd-btn-secondary">
-                                                Scan Next Student
-                                            </button>
-                                            
-                                            {!outpassData.out && (
-                                                <button 
+                                            {/* Scan action buttons */}
+                                            <div className="sd-result-actions">
+                                                <button
                                                     onClick={() => handleStatusUpdate('out')}
-                                                    className="sd-action-btn sd-btn-primary sd-btn-exit"
+                                                    disabled={outpassData.out !== null}
+                                                    className="sd-action-btn sd-btn-out"
                                                 >
-                                                    Confirm Student EXIT (Out)
+                                                    🚪 Mark Student OUT
                                                 </button>
-                                            )}
-                                            
-                                            {outpassData.out && !outpassData.in && (
-                                                <button 
+                                                <button
                                                     onClick={() => handleStatusUpdate('in')}
-                                                    className="sd-action-btn sd-btn-primary sd-btn-entry"
+                                                    disabled={outpassData.in !== null || outpassData.out === null}
+                                                    className="sd-action-btn sd-btn-in"
                                                 >
-                                                    Confirm Student ENTRY (In)
+                                                    🏠 Mark Student IN
                                                 </button>
-                                            )}
+                                            </div>
+
+                                            <button onClick={resetScan} className="sd-btn-reset-bottom">
+                                                Scan Next QR Code
+                                            </button>
                                         </div>
                                     </div>
                                 )}
@@ -244,7 +245,7 @@ const WatchmanScanQR: React.FC = () => {
             </main>
 
             <style>{`
-                /* ====== LAYOUT & BASE ====== */
+                /* ====== ROOT LAYOUT ====== */
                 .sd-root {
                     min-height: 100vh;
                     background: linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 45%, #DBEAFE 100%);
@@ -262,7 +263,7 @@ const WatchmanScanQR: React.FC = () => {
                 .sd-container {
                     display: flex;
                     flex-direction: column;
-                    gap: 24px;
+                    gap: 28px;
                 }
 
                 /* ====== HEADER ROW ====== */
@@ -271,6 +272,7 @@ const WatchmanScanQR: React.FC = () => {
                     justify-content: space-between;
                     align-items: flex-end;
                     flex-wrap: wrap;
+                    gap: 20px;
                 }
 
                 .sd-back-btn {
@@ -279,7 +281,7 @@ const WatchmanScanQR: React.FC = () => {
                     gap: 8px;
                     background: white;
                     border: 1px solid #E2E8F0;
-                    color: #3B82F6;
+                    color: #0047AB;
                     font-size: 0.85rem;
                     font-weight: 700;
                     padding: 10px 18px;
@@ -293,7 +295,7 @@ const WatchmanScanQR: React.FC = () => {
                 .sd-back-btn:hover {
                     background: #EFF6FF;
                     transform: translateX(-4px);
-                    box-shadow: 0 6px 12px rgba(59, 130, 246, 0.08);
+                    box-shadow: 0 6px 12px rgba(0, 71, 171, 0.08);
                 }
 
                 .sd-title {
@@ -311,98 +313,78 @@ const WatchmanScanQR: React.FC = () => {
                     font-weight: 500;
                 }
 
-                /* ====== SCANNER CONTAINER CARD ====== */
+                /* ====== SCANNER CARD ====== */
                 .sd-scanner-card {
-                    background: rgba(255, 255, 255, 0.92);
+                    background: rgba(255, 255, 255, 0.9);
                     backdrop-filter: blur(16px);
                     -webkit-backdrop-filter: blur(16px);
-                    border: 1px solid rgba(255, 255, 255, 0.75);
+                    border: 1px solid rgba(255, 255, 255, 0.7);
                     border-radius: 24px;
-                    padding: 32px;
-                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03), 0 0 0 1px rgba(226, 232, 240, 0.6);
+                    padding: 40px;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.03), 0 0 0 1px rgba(226,232,240,0.5);
                     max-width: 600px;
                     margin: 0 auto;
                     width: 100%;
                     box-sizing: border-box;
                 }
 
-                /* ====== INITIAL STATE ====== */
+                /* Scanner Init Mode */
                 .sd-scanner-init {
                     display: flex;
                     flex-direction: column;
                     align-items: center;
-                    gap: 24px;
+                    gap: 32px;
                 }
 
                 .sd-scanner-instructions {
                     text-align: center;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 8px;
                     max-width: 380px;
                 }
 
                 .sd-scanner-tip-icon {
-                    font-size: 2.2rem;
-                    background: #EFF6FF;
-                    color: #3B82F6;
-                    width: 56px;
-                    height: 56px;
-                    border-radius: 16px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    box-shadow: 0 4px 10px rgba(59,130,246,0.1);
+                    font-size: 2.5rem;
+                    display: block;
+                    margin-bottom: 12px;
                 }
 
                 .sd-scanner-tip-text {
-                    font-size: 0.88rem;
+                    font-size: 0.95rem;
                     color: #64748B;
-                    margin: 0;
-                    line-height: 1.5;
                     font-weight: 500;
+                    line-height: 1.5;
+                    margin: 0;
                 }
 
                 .sd-scanner-viewport-wrapper {
                     position: relative;
-                    width: 100%;
-                    max-width: 360px;
-                    aspect-ratio: 1;
-                    border-radius: 20px;
+                    width: 280px;
+                    height: 280px;
+                    border-radius: 24px;
                     overflow: hidden;
-                    border: 2px solid #E2E8F0;
-                    background: #000;
-                    box-shadow: 0 12px 36px rgba(0,0,0,0.1);
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+                    border: 4px solid #1E293B;
                 }
 
                 .sd-scanner-glow-border {
                     position: absolute;
-                    inset: 12px;
-                    border: 3px solid #3B82F6;
-                    border-radius: 12px;
+                    inset: 0;
+                    border: 3px solid #0047AB;
+                    border-radius: 20px;
                     pointer-events: none;
                     z-index: 10;
-                    box-shadow: 0 0 15px rgba(59, 130, 246, 0.4), inset 0 0 15px rgba(59, 130, 246, 0.4);
+                    box-shadow: 0 0 15px rgba(0, 71, 171, 0.5);
                 }
 
                 .sd-scanner-laser-line {
                     position: absolute;
-                    top: 15px;
-                    left: 20px;
-                    right: 20px;
+                    left: 0;
+                    width: 100%;
                     height: 3px;
-                    background: #3B82F6;
-                    z-index: 11;
+                    background: linear-gradient(90deg, transparent, #3B82F6, transparent);
+                    z-index: 9;
                     pointer-events: none;
-                    box-shadow: 0 0 12px #3B82F6, 0 0 4px #3B82F6;
-                    border-radius: 50%;
-                    animation: laser-sweep 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-                }
-
-                @keyframes laser-sweep {
-                    0%, 100% { top: 15px; opacity: 0.7; }
-                    50% { top: calc(100% - 18px); opacity: 1; }
+                    animation: scannerSweep 2s ease-in-out infinite;
+                    box-shadow: 0 0 10px #3B82F6;
                 }
 
                 .sd-scanner-element {
@@ -410,146 +392,126 @@ const WatchmanScanQR: React.FC = () => {
                     height: 100%;
                 }
 
-                /* ====== LOADING STATE ====== */
+                .sd-scanner-element video {
+                    object-fit: cover !important;
+                }
+
+                /* ====== RESULTS DISPLAY ====== */
+                .sd-scanner-results {
+                    width: 100%;
+                }
+
                 .sd-result-loading {
                     text-align: center;
-                    padding: 48px 12px;
+                    padding: 40px 0;
                 }
 
                 .sd-loader-spin {
                     width: 48px;
                     height: 48px;
                     border: 4px solid #E2E8F0;
-                    border-top-color: #3B82F6;
+                    border-top-color: #0047AB;
                     border-radius: 50%;
                     animation: spin 0.8s linear infinite;
                     margin: 0 auto 20px;
                 }
 
-                @keyframes spin {
-                    to { transform: rotate(360deg); }
-                }
-
                 .sd-result-loading h3 {
-                    color: #1E293B;
-                    font-size: 1.15rem;
-                    margin: 0 0 8px;
-                    font-weight: 700;
+                    margin: 0 0 6px;
+                    font-size: 1.1rem;
+                    color: #0F172A;
                 }
 
                 .sd-result-loading p {
-                    color: #94A3B8;
-                    font-size: 0.82rem;
                     margin: 0;
-                    font-weight: 500;
+                    font-size: 0.85rem;
+                    color: #64748B;
                 }
 
-                /* ====== ERROR STATE ====== */
+                /* Error results */
                 .sd-result-error {
                     text-align: center;
-                    padding: 40px 16px;
+                    padding: 20px 0;
                 }
 
                 .sd-error-badge-large {
-                    font-size: 3rem;
-                    width: 72px;
-                    height: 72px;
-                    background: #FEF2F2;
-                    border-radius: 50%;
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
+                    font-size: 3.5rem;
                     margin-bottom: 20px;
-                    box-shadow: inset 0 2px 4px rgba(239, 68, 68, 0.05);
                 }
 
                 .sd-error-header {
-                    font-size: 1.3rem;
+                    font-size: 1.35rem;
                     font-weight: 800;
                     color: #EF4444;
-                    margin: 0 0 8px;
-                    letter-spacing: -0.01em;
+                    margin: 0 0 10px;
                 }
 
                 .sd-error-desc {
-                    font-size: 0.9rem;
+                    font-size: 0.95rem;
                     color: #64748B;
-                    margin: 0 0 24px;
                     line-height: 1.5;
-                    font-weight: 500;
+                    margin: 0 0 32px;
                 }
 
-                .sd-btn-retry {
-                    background: #EF4444;
-                    color: white;
-                    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+                /* Success Results */
+                .sd-result-success {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 24px;
                 }
 
-                .sd-btn-retry:hover {
-                    background: #DC2626;
-                    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
-                }
-
-                /* ====== SUCCESS STATE ====== */
                 .sd-success-banner {
                     display: flex;
                     align-items: center;
                     gap: 16px;
                     background: #ECFDF5;
-                    border: 1px solid rgba(16, 185, 129, 0.15);
+                    border: 1px solid rgba(16, 185, 129, 0.2);
                     padding: 16px 20px;
                     border-radius: 16px;
-                    margin-bottom: 24px;
                 }
 
                 .sd-success-checkmark {
-                    font-size: 1.5rem;
-                    font-weight: 900;
-                    color: white;
-                    background: #10B981;
                     width: 36px;
                     height: 36px;
                     border-radius: 50%;
+                    background: #10B981;
+                    color: white;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    flex-shrink: 0;
-                    box-shadow: 0 4px 10px rgba(16,185,129,0.25);
+                    font-weight: bold;
+                    font-size: 1.1rem;
                 }
 
                 .sd-success-title {
-                    font-size: 1.05rem;
+                    font-size: 1rem;
                     font-weight: 800;
                     color: #065F46;
-                    margin: 0 0 2px;
+                    margin: 0;
                 }
 
                 .sd-success-subtitle {
                     font-size: 0.8rem;
                     color: #047857;
-                    margin: 0;
+                    margin: 2px 0 0;
                     font-weight: 600;
                 }
 
-                /* Student Identity Strip */
+                /* Student profile strip */
                 .sd-student-profile-strip {
                     display: flex;
                     align-items: center;
-                    gap: 18px;
-                    background: #FAFBFD;
-                    border: 1px solid #EFF2F5;
-                    border-radius: 18px;
-                    padding: 16px 20px;
-                    margin-bottom: 20px;
+                    gap: 20px;
+                    padding-bottom: 20px;
+                    border-bottom: 1px solid #E2E8F0;
                 }
 
                 .sd-student-avatar-wrap {
                     width: 64px;
                     height: 64px;
-                    border-radius: 14px;
+                    border-radius: 50%;
                     overflow: hidden;
-                    border: 2px solid white;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
                     flex-shrink: 0;
                 }
 
@@ -562,50 +524,49 @@ const WatchmanScanQR: React.FC = () => {
                 .sd-student-initials {
                     width: 100%;
                     height: 100%;
-                    background: linear-gradient(135deg, #3B82F6, #1D4ED8);
-                    color: white;
-                    font-size: 1.8rem;
-                    font-weight: 800;
                     display: flex;
                     align-items: center;
                     justify-content: center;
+                    background: linear-gradient(135deg, #0047AB 0%, #2563EB 100%);
+                    color: white;
+                    font-weight: 700;
+                    font-size: 1.6rem;
                 }
 
                 .sd-student-identity {
                     display: flex;
                     flex-direction: column;
+                    gap: 2px;
                 }
 
                 .sd-student-name {
-                    font-size: 1.15rem;
+                    font-size: 1.2rem;
                     font-weight: 800;
                     color: #0F172A;
-                    margin: 0 0 2px;
+                    margin: 0;
                 }
 
                 .sd-student-reg {
-                    font-size: 0.82rem;
-                    font-weight: 700;
+                    font-size: 0.88rem;
                     color: #64748B;
+                    font-weight: 600;
                 }
 
                 .sd-student-dept {
-                    font-size: 0.78rem;
-                    color: #94A3B8;
-                    margin-top: 2px;
-                    font-weight: 600;
+                    font-size: 0.8rem;
+                    color: #64748B;
+                    font-weight: 500;
                 }
 
                 /* Details grid */
                 .sd-details-grid {
                     display: grid;
-                    grid-template-columns: 1fr 1fr;
+                    grid-template-columns: repeat(2, 1fr);
                     gap: 16px;
-                    background: #FAFBFD;
-                    border: 1px solid #EFF2F5;
-                    border-radius: 18px;
+                    background: #F8FAFC;
+                    border: 1px solid rgba(226,232,240,0.6);
                     padding: 20px;
-                    margin-bottom: 28px;
+                    border-radius: 16px;
                 }
 
                 .sd-detail-item {
@@ -620,27 +581,34 @@ const WatchmanScanQR: React.FC = () => {
 
                 .sd-detail-item .label {
                     font-size: 0.68rem;
-                    font-weight: 700;
                     color: #94A3B8;
+                    font-weight: 700;
                     text-transform: uppercase;
-                    letter-spacing: 0.05em;
+                    letter-spacing: 0.02em;
                 }
 
                 .sd-detail-item .value {
-                    font-size: 0.95rem;
+                    font-size: 0.9rem;
                     font-weight: 600;
-                    color: #1F2937;
+                    color: #334155;
+                }
+
+                .sd-detail-item .value-p {
+                    font-size: 0.88rem;
+                    color: #475569;
+                    font-weight: 500;
+                    margin: 0;
+                    line-height: 1.4;
                 }
 
                 .sd-pill-type {
-                    display: inline-block;
-                    padding: 3px 8px;
-                    border-radius: 6px;
-                    background: #EFF6FF;
-                    color: #3B82F6;
-                    font-size: 0.75rem;
-                    font-weight: 700;
+                    display: inline-flex;
+                    padding: 2px 6px;
+                    border-radius: 4px;
+                    font-size: 0.72rem;
                     text-transform: uppercase;
+                    background: #EFF6FF;
+                    color: #0047AB;
                     width: fit-content;
                 }
 
@@ -649,121 +617,113 @@ const WatchmanScanQR: React.FC = () => {
                     color: #EF4444;
                 }
 
-                .sd-detail-item .value-p {
-                    margin: 0;
-                    font-size: 0.88rem;
-                    color: #475569;
-                    line-height: 1.5;
-                    font-weight: 500;
-                }
-
                 .sd-timestamp {
-                    color: #3B82F6 !important;
+                    color: #0F172A;
                     font-family: 'SF Mono', monospace;
-                    font-size: 0.82rem !important;
                 }
 
-                /* ====== BUTTON ACTION STYLING ====== */
+                /* Interactive actions */
                 .sd-result-actions {
                     display: flex;
-                    gap: 12px;
-                    flex-wrap: wrap;
+                    gap: 16px;
+                    margin-top: 10px;
                 }
 
                 .sd-action-btn {
                     flex: 1;
-                    min-width: 140px;
-                    padding: 14px 24px;
-                    border-radius: 14px;
-                    font-size: 0.92rem;
+                    padding: 14px 20px;
+                    border: none;
+                    border-radius: 12px;
                     font-weight: 700;
+                    font-size: 0.9rem;
                     cursor: pointer;
                     transition: all 0.2s ease;
-                    border: none;
-                    font-family: inherit;
                     display: inline-flex;
                     align-items: center;
                     justify-content: center;
                     gap: 8px;
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
                 }
 
-                .sd-btn-primary {
+                .sd-btn-out {
+                    background: #EF4444;
                     color: white;
                 }
 
-                .sd-btn-exit {
-                    background: linear-gradient(135deg, #EA580C 0%, #C2410C 100%);
-                    box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35);
-                }
-
-                .sd-btn-exit:hover {
+                .sd-btn-out:hover:not(:disabled) {
+                    background: #DC2626;
+                    box-shadow: 0 6px 16px rgba(239,68,68,0.3);
                     transform: translateY(-2px);
-                    box-shadow: 0 6px 20px rgba(234, 88, 12, 0.45);
                 }
 
-                .sd-btn-entry {
-                    background: linear-gradient(135deg, #10B981 0%, #047857 100%);
-                    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+                .sd-btn-in {
+                    background: #10B981;
+                    color: white;
                 }
 
-                .sd-btn-entry:hover {
+                .sd-btn-in:hover:not(:disabled) {
+                    background: #059669;
+                    box-shadow: 0 6px 16px rgba(16,185,129,0.3);
                     transform: translateY(-2px);
-                    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
                 }
 
-                .sd-btn-secondary {
-                    background: white;
-                    border: 1px solid #E2E8F0;
-                    color: #475569;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+                .sd-action-btn:disabled {
+                    opacity: 0.45;
+                    cursor: not-allowed;
+                    transform: none !important;
+                    box-shadow: none !important;
                 }
 
-                .sd-btn-secondary:hover {
-                    background: #F8FAFC;
-                    border-color: #CBD5E1;
-                    color: #0F172A;
+                .sd-btn-retry {
+                    width: 100%;
+                    max-width: 240px;
+                    background: #0047AB;
+                    color: white;
+                    margin: 0 auto;
+                }
+
+                .sd-btn-retry:hover {
+                    background: #003682;
+                    box-shadow: 0 4px 12px rgba(0,71,171,0.25);
+                }
+
+                .sd-btn-reset-bottom {
+                    background: transparent;
+                    border: 1px dashed #CBD5E1;
+                    color: #64748B;
+                    padding: 10px;
+                    border-radius: 10px;
+                    cursor: pointer;
+                    font-weight: 700;
+                    font-size: 0.85rem;
+                    transition: all 0.2s ease;
+                    margin-top: 10px;
+                }
+
+                .sd-btn-reset-bottom:hover {
+                    border-color: #0047AB;
+                    color: #0047AB;
+                    background: #EFF6FF;
                 }
 
                 .sd-mono {
                     font-family: 'SF Mono', 'Fira Code', monospace;
+                    font-weight: 600;
                 }
 
-                @media (max-width: 480px) {
-                    .sd-scanner-card {
-                        padding: 20px 16px;
-                    }
-                    .sd-success-banner {
-                        padding: 12px;
-                        gap: 12px;
-                    }
-                    .sd-success-title {
-                        font-size: 0.95rem;
-                    }
-                    .sd-student-profile-strip {
-                        padding: 12px;
-                        gap: 12px;
-                    }
-                    .sd-student-name {
-                        font-size: 1rem;
-                    }
-                    .sd-details-grid {
-                        grid-template-columns: 1fr;
-                        padding: 14px;
-                        gap: 12px;
-                    }
-                    .sd-detail-item.full-width {
-                        grid-column: span 1;
-                    }
-                    .sd-result-actions {
-                        flex-direction: column;
-                    }
-                    .sd-action-btn {
-                        width: 100%;
-                    }
+                /* Keyframes */
+                @keyframes scannerSweep {
+                    0% { top: 0%; }
+                    50% { top: 100%; }
+                    100% { top: 0%; }
+                }
+
+                @keyframes spin {
+                    to { transform: rotate(360deg); }
                 }
             `}</style>
         </div>
     );
 };
 
-export default WatchmanScanQR;
+export default WardenScanQR;

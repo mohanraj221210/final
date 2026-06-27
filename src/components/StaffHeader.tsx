@@ -85,7 +85,8 @@ const StaffHeader: React.FC<StaffHeaderProps> = ({ activeMenu }) => {
     const navItems = [
         { key: 'dashboard',    path: '/staff-dashboard',    label: 'Dashboard',     icon: '🏠' },
         { key: 'registration', path: '/staff-registration', label: 'Registration',  icon: '📋' },
-        { key: 'passapproval', path: '/passapproval',       label: 'Pass Approval', icon: '✅' },
+        { key: 'pendingpasses', path: '/pending-passes',    label: 'Pending Passes', icon: '⏳' },
+        { key: 'allpasses',    path: '/all-passes',         label: 'All Passes',    icon: '🎫' },
         { key: 'profile',      path: '/staff-profile',      label: 'Profile',       icon: '👤' },
     ];
 

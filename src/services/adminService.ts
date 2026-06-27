@@ -10,7 +10,7 @@ import type {
     AdminProfile
 } from '../types/admin';
 
-const API_URL = "https://api.jit.college";
+const API_URL = "http://localhost:8000";
 
 // Create axios instance with interceptor for token
 const api = axios.create({
@@ -230,8 +230,26 @@ export const adminService = {
     },
     // Outpass
     // Outpass
-    getAllOutpasses: async () => {
-        const response = await api.get<{ message: string, outpasses: any[] }>('/admin/outpass/list');
+    getAllOutpasses: async (filters?: {
+        page?: number;
+        status?: string;
+        appliedDate?: string;
+        department?: string;
+        outpasstype?: string;
+        search?: string;
+        registerNumber?: string;
+    }) => {
+        const params = new URLSearchParams();
+        if (filters?.page) params.append('page', filters.page.toString());
+        if (filters?.status) params.append('status', filters.status);
+        if (filters?.appliedDate) params.append('appliedDate', filters.appliedDate);
+        if (filters?.department) params.append('department', filters.department);
+        if (filters?.outpasstype) params.append('outpasstype', filters.outpasstype);
+        if (filters?.search) params.append('search', filters.search);
+        if (filters?.registerNumber) params.append('registerNumber', filters.registerNumber);
+        const qs = params.toString();
+        const endpoint = qs ? `/admin/outpass/list?${qs}` : '/admin/outpass/list';
+        const response = await api.get<{ message: string, outpasses: any[], isLast?: boolean }>(endpoint);
         return response.data;
     },
     getOutpassStats: async (filters?: { status?: string, appliedDate?: string, department?: string, outpasstype?: string }) => {

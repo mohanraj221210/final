@@ -170,7 +170,7 @@ const DoughnutChart: React.FC<{ data: { label: string; value: number; color: str
                     const dashArray = `${percentage * circumference} ${circumference}`;
                     const dashOffset = -currentOffset;
                     currentOffset += (d.value / renderTotal) * circumference;
-                    
+
                     return (
                         <circle
                             key={i}
@@ -301,9 +301,9 @@ const StaffDashboard: React.FC = () => {
                 if (outpassStatsRes?.status === 200) {
                     // Support both nested structure and flat structure
                     const statsArray = outpassStatsRes.data.stats || [];
-                    const parsedStats = statsArray.length > 0 && statsArray[0].stats && statsArray[0].stats.length > 0 
-                                      ? statsArray[0].stats[0] 
-                                      : outpassStatsRes.data; 
+                    const parsedStats = statsArray.length > 0 && statsArray[0].stats && statsArray[0].stats.length > 0
+                        ? statsArray[0].stats[0]
+                        : outpassStatsRes.data;
                     setOutpassStats(parsedStats);
 
                     const emergencyCount = parsedStats.Emergency || parsedStats.emergency || 0;
@@ -364,12 +364,12 @@ const StaffDashboard: React.FC = () => {
 
     /* ---------- derived values ---------- */
     const totalStudents = studentStats?.total || studentStats?.totalStudents || studentStats?.students || 0;
-    
+
     // Support both lowercase and capitalized keys from API response
     const pendingCount = outpassStats?.pending || outpassStats?.Pending || 0;
     const approvedCount = outpassStats?.approved || outpassStats?.Approved || 0;
     const rejectedCount = outpassStats?.rejected || outpassStats?.Rejected || 0;
-    
+
     // Total passes is either explicitly provided or the sum of statuses
     const totalPasses = outpassStats?.total || outpassStats?.Total || (pendingCount + approvedCount + rejectedCount);
 
@@ -459,11 +459,11 @@ const StaffDashboard: React.FC = () => {
             const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const slots = [
                 { label: '12AM', start: 0, end: 4 },
-                { label: '4AM',  start: 4, end: 8 },
-                { label: '8AM',  start: 8, end: 12 },
+                { label: '4AM', start: 4, end: 8 },
+                { label: '8AM', start: 8, end: 12 },
                 { label: '12PM', start: 12, end: 16 },
-                { label: '4PM',  start: 16, end: 20 },
-                { label: '8PM',  start: 20, end: 24 },
+                { label: '4PM', start: 16, end: 20 },
+                { label: '8PM', start: 20, end: 24 },
             ];
             const counts = slots.map(() => 0);
             passesToUse.forEach(pass => {
@@ -567,7 +567,7 @@ const StaffDashboard: React.FC = () => {
                         <section className="sd-kpi-grid">
                             <div className="sd-kpi-card sd-fade-up" style={{ animationDelay: '0.1s' }}>
                                 <div className="sd-kpi-icon sd-kpi-blue">
-                                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="2"/><path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="2" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
                                 </div>
                                 <div className="sd-kpi-info">
                                     <span className="sd-kpi-num">{aniStudents}</span>
@@ -578,7 +578,7 @@ const StaffDashboard: React.FC = () => {
 
                             <div className="sd-kpi-card sd-fade-up" style={{ animationDelay: '0.2s' }}>
                                 <div className="sd-kpi-icon sd-kpi-amber">
-                                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/><polyline points="12 6 12 12 16 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" /><polyline points="12 6 12 12 16 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                                 </div>
                                 <div className="sd-kpi-info">
                                     <span className="sd-kpi-num">{aniPending}</span>
@@ -589,7 +589,7 @@ const StaffDashboard: React.FC = () => {
 
                             <div className="sd-kpi-card sd-fade-up" style={{ animationDelay: '0.3s' }}>
                                 <div className="sd-kpi-icon sd-kpi-green">
-                                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><polyline points="22 4 12 14.01 9 11.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><polyline points="22 4 12 14.01 9 11.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                                 </div>
                                 <div className="sd-kpi-info">
                                     <span className="sd-kpi-num">{aniApproved}</span>
@@ -600,7 +600,7 @@ const StaffDashboard: React.FC = () => {
 
                             <div className="sd-kpi-card sd-fade-up" style={{ animationDelay: '0.4s' }}>
                                 <div className="sd-kpi-icon sd-kpi-red">
-                                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/><line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" /><line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
                                 </div>
                                 <div className="sd-kpi-info">
                                     <span className="sd-kpi-num">{aniRejected}</span>
@@ -611,7 +611,7 @@ const StaffDashboard: React.FC = () => {
 
                             <div className="sd-kpi-card sd-fade-up" style={{ animationDelay: '0.5s' }}>
                                 <div className="sd-kpi-icon sd-kpi-rose">
-                                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><polyline points="9 22 9 12 15 12 15 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><polyline points="9 22 9 12 15 12 15 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                                 </div>
                                 <div className="sd-kpi-info">
                                     <span className="sd-kpi-num">{aniHome}</span>
@@ -622,7 +622,7 @@ const StaffDashboard: React.FC = () => {
 
                             <div className="sd-kpi-card sd-fade-up" style={{ animationDelay: '0.6s' }}>
                                 <div className="sd-kpi-icon sd-kpi-indigo">
-                                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                                 </div>
                                 <div className="sd-kpi-info">
                                     <span className="sd-kpi-num">{aniOD}</span>
@@ -633,7 +633,7 @@ const StaffDashboard: React.FC = () => {
 
                             <div className="sd-kpi-card sd-fade-up" style={{ animationDelay: '0.7s' }}>
                                 <div className="sd-kpi-icon sd-kpi-purple">
-                                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="currentColor" strokeWidth="2"/><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="currentColor" strokeWidth="2" /><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                                 </div>
                                 <div className="sd-kpi-info">
                                     <span className="sd-kpi-num">{aniOuting}</span>
@@ -644,7 +644,7 @@ const StaffDashboard: React.FC = () => {
 
                             <div className="sd-kpi-card sd-fade-up" style={{ animationDelay: '0.8s' }}>
                                 <div className="sd-kpi-icon sd-kpi-orange">
-                                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
                                 </div>
                                 <div className="sd-kpi-info">
                                     <span className="sd-kpi-num">{aniEmergency}</span>
@@ -720,7 +720,7 @@ const StaffDashboard: React.FC = () => {
                                 </div>
                                 <div className="sd-analytics-right">
                                     <h3 className="sd-doughnut-title">Distribution</h3>
-                                    <DoughnutChart 
+                                    <DoughnutChart
                                         data={[
                                             { label: 'Approved', value: chartStats.approved, color: '#22C55E' },
                                             { label: 'Pending', value: chartStats.pending, color: '#F59E0B' },
@@ -760,22 +760,22 @@ const StaffDashboard: React.FC = () => {
                         <div className="sd-actions-grid">
                             {[
                                 { icon: '📋', title: 'Student Registration', desc: 'Onboard new students individually or via Excel upload', path: '/staff-registration', delay: '0.25s' },
-                                { icon: '🎫', title: 'Manage Outpasses', desc: 'Review, filter, and track all submitted student outpasses', path: '/passApproval', delay: '0.3s' },
-                                { icon: '⏳', title: 'Pending Approvals', desc: 'Review, approve, or reject requests waiting for your action', path: '/passApproval', state: { filter: 'pending' }, delay: '0.35s' },
+                                { icon: '🎫', title: 'Manage Outpasses', desc: 'Review, filter, and track all submitted student outpasses', path: '/all-passes', delay: '0.3s' },
+                                { icon: '⏳', title: 'Pending Approvals', desc: 'Review, approve, or reject requests waiting for your action', path: '/pending-passes', delay: '0.35s' },
                                 { icon: '👤', title: 'Faculty Profile', desc: 'Manage your teaching profile, subjects, and achievements', path: '/staff-profile', delay: '0.4s' },
                             ].map((a, i) => (
                                 <button
                                     key={i}
                                     className="sd-action-card sd-fade-up"
                                     style={{ animationDelay: a.delay }}
-                                    onClick={() => navigate(a.path, a.state ? { state: a.state } : undefined)}
+                                    onClick={() => navigate(a.path, (a as any).state ? { state: (a as any).state } : undefined)}
                                     tabIndex={0}
                                     aria-label={a.title}
                                 >
                                     <div className="sd-action-top">
                                         <span className="sd-action-icon">{a.icon}</span>
                                         <span className="sd-action-arrow">
-                                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H7M17 7v10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H7M17 7v10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                                         </span>
                                     </div>
                                     <div>
@@ -795,9 +795,9 @@ const StaffDashboard: React.FC = () => {
                                     <h2 className="sd-card-title">Recent Outpass Requests</h2>
                                     <p className="sd-card-desc">{Math.min(recentPasses.length, 10)} of {recentPasses.length} requests shown</p>
                                 </div>
-                                <button className="sd-view-all-btn" onClick={() => navigate('/passApproval')} tabIndex={0}>
+                                <button className="sd-view-all-btn" onClick={() => navigate('/all-passes')} tabIndex={0}>
                                     View All
-                                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                                 </button>
                             </div>
 
@@ -816,7 +816,7 @@ const StaffDashboard: React.FC = () => {
                                         </thead>
                                         <tbody>
                                             {recentPasses.slice(0, 10).map((pass, idx) => (
-                                                <tr key={pass._id || idx} onClick={() => navigate('/passApproval')} tabIndex={0} role="button" aria-label={`Review outpass for ${pass.name || 'Student'}`}>
+                                                <tr key={pass._id || idx} onClick={() => navigate(pass.status?.toLowerCase() === 'pending' ? '/pending-passes' : '/all-passes')} tabIndex={0} role="button" aria-label={`Review outpass for ${pass.name || 'Student'}`}>
                                                     <td>
                                                         <div className="sd-student-cell">
                                                             <img
@@ -846,7 +846,7 @@ const StaffDashboard: React.FC = () => {
                             ) : (
                                 <div className="sd-empty">
                                     <div className="sd-empty-icon">
-                                        <svg width="48" height="48" fill="none" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10z" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                        <svg width="48" height="48" fill="none" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10z" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                                     </div>
                                     <p className="sd-empty-title">No recent requests</p>
                                     <p className="sd-empty-desc">New outpass requests from your students will appear here</p>
@@ -860,7 +860,7 @@ const StaffDashboard: React.FC = () => {
                         <div className="sd-dept-header">
                             <div className="sd-dept-left">
                                 <div className="sd-dept-icon-wrap">
-                                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M3 21h18M3 7v14M21 7v14M6 11h.01M6 15h.01M6 19h.01M10 11h.01M10 15h.01M10 19h.01M14 11h.01M14 15h.01M14 19h.01M18 11h.01M18 15h.01M18 19h.01M12 3l9 4H3l9-4z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M3 21h18M3 7v14M21 7v14M6 11h.01M6 15h.01M6 19h.01M10 11h.01M10 15h.01M10 19h.01M14 11h.01M14 15h.01M14 19h.01M18 11h.01M18 15h.01M18 19h.01M12 3l9 4H3l9-4z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                                 </div>
                                 <div>
                                     <h3 className="sd-dept-name">Department of {staff.department || 'Information Technology'}</h3>

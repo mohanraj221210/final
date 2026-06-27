@@ -14,7 +14,7 @@ export const API_ENDPOINTS = {
     }
 };
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://api.jit.college';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // Create Axios client with authentication interceptor
 const api = axios.create({
@@ -111,6 +111,7 @@ export interface MappedStats {
     pending: number;
     approved: number;
     rejected: number;
+    recentpasses?: MappedOutpass[];
 }
 
 export interface MappedYearIncharge {
@@ -285,7 +286,16 @@ export const YearInchargeService = {
         try {
             const response = await api.get(url);
             console.log(`[YearInchargeService.getStats] Response: Status: ${response.status}, Raw Data:`, response.data);
-            return mapStatsResponse(response.data);
+            const mapped = mapStatsResponse(response.data);
+
+            // Extract recentpasses if available
+            const statsObj = response.data?.stats?.[0] || response.data?.data?.[0] || {};
+            const recentpasses = statsObj?.recentpasses || response.data?.recentpasses || [];
+
+            return {
+                ...mapped,
+                recentpasses: Array.isArray(recentpasses) ? recentpasses.map(mapOutpassResponse) : []
+            };
         } catch (error: any) {
             console.error(`[YearInchargeService.getStats] Error: Status: ${error.response?.status}, Data:`, error.response?.data || error.message);
             throw error;
@@ -304,6 +314,15 @@ export const YearInchargeService = {
             console.log('API Response:', response.data);
             return mapPaginatedResponse<MappedOutpass>(response.data, mapOutpassResponse);
         } catch (error: any) {
+            if (error?.response?.status === 404) {
+                return {
+                    data: [],
+                    totalPages: 1,
+                    currentPage: page,
+                    totalResults: 0,
+                    isLast: true
+                };
+            }
             console.error(`[YearInchargeService.getOutpasses] Error: Status: ${error?.response?.status}, Data:`, error?.response?.data || error?.message);
             throw error;
         }
@@ -326,60 +345,73 @@ export const YearInchargeService = {
                     "Using fallback pending-outpass implementation because backend endpoint returned 404"
                 );
 
-                const fallbackUrl = `${API_ENDPOINTS.YEAR_INCHARGE.OUTPASS_LIST}?page=1&limit=200${appliedDateParam}${searchParam}${filterParam}`;
-                console.log('API Request (Fallback):', fallbackUrl);
+                try {
+                    const fallbackUrl = `${API_ENDPOINTS.YEAR_INCHARGE.OUTPASS_LIST}?page=1&limit=200${appliedDateParam}${searchParam}${filterParam}`;
+                    console.log('API Request (Fallback):', fallbackUrl);
 
-                const fallbackResponse = await api.get(fallbackUrl);
-                console.log('API Response (Fallback):', fallbackResponse.data);
+                    const fallbackResponse = await api.get(fallbackUrl);
+                    console.log('API Response (Fallback):', fallbackResponse.data);
 
-                const rawList = fallbackResponse.data.outpasses ||
-                    fallbackResponse.data.outpasslist ||
-                    fallbackResponse.data.filterOutpass ||
-                    fallbackResponse.data.data ||
-                    (Array.isArray(fallbackResponse.data) ? fallbackResponse.data : []);
+                    const rawList = fallbackResponse.data.outpasses ||
+                        fallbackResponse.data.outpasslist ||
+                        fallbackResponse.data.filterOutpass ||
+                        fallbackResponse.data.data ||
+                        (Array.isArray(fallbackResponse.data) ? fallbackResponse.data : []);
 
-                const totalOutpasses = rawList.length;
+                    const totalOutpasses = rawList.length;
 
-                // Inspect actual status field
-                let actualStatusField = 'none';
-                if (totalOutpasses > 0) {
-                    const firstItem = rawList[0];
-                    if (firstItem.yearinchargeapprovalstatus !== undefined) {
-                        actualStatusField = 'yearinchargeapprovalstatus';
-                    } else if (firstItem.yearincharge?.status !== undefined) {
-                        actualStatusField = 'yearincharge.status';
-                    } else if (firstItem.status !== undefined) {
-                        actualStatusField = 'status';
+                    // Inspect actual status field
+                    let actualStatusField = 'none';
+                    if (totalOutpasses > 0) {
+                        const firstItem = rawList[0];
+                        if (firstItem.yearinchargeapprovalstatus !== undefined) {
+                            actualStatusField = 'yearinchargeapprovalstatus';
+                        } else if (firstItem.yearincharge?.status !== undefined) {
+                            actualStatusField = 'yearincharge.status';
+                        } else if (firstItem.status !== undefined) {
+                            actualStatusField = 'status';
+                        }
                     }
+
+                    // Filter for pending status locally
+                    const pendingRawList = rawList.filter((o: any) => {
+                        const statusVal = o.yearinchargeapprovalstatus || o.yearincharge?.status || o.status;
+                        return typeof statusVal === 'string' && statusVal.toLowerCase() === 'pending';
+                    });
+
+                    const pendingCount = pendingRawList.length;
+
+                    console.log(`[YearInchargeService.getPendingOutpasses] Fallback Analysis:`, {
+                        totalOutpasses,
+                        pendingCountDerived: pendingCount,
+                        actualStatusFieldUsed: actualStatusField,
+                        failedEndpoint: url
+                    });
+
+                    const mappedPending = pendingRawList.map(mapOutpassResponse);
+                    const startIndex = (page - 1) * limit;
+                    const paginatedData = mappedPending.slice(startIndex, startIndex + limit);
+                    const totalPages = Math.max(1, Math.ceil(pendingCount / limit));
+
+                    return {
+                        data: paginatedData,
+                        totalPages,
+                        currentPage: page,
+                        totalResults: pendingCount,
+                        isLast: page >= totalPages
+                    };
+                } catch (fallbackError: any) {
+                    if (fallbackError.response?.status === 404) {
+                        return {
+                            data: [],
+                            totalPages: 1,
+                            currentPage: page,
+                            totalResults: 0,
+                            isLast: true
+                        };
+                    }
+                    throw fallbackError;
                 }
-
-                // Filter for pending status locally
-                const pendingRawList = rawList.filter((o: any) => {
-                    const statusVal = o.yearinchargeapprovalstatus || o.yearincharge?.status || o.status;
-                    return typeof statusVal === 'string' && statusVal.toLowerCase() === 'pending';
-                });
-
-                const pendingCount = pendingRawList.length;
-
-                console.log(`[YearInchargeService.getPendingOutpasses] Fallback Analysis:`, {
-                    totalOutpasses,
-                    pendingCountDerived: pendingCount,
-                    actualStatusFieldUsed: actualStatusField,
-                    failedEndpoint: url
-                });
-
-                const mappedPending = pendingRawList.map(mapOutpassResponse);
-                const startIndex = (page - 1) * limit;
-                const paginatedData = mappedPending.slice(startIndex, startIndex + limit);
-                const totalPages = Math.max(1, Math.ceil(pendingCount / limit));
-
-                return {
-                    data: paginatedData,
-                    totalPages,
-                    currentPage: page,
-                    totalResults: pendingCount,
-                    isLast: page >= totalPages
-                };
             }
             console.error(`[YearInchargeService.getPendingOutpasses] Error: Status: ${error.response?.status}, Data:`, error.response?.data || error.message);
             throw error;

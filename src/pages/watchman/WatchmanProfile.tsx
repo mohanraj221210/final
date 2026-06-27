@@ -150,7 +150,6 @@ const WatchmanProfile: React.FC = () => {
                 toast.success("Profile updated");
                 setShowToast(true);
                 setIsEditing(false);
-                // Optionally refresh profile to get the new image URL from server
                 fetchProfile();
             }
         } catch (err) {
@@ -162,7 +161,7 @@ const WatchmanProfile: React.FC = () => {
     if (loading) return <LoadingSpinner />;
 
     return (
-        <div className="page-container profile-page">
+        <div className="sd-root">
             <Nav />
 
             {showToast && (
@@ -174,28 +173,42 @@ const WatchmanProfile: React.FC = () => {
             )}
             <ToastContainer />
 
-            <div className="content-wrapper">
-                <button className="back-btn" onClick={() => navigate('/watchman-dashboard')}>
-                    ← Back
-                </button>
-                <div className="profile-layout">
-                    {/* Sidebar */}
-                    <div className="profile-sidebar">
-                        <div className="card profile-card">
-                            <div className="profile-header">
-                                <div className="avatar-container">
+            <main className="sd-main">
+                <div className="sd-container">
+                    
+                    {/* Header Row */}
+                    <div className="sd-header-row">
+                        <div>
+                            <button className="sd-back-btn" onClick={() => navigate('/watchman-dashboard')}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M19 12H5M12 5l-7 7 7 7"/>
+                                </svg>
+                                Back to Dashboard
+                            </button>
+                            <h1 className="sd-title">Profile Settings</h1>
+                            <p className="sd-subtitle">Manage security account credentials and details</p>
+                        </div>
+                    </div>
+
+                    {/* Profile Split Grid */}
+                    <div className="sd-profile-layout">
+                        
+                        {/* Sidebar: Profile Card */}
+                        <div className="sd-profile-sidebar-card">
+                            <div className="sd-avatar-uploader-container">
+                                <div className="sd-profile-avatar-wrapper">
                                     <img
                                         src={previewUrl || `${import.meta.env.VITE_CDN_URL}${watchman.photo}` || watchmanProfile}
                                         alt="Profile"
-                                        className="profile-avatar"
+                                        className="sd-profile-img"
                                         onError={(e) => {
                                             e.currentTarget.onerror = null;
                                             e.currentTarget.src = watchmanProfile;
                                         }}
                                     />
                                     {isEditing && (
-                                        <label className="avatar-upload">
-                                            <span>📷</span>
+                                        <label className="sd-avatar-upload-overlay">
+                                            <span className="sd-upload-icon">📷</span>
                                             <input
                                                 type="file"
                                                 accept="image/jpeg, image/png"
@@ -206,88 +219,101 @@ const WatchmanProfile: React.FC = () => {
                                     )}
                                 </div>
 
-                                <h2 className="profile-name">{watchman.name}</h2>
-
-                                <div className="profile-badges">
-                                    <span className="badge">Security</span>
+                                <h2 className="sd-sidebar-name">{watchman.name || "Security Officer"}</h2>
+                                
+                                <div className="sd-sidebar-badge-row">
+                                    <span className="sd-sidebar-badge">👮 Security Gate</span>
                                 </div>
                             </div>
 
-                            {!isEditing ? (
-                                <button
-                                    onClick={() => setIsEditing(true)}
-                                    className="btn btn-primary w-full"
-                                >
-                                    Edit Profile
-                                </button>
-                            ) : (
-                                <div className="action-buttons">
-                                    <button onClick={handleSave} className="btn btn-primary">
-                                        Save Changes
-                                    </button>
+                            <div className="sd-sidebar-actions">
+                                {!isEditing ? (
                                     <button
-                                        onClick={() => setIsEditing(false)}
-                                        className="btn btn-ghost"
+                                        onClick={() => setIsEditing(true)}
+                                        className="sd-profile-btn sd-btn-primary"
                                     >
-                                        Cancel
+                                        Edit Credentials
                                     </button>
+                                ) : (
+                                    <div className="sd-action-buttons-group">
+                                        <button onClick={handleSave} className="sd-profile-btn sd-btn-primary">
+                                            Save Changes
+                                        </button>
+                                        <button
+                                            onClick={() => { setIsEditing(false); setPreviewUrl(null); setSelectedFile(null); }}
+                                            className="sd-profile-btn sd-btn-ghost"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Main Content Area: Forms */}
+                        <div className="sd-profile-content-card">
+                            <div className="sd-card-section-header">
+                                <span className="sd-section-icon-badge">👤</span>
+                                <div>
+                                    <h3>Personal Credentials</h3>
+                                    <p className="sd-card-section-desc">Keep your details up to date for campus notifications.</p>
                                 </div>
-                            )}
+                            </div>
+
+                            <div className="sd-form-grid">
+                                <div className="sd-input-group">
+                                    <label className="sd-label">Full Name</label>
+                                    <div className="sd-input-wrapper">
+                                        <span className="sd-input-icon">👤</span>
+                                        <input
+                                            type="text"
+                                            name="name"
+                                            value={watchman.name}
+                                            onChange={handleChange}
+                                            disabled={!isEditing}
+                                            className="sd-input"
+                                            placeholder="Enter full name"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="sd-input-group">
+                                    <label className="sd-label">Email ID</label>
+                                    <div className="sd-input-wrapper">
+                                        <span className="sd-input-icon">✉️</span>
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            value={watchman.email}
+                                            onChange={handleChange}
+                                            disabled={!isEditing}
+                                            className="sd-input"
+                                            placeholder="Enter email address"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="sd-input-group">
+                                    <label className="sd-label">Mobile Number</label>
+                                    <div className="sd-input-wrapper">
+                                        <span className="sd-input-icon">📞</span>
+                                        <input
+                                            type="tel"
+                                            name="phone"
+                                            value={watchman.phone}
+                                            onChange={handleChange}
+                                            disabled={!isEditing}
+                                            className="sd-input"
+                                            placeholder="Enter phone number"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Main */}
-                    <div className="profile-main">
-                        <div className="card details-card">
-                            <div className="card-header">
-                                <h3>Personal Information</h3>
-                                <p className="text-muted" style={{ marginTop: '16px', marginBottom: '16px' }}>
-                                    Manage your personal and contact details.
-                                </p>
-                            </div>
-
-                            <div className="form-grid">
-                                <div className="form-group">
-                                    <label>Full Name</label>
-                                    <input
-                                        type="text"
-                                        name="name"
-                                        value={watchman.name}
-                                        onChange={handleChange}
-                                        disabled={!isEditing}
-                                        className="input"
-                                    />
-                                </div>
-
-                                <div className="form-group">
-                                    <label>Email</label>
-                                    <input
-                                        type="text"
-                                        name="email"
-                                        value={watchman.email}
-                                        onChange={handleChange}
-                                        disabled={!isEditing}
-                                        className="input"
-                                    />
-                                </div>
-
-                                <div className="form-group">
-                                    <label>Phone</label>
-                                    <input
-                                        type="tel"
-                                        name="phone"
-                                        value={watchman.phone}
-                                        onChange={handleChange}
-                                        disabled={!isEditing}
-                                        className="input"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
-            </div>
-
+            </main>
 
             {showCropper && tempImage && (
                 <ImageCropper
@@ -298,58 +324,354 @@ const WatchmanProfile: React.FC = () => {
             )}
 
             <style>{`
-        
-        button.back-btn {
-          background: white;
-          border: 1px solid #cbd5e1;
-          color: #1e293b;
-          font-size: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          padding: 8px 16px;
-          border-radius: 6px;
-          transition: all 0.2s;
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-          margin-bottom: 24px;
-        }
+                /* ====== LAYOUT & BASE ====== */
+                .sd-root {
+                    min-height: 100vh;
+                    background: linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 45%, #DBEAFE 100%);
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                    padding-top: var(--nav-height, 64px);
+                    padding-bottom: 80px;
+                }
 
-        button.back-btn:hover {
-          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-          transform: translateY(-1px);
-          background: #f8fafc;
-        }
+                .sd-main {
+                    padding: 24px 32px;
+                    max-width: var(--content-max, 1280px);
+                    margin: 0 auto;
+                }
 
-        .profile-page { margin-top: 10px; }
-        .profile-layout { display: grid; grid-template-columns: 350px 1fr; gap: 32px; }
-        .profile-card { text-align: center; }
-        .avatar-container { position: relative; width: 120px; height: 120px; margin: 0 auto 16px; }
-        .profile-header { display: flex; flex-direction: column; align-items: center; }
-        .profile-badges { margin-top: 10px; }
-        .profile-avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 0 0 4px var(--primary-light); }
-        .avatar-upload { position: absolute; bottom: 0; right: 0; background: var(--primary); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid white; transition: var(--transition); }
-        .avatar-upload:hover { transform: scale(1.1); }
-        .hidden-input { display: none; }
-        .w-full { width: 100%; }
-        .action-buttons { display: flex; flex-direction: column; gap: 8px; }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-        @media (max-width: 968px) {
-          .profile-layout { grid-template-columns: 1fr; }
-          .form-grid { grid-template-columns: 1fr; }
-        }
+                .sd-container {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 24px;
+                }
 
-        @media (max-width: 480px) {
-          .page-container { padding: 16px; }
-          .profile-card, .details-card { padding: 20px; }
-          .avatar-container { width: 100px; height: 100px; }
-          .profile-header h2 { font-size: 1.25rem; margin-bottom: 2px; }
-          .profile-role { margin-bottom: 2px; }
-          .profile-badges { margin-top: 8px; }
-          .input { font-size: 14px; padding: 10px; }
-        }
-      `}</style>
+                /* ====== HEADER ROW ====== */
+                .sd-header-row {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-end;
+                    flex-wrap: wrap;
+                }
+
+                .sd-back-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    background: white;
+                    border: 1px solid #E2E8F0;
+                    color: #3B82F6;
+                    font-size: 0.85rem;
+                    font-weight: 700;
+                    padding: 10px 18px;
+                    border-radius: 100px;
+                    cursor: pointer;
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+                    transition: all 0.2s ease;
+                    font-family: inherit;
+                }
+
+                .sd-back-btn:hover {
+                    background: #EFF6FF;
+                    transform: translateX(-4px);
+                    box-shadow: 0 6px 12px rgba(59, 130, 246, 0.08);
+                }
+
+                .sd-title {
+                    font-size: 1.8rem;
+                    font-weight: 800;
+                    color: #0F172A;
+                    margin: 12px 0 4px;
+                    letter-spacing: -0.02em;
+                }
+
+                .sd-subtitle {
+                    font-size: 0.9rem;
+                    color: #64748B;
+                    margin: 0;
+                    font-weight: 500;
+                }
+
+                /* ====== PROFILE SPLIT GRID ====== */
+                .sd-profile-layout {
+                    display: grid;
+                    grid-template-columns: 320px 1fr;
+                    gap: 24px;
+                    align-items: start;
+                }
+
+                /* Sidebar Profile Card */
+                .sd-profile-sidebar-card {
+                    background: rgba(255, 255, 255, 0.92);
+                    backdrop-filter: blur(16px);
+                    -webkit-backdrop-filter: blur(16px);
+                    border: 1px solid rgba(255, 255, 255, 0.7);
+                    border-radius: 24px;
+                    padding: 32px 24px;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.03), 0 0 0 1px rgba(226,232,240,0.5);
+                    text-align: center;
+                }
+
+                .sd-avatar-uploader-container {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    margin-bottom: 28px;
+                }
+
+                .sd-profile-avatar-wrapper {
+                    position: relative;
+                    width: 120px;
+                    height: 120px;
+                    border-radius: 50%;
+                    overflow: hidden;
+                    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+                    border: 4px solid white;
+                    margin-bottom: 16px;
+                }
+
+                .sd-profile-img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+
+                .sd-avatar-upload-overlay {
+                    position: absolute;
+                    inset: 0;
+                    background: rgba(15, 23, 42, 0.6);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    opacity: 0;
+                    transition: opacity 0.2s ease;
+                }
+
+                .sd-profile-avatar-wrapper:hover .sd-avatar-upload-overlay {
+                    opacity: 1;
+                }
+
+                .sd-upload-icon {
+                    font-size: 1.8rem;
+                }
+
+                .hidden-input {
+                    display: none;
+                }
+
+                .sd-sidebar-name {
+                    font-size: 1.2rem;
+                    font-weight: 800;
+                    color: #0F172A;
+                    margin: 0 0 6px;
+                }
+
+                .sd-sidebar-badge-row {
+                    display: flex;
+                    justify-content: center;
+                }
+
+                .sd-sidebar-badge {
+                    display: inline-block;
+                    padding: 4px 12px;
+                    border-radius: 100px;
+                    font-size: 0.72rem;
+                    font-weight: 700;
+                    background: #EFF6FF;
+                    color: #3B82F6;
+                    border: 1px solid rgba(59,130,246,0.1);
+                }
+
+                .sd-sidebar-actions {
+                    width: 100%;
+                }
+
+                .sd-action-buttons-group {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                }
+
+                /* PROFILE BUTTONS */
+                .sd-profile-btn {
+                    width: 100%;
+                    padding: 12px 20px;
+                    border-radius: 12px;
+                    font-size: 0.88rem;
+                    font-weight: 700;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    border: none;
+                    font-family: inherit;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .sd-btn-primary {
+                    background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+                    color: white;
+                    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+                }
+
+                .sd-btn-primary:hover {
+                    transform: translateY(-1px);
+                    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
+                }
+
+                .sd-btn-primary:active {
+                    transform: translateY(0);
+                }
+
+                .sd-btn-ghost {
+                    background: transparent;
+                    color: #64748B;
+                    border: 1px solid #E2E8F0;
+                }
+
+                .sd-btn-ghost:hover {
+                    background: #F1F5F9;
+                    color: #334155;
+                }
+
+                /* Main Profile Card Content */
+                .sd-profile-content-card {
+                    background: rgba(255, 255, 255, 0.92);
+                    backdrop-filter: blur(16px);
+                    -webkit-backdrop-filter: blur(16px);
+                    border: 1px solid rgba(255, 255, 255, 0.7);
+                    border-radius: 24px;
+                    padding: 32px;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.03), 0 0 0 1px rgba(226,232,240,0.5);
+                }
+
+                .sd-card-section-header {
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 14px;
+                    border-bottom: 1px solid #F1F5F9;
+                    padding-bottom: 18px;
+                    margin-bottom: 24px;
+                }
+
+                .sd-section-icon-badge {
+                    font-size: 1.3rem;
+                    background: #EFF6FF;
+                    width: 44px;
+                    height: 44px;
+                    border-radius: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-shadow: 0 2px 6px rgba(59,130,246,0.08);
+                    flex-shrink: 0;
+                }
+
+                .sd-card-section-header h3 {
+                    margin: 0;
+                    font-size: 1.1rem;
+                    font-weight: 700;
+                    color: #0F172A;
+                }
+
+                .sd-card-section-desc {
+                    margin: 2px 0 0;
+                    font-size: 0.8rem;
+                    color: #64748B;
+                    font-weight: 500;
+                }
+
+                .sd-form-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 20px;
+                }
+
+                .sd-input-group {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 6px;
+                }
+
+                .sd-input-group .sd-label {
+                    font-size: 0.72rem;
+                    font-weight: 700;
+                    color: #94A3B8;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                }
+
+                .sd-input-wrapper {
+                    position: relative;
+                }
+
+                .sd-input-icon {
+                    position: absolute;
+                    left: 14px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    color: #94A3B8;
+                    font-size: 0.95rem;
+                    pointer-events: none;
+                }
+
+                .sd-input {
+                    width: 100%;
+                    height: 46px;
+                    padding: 10px 16px 10px 42px;
+                    background: #F8FAFC;
+                    border: 1.5px solid #E2E8F0;
+                    border-radius: 12px;
+                    font-size: 0.88rem;
+                    font-weight: 600;
+                    color: #334155;
+                    outline: none;
+                    transition: all 0.2s ease;
+                    font-family: inherit;
+                    box-sizing: border-box;
+                }
+
+                .sd-input:focus:not(:disabled) {
+                    border-color: #3B82F6;
+                    background: white;
+                    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+                }
+
+                .sd-input:disabled {
+                    background: #F1F5F9;
+                    color: #94A3B8;
+                    cursor: not-allowed;
+                    border-color: #E2E8F0;
+                }
+
+                .sd-mono {
+                    font-family: 'SF Mono', 'Fira Code', monospace;
+                }
+
+                /* ====== RESPONSIVE ====== */
+                @media (max-width: 968px) {
+                    .sd-profile-layout {
+                        grid-template-columns: 1fr;
+                        gap: 20px;
+                    }
+                    .sd-form-grid {
+                        grid-template-columns: 1fr;
+                    }
+                }
+
+                @media (max-width: 480px) {
+                    .sd-profile-sidebar-card {
+                        padding: 24px 16px;
+                    }
+                    .sd-profile-content-card {
+                        padding: 24px 16px;
+                    }
+                    .sd-input {
+                        height: 42px;
+                        font-size: 0.82rem;
+                    }
+                }
+            `}</style>
         </div>
     );
 };
