@@ -27,7 +27,7 @@ const Profile: React.FC = () => {
         batch: '',
         cgpa: 0,
         arrears: 0,
-        gender: 'male',
+        gender: '',
         parentnumber: '',
         residencetype: '',
         hostelname: '',
@@ -85,7 +85,7 @@ const Profile: React.FC = () => {
                     setUser(prev => ({
                         ...prev,
                         ...response.data.user,
-                        gender: response.data.user.gender || prev.gender || 'male'
+                        gender: response.data.user.gender || prev.gender || ''
                     }));
                     setImageError(false);
                     toast.success("User profile fetched successfully");
@@ -159,6 +159,10 @@ const Profile: React.FC = () => {
     };
 
     const handleSave = async () => {
+        if (!user.gender) {
+            toast.error("Please select your gender");
+            return;
+        }
         try {
             let response;
             if (selectedFile) {
@@ -442,6 +446,7 @@ const Profile: React.FC = () => {
                                                     disabled={!isEditing}
                                                     className="pb-select"
                                                 >
+                                                    <option value="">Gender not selected</option>
                                                     <option value="male">Male</option>
                                                     <option value="female">Female</option>
                                                 </select>
