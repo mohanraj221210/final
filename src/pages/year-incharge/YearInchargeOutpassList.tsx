@@ -16,7 +16,7 @@ const YearInchargeOutpassList: React.FC = () => {
     const [outpasses, setOutpasses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'yesterday' | 'this_week' | 'this_month'>('all');
+    const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'this_week' | 'this_month'>('all');
     const [statusFilter, setStatusFilter] = useState<'all' | 'approved' | 'rejected' | 'pending'>('all');
     const [typeFilter, setTypeFilter] = useState<'all' | 'Home' | 'Outing' | 'Emergency' | 'OD'>('all');
     const [showDocumentModal, setShowDocumentModal] = useState(false);
@@ -24,6 +24,7 @@ const YearInchargeOutpassList: React.FC = () => {
     const [documentType, setDocumentType] = useState<'image' | 'pdf'>('image');
     const [expandedRow, setExpandedRow] = useState<string | null>(null);
     const [apiFilter, setApiFilter] = useState<ApiFilter>('total');
+    const [stats, setStats] = useState<{ approved: number; pending: number; rejected: number }>({ approved: 0, pending: 0, rejected: 0 });
 
     // Pagination & Error states
     const [currentPage, setCurrentPage] = useState(1);
@@ -63,6 +64,21 @@ const YearInchargeOutpassList: React.FC = () => {
     };
 
     const navigate = useNavigate();
+
+    const fetchStats = async (appliedDate: string = apiFilter) => {
+        try {
+            const statsResult = await YearInchargeService.getStats(appliedDate);
+            if (statsResult) {
+                setStats({
+                    approved: statsResult.approved,
+                    pending: statsResult.pending,
+                    rejected: statsResult.rejected
+                });
+            }
+        } catch (err) {
+            console.error("Error fetching stats:", err);
+        }
+    };
 
     const fetchOutpasses = async (
         page: number = currentPage,
@@ -112,19 +128,27 @@ const YearInchargeOutpassList: React.FC = () => {
         }
     };
 
+    // Re-fetch data on page change
     useEffect(() => {
         fetchOutpasses(currentPage, apiFilter, statusFilter, searchTerm, typeFilter);
     }, [currentPage]);
 
+    // Re-fetch both data and stats when filter/search changes
     const isFirstRender = useRef(true);
     useEffect(() => {
         if (isFirstRender.current) { isFirstRender.current = false; return; }
         const handler = setTimeout(() => {
             setCurrentPage(1);
             fetchOutpasses(1, apiFilter, statusFilter, searchTerm, typeFilter);
+            fetchStats(apiFilter);
         }, 500);
         return () => clearTimeout(handler);
     }, [apiFilter, statusFilter, searchTerm, typeFilter]);
+
+    // Initial stats fetch
+    useEffect(() => {
+        fetchStats(apiFilter);
+    }, []);
 
     const handleViewDocument = (url: string | null) => {
         if (!url) return;
@@ -173,23 +197,14 @@ const YearInchargeOutpassList: React.FC = () => {
             (outpass.reason?.toLowerCase().includes(term) || false);
         const matchesStatus = statusFilter === 'all' || outpass.status === statusFilter || yiStatus === statusFilter;
         const matchesType = typeFilter === 'all' || outpass.outpasstype === typeFilter;
-        let matchesDate = true;
-        if (dateFilter !== 'all' && outpass.createdAt) {
-            const appliedDate = new Date(outpass.createdAt);
-            const today = new Date(); today.setHours(0, 0, 0, 0);
-            if (dateFilter === 'today') { const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1); matchesDate = appliedDate >= today && appliedDate < tomorrow; }
-            else if (dateFilter === 'yesterday') { const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1); matchesDate = appliedDate >= yesterday && appliedDate < today; }
-            else if (dateFilter === 'this_week') { const startOfWeek = new Date(today); startOfWeek.setDate(today.getDate() - today.getDay()); matchesDate = appliedDate >= startOfWeek; }
-            else if (dateFilter === 'this_month') { const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1); matchesDate = appliedDate >= startOfMonth; }
-        }
-        return matchesSearch && matchesDate && matchesStatus && matchesType;
+        return matchesSearch && matchesStatus && matchesType;
     });
 
     const toggleExpand = (id: string) => setExpandedRow(expandedRow === id ? null : id);
 
-    const approvedCount = filteredOutpasses.filter(o => (o.yearincharge?.status || 'pending') === 'approved').length;
-    const rejectedCount = filteredOutpasses.filter(o => (o.yearincharge?.status || 'pending') === 'rejected').length;
-    const pendingCount = filteredOutpasses.filter(o => (o.yearincharge?.status || 'pending') === 'pending').length;
+    const approvedCount = stats.approved;
+    const rejectedCount = stats.rejected;
+    const pendingCount = stats.pending;
 
     return (
         <div className="ol-page-container">
@@ -240,7 +255,13 @@ const YearInchargeOutpassList: React.FC = () => {
                             return (
                                 <button
                                     key={opt.value}
-                                    onClick={() => setApiFilter(opt.value)}
+                                    onClick={() => {
+                                        setApiFilter(opt.value);
+                                        if (opt.value === 'total') setDateFilter('all');
+                                        else if (opt.value === 'today') setDateFilter('today');
+                                        else if (opt.value === 'weekly') setDateFilter('this_week');
+                                        else if (opt.value === 'monthly') setDateFilter('this_month');
+                                    }}
                                     className={`ol-pill ${active ? 'ol-pill-active' : ''}`}
                                 >
                                     <span>{opt.icon}</span>
@@ -279,10 +300,20 @@ const YearInchargeOutpassList: React.FC = () => {
                                 <svg className="ol-select-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
                                 </svg>
-                                <select className="ol-select" value={dateFilter} onChange={(e) => setDateFilter(e.target.value as any)}>
+                                <select 
+                                    className="ol-select" 
+                                    value={dateFilter} 
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        setDateFilter(val as any);
+                                        if (val === 'all') setApiFilter('total');
+                                        else if (val === 'today') setApiFilter('today');
+                                        else if (val === 'this_week') setApiFilter('weekly');
+                                        else if (val === 'this_month') setApiFilter('monthly');
+                                    }}
+                                >
                                     <option value="all">All Time</option>
                                     <option value="today">Today</option>
-                                    <option value="yesterday">Yesterday</option>
                                     <option value="this_week">This Week</option>
                                     <option value="this_month">This Month</option>
                                 </select>
@@ -671,9 +702,9 @@ const YearInchargeOutpassList: React.FC = () => {
 
                         {/* Next */}
                         <button
-                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                            disabled={currentPage === totalPages || isLastPage}
-                            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: (currentPage === totalPages || isLastPage) ? '#f1f5f9' : 'white', cursor: (currentPage === totalPages || isLastPage) ? 'not-allowed' : 'pointer', fontWeight: 600, color: '#475569' }}
+                            onClick={() => setCurrentPage(prev => isLastPage ? prev : prev + 1)}
+                            disabled={isLastPage}
+                            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: isLastPage ? '#f1f5f9' : 'white', cursor: isLastPage ? 'not-allowed' : 'pointer', fontWeight: 600, color: '#475569' }}
                         >
                             Next &gt;
                         </button>
@@ -681,8 +712,8 @@ const YearInchargeOutpassList: React.FC = () => {
                         {/* Last */}
                         <button
                             onClick={() => setCurrentPage(totalPages)}
-                            disabled={currentPage === totalPages || isLastPage}
-                            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: (currentPage === totalPages || isLastPage) ? '#f1f5f9' : 'white', cursor: (currentPage === totalPages || isLastPage) ? 'not-allowed' : 'pointer', fontWeight: 600, color: '#475569' }}
+                            disabled={isLastPage}
+                            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: isLastPage ? '#f1f5f9' : 'white', cursor: isLastPage ? 'not-allowed' : 'pointer', fontWeight: 600, color: '#475569' }}
                         >
                             Last »
                         </button>

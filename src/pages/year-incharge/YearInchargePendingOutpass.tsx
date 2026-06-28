@@ -14,7 +14,7 @@ const FILTER_OPTIONS: { value: ApiFilter; label: string; icon: string }[] = [
 const YearInchargePendingOutpass: React.FC = () => {
     const [pendingOutpasses, setPendingOutpasses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'yesterday' | 'this_week' | 'this_month'>('all');
+    const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'this_week' | 'this_month'>('all');
     const [showDocumentModal, setShowDocumentModal] = useState(false);
     const [documentUrl, setDocumentUrl] = useState<string | null>(null);
     const [documentType, setDocumentType] = useState<'image' | 'pdf'>('image');
@@ -27,6 +27,7 @@ const YearInchargePendingOutpass: React.FC = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [isLastPage, setIsLastPage] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [totalPending, setTotalPending] = useState(0);
 
     const getPageNumbers = () => {
         const pages: (number | string)[] = [];
@@ -106,6 +107,7 @@ const YearInchargePendingOutpass: React.FC = () => {
             setPendingOutpasses(sorted);
             setTotalPages(result.totalPages);
             setIsLastPage(result.isLast ?? (sorted.length < 10));
+            setTotalPending(result.totalResults);
         } catch (err: any) {
             console.error("Error fetching pending outpasses:", err);
             if (err?.response?.status === 401 || err?.response?.status === 403) {
@@ -116,6 +118,7 @@ const YearInchargePendingOutpass: React.FC = () => {
                 setPendingOutpasses([]);
                 setTotalPages(1);
                 setIsLastPage(true);
+                setTotalPending(0);
                 setError(null);
                 return;
             }
@@ -155,29 +158,7 @@ const YearInchargePendingOutpass: React.FC = () => {
             dateStr3.toLowerCase().includes(term) ||
             dateStr4.toLowerCase().includes(term);
 
-        let matchesDate = true;
-        if (dateFilter !== 'all') {
-            const appliedDate = new Date(item.fromDate);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            if (dateFilter === 'today') matchesDate = appliedDate >= today;
-            else if (dateFilter === 'yesterday') {
-                const yesterday = new Date(today);
-                yesterday.setDate(yesterday.getDate() - 1);
-                matchesDate = appliedDate >= yesterday && appliedDate < today;
-            }
-            else if (dateFilter === 'this_week') {
-                const thisWeek = new Date(today);
-                thisWeek.setDate(today.getDate() - today.getDay());
-                matchesDate = appliedDate >= thisWeek;
-            }
-            else if (dateFilter === 'this_month') {
-                const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-                matchesDate = appliedDate >= thisMonth;
-            }
-        }
-        return matchesSearch && matchesDate;
+        return matchesSearch;
     });
 
     const emergencyCount = filteredPending.filter(i => String(i.outpasstype || '').toLowerCase() === 'emergency').length;
@@ -205,7 +186,7 @@ const YearInchargePendingOutpass: React.FC = () => {
                         {!loading && (
                             <>
                                 <div className="po-count-badge po-count-total">
-                                    <span className="po-count-num">{filteredPending.length}</span>
+                                    <span className="po-count-num">{totalPending}</span>
                                     <span className="po-count-label">Pending</span>
                                 </div>
                                 {emergencyCount > 0 && (
@@ -229,7 +210,13 @@ const YearInchargePendingOutpass: React.FC = () => {
                             return (
                                 <button
                                     key={opt.value}
-                                    onClick={() => setApiFilter(opt.value)}
+                                    onClick={() => {
+                                        setApiFilter(opt.value);
+                                        if (opt.value === 'total') setDateFilter('all');
+                                        else if (opt.value === 'today') setDateFilter('today');
+                                        else if (opt.value === 'weekly') setDateFilter('this_week');
+                                        else if (opt.value === 'monthly') setDateFilter('this_month');
+                                    }}
                                     className={`po-pill ${active ? 'po-pill-active' : ''}`}
                                 >
                                     <span>{opt.icon}</span>
@@ -269,12 +256,18 @@ const YearInchargePendingOutpass: React.FC = () => {
                             </svg>
                             <select
                                 value={dateFilter}
-                                onChange={(e) => setDateFilter(e.target.value as any)}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setDateFilter(val as any);
+                                    if (val === 'all') setApiFilter('total');
+                                    else if (val === 'today') setApiFilter('today');
+                                    else if (val === 'this_week') setApiFilter('weekly');
+                                    else if (val === 'this_month') setApiFilter('monthly');
+                                }}
                                 className="po-select"
                             >
                                 <option value="all">All Time</option>
                                 <option value="today">Today</option>
-                                <option value="yesterday">Yesterday</option>
                                 <option value="this_week">This Week</option>
                                 <option value="this_month">This Month</option>
                             </select>
@@ -455,9 +448,9 @@ const YearInchargePendingOutpass: React.FC = () => {
 
                         {/* Next */}
                         <button
-                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                            disabled={currentPage === totalPages || isLastPage}
-                            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: (currentPage === totalPages || isLastPage) ? '#f1f5f9' : 'white', cursor: (currentPage === totalPages || isLastPage) ? 'not-allowed' : 'pointer', fontWeight: 600, color: '#475569' }}
+                            onClick={() => setCurrentPage(prev => isLastPage ? prev : prev + 1)}
+                            disabled={isLastPage}
+                            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: isLastPage ? '#f1f5f9' : 'white', cursor: isLastPage ? 'not-allowed' : 'pointer', fontWeight: 600, color: '#475569' }}
                         >
                             Next
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -468,8 +461,8 @@ const YearInchargePendingOutpass: React.FC = () => {
                         {/* Last */}
                         <button
                             onClick={() => setCurrentPage(totalPages)}
-                            disabled={currentPage === totalPages || isLastPage}
-                            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: (currentPage === totalPages || isLastPage) ? '#f1f5f9' : 'white', cursor: (currentPage === totalPages || isLastPage) ? 'not-allowed' : 'pointer', fontWeight: 600, color: '#475569' }}
+                            disabled={isLastPage}
+                            style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: isLastPage ? '#f1f5f9' : 'white', cursor: isLastPage ? 'not-allowed' : 'pointer', fontWeight: 600, color: '#475569' }}
                         >
                             Last »
                         </button>

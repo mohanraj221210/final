@@ -434,7 +434,7 @@ const OutpassList: React.FC = () => {
 
               {/* Next */}
               <button
-                disabled={currentPage === totalPages || isLast}
+                disabled={isLast}
                 onClick={() => setCurrentPage((p) => p + 1)}
                 className="wd-page-btn"
               >
@@ -443,7 +443,7 @@ const OutpassList: React.FC = () => {
 
               {/* Last */}
               <button
-                disabled={currentPage === totalPages || isLast}
+                disabled={isLast}
                 onClick={() => setCurrentPage(totalPages)}
                 className="wd-page-btn"
               >

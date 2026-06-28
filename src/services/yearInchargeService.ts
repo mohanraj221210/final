@@ -251,10 +251,10 @@ export function mapPaginatedResponse<T>(data: any, mapper: (item: any) => T): Pa
     const list = data.outpasses || data.outpasslist || data.filterOutpass || data.data || (Array.isArray(data) ? data : []);
     return {
         data: list.map(mapper),
-        totalPages: data.totalPages || 1,
-        currentPage: data.currentPage || 1,
+        totalPages: data.pages || data.totalPages || 1,
+        currentPage: data.currentPage || data.page || 1,
         totalResults: data.totalResults || data.total || list.length || 0,
-        isLast: data.isLast,
+        isLast: data.isLast !== undefined ? data.isLast : (data.isLastPage !== undefined ? data.isLastPage : false),
     };
 }
 
@@ -279,8 +279,11 @@ export function mapProfileResponse(data: any): MappedYearIncharge {
 // 4. Year Incharge Service Methods
 export const YearInchargeService = {
     getStats: async (filter?: string) => {
-        const url = filter && filter !== 'total'
-            ? `${API_ENDPOINTS.YEAR_INCHARGE.STATS}?filter=${filter}`
+        let backendFilter = filter;
+        if (filter === 'weekly') backendFilter = 'weekly';
+        if (filter === 'monthly') backendFilter = 'monthly';
+        const url = backendFilter && backendFilter !== 'total'
+            ? `${API_ENDPOINTS.YEAR_INCHARGE.STATS}?filter=${backendFilter}`
             : API_ENDPOINTS.YEAR_INCHARGE.STATS;
         console.log(`[YearInchargeService.getStats] Request: Method: GET, URL: ${url}, Token: ${localStorage.getItem('token') ? 'Bearer present' : 'Missing'}`);
         try {

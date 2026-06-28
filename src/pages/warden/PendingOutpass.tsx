@@ -407,7 +407,7 @@ const PendingOutpass: React.FC = () => {
 
               {/* Next */}
               <button
-                disabled={page === totalPages || isLast}
+                disabled={isLast}
                 onClick={() => setPage((p) => p + 1)}
                 className="wd-page-btn"
               >
@@ -416,7 +416,7 @@ const PendingOutpass: React.FC = () => {
 
               {/* Last */}
               <button
-                disabled={page === totalPages || isLast}
+                disabled={isLast}
                 onClick={() => setPage(totalPages)}
                 className="wd-page-btn"
               >

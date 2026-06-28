@@ -728,8 +728,8 @@ const PendingPasses: React.FC = () => {
                                 {/* Next */}
                                 <button
                                     className="pa-page-btn"
-                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                    disabled={currentPage === totalPages || isLastPage}
+                                    onClick={() => setCurrentPage(prev => isLastPage ? prev : prev + 1)}
+                                    disabled={isLastPage}
                                 >
                                     Next
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -741,7 +741,7 @@ const PendingPasses: React.FC = () => {
                                 <button
                                     className="pa-page-btn"
                                     onClick={() => setCurrentPage(totalPages)}
-                                    disabled={currentPage === totalPages || isLastPage}
+                                    disabled={isLastPage}
                                 >
                                     Last »
                                 </button>
