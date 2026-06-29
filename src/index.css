@@ -221,7 +221,7 @@ img {
   min-height: 100vh;
   background: var(--bg);
   padding-top: var(--nav-height);
-  padding-bottom: var(--space-10);
+  padding-bottom: calc(100px + env(safe-area-inset-bottom));
 }
 
 /* Page container with bottom padding for mobile nav */
@@ -229,7 +229,7 @@ img {
   min-height: 100vh;
   background: var(--bg);
   padding-top: var(--nav-height);
-  padding-bottom: calc(var(--mobile-nav-height) + var(--space-6));
+  padding-bottom: calc(100px + env(safe-area-inset-bottom));
 }
 
 .content-wrapper {

@@ -465,25 +465,42 @@ const PendingOutpass: React.FC = () => {
       )}
 
       <style>{`
-        /* ====== LAYOUT & BASE ====== */
+        /* ====== DESIGN TOKENS ====== */
         .wd-root {
+          --wdl-primary:       #3B82F6;
+          --wdl-primary-light: #60A5FA;
+          --wdl-bg:            linear-gradient(180deg, #F8FBFF 0%, #EFF6FF 55%, #F6FAFF 100%);
+          --wdl-card:          rgba(255, 255, 255, 0.90);
+          --wdl-blur:          18px;
+          --wdl-border:        1px solid rgba(255, 255, 255, 0.65);
+          --wdl-shadow:        0 18px 50px rgba(59, 130, 246, 0.12);
+          --wdl-radius:        28px;
+          --wdl-radius-sm:     16px;
+          --wdl-transition:    all 0.25s cubic-bezier(0.16,1,0.3,1);
+
           min-height: 100vh;
-          background: linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 45%, #DBEAFE 100%);
+          background: var(--wdl-bg);
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
           padding-top: var(--nav-height, 64px);
-          padding-bottom: 80px;
+          padding-bottom: calc(100px + env(safe-area-inset-bottom));
         }
 
         .wd-main {
-          padding: 24px 32px;
-          max-width: var(--content-max, 1280px);
+          padding: 32px 40px;
+          max-width: var(--content-max, 1400px);
           margin: 0 auto;
+          animation: fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) both;
+        }
+
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(16px); }
+          to { opacity: 1; transform: none; }
         }
 
         .wd-container {
           display: flex;
           flex-direction: column;
-          gap: 28px;
+          gap: 32px;
         }
 
         /* ====== HEADER ROW ====== */
@@ -499,35 +516,37 @@ const PendingOutpass: React.FC = () => {
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          background: white;
-          border: 1px solid #E2E8F0;
-          color: #0047AB;
+          background: rgba(255,255,255,0.8);
+          backdrop-filter: blur(8px);
+          border: 1px solid rgba(59,130,246,0.15);
+          color: var(--wdl-primary);
           font-size: 0.85rem;
           font-weight: 700;
-          padding: 10px 18px;
+          padding: 8px 16px;
           border-radius: 100px;
           cursor: pointer;
-          box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-          transition: all 0.2s ease;
+          box-shadow: 0 4px 12px rgba(59,130,246,0.08);
+          transition: var(--wdl-transition);
           font-family: inherit;
+          margin-bottom: 12px;
         }
 
         .wd-back-btn:hover {
-          background: #EFF6FF;
+          background: white;
           transform: translateX(-4px);
-          box-shadow: 0 6px 12px rgba(0, 71, 171, 0.08);
+          box-shadow: 0 6px 16px rgba(59,130,246,0.12);
         }
 
         .wd-title {
-          font-size: 1.8rem;
+          font-size: 1.85rem;
           font-weight: 800;
           color: #0F172A;
-          margin: 12px 0 4px;
+          margin: 0 0 6px;
           letter-spacing: -0.02em;
         }
 
         .wd-subtitle {
-          font-size: 0.9rem;
+          font-size: 0.92rem;
           color: #64748B;
           margin: 0;
           font-weight: 500;
@@ -543,36 +562,38 @@ const PendingOutpass: React.FC = () => {
 
         .wd-search-wrapper {
           position: relative;
-          min-width: 260px;
+          min-width: 280px;
         }
 
         .wd-search-icon {
           position: absolute;
-          left: 14px;
+          left: 16px;
           top: 50%;
           transform: translateY(-50%);
           color: #94A3B8;
-          font-size: 0.95rem;
+          font-size: 1rem;
         }
 
         .wd-search-input {
           width: 100%;
-          padding: 12px 16px 12px 42px;
-          background: white;
-          border: 1px solid rgba(226, 232, 240, 0.8);
+          padding: 12px 16px 12px 44px;
+          background: var(--wdl-card);
+          backdrop-filter: blur(var(--wdl-blur));
+          border: var(--wdl-border);
           border-radius: 14px;
-          font-size: 0.88rem;
+          font-size: 0.9rem;
           font-weight: 500;
           color: #0F172A;
           outline: none;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.02);
-          transition: all 0.2s ease;
+          box-shadow: 0 4px 12px rgba(59,130,246,0.05);
+          transition: var(--wdl-transition);
           box-sizing: border-box;
         }
 
         .wd-search-input:focus {
-          border-color: #0047AB;
-          box-shadow: 0 0 0 4px rgba(0, 71, 171, 0.10);
+          border-color: var(--wdl-primary);
+          box-shadow: 0 0 0 4px rgba(59,130,246,0.15);
+          background: white;
         }
 
         .wd-dropdown-wrapper {
@@ -581,7 +602,7 @@ const PendingOutpass: React.FC = () => {
 
         .wd-dropdown-icon {
           position: absolute;
-          left: 12px;
+          left: 14px;
           top: 50%;
           transform: translateY(-50%);
           font-size: 0.95rem;
@@ -599,22 +620,25 @@ const PendingOutpass: React.FC = () => {
         }
 
         .wd-filter-dropdown {
-          padding: 12px 32px 12px 36px;
-          background: white;
-          border: 1px solid rgba(226, 232, 240, 0.8);
+          padding: 12px 34px 12px 38px;
+          background: var(--wdl-card);
+          backdrop-filter: blur(var(--wdl-blur));
+          border: var(--wdl-border);
           border-radius: 14px;
           font-size: 0.88rem;
           font-weight: 600;
           color: #334155;
           outline: none;
           cursor: pointer;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+          box-shadow: 0 4px 12px rgba(59,130,246,0.05);
           appearance: none;
           min-width: 160px;
+          transition: var(--wdl-transition);
         }
 
-        .wd-filter-dropdown:focus {
-          border-color: #0047AB;
+        .wd-filter-dropdown:focus, .wd-filter-dropdown:hover {
+          border-color: var(--wdl-primary-light);
+          background: white;
         }
 
         /* ====== CARDS GRID ====== */
@@ -625,26 +649,26 @@ const PendingOutpass: React.FC = () => {
         }
 
         .wd-card {
-          background: rgba(255, 255, 255, 0.9);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
-          border: 1px solid rgba(255, 255, 255, 0.7);
-          border-radius: 20px;
+          background: var(--wdl-card);
+          backdrop-filter: blur(var(--wdl-blur));
+          -webkit-backdrop-filter: blur(var(--wdl-blur));
+          border: var(--wdl-border);
+          border-radius: var(--wdl-radius);
           padding: 24px;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03), 0 0 0 1px rgba(226, 232, 240, 0.5);
+          box-shadow: var(--wdl-shadow);
           cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          transition: var(--wdl-transition);
           position: relative;
           overflow: hidden;
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 18px;
         }
 
         .wd-card:hover {
-          transform: translateY(-5px);
-          border-color: #0047AB;
-          box-shadow: 0 12px 30px rgba(0, 71, 171, 0.08), 0 0 0 1px rgba(0, 71, 171, 0.2);
+          transform: translateY(-6px);
+          border-color: var(--wdl-primary);
+          box-shadow: 0 20px 40px rgba(59, 130, 246, 0.16);
         }
 
         .wd-card-emergency {
@@ -653,7 +677,7 @@ const PendingOutpass: React.FC = () => {
 
         .wd-card-emergency:hover {
           border-color: #EF4444;
-          box-shadow: 0 12px 30px rgba(239, 68, 68, 0.08), 0 0 0 1px rgba(239, 68, 68, 0.2);
+          box-shadow: 0 20px 40px rgba(239, 68, 68, 0.14);
         }
 
         /* Card Header */
@@ -664,12 +688,12 @@ const PendingOutpass: React.FC = () => {
         }
 
         .wd-avatar-wrapper {
-          width: 50px;
-          height: 50px;
+          width: 52px;
+          height: 52px;
           border-radius: 50%;
           overflow: hidden;
           flex-shrink: 0;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+          box-shadow: 0 4px 10px rgba(59,130,246,0.2);
         }
 
         .wd-avatar-img {
@@ -684,22 +708,22 @@ const PendingOutpass: React.FC = () => {
           display: flex;
           align-items: center;
           justify-content: center;
-          background: linear-gradient(135deg, #0047AB 0%, #2563EB 100%);
+          background: linear-gradient(135deg, #3B82F6, #1D4ED8);
           color: white;
           font-weight: 700;
-          font-size: 1.25rem;
+          font-size: 1.3rem;
         }
 
         .wd-student-info {
           display: flex;
           flex-direction: column;
-          gap: 2px;
+          gap: 3px;
           flex-grow: 1;
         }
 
         .wd-name {
           font-size: 1.05rem;
-          font-weight: 700;
+          font-weight: 800;
           color: #0F172A;
           margin: 0;
           display: flex;
@@ -710,23 +734,24 @@ const PendingOutpass: React.FC = () => {
 
         .wd-emergency-tag {
           font-size: 0.65rem;
-          font-weight: 700;
+          font-weight: 800;
           background: #FEF2F2;
           color: #EF4444;
-          padding: 2px 6px;
-          border-radius: 4px;
-          border: 1px solid rgba(239, 68, 68, 0.15);
+          padding: 2px 7px;
+          border-radius: 6px;
+          border: 1px solid rgba(239, 68, 68, 0.2);
           text-transform: uppercase;
+          letter-spacing: 0.04em;
         }
 
         .wd-reg-no {
-          font-size: 0.8rem;
+          font-size: 0.82rem;
           font-weight: 600;
           color: #64748B;
         }
 
         .wd-dept {
-          font-size: 0.78rem;
+          font-size: 0.8rem;
           font-weight: 500;
           color: #64748B;
           display: flex;
@@ -735,38 +760,38 @@ const PendingOutpass: React.FC = () => {
         }
 
         .wd-year-tag {
-          background: #F1F5F9;
-          color: #475569;
-          padding: 1px 4px;
+          background: rgba(59,130,246,0.08);
+          color: var(--wdl-primary);
+          padding: 1px 6px;
           border-radius: 4px;
           font-weight: 700;
-          font-size: 0.65rem;
+          font-size: 0.68rem;
         }
 
         /* Card Body */
         .wd-card-body {
-          background: #F8FAFC;
-          border-radius: 12px;
-          padding: 12px 14px;
+          background: rgba(248,250,252,0.8);
+          border-radius: 14px;
+          padding: 14px 16px;
           border: 1px solid rgba(226, 232, 240, 0.6);
           flex-grow: 1;
         }
 
         .wd-reason-label {
-          font-size: 0.7rem;
+          font-size: 0.72rem;
           font-weight: 700;
           color: #94A3B8;
           text-transform: uppercase;
-          margin-bottom: 4px;
-          letter-spacing: 0.02em;
+          margin-bottom: 6px;
+          letter-spacing: 0.04em;
         }
 
         .wd-reason-text {
-          font-size: 0.85rem;
+          font-size: 0.86rem;
           color: #475569;
           font-weight: 500;
           margin: 0;
-          line-height: 1.4;
+          line-height: 1.45;
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
@@ -775,36 +800,38 @@ const PendingOutpass: React.FC = () => {
 
         /* Card Meta */
         .wd-card-meta {
-          border-top: 1px dashed #E2E8F0;
-          padding-top: 12px;
+          border-top: 1px dashed rgba(226,232,240,0.8);
+          padding-top: 14px;
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 10px;
         }
 
         .wd-meta-row {
           display: flex;
           justify-content: space-between;
-          font-size: 0.8rem;
+          font-size: 0.84rem;
         }
 
         .wd-meta-row .label {
           color: #64748B;
-          font-weight: 500;
+          font-weight: 600;
         }
 
         .wd-meta-row .value {
-          font-weight: 600;
-          color: #334155;
+          font-weight: 700;
+          color: #0F172A;
         }
 
         .wd-meta-row .type-badge {
           background: #EFF6FF;
-          color: #0047AB;
-          padding: 1px 6px;
-          border-radius: 4px;
-          font-size: 0.72rem;
+          color: var(--wdl-primary);
+          padding: 2px 8px;
+          border-radius: 6px;
+          font-size: 0.7rem;
+          font-weight: 700;
           text-transform: uppercase;
+          letter-spacing: 0.04em;
         }
 
         .wd-meta-row .type-badge.emergency {
@@ -819,21 +846,21 @@ const PendingOutpass: React.FC = () => {
         /* Card Actions */
         .wd-card-actions {
           display: flex;
-          gap: 8px;
+          gap: 10px;
           margin-top: auto;
         }
 
         .wd-btn-doc {
           flex: 1;
-          padding: 8px 12px;
-          background: #EFF6FF;
-          border: 1px solid rgba(0, 71, 171, 0.15);
-          color: #0047AB;
+          padding: 10px 14px;
+          background: rgba(59,130,246,0.08);
+          border: 1px solid rgba(59,130,246,0.2);
+          color: var(--wdl-primary);
           font-size: 0.78rem;
           font-weight: 700;
-          border-radius: 10px;
+          border-radius: 12px;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: var(--wdl-transition);
           display: inline-flex;
           align-items: center;
           justify-content: center;
@@ -841,25 +868,26 @@ const PendingOutpass: React.FC = () => {
         }
 
         .wd-btn-doc:hover {
-          background: #DBEAFE;
-          border-color: #0047AB;
+          background: rgba(59,130,246,0.15);
+          border-color: var(--wdl-primary-light);
         }
 
         .wd-btn-review {
-          flex: 1.5;
-          padding: 8px 14px;
-          background: #0047AB;
+          flex: 1.4;
+          padding: 10px 14px;
+          background: linear-gradient(135deg, #3B82F6, #1D4ED8);
           border: none;
           color: white;
           font-size: 0.78rem;
           font-weight: 700;
-          border-radius: 10px;
+          border-radius: 12px;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: var(--wdl-transition);
           display: inline-flex;
           align-items: center;
           justify-content: center;
           gap: 6px;
+          box-shadow: 0 4px 10px rgba(59,130,246,0.2);
         }
 
         .wd-btn-review svg {
@@ -867,8 +895,8 @@ const PendingOutpass: React.FC = () => {
         }
 
         .wd-btn-review:hover {
-          background: #003682;
-          box-shadow: 0 4px 12px rgba(0, 71, 171, 0.2);
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(59,130,246,0.3);
         }
 
         .wd-btn-review:hover svg {
@@ -879,47 +907,55 @@ const PendingOutpass: React.FC = () => {
         .wd-loading-wrap {
           text-align: center;
           padding: 80px 24px;
-          background: rgba(255,255,255,0.6);
-          border-radius: 20px;
-          border: 1px solid rgba(226,232,240,0.5);
+          background: var(--wdl-card);
+          backdrop-filter: blur(var(--wdl-blur));
+          border-radius: var(--wdl-radius);
+          border: var(--wdl-border);
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 16px;
+          gap: 18px;
+          box-shadow: var(--wdl-shadow);
         }
 
         .wd-spinner {
-          width: 42px;
-          height: 42px;
-          border: 4px solid #E2E8F0;
-          border-top-color: #0047AB;
+          width: 44px;
+          height: 44px;
+          border: 4px solid rgba(59,130,246,0.15);
+          border-top-color: var(--wdl-primary);
           border-radius: 50%;
           animation: spin 0.8s linear infinite;
         }
 
         .wd-empty-state {
           text-align: center;
-          padding: 80px 24px;
-          background: rgba(255,255,255,0.6);
-          border-radius: 20px;
-          border: 1px solid rgba(226,232,240,0.5);
+          padding: 90px 24px;
+          background: var(--wdl-card);
+          backdrop-filter: blur(var(--wdl-blur));
+          border-radius: var(--wdl-radius);
+          border: var(--wdl-border);
+          box-shadow: var(--wdl-shadow);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 16px;
         }
 
         .wd-empty-icon {
-          font-size: 3rem;
+          font-size: 3.5rem;
           display: block;
-          margin-bottom: 16px;
+          opacity: 0.5;
         }
 
         .wd-empty-title {
-          font-size: 1.25rem;
-          font-weight: 700;
-          color: #1E293B;
-          margin: 0 0 6px;
+          font-size: 1.3rem;
+          font-weight: 800;
+          color: #0F172A;
+          margin: 0;
         }
 
         .wd-empty-desc {
-          font-size: 0.88rem;
+          font-size: 0.9rem;
           color: #64748B;
           margin: 0;
         }
@@ -929,8 +965,8 @@ const PendingOutpass: React.FC = () => {
           display: flex;
           justify-content: center;
           align-items: center;
-          gap: 10px;
-          margin-top: 16px;
+          gap: 8px;
+          margin-top: 24px;
           flex-wrap: wrap;
         }
 
@@ -947,27 +983,27 @@ const PendingOutpass: React.FC = () => {
           align-items: center;
           justify-content: center;
           border-radius: 10px;
-          border: 1px solid rgba(0, 71, 171, 0.15);
-          background: #EFF6FF;
-          color: #0047AB;
+          border: 1px solid rgba(59,130,246,0.2);
+          background: var(--wdl-card);
+          backdrop-filter: blur(var(--wdl-blur));
+          color: var(--wdl-primary);
           font-weight: 700;
-          font-size: 0.82rem;
+          font-size: 0.85rem;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: var(--wdl-transition);
           font-family: inherit;
         }
 
         .wd-pnum-btn:hover {
-          background: #0047AB;
-          color: white;
-          box-shadow: 0 4px 10px rgba(0, 71, 171, 0.15);
+          background: rgba(59,130,246,0.1);
+          border-color: var(--wdl-primary);
         }
 
         .wd-pnum-btn.active {
-          background: #0047AB;
+          background: linear-gradient(135deg, #3B82F6, #1D4ED8);
           color: white;
-          border-color: #0047AB;
-          box-shadow: 0 4px 10px rgba(0, 71, 171, 0.15);
+          border-color: transparent;
+          box-shadow: 0 4px 12px rgba(59,130,246,0.25);
         }
 
         .wd-pnum-dots {
@@ -978,30 +1014,30 @@ const PendingOutpass: React.FC = () => {
         }
 
         .wd-page-btn {
-          padding: 8px 18px;
+          padding: 8px 16px;
           border-radius: 10px;
-          border: 1px solid rgba(0, 71, 171, 0.15);
-          background: #EFF6FF;
-          color: #0047AB;
+          border: 1px solid rgba(59,130,246,0.2);
+          background: var(--wdl-card);
+          backdrop-filter: blur(var(--wdl-blur));
+          color: var(--wdl-primary);
           font-weight: 700;
-          font-size: 0.82rem;
+          font-size: 0.85rem;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: var(--wdl-transition);
           font-family: inherit;
         }
 
         .wd-page-btn:hover:not(:disabled) {
-          background: #0047AB;
-          color: white;
-          box-shadow: 0 4px 10px rgba(0, 71, 171, 0.15);
+          background: rgba(59,130,246,0.1);
+          border-color: var(--wdl-primary);
         }
 
         .wd-page-btn:disabled {
-          opacity: 0.45;
+          opacity: 0.5;
           cursor: not-allowed;
-          background: #F1F5F9;
+          background: rgba(241,245,249,0.5);
           color: #94A3B8;
-          border-color: #E2E8F0;
+          border-color: rgba(226,232,240,0.5);
         }
 
         .wd-page-indicator {
@@ -1009,22 +1045,30 @@ const PendingOutpass: React.FC = () => {
           color: #64748B;
         }
 
-        /* ====== MODAL BAR ====== */
+        /* ====== MODAL ====== */
         .wd-modal-backdrop {
           position: fixed;
           inset: 0;
-          background: rgba(15, 23, 42, 0.75);
+          background: rgba(15, 23, 42, 0.4);
           backdrop-filter: blur(8px);
           z-index: 1000;
           display: flex;
           align-items: center;
           justify-content: center;
           padding: 24px;
+          animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
 
         .wd-modal-card {
-          background: white;
-          border-radius: 20px;
+          background: var(--wdl-card);
+          backdrop-filter: blur(var(--wdl-blur));
+          border: var(--wdl-border);
+          border-radius: var(--wdl-radius);
           width: 100%;
           max-width: 900px;
           height: 80vh;
@@ -1032,47 +1076,54 @@ const PendingOutpass: React.FC = () => {
           flex-direction: column;
           box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
           overflow: hidden;
+          animation: modalSlideUp 0.3s cubic-bezier(0.16,1,0.3,1);
+        }
+
+        @keyframes modalSlideUp {
+          from { opacity: 0; transform: translateY(20px) scale(0.98); }
+          to { opacity: 1; transform: none; }
         }
 
         .wd-modal-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 18px 24px;
-          border-bottom: 1px solid #F1F5F9;
+          padding: 20px 28px;
+          border-bottom: 1px solid rgba(226,232,240,0.6);
         }
 
         .wd-modal-header h3 {
           margin: 0;
-          font-size: 1.15rem;
-          font-weight: 700;
+          font-size: 1.2rem;
+          font-weight: 800;
           color: #0F172A;
         }
 
         .wd-modal-close {
-          background: #F1F5F9;
+          background: rgba(241,245,249,0.8);
           border: none;
           color: #64748B;
-          width: 32px;
-          height: 32px;
+          width: 36px;
+          height: 36px;
           border-radius: 50%;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 0.95rem;
+          font-size: 1rem;
           font-weight: bold;
-          transition: all 0.2s ease;
+          transition: var(--wdl-transition);
         }
 
         .wd-modal-close:hover {
           background: #FEF2F2;
           color: #EF4444;
+          transform: rotate(90deg);
         }
 
         .wd-modal-body {
           flex-grow: 1;
-          background: #F8FAFC;
+          background: rgba(248,250,252,0.5);
           overflow: auto;
           padding: 24px;
           display: flex;
@@ -1080,44 +1131,40 @@ const PendingOutpass: React.FC = () => {
           justify-content: center;
         }
 
-        .wd-modal-iframe {
+        .wd-modal-iframe, .wd-modal-img {
           width: 100%;
           height: 100%;
-          border: none;
-          border-radius: 12px;
-          background: white;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-        }
-
-        .wd-modal-img {
           max-width: 100%;
           max-height: 100%;
+          border: none;
+          border-radius: 16px;
           object-fit: contain;
-          border-radius: 12px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+          background: white;
         }
 
         .wd-modal-footer {
-          padding: 16px 24px;
-          border-top: 1px solid #F1F5F9;
+          padding: 16px 28px;
+          border-top: 1px solid rgba(226,232,240,0.6);
           display: flex;
           justify-content: flex-end;
         }
 
         .wd-btn-download {
-          padding: 10px 20px;
-          background: #0047AB;
+          padding: 10px 24px;
+          background: linear-gradient(135deg, #3B82F6, #1D4ED8);
           color: white;
-          border-radius: 10px;
+          border-radius: 12px;
           text-decoration: none;
-          font-size: 0.88rem;
+          font-size: 0.9rem;
           font-weight: 700;
-          transition: all 0.2s ease;
+          transition: var(--wdl-transition);
+          box-shadow: 0 4px 12px rgba(59,130,246,0.25);
         }
 
         .wd-btn-download:hover {
-          background: #003682;
-          box-shadow: 0 4px 12px rgba(0,71,171,0.25);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(59,130,246,0.3);
         }
 
         @keyframes spin {
@@ -1130,35 +1177,41 @@ const PendingOutpass: React.FC = () => {
         }
 
         /* ====== RESPONSIVE ====== */
+        @media (max-width: 1024px) {
+          .wd-main { padding: 24px; }
+        }
+
         @media (max-width: 768px) {
-          .wd-main {
-            padding: 16px;
-          }
-
-          .wd-header-row {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 16px;
-          }
-
-          .wd-controls {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 12px;
-          }
-
-          .wd-search-wrapper {
-            min-width: 100%;
-          }
-
-          .wd-filter-dropdown {
-            width: 100%;
-          }
+          .wd-main { padding: 16px 16px 0; }
+          .wd-header-row { flex-direction: column; align-items: stretch; gap: 16px; margin-bottom: 8px; }
+          .wd-controls { flex-direction: column; align-items: stretch; gap: 12px; }
+          .wd-search-wrapper { min-width: 100%; }
+          .wd-filter-dropdown { width: 100%; }
 
           .wd-cards-grid {
             grid-template-columns: 1fr;
             gap: 16px;
+            margin-bottom: 24px;
           }
+          
+          .wd-card {
+            padding: 20px;
+          }
+          
+          .wd-card-actions .wd-btn-doc, .wd-card-actions .wd-btn-review {
+            padding: 10px 12px;
+            font-size: 0.75rem;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .wd-title { font-size: 1.5rem; }
+          .wd-card { padding: 16px; gap: 14px; }
+          .wd-avatar-wrapper { width: 44px; height: 44px; }
+          .wd-avatar-initials { font-size: 1.15rem; }
+          .wd-name { font-size: 0.95rem; }
+          .wd-reason-text { font-size: 0.82rem; }
+          .wd-meta-row { font-size: 0.8rem; }
         }
       `}</style>
     </div>

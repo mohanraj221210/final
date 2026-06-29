@@ -258,7 +258,7 @@ const OutpassList: React.FC = () => {
                       currentData.map((item, index) => {
                         const isEmergency = (item.outpasstype || '').toLowerCase().includes('emergency');
                         return (
-                          <tr key={item._id || index} onClick={() => navigate(`/warden/outpass/${item._id}`)}>
+                          <tr key={item._id || index} onClick={() => navigate(`/warden/student/${item._id}`)}>
                             <td><span className="sd-mono">{startIndex + index + 1}</span></td>
                             <td>
                               <div className="wd-student-cell">
@@ -296,7 +296,7 @@ const OutpassList: React.FC = () => {
                                 <button
                                   className="wd-btn-view-rect"
                                   onClick={() => {
-                                    navigate(`/warden/outpass/${item._id}`);
+                                    navigate(`/warden/student/${item._id}`);
                                   }}
                                 >
                                   View
@@ -332,7 +332,7 @@ const OutpassList: React.FC = () => {
                     <div
                       className="wd-mobile-card"
                       key={item._id || index}
-                      onClick={() => navigate(`/warden/outpass/${item._id}`)}
+                      onClick={() => navigate(`/warden/student/${item._id}`)}
                     >
                       <div className="wd-mobile-card-header">
                         <div className="wd-mobile-avatar">
@@ -379,7 +379,7 @@ const OutpassList: React.FC = () => {
                             className="wd-btn-view-rect"
                             style={{ padding: '4px 8px', fontSize: '0.75rem' }}
                             onClick={() => {
-                              navigate(`/warden/outpass/${item._id}`);
+                              navigate(`/warden/student/${item._id}`);
                             }}
                           >
                             View →
@@ -492,25 +492,42 @@ const OutpassList: React.FC = () => {
       )}
 
       <style>{`
-        /* ====== LAYOUT & BASE ====== */
+        /* ====== DESIGN TOKENS ====== */
         .wd-root {
+          --wdl-primary:       #3B82F6;
+          --wdl-primary-light: #60A5FA;
+          --wdl-bg:            linear-gradient(180deg, #F8FBFF 0%, #EFF6FF 55%, #F6FAFF 100%);
+          --wdl-card:          rgba(255, 255, 255, 0.90);
+          --wdl-blur:          18px;
+          --wdl-border:        1px solid rgba(255, 255, 255, 0.65);
+          --wdl-shadow:        0 18px 50px rgba(59, 130, 246, 0.12);
+          --wdl-radius:        28px;
+          --wdl-radius-sm:     16px;
+          --wdl-transition:    all 0.25s cubic-bezier(0.16,1,0.3,1);
+
           min-height: 100vh;
-          background: linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 45%, #DBEAFE 100%);
+          background: var(--wdl-bg);
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
           padding-top: var(--nav-height, 64px);
-          padding-bottom: 80px;
+          padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
         }
 
         .wd-main {
-          padding: 24px 32px;
-          max-width: var(--content-max, 1280px);
+          padding: 32px 40px;
+          max-width: var(--content-max, 1400px);
           margin: 0 auto;
+          animation: fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) both;
+        }
+
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(16px); }
+          to { opacity: 1; transform: none; }
         }
 
         .wd-container {
           display: flex;
           flex-direction: column;
-          gap: 28px;
+          gap: 32px;
         }
 
         /* ====== HEADER ROW ====== */
@@ -526,35 +543,37 @@ const OutpassList: React.FC = () => {
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          background: white;
-          border: 1px solid #E2E8F0;
-          color: #0047AB;
+          background: rgba(255,255,255,0.8);
+          backdrop-filter: blur(8px);
+          border: 1px solid rgba(59,130,246,0.15);
+          color: var(--wdl-primary);
           font-size: 0.85rem;
           font-weight: 700;
-          padding: 10px 18px;
+          padding: 8px 16px;
           border-radius: 100px;
           cursor: pointer;
-          box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-          transition: all 0.2s ease;
+          box-shadow: 0 4px 12px rgba(59,130,246,0.08);
+          transition: var(--wdl-transition);
           font-family: inherit;
+          margin-bottom: 12px;
         }
 
         .wd-back-btn:hover {
-          background: #EFF6FF;
+          background: white;
           transform: translateX(-4px);
-          box-shadow: 0 6px 12px rgba(0, 71, 171, 0.08);
+          box-shadow: 0 6px 16px rgba(59,130,246,0.12);
         }
 
         .wd-title {
-          font-size: 1.8rem;
+          font-size: 1.85rem;
           font-weight: 800;
           color: #0F172A;
-          margin: 12px 0 4px;
+          margin: 0 0 6px;
           letter-spacing: -0.02em;
         }
 
         .wd-subtitle {
-          font-size: 0.9rem;
+          font-size: 0.92rem;
           color: #64748B;
           margin: 0;
           font-weight: 500;
@@ -570,36 +589,38 @@ const OutpassList: React.FC = () => {
 
         .wd-search-wrapper {
           position: relative;
-          min-width: 260px;
+          min-width: 280px;
         }
 
         .wd-search-icon {
           position: absolute;
-          left: 14px;
+          left: 16px;
           top: 50%;
           transform: translateY(-50%);
           color: #94A3B8;
-          font-size: 0.95rem;
+          font-size: 1rem;
         }
 
         .wd-search-input {
           width: 100%;
-          padding: 12px 16px 12px 42px;
-          background: white;
-          border: 1px solid rgba(226, 232, 240, 0.8);
+          padding: 12px 16px 12px 44px;
+          background: var(--wdl-card);
+          backdrop-filter: blur(var(--wdl-blur));
+          border: var(--wdl-border);
           border-radius: 14px;
-          font-size: 0.88rem;
+          font-size: 0.9rem;
           font-weight: 500;
           color: #0F172A;
           outline: none;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.02);
-          transition: all 0.2s ease;
+          box-shadow: 0 4px 12px rgba(59,130,246,0.05);
+          transition: var(--wdl-transition);
           box-sizing: border-box;
         }
 
         .wd-search-input:focus {
-          border-color: #0047AB;
-          box-shadow: 0 0 0 4px rgba(0, 71, 171, 0.10);
+          border-color: var(--wdl-primary);
+          box-shadow: 0 0 0 4px rgba(59,130,246,0.15);
+          background: white;
         }
 
         .wd-dropdown-wrapper {
@@ -608,7 +629,7 @@ const OutpassList: React.FC = () => {
 
         .wd-dropdown-icon {
           position: absolute;
-          left: 12px;
+          left: 14px;
           top: 50%;
           transform: translateY(-50%);
           font-size: 0.95rem;
@@ -626,70 +647,74 @@ const OutpassList: React.FC = () => {
         }
 
         .wd-filter-dropdown {
-          padding: 12px 32px 12px 36px;
-          background: white;
-          border: 1px solid rgba(226, 232, 240, 0.8);
+          padding: 12px 34px 12px 38px;
+          background: var(--wdl-card);
+          backdrop-filter: blur(var(--wdl-blur));
+          border: var(--wdl-border);
           border-radius: 14px;
           font-size: 0.88rem;
           font-weight: 600;
           color: #334155;
           outline: none;
           cursor: pointer;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+          box-shadow: 0 4px 12px rgba(59,130,246,0.05);
           appearance: none;
-          min-width: 140px;
+          min-width: 150px;
+          transition: var(--wdl-transition);
         }
 
-        .wd-filter-dropdown:focus {
-          border-color: #0047AB;
+        .wd-filter-dropdown:focus, .wd-filter-dropdown:hover {
+          border-color: var(--wdl-primary-light);
+          background: white;
         }
 
         /* Status Tab Pills */
         .wd-tab-pills {
           display: flex;
-          background: #E2E8F0;
+          background: rgba(241,245,249,0.8);
           padding: 4px;
           border-radius: 12px;
           gap: 2px;
-          border: 1px solid rgba(226,232,240,0.5);
+          border: 1px solid rgba(226,232,240,0.6);
         }
 
         .wd-tab-pill {
-          padding: 8px 16px;
+          padding: 9px 20px;
           border: none;
           background: transparent;
           color: #64748B;
           font-weight: 600;
-          font-size: 0.82rem;
+          font-size: 0.84rem;
           cursor: pointer;
-          border-radius: 8px;
-          transition: all 0.2s ease;
+          border-radius: 9px;
+          transition: var(--wdl-transition);
           font-family: inherit;
         }
 
         .wd-tab-pill:hover {
-          color: #0f172a;
+          color: #0F172A;
         }
 
         .wd-tab-pill.active {
-          background: white;
-          color: #0047AB;
-          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+          background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+          color: white;
+          box-shadow: 0 4px 12px rgba(59,130,246,0.25);
         }
 
         /* ====== TABLE CARD ====== */
         .wd-table-card {
-          background: rgba(255, 255, 255, 0.9);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
-          border: 1px solid rgba(255, 255, 255, 0.7);
-          border-radius: 20px;
+          background: var(--wdl-card);
+          backdrop-filter: blur(var(--wdl-blur));
+          -webkit-backdrop-filter: blur(var(--wdl-blur));
+          border: var(--wdl-border);
+          border-radius: var(--wdl-radius);
           overflow: hidden;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.03), 0 0 0 1px rgba(226,232,240,0.5);
+          box-shadow: var(--wdl-shadow);
         }
 
         .wd-table-scroll {
           overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
         }
 
         .wd-table {
@@ -699,21 +724,22 @@ const OutpassList: React.FC = () => {
         }
 
         .wd-table th {
-          background: #F8FAFC;
+          background: rgba(248,250,252,0.8);
           padding: 16px 24px;
           font-size: 0.72rem;
           font-weight: 700;
-          color: #64748B;
+          color: #94A3B8;
           text-transform: uppercase;
           letter-spacing: 0.06em;
-          border-bottom: 1px solid #E2E8F0;
+          border-bottom: 1px solid rgba(226,232,240,0.6);
+          white-space: nowrap;
         }
 
         .wd-table td {
           padding: 16px 24px;
           font-size: 0.88rem;
           color: #334155;
-          border-bottom: 1px solid #F1F5F9;
+          border-bottom: 1px solid rgba(241,245,249,0.8);
           transition: background 0.15s ease;
         }
 
@@ -722,7 +748,7 @@ const OutpassList: React.FC = () => {
         }
 
         .wd-table tbody tr:hover td {
-          background: #F8FAFC;
+          background: rgba(239,246,255,0.5);
         }
 
         .wd-table tbody tr:last-child td {
@@ -737,48 +763,50 @@ const OutpassList: React.FC = () => {
         }
 
         .wd-table-avatar {
-          width: 32px;
-          height: 32px;
+          width: 36px;
+          height: 36px;
           border-radius: 50%;
-          background: linear-gradient(135deg, #0047AB 0%, #2563EB 100%);
+          background: linear-gradient(135deg, #3B82F6, #1D4ED8);
           color: white;
           font-weight: 700;
-          font-size: 0.82rem;
+          font-size: 0.9rem;
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 2px 6px rgba(0, 71, 171, 0.2);
+          box-shadow: 0 4px 10px rgba(59,130,246,0.25);
+          flex-shrink: 0;
         }
 
         .wd-name-cell {
-          font-weight: 600;
+          font-weight: 700;
           color: #0F172A;
         }
 
         .wd-date-cell {
-          color: #475569;
+          color: #64748B;
           font-weight: 500;
+          font-size: 0.84rem;
         }
 
         /* Reason & Type Badging */
         .wd-reason-cell {
           display: flex;
           flex-direction: column;
-          gap: 4px;
+          gap: 6px;
           max-width: 250px;
         }
 
         .wd-type-pill {
           display: inline-flex;
-          padding: 2px 6px;
-          border-radius: 4px;
+          padding: 3px 8px;
+          border-radius: 6px;
           font-size: 0.68rem;
           font-weight: 700;
           text-transform: uppercase;
           background: #EFF6FF;
-          color: #0047AB;
+          color: var(--wdl-primary);
           width: fit-content;
-          letter-spacing: 0.02em;
+          letter-spacing: 0.04em;
         }
 
         .wd-type-pill.emergency {
@@ -787,7 +815,7 @@ const OutpassList: React.FC = () => {
         }
 
         .wd-reason-text-cell {
-          font-size: 0.8rem;
+          font-size: 0.82rem;
           color: #64748B;
           white-space: nowrap;
           overflow: hidden;
@@ -798,18 +826,18 @@ const OutpassList: React.FC = () => {
         .wd-status-badge {
           display: inline-flex;
           align-items: center;
-          padding: 4px 10px;
-          border-radius: 6px;
+          padding: 5px 12px;
+          border-radius: 8px;
           font-size: 0.72rem;
           font-weight: 700;
           text-transform: uppercase;
-          letter-spacing: 0.03em;
-          border: 1px solid transparent;
+          letter-spacing: 0.04em;
+          white-space: nowrap;
         }
 
-        .wd-status-approved { background: #ECFDF5; color: #10B981; border-color: rgba(16, 185, 129, 0.15); }
-        .wd-status-pending  { background: #FFFBEB; color: #D97706; border-color: rgba(217, 119, 6, 0.15); }
-        .wd-status-rejected { background: #FEF2F2; color: #EF4444; border-color: rgba(239, 68, 68, 0.15); }
+        .wd-status-approved { background: rgba(16,185,129,0.1); color: #10B981; }
+        .wd-status-pending  { background: rgba(245,158,11,0.1); color: #D97706; }
+        .wd-status-rejected { background: rgba(239,68,68,0.1);  color: #EF4444; }
 
         /* Actions */
         .wd-action-cell {
@@ -818,72 +846,75 @@ const OutpassList: React.FC = () => {
         }
 
         .wd-btn-view-rect {
-          padding: 6px 12px;
-          background: #0047AB;
+          padding: 6px 14px;
+          background: linear-gradient(135deg, #3B82F6, #1D4ED8);
           color: white;
           font-size: 0.75rem;
           font-weight: 700;
           border-radius: 8px;
           border: none;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: var(--wdl-transition);
+          box-shadow: 0 2px 8px rgba(59,130,246,0.2);
         }
 
         .wd-btn-view-rect:hover {
-          background: #003682;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(59,130,246,0.3);
         }
 
         .wd-btn-doc-rect {
-          padding: 6px 12px;
-          background: #EFF6FF;
-          border: 1px solid rgba(0, 71, 171, 0.15);
-          color: #0047AB;
+          padding: 6px 14px;
+          background: rgba(59,130,246,0.08);
+          border: 1px solid rgba(59,130,246,0.2);
+          color: var(--wdl-primary);
           font-size: 0.75rem;
           font-weight: 700;
           border-radius: 8px;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: var(--wdl-transition);
         }
 
         .wd-btn-doc-rect:hover {
-          background: #DBEAFE;
-          border-color: #0047AB;
+          background: rgba(59,130,246,0.15);
+          border-color: var(--wdl-primary-light);
         }
 
         /* Empty Cell */
         .wd-empty-cell {
           text-align: center;
-          padding: 64px 24px !important;
+          padding: 80px 24px !important;
         }
 
         .wd-table-empty {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 12px;
+          gap: 16px;
         }
 
         .wd-empty-icon {
-          font-size: 3rem;
-          color: #CBD5E1;
+          font-size: 3.5rem;
+          color: #94A3B8;
+          opacity: 0.5;
         }
 
         .wd-empty-title {
-          font-size: 1.1rem;
-          font-weight: 700;
-          color: #334155;
+          font-size: 1.25rem;
+          font-weight: 800;
+          color: #0F172A;
           margin: 0;
         }
 
         .wd-empty-desc {
-          font-size: 0.85rem;
-          color: #94A3B8;
+          font-size: 0.9rem;
+          color: #64748B;
           margin: 0;
         }
 
         /* ====== TABLE LOADING ====== */
         .wd-table-loading {
-          padding: 64px;
+          padding: 80px;
           display: flex;
           justify-content: center;
           align-items: center;
@@ -894,8 +925,8 @@ const OutpassList: React.FC = () => {
           display: flex;
           justify-content: center;
           align-items: center;
-          gap: 10px;
-          margin-top: 24px;
+          gap: 8px;
+          margin-top: 16px;
           flex-wrap: wrap;
         }
 
@@ -912,27 +943,27 @@ const OutpassList: React.FC = () => {
           align-items: center;
           justify-content: center;
           border-radius: 10px;
-          border: 1px solid rgba(0, 71, 171, 0.15);
-          background: #EFF6FF;
-          color: #0047AB;
+          border: 1px solid rgba(59,130,246,0.2);
+          background: var(--wdl-card);
+          backdrop-filter: blur(var(--wdl-blur));
+          color: var(--wdl-primary);
           font-weight: 700;
-          font-size: 0.82rem;
+          font-size: 0.85rem;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: var(--wdl-transition);
           font-family: inherit;
         }
 
         .wd-pnum-btn:hover {
-          background: #0047AB;
-          color: white;
-          box-shadow: 0 4px 10px rgba(0, 71, 171, 0.15);
+          background: rgba(59,130,246,0.1);
+          border-color: var(--wdl-primary);
         }
 
         .wd-pnum-btn.active {
-          background: #0047AB;
+          background: linear-gradient(135deg, #3B82F6, #1D4ED8);
           color: white;
-          border-color: #0047AB;
-          box-shadow: 0 4px 10px rgba(0, 71, 171, 0.15);
+          border-color: transparent;
+          box-shadow: 0 4px 12px rgba(59,130,246,0.25);
         }
 
         .wd-pnum-dots {
@@ -943,53 +974,56 @@ const OutpassList: React.FC = () => {
         }
 
         .wd-page-btn {
-          padding: 8px 18px;
+          padding: 8px 16px;
           border-radius: 10px;
-          border: 1px solid rgba(0, 71, 171, 0.15);
-          background: #EFF6FF;
-          color: #0047AB;
+          border: 1px solid rgba(59,130,246,0.2);
+          background: var(--wdl-card);
+          backdrop-filter: blur(var(--wdl-blur));
+          color: var(--wdl-primary);
           font-weight: 700;
-          font-size: 0.82rem;
+          font-size: 0.85rem;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: var(--wdl-transition);
           font-family: inherit;
         }
 
         .wd-page-btn:hover:not(:disabled) {
-          background: #0047AB;
-          color: white;
-          box-shadow: 0 4px 10px rgba(0, 71, 171, 0.15);
+          background: rgba(59,130,246,0.1);
+          border-color: var(--wdl-primary);
         }
 
         .wd-page-btn:disabled {
-          opacity: 0.45;
+          opacity: 0.5;
           cursor: not-allowed;
-          background: #F1F5F9;
+          background: rgba(241,245,249,0.5);
           color: #94A3B8;
-          border-color: #E2E8F0;
+          border-color: rgba(226,232,240,0.5);
         }
 
-        .wd-page-indicator {
-          font-size: 0.88rem;
-          color: #64748B;
-        }
-
-        /* ====== MODAL BAR ====== */
+        /* ====== MODAL ====== */
         .wd-modal-backdrop {
           position: fixed;
           inset: 0;
-          background: rgba(15, 23, 42, 0.75);
+          background: rgba(15, 23, 42, 0.4);
           backdrop-filter: blur(8px);
           z-index: 1000;
           display: flex;
           align-items: center;
           justify-content: center;
           padding: 24px;
+          animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
 
         .wd-modal-card {
-          background: white;
-          border-radius: 20px;
+          background: var(--wdl-card);
+          backdrop-filter: blur(var(--wdl-blur));
+          border: var(--wdl-border);
+          border-radius: var(--wdl-radius);
           width: 100%;
           max-width: 900px;
           height: 80vh;
@@ -997,47 +1031,54 @@ const OutpassList: React.FC = () => {
           flex-direction: column;
           box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
           overflow: hidden;
+          animation: modalSlideUp 0.3s cubic-bezier(0.16,1,0.3,1);
+        }
+
+        @keyframes modalSlideUp {
+          from { opacity: 0; transform: translateY(20px) scale(0.98); }
+          to { opacity: 1; transform: none; }
         }
 
         .wd-modal-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 18px 24px;
-          border-bottom: 1px solid #F1F5F9;
+          padding: 20px 28px;
+          border-bottom: 1px solid rgba(226,232,240,0.6);
         }
 
         .wd-modal-header h3 {
           margin: 0;
-          font-size: 1.15rem;
-          font-weight: 700;
+          font-size: 1.2rem;
+          font-weight: 800;
           color: #0F172A;
         }
 
         .wd-modal-close {
-          background: #F1F5F9;
+          background: rgba(241,245,249,0.8);
           border: none;
           color: #64748B;
-          width: 32px;
-          height: 32px;
+          width: 36px;
+          height: 36px;
           border-radius: 50%;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 0.95rem;
+          font-size: 1rem;
           font-weight: bold;
-          transition: all 0.2s ease;
+          transition: var(--wdl-transition);
         }
 
         .wd-modal-close:hover {
           background: #FEF2F2;
           color: #EF4444;
+          transform: rotate(90deg);
         }
 
         .wd-modal-body {
           flex-grow: 1;
-          background: #F8FAFC;
+          background: rgba(248,250,252,0.5);
           overflow: auto;
           padding: 24px;
           display: flex;
@@ -1045,44 +1086,40 @@ const OutpassList: React.FC = () => {
           justify-content: center;
         }
 
-        .wd-modal-iframe {
+        .wd-modal-iframe, .wd-modal-img {
           width: 100%;
           height: 100%;
-          border: none;
-          border-radius: 12px;
-          background: white;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-        }
-
-        .wd-modal-img {
           max-width: 100%;
           max-height: 100%;
+          border: none;
+          border-radius: 16px;
           object-fit: contain;
-          border-radius: 12px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+          background: white;
         }
 
         .wd-modal-footer {
-          padding: 16px 24px;
-          border-top: 1px solid #F1F5F9;
+          padding: 16px 28px;
+          border-top: 1px solid rgba(226,232,240,0.6);
           display: flex;
           justify-content: flex-end;
         }
 
         .wd-btn-download {
-          padding: 10px 20px;
-          background: #0047AB;
+          padding: 10px 24px;
+          background: linear-gradient(135deg, #3B82F6, #1D4ED8);
           color: white;
-          border-radius: 10px;
+          border-radius: 12px;
           text-decoration: none;
-          font-size: 0.88rem;
+          font-size: 0.9rem;
           font-weight: 700;
-          transition: all 0.2s ease;
+          transition: var(--wdl-transition);
+          box-shadow: 0 4px 12px rgba(59,130,246,0.25);
         }
 
         .wd-btn-download:hover {
-          background: #003682;
-          box-shadow: 0 4px 12px rgba(0,71,171,0.25);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(59,130,246,0.3);
         }
 
         .sd-mono {
@@ -1093,103 +1130,86 @@ const OutpassList: React.FC = () => {
         /* ====== RESPONSIVE ====== */
         .wd-mobile-cards-view { display: none; }
 
+        @media (max-width: 1024px) {
+          .wd-main { padding: 24px; }
+        }
+
         @media (max-width: 968px) {
-          .wd-main {
-            padding: 16px;
-          }
-
-          .wd-header-row {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 16px;
-          }
-
-          .wd-controls {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 12px;
-          }
-
-          .wd-search-wrapper {
-            min-width: 100%;
-          }
-
-          .wd-filter-dropdown {
-            width: 100%;
-          }
-
+          .wd-main { padding: 16px 16px 0; }
+          .wd-header-row { flex-direction: column; align-items: stretch; gap: 16px; margin-bottom: 8px; }
+          .wd-controls { flex-direction: column; align-items: stretch; gap: 12px; }
+          .wd-search-wrapper { min-width: 100%; }
+          .wd-filter-dropdown { width: 100%; }
+          
           .wd-tab-pills {
-            justify-content: space-between;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            justify-content: flex-start;
           }
+          .wd-tab-pills::-webkit-scrollbar { display: none; }
+          .wd-tab-pill { flex-shrink: 0; white-space: nowrap; }
 
-          .wd-tab-pill {
-            flex: 1;
-            text-align: center;
-          }
-
-          .wd-table {
-            display: none;
-          }
-
-          .wd-table-card {
-            background: transparent;
-            box-shadow: none;
-            border: none;
-          }
+          .wd-table { display: none; }
+          .wd-table-card { background: transparent; box-shadow: none; border: none; padding: 0; }
+          .wd-table-scroll { display: none; }
 
           /* Mobile Card */
           .wd-mobile-cards-view {
             display: flex;
             flex-direction: column;
             gap: 16px;
+            margin-bottom: 24px;
           }
 
           .wd-mobile-card {
-            background: white;
+            background: var(--wdl-card);
+            backdrop-filter: blur(var(--wdl-blur));
             border-radius: 20px;
             padding: 20px;
-            border: 1px solid rgba(226, 232, 240, 0.7);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            border: var(--wdl-border);
+            box-shadow: var(--wdl-shadow);
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: var(--wdl-transition);
           }
 
           .wd-mobile-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 71, 171, 0.05);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(59,130,246,0.15);
           }
 
           .wd-mobile-card-header {
             display: flex;
             align-items: center;
             gap: 12px;
-            margin-bottom: 14px;
+            margin-bottom: 16px;
             position: relative;
           }
 
           .wd-mobile-avatar {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, #0047AB 0%, #2563EB 100%);
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #3B82F6, #1D4ED8);
             color: white;
             font-weight: 700;
-            font-size: 0.9rem;
+            font-size: 1rem;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 50%;
+            box-shadow: 0 4px 10px rgba(59,130,246,0.25);
           }
 
           .wd-mobile-name {
-            font-size: 0.95rem;
-            font-weight: 700;
+            font-size: 1.05rem;
+            font-weight: 800;
             color: #0F172A;
             margin: 0 0 2px;
           }
 
           .wd-mobile-reg {
             display: block;
-            font-size: 0.78rem;
+            font-size: 0.8rem;
             color: #64748B;
           }
 
@@ -1200,37 +1220,29 @@ const OutpassList: React.FC = () => {
           }
 
           .wd-mobile-details {
-            border-top: 1px dashed #F1F5F9;
-            border-bottom: 1px dashed #F1F5F9;
-            padding: 12px 0;
-            margin-bottom: 14px;
+            border-top: 1px dashed rgba(226,232,240,0.8);
+            border-bottom: 1px dashed rgba(226,232,240,0.8);
+            padding: 14px 0;
+            margin-bottom: 16px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
           }
 
           .wd-mobile-row {
             display: flex;
             justify-content: space-between;
-            font-size: 0.82rem;
+            font-size: 0.85rem;
           }
 
-          .wd-mobile-row .label {
-            color: #64748B;
-            font-weight: 500;
-          }
-
-          .wd-mobile-row .value {
-            color: #334155;
-            font-weight: 600;
-            text-align: right;
-          }
-
+          .wd-mobile-row .label { color: #64748B; font-weight: 600; }
+          .wd-mobile-row .value { color: #0F172A; font-weight: 700; text-align: right; }
           .wd-mobile-row .reason-truncate {
-            max-width: 180px;
+            max-width: 200px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            color: #475569;
           }
 
           .wd-mobile-footer {
@@ -1238,6 +1250,18 @@ const OutpassList: React.FC = () => {
             justify-content: space-between;
             align-items: center;
           }
+          
+          .wd-mobile-footer .wd-btn-view-rect, .wd-mobile-footer .wd-btn-doc-rect {
+            padding: 8px 12px;
+            font-size: 0.75rem;
+          }
+        }
+        
+        @media (max-width: 480px) {
+           .wd-mobile-row .reason-truncate { max-width: 140px; }
+           .wd-mobile-avatar { width: 38px; height: 38px; font-size: 0.9rem; }
+           .wd-mobile-name { font-size: 0.95rem; }
+           .wd-title { font-size: 1.5rem; }
         }
       `}</style>
     </div>
