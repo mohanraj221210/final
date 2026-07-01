@@ -126,7 +126,7 @@ const YearInchargeProfile: React.FC = () => {
             }
         });
 
-        setCompletionPercentage(Math.round((completed / 9) * 100));
+        setCompletionPercentage(Math.round((completed / fields.length) * 100));
     };
 
     const fetchProfile = async () => {

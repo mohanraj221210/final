@@ -231,6 +231,19 @@ const Outpass: React.FC = () => {
             return;
         }
 
+        if (formData.outpasstype !== 'Emergency') {
+            const endHour = end.getHours();
+            const endMinutes = end.getMinutes();
+            // Disallow times from 18:01 to 05:59. Allow exactly 18:00 (6:00 PM).
+            const isAfter6PM = endHour > 18 || (endHour === 18 && endMinutes > 0);
+            const isBefore6AM = endHour < 6;
+            
+            if (isAfter6PM || isBefore6AM) {
+                toast.error("Return time must be between 6:00 AM and 6:00 PM.");
+                return;
+            }
+        }
+
         setActiveStep(2);
     };
 

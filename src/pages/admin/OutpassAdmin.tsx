@@ -116,24 +116,50 @@ const OutpassAdmin: React.FC = () => {
     const totalEmergency = statsData.reduce((sum, s) => sum + (s.Emergency || 0), 0);
     const grandTotal = totalPending + totalRejected + totalApproved;
 
-    // Download CSV
-    const handleDownload = () => {
-        const headers = ['S.No', 'Student Name', 'Email', 'Department', 'Semester', 'Pass Type', 'Status', 'Applied On'];
-        const rows = outpasses.map((op, index) => [
-            index + 1, `"${getStudentName(op)}"`, `"${getStudentEmail(op)}"`,
-            `"${getStudentDept(op)}"`, getStudentYear(op), getType(op), getStatus(op),
-            op.createdAt ? new Date(op.createdAt).toISOString().split('T')[0] : '-'
-        ]);
-        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.setAttribute('href', url);
-        link.setAttribute('download', `outpass_report_${new Date().toISOString().split('T')[0]}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    // Download CSV / Excel from API
+    const handleDownload = async () => {
+        try {
+            toast.info('Requesting outpass report from server...');
+            const response = await adminService.exportOutpassReport({
+                outpasstype: filterType,
+                status: filterStatus,
+                appliedDate: filterTime,
+                search: searchTerm
+            });
+
+            const contentType = response.headers['content-type'] || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+            const blob = new Blob([response.data], { type: contentType });
+            const disposition = response.headers['content-disposition'];
+            
+            let filename = `outpass_report_${new Date().toISOString().split('T')[0]}`;
+            if (disposition && disposition.includes('filename=')) {
+                const parts = disposition.split('filename=');
+                if (parts[1]) filename = parts[1].replace(/['"]/g, '');
+            } else {
+                if (contentType.includes('csv')) {
+                    filename += '.csv';
+                } else if (contentType.includes('pdf')) {
+                    filename += '.pdf';
+                } else {
+                    filename += '.xlsx';
+                }
+            }
+
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            toast.success('Report exported successfully!');
+        } catch (error) {
+            console.error('Export failed:', error);
+            toast.error('Failed to export outpass report');
+        }
     };
+
 
     const getTypeBadgeColor = (type: string) => {
         switch (type?.toLowerCase()) {
