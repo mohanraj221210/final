@@ -261,5 +261,55 @@ export const adminService = {
 
         const response = await api.get(`/admin/outpass/stats?${params.toString()}`);
         return response.data.stats;
+    },
+    exportOutpassReport: async (filters?: {
+        outpasstype?: string;
+        status?: string;
+        appliedDate?: string;
+        search?: string;
+    }) => {
+        const params = new URLSearchParams();
+        
+        // Map outpass type filter (as plain string, not array)
+        const type = filters?.outpasstype;
+        if (type && type !== 'All' && type.trim() !== '') {
+            let mappedType = type;
+            if (type.toLowerCase() === 'home pass') {
+                mappedType = 'Home';
+            }
+            params.append('outpasstype', mappedType);
+        }
+
+        // Map appliedDate timeline filter (as plain string, not array)
+        const dateRange = filters?.appliedDate;
+        if (dateRange && dateRange !== 'All' && dateRange.trim() !== '') {
+            let mappedDate = dateRange.toLowerCase();
+            if (mappedDate === 'this week' || mappedDate === 'weekly') {
+                mappedDate = 'weekly';
+            } else if (mappedDate === 'this month' || mappedDate === 'monthly') {
+                mappedDate = 'monthly';
+            } else if (mappedDate === 'today') {
+                mappedDate = 'today';
+            }
+            params.append('appliedDate', mappedDate);
+        }
+
+        // Map status filter (as plain string, not array)
+        const statusVal = filters?.status;
+        if (statusVal && statusVal !== 'All' && statusVal.trim() !== '') {
+            params.append('status', statusVal.toLowerCase());
+        }
+
+        // Map search query filter (as plain string)
+        const searchVal = filters?.search;
+        if (searchVal && searchVal.trim() !== '') {
+            params.append('search', searchVal.trim());
+        }
+
+        const response = await api.get('/admin/outpass/export', {
+            params: params,
+            responseType: 'blob'
+        });
+        return response;
     }
 };
