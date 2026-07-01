@@ -270,7 +270,7 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
           {/* Heading */}
           <div className="lp-heading-block">
             <h1 className="lp-h1">Welcome Back!</h1>
-            <p className="lp-h1-blue">{loginType === 'staff' ? 'Staff Portal' : 'Student Portal'}</p>
+            <p className="lp-h1-blue">{loginType === 'staff' ? 'Faculty Portal' : 'Student Portal'}</p>
             <p className="lp-desc">
               {loginType === 'staff' ? (
                 <>
@@ -369,8 +369,8 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
 
             {/* Card heading */}
             <div className="lp-card-head">
-              <h2 className="lp-card-title">{loginType === 'staff' ? 'Staff Login' : 'Student Login'}</h2>
-              <p className="lp-card-sub">Sign in to your {loginType === 'staff' ? 'staff' : 'student'} account</p>
+              <h2 className="lp-card-title">{loginType === 'staff' ? 'Faculty Login' : 'Student Login'}</h2>
+              <p className="lp-card-sub">Sign in to your {loginType === 'staff' ? 'Faculty' : 'student'} account</p>
             </div>
 
             {/* Form */}

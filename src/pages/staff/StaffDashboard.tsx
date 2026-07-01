@@ -281,6 +281,7 @@ const StaffDashboard: React.FC = () => {
     const [chartTypeFilter, setChartTypeFilter] = useState<'all' | 'home' | 'od' | 'outing' | 'emergency'>('all');
     const navigate = useNavigate();
 
+
     useEffect(() => {
         const fetchDashboardData = async () => {
             const token = localStorage.getItem('token');
@@ -756,7 +757,6 @@ const StaffDashboard: React.FC = () => {
 
                     {/* ============ 4. QUICK ACTIONS ============ */}
                     <section className="sd-section">
-                        <h2 className="sd-section-title sd-fade-up" style={{ animationDelay: '0.2s' }}>Quick Actions</h2>
                         <div className="sd-actions-grid">
                             {[
                                 { icon: '📋', title: 'Student Registration', desc: 'Onboard new students individually or via Excel upload', path: '/staff-registration', delay: '0.25s' },
@@ -890,6 +890,8 @@ const StaffDashboard: React.FC = () => {
                 </div>
             </main>
 
+           
+            
             {/* ============================================================ */}
             {/*  STYLES                                                       */}
             {/* ============================================================ */}
@@ -1267,6 +1269,43 @@ const StaffDashboard: React.FC = () => {
                     font-size: 1.15rem; font-weight: 700; color: #0F172A;
                     letter-spacing: -0.01em; margin: 0 0 16px;
                 }
+
+                /* ── Section header (title + report button row) ── */
+                .sd-section-header {
+                    display: flex; align-items: center; justify-content: space-between;
+                    margin-bottom: 16px; gap: 12px; flex-wrap: wrap;
+                }
+                .sd-section-header .sd-section-title { margin-bottom: 0; }
+
+                /* ── Generate Report Button ── */
+                .sd-report-btn {
+                    display: inline-flex; align-items: center; gap: 7px;
+                    padding: 9px 18px; border-radius: 10px;
+                    background: rgba(255,255,255,0.85);
+                    backdrop-filter: blur(12px);
+                    -webkit-backdrop-filter: blur(12px);
+                    border: 1.5px solid rgba(59,130,246,0.35);
+                    color: #1e3a8a; font-size: 13px; font-weight: 700;
+                    cursor: pointer; font-family: inherit;
+                    box-shadow: 0 2px 12px rgba(59,130,246,0.12), 0 1px 3px rgba(0,0,0,0.06);
+                    transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
+                    position: relative; overflow: hidden;
+                    white-space: nowrap;
+                }
+                .sd-report-btn::after {
+                    content: ''; position: absolute; inset: 0; border-radius: inherit;
+                    background: radial-gradient(circle at 50% 50%, rgba(59,130,246,0.18) 0%, transparent 70%);
+                    opacity: 0; transition: opacity 0.22s;
+                }
+                .sd-report-btn:hover {
+                    border-color: rgba(59,130,246,0.65);
+                    box-shadow: 0 6px 24px rgba(59,130,246,0.22), 0 2px 8px rgba(0,0,0,0.08);
+                    transform: translateY(-2px) scale(1.02);
+                    background: rgba(239,246,255,0.95);
+                    color: #1e3a8a;
+                }
+                .sd-report-btn:hover::after { opacity: 1; }
+                .sd-report-btn:active { transform: translateY(0) scale(0.97); }
 
                 /* ====== 4. QUICK ACTIONS ====== */
                 .sd-actions-grid {

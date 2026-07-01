@@ -83,11 +83,94 @@ const StaffHeader: React.FC<StaffHeaderProps> = ({ activeMenu }) => {
     };
 
     const navItems = [
-        { key: 'dashboard',    path: '/staff-dashboard',    label: 'Dashboard',     icon: '🏠' },
-        { key: 'registration', path: '/staff-registration', label: 'Registration',  icon: '📋' },
-        { key: 'pendingpasses', path: '/pending-passes',    label: 'Pending Passes', icon: '⏳' },
-        { key: 'allpasses',    path: '/all-passes',         label: 'All Passes',    icon: '🎫' },
-        { key: 'profile',      path: '/staff-profile',      label: 'Profile',       icon: '👤' },
+        {
+            key: 'dashboard',
+            path: '/staff-dashboard',
+            label: 'Dashboard',
+            icon: '🏠',
+            svg: (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>
+                    <polyline points="9 21 9 12 15 12 15 21"/>
+                </svg>
+            ),
+            svgActive: (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                    <path d="M12 3L3 9.5V20a1 1 0 0 0 1 1h6v-9h4v9h6a1 1 0 0 0 1-1V9.5L12 3z"/>
+                </svg>
+            )
+        },
+        {
+            key: 'registration',
+            path: '/staff-registration',
+            label: 'Register',
+            icon: '📋',
+            svg: (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="12" y1="18" x2="12" y2="12"/>
+                    <line x1="9" y1="15" x2="15" y2="15"/>
+                </svg>
+            ),
+            svgActive: (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8L14 2zm-1 11h-2v-2H9v-2h2V7h2v2h2v2h-2v2z"/>
+                </svg>
+            )
+        },
+        {
+            key: 'pendingpasses',
+            path: '/pending-passes',
+            label: 'Pending',
+            icon: '⏳',
+            svg: (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                </svg>
+            ),
+            svgActive: (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14" fill="none"/>
+                </svg>
+            )
+        },
+        {
+            key: 'allpasses',
+            path: '/all-passes',
+            label: 'Passes',
+            icon: '🎫',
+            svg: (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="5" width="20" height="14" rx="2"/>
+                    <line x1="2" y1="10" x2="22" y2="10"/>
+                </svg>
+            ),
+            svgActive: (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                    <path d="M22 5H2C.9 5 0 5.9 0 7v10c0 1.1.9 2 2 2h20c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 12H2v-7h20v7zm0-9H2V7h20v1z"/>
+                </svg>
+            )
+        },
+        {
+            key: 'profile',
+            path: '/staff-profile',
+            label: 'Profile',
+            icon: '👤',
+            svg: (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+            ),
+            svgActive: (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+            )
+        },
     ];
 
     const notifications = [
@@ -159,9 +242,6 @@ const StaffHeader: React.FC<StaffHeaderProps> = ({ activeMenu }) => {
                                 <button className="sfh-dropdown-item" onClick={() => handleNavigation('/staff-profile')}>
                                     👤 My Profile
                                 </button>
-                                <button className="sfh-dropdown-item" onClick={() => handleNavigation('/staff-dashboard')}>
-                                    ⚙️ Command Center
-                                </button>
                                 <div className="sfh-dropdown-divider"></div>
                                 <button className="sfh-dropdown-item danger" onClick={handleLogout}>
                                     🚪 Logout
@@ -210,17 +290,28 @@ const StaffHeader: React.FC<StaffHeaderProps> = ({ activeMenu }) => {
             )}
 
             {/* Mobile Bottom Nav */}
-            <nav className="sfh-bottom-nav">
-                {navItems.map(item => (
-                    <button
-                        key={item.key}
-                        className={`sfh-bottom-item ${activeMenu === item.key ? 'sfh-bottom-active' : ''}`}
-                        onClick={() => handleNavigation(item.path)}
-                    >
-                        <span className="sfh-bottom-icon">{item.icon}</span>
-                        <span className="sfh-bottom-label">{item.label}</span>
-                    </button>
-                ))}
+            <nav className="sfh-bottom-nav" role="navigation" aria-label="Main navigation">
+                <div className="sfh-bottom-inner">
+                    {navItems.map((item) => {
+                        const isActive = activeMenu === item.key;
+                        return (
+                            <button
+                                key={item.key}
+                                className={`sfh-bottom-item ${isActive ? 'sfh-bottom-active' : ''}`}
+                                onClick={() => handleNavigation(item.path)}
+                                aria-label={item.label}
+                                aria-current={isActive ? 'page' : undefined}
+                            >
+                                <span className="sfh-bottom-icon-wrap">
+                                    <span className="sfh-bottom-icon">
+                                        {isActive ? item.svgActive : item.svg}
+                                    </span>
+                                </span>
+                                <span className="sfh-bottom-label">{item.label}</span>
+                            </button>
+                        );
+                    })}
+                </div>
             </nav>
 
             <style>{`
@@ -554,65 +645,151 @@ const StaffHeader: React.FC<StaffHeaderProps> = ({ activeMenu }) => {
                 }
                 .sfh-mobile-logout:hover { background: var(--danger); color: white; }
 
+                /* ====== PREMIUM BOTTOM NAV ====== */
+                @keyframes sfhBounceIn {
+                    0%   { transform: scale(0.6) translateY(4px); opacity: 0; }
+                    60%  { transform: scale(1.15) translateY(-2px); opacity: 1; }
+                    100% { transform: scale(1) translateY(0); opacity: 1; }
+                }
+                @keyframes sfhLabelIn {
+                    from { opacity: 0; transform: translateY(4px); }
+                    to   { opacity: 1; transform: translateY(0); }
+                }
+                @keyframes sfhNavSlideUp {
+                    from { opacity: 0; transform: translateY(24px); }
+                    to   { opacity: 1; transform: translateY(0); }
+                }
+
                 .sfh-bottom-nav {
                     display: none;
                     position: fixed;
-                    bottom: 16px;
-                    left: 16px;
-                    right: 16px;
-                    height: 48px; /* reduced from 64px */
-                    background: rgba(255, 255, 255, 0.85);
-                    backdrop-filter: blur(20px);
-                    -webkit-backdrop-filter: blur(20px);
-                    border: 1px solid rgba(255, 255, 255, 0.4);
-                    box-shadow: 0 6px 24px 0 rgba(31, 38, 135, 0.06);
-                    border-radius: 20px; /* slightly more rounded */
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
                     z-index: 999;
-                    justify-content: space-around;
-                    align-items: center;
-                    padding: 0 6px; /* reduced side padding */
-                    margin-bottom: env(safe-area-inset-bottom, 0px);
+                    /* safe-area padding for notched phones */
+                    padding-bottom: env(safe-area-inset-bottom, 0px);
+                    background: transparent;
+                    pointer-events: none;
                 }
+                .sfh-bottom-inner {
+                    pointer-events: all;
+                    margin: 0 14px 14px;
+                    height: 64px;
+                    background: rgba(255, 255, 255, 0.82);
+                    backdrop-filter: blur(28px) saturate(180%);
+                    -webkit-backdrop-filter: blur(28px) saturate(180%);
+                    border: 1.5px solid rgba(255, 255, 255, 0.55);
+                    border-bottom-color: rgba(200, 215, 240, 0.4);
+                    box-shadow:
+                        0 8px 32px rgba(30, 64, 175, 0.10),
+                        0 2px 8px rgba(0, 0, 0, 0.06),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+                    border-radius: 22px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-around;
+                    padding: 0 8px;
+                    animation: sfhNavSlideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                }
+
+                /* Each nav button */
                 .sfh-bottom-item {
                     display: flex;
                     flex-direction: column;
                     align-items: center;
                     justify-content: center;
-                    gap: 2px;
+                    gap: 3px;
                     flex: 1;
-                    height: 80%;
+                    height: 52px;
                     background: none;
                     border: none;
                     cursor: pointer;
-                    color: #64748B;
+                    color: #94A3B8;
                     font-family: inherit;
                     border-radius: 16px;
-                    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                    padding: 0 4px;
+                    position: relative;
+                    transition: color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                    -webkit-tap-highlight-color: transparent;
+                    outline: none;
                 }
-                .sfh-bottom-item:hover, .sfh-bottom-item.sfh-bottom-active {
-                    color: var(--primary);
+                .sfh-bottom-item:hover {
+                    color: #3B82F6;
                 }
+
+                /* Active item */
                 .sfh-bottom-item.sfh-bottom-active {
-                    background: rgba(37, 99, 235, 0.08);
+                    color: #1D4ED8;
                 }
+
+                /* Icon wrapper — holds the pill glow on active */
+                .sfh-bottom-icon-wrap {
+                    position: relative;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 38px;
+                    height: 28px;
+                    border-radius: 10px;
+                    transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+                .sfh-bottom-item.sfh-bottom-active .sfh-bottom-icon-wrap {
+                    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(99, 102, 241, 0.12) 100%);
+                    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.18);
+                }
+
+                /* The SVG icon itself */
                 .sfh-bottom-icon {
-                    font-size: 1.25rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                     line-height: 1;
-                    transition: transform 0.2s ease;
+                    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
                 }
                 .sfh-bottom-item.sfh-bottom-active .sfh-bottom-icon {
-                    transform: scale(1.1);
+                    animation: sfhBounceIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
                 }
+                .sfh-bottom-item:not(.sfh-bottom-active):active .sfh-bottom-icon {
+                    transform: scale(0.88);
+                }
+
+                /* Label */
                 .sfh-bottom-label {
-                    font-size: 0.65rem;
+                    font-size: 0.62rem;
                     font-weight: 700;
-                    letter-spacing: 0.01em;
+                    letter-spacing: 0.02em;
+                    text-transform: uppercase;
+                    line-height: 1;
+                    transition: color 0.2s ease;
+                    white-space: nowrap;
+                }
+                .sfh-bottom-item.sfh-bottom-active .sfh-bottom-label {
+                    animation: sfhLabelIn 0.3s ease forwards;
+                    background: linear-gradient(135deg, #1D4ED8, #6366F1);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                }
+
+                /* Top accent line on active item */
+                .sfh-bottom-item.sfh-bottom-active::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    width: 28px;
+                    height: 2.5px;
+                    border-radius: 0 0 3px 3px;
+                    background: linear-gradient(90deg, #3B82F6, #6366F1);
+                    box-shadow: 0 0 8px rgba(99, 102, 241, 0.5);
                 }
 
                 @media (max-width: 768px) {
                     .sfh-desktop-nav { display: none; }
                     .sfh-hamburger { display: flex; }
-                    .sfh-bottom-nav { display: flex; }
+                    .sfh-bottom-nav { display: block; }
                     .sfh-header {
                         height: 84px !important;
                     }
