@@ -1,0 +1,27 @@
+{
+  "name": "JIT Permigo",
+  "short_name": "JIT Permigo",
+  "description": "Smart Campus Management Portal for Jeppiaar Institute of Technology — outpass management, subject tracking, and staff coordination.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b3b66",
+  "theme_color": "#0b3b66",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/jit permigo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/jit.webp",
+      "sizes": "192x192",
+      "type": "image/webp",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["education", "productivity"],
+  "lang": "en",
+  "scope": "/"
+}

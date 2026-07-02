@@ -3,12 +3,123 @@
 
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/webp" href="/jit permigo.png" />
+
+  <!-- ── Viewport & Theme ─────────────────────────────────────── -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <title>JIT PERMIGO</title>
+  <meta name="theme-color" content="#0b3b66" />
+  <meta name="color-scheme" content="light dark" />
+
+  <!-- ── Favicon & PWA Manifest ───────────────────────────────── -->
+  <link rel="icon" type="image/png" href="/jit permigo.png" />
+  <link rel="apple-touch-icon" href="/jit permigo.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+
+  <!-- ── Fallback SEO (overridden per-page by react-helmet-async) -->
+  <title>JIT Permigo — Smart Campus Management Portal</title>
+  <meta name="description" content="JIT Permigo is the official digital campus management portal of Jeppiaar Institute of Technology. Manage outpass requests, track subjects, coordinate staff, and access college services — all in one place." />
+  <meta name="keywords" content="JIT Permigo, Jeppiaar Institute of Technology, JIT college portal, student outpass management, campus management system, JIT student portal, JIT staff portal, JIT outpass, JIT Chennai" />
+  <meta name="author" content="Jeppiaar Institute of Technology" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <meta name="generator" content="Vite + React" />
+  <link rel="canonical" href="https://jit.college/" />
+
+  <!-- ── Open Graph (fallback) ────────────────────────────────── -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="JIT Permigo" />
+  <meta property="og:title" content="JIT Permigo — Smart Campus Management Portal" />
+  <meta property="og:description" content="JIT Permigo is the official digital campus management portal of Jeppiaar Institute of Technology. Manage outpass requests, track subjects, coordinate staff, and access college services — all in one place." />
+  <meta property="og:url" content="https://jit.college/" />
+  <meta property="og:image" content="https://jit.college/og-preview.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="JIT Permigo — Smart Campus Management Portal" />
+  <meta property="og:locale" content="en_IN" />
+
+  <!-- ── Twitter Card (fallback) ──────────────────────────────── -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="JIT Permigo — Smart Campus Management Portal" />
+  <meta name="twitter:description" content="JIT Permigo is the official digital campus management portal of Jeppiaar Institute of Technology." />
+  <meta name="twitter:image" content="https://jit.college/og-preview.png" />
+  <meta name="twitter:image:alt" content="JIT Permigo — Smart Campus Management Portal" />
+
+  <!-- ── Font Preconnect & Load ───────────────────────────────── -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- ── Structured Data: Organization ───────────────────────── -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Jeppiaar Institute of Technology",
+    "alternateName": "JIT",
+    "url": "https://jit.college",
+    "logo": "https://jit.college/jit%20permigo.png",
+    "description": "Jeppiaar Institute of Technology is an engineering college in Chennai, Tamil Nadu, India.",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Old Mahabalipuram Road, Semmancheri",
+      "addressLocality": "Chennai",
+      "addressRegion": "Tamil Nadu",
+      "postalCode": "600119",
+      "addressCountry": "IN"
+    },
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "contactType": "customer support",
+      "availableLanguage": ["English", "Tamil"]
+    },
+    "sameAs": [
+      "https://jit.ac.in"
+    ]
+  }
+  </script>
+
+  <!-- ── Structured Data: WebSite (enables Sitelinks Searchbox) ─ -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "JIT Permigo",
+    "url": "https://jit.college",
+    "description": "JIT Permigo — Smart Campus Management Portal for Jeppiaar Institute of Technology",
+    "publisher": {
+      "@type": "Organization",
+      "name": "Jeppiaar Institute of Technology"
+    },
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "https://jit.college/?q={search_term_string}"
+      },
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+
+  <!-- ── Structured Data: SoftwareApplication ────────────────── -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "JIT Permigo",
+    "operatingSystem": "Web",
+    "applicationCategory": "EducationApplication",
+    "description": "Digital campus management portal for JIT students, staff, faculty, wardens, and administrators. Outpass management, subject tracking, and attendance coordination.",
+    "url": "https://jit.college",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "INR"
+    },
+    "author": {
+      "@type": "Organization",
+      "name": "Jeppiaar Institute of Technology"
+    }
+  }
+  </script>
 </head>
 
 <body>

@@ -1,4 +1,5 @@
 import { createRoot } from 'react-dom/client'
+import { HelmetProvider } from 'react-helmet-async'
 import './index.css'
 import 'react-toastify/dist/ReactToastify.css';
 import './styles.css'
@@ -65,6 +66,7 @@ import OutpassAdmin from './pages/admin/OutpassAdmin'
 import AxiosInterceptor from './components/AxiosInterceptor'
 
 createRoot(document.getElementById('root')!).render(
+  <HelmetProvider>
   <BrowserRouter>
     <AxiosInterceptor />
     <Routes>
@@ -428,4 +430,5 @@ createRoot(document.getElementById('root')!).render(
       <Route path="*" element={<Login />} />
     </Routes>
   </BrowserRouter>
+  </HelmetProvider>
 )

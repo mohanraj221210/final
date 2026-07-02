@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Toast from '../../components/Toast';
 import axios from 'axios';
 import { toast, ToastContainer } from "react-toastify";
+import SEO from '../../components/SEO';
 
 /* ─────────────────────────────────────────────────────────────────────────────
    BACKGROUND CANVAS  — flowing light waves + floating dots (green/emerald tint)
@@ -213,6 +214,12 @@ const WatchmanLogin: React.FC = () => {
 
   return (
     <div className={`wm-root ${mounted ? 'wm-mounted' : ''} ${successAnim ? 'wm-success-zoom' : ''}`}>
+      <SEO
+        title="Security Login"
+        description="Watchman/Security portal login for JIT Permigo campus gate management."
+        canonical="/watchmanlogin"
+        noIndex
+      />
       <ToastContainer />
       {showToast && (
         <Toast message="Security login successful! Redirecting..." type="success" onClose={() => setShowToast(false)} />
