@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import SEO from "../../components/SEO";
 
 /* ─── Particle type ─── */
 interface Particle {
@@ -248,6 +249,12 @@ const AdminLogin: React.FC = () => {
   /* ═══ RENDER ═══ */
   return (
     <div className="al-root" onMouseMove={onMove} onMouseLeave={onLeave}>
+      <SEO
+        title="Admin Login"
+        description="Secure administrator access portal for JIT Permigo campus management system."
+        canonical="/admin-login"
+        noIndex
+      />
 
       {/* Canvas */}
       <canvas ref={canvasRef} className="al-canvas" />

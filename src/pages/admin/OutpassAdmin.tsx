@@ -3,6 +3,7 @@ import AdminLayout from './AdminLayout';
 import { adminService } from '../../services/adminService';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { Download } from 'lucide-react';
 
 interface Outpass {
     _id: string;
@@ -49,6 +50,14 @@ const OutpassAdmin: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [isLastPage, setIsLastPage] = useState(true);
     const [statsData, setStatsData] = useState<StatEntry[]>([]);
+
+    // Export Modal States
+    const [showExportModal, setShowExportModal] = useState(false);
+    const [exportFilterType, setExportFilterType] = useState('All');
+    const [exportFilterTime, setExportFilterTime] = useState('All');
+    const [exportFilterStatus, setExportFilterStatus] = useState('All');
+    const [exportSearchTerm, setExportSearchTerm] = useState('');
+    const [exportLoading, setExportLoading] = useState(false);
 
     // Fetch stats on mount
     useEffect(() => {
@@ -117,14 +126,15 @@ const OutpassAdmin: React.FC = () => {
     const grandTotal = totalPending + totalRejected + totalApproved;
 
     // Download CSV / Excel from API
-    const handleDownload = async () => {
+    const triggerExport = async () => {
+        setExportLoading(true);
         try {
             toast.info('Requesting outpass report from server...');
             const response = await adminService.exportOutpassReport({
-                outpasstype: filterType,
-                status: filterStatus,
-                appliedDate: filterTime,
-                search: searchTerm
+                outpasstype: exportFilterType,
+                status: exportFilterStatus,
+                appliedDate: exportFilterTime,
+                search: exportSearchTerm
             });
 
             const contentType = response.headers['content-type'] || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
@@ -154,9 +164,12 @@ const OutpassAdmin: React.FC = () => {
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
             toast.success('Report exported successfully!');
+            setShowExportModal(false);
         } catch (error) {
             console.error('Export failed:', error);
             toast.error('Failed to export outpass report');
+        } finally {
+            setExportLoading(false);
         }
     };
 
@@ -316,10 +329,10 @@ const OutpassAdmin: React.FC = () => {
                     )}
                     {/* Download */}
                     <button
-                        onClick={handleDownload}
+                        onClick={() => setShowExportModal(true)}
                         style={{ padding: '10px 18px', borderRadius: '10px', border: 'none', background: 'linear-gradient(135deg, #6366f1, #4f46e5)', color: 'white', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', boxShadow: '0 2px 8px rgba(99,102,241,0.3)' }}
                     >
-                        📥 Export CSV
+                        <Download size={16} /> Export Report
                     </button>
                 </div>
 
@@ -415,6 +428,202 @@ const OutpassAdmin: React.FC = () => {
                     </button>
                 </div>
             </div>
+
+            {showExportModal && (
+                <div className="custom-modal-overlay">
+                    <div className="custom-modal-content">
+                        <div className="custom-modal-header">
+                            <h3>Export Outpass Report</h3>
+                            <button className="close-btn" onClick={() => setShowExportModal(false)}>✕</button>
+                        </div>
+                        <div className="custom-modal-body">
+                            <p className="modal-desc">Configure the filters below before generating the report.</p>
+                            
+                            <div className="modal-field">
+                                <label>Outpass Type</label>
+                                <select 
+                                    value={exportFilterType} 
+                                    onChange={e => setExportFilterType(e.target.value)}
+                                >
+                                    <option value="All">All Types</option>
+                                    <option value="OD">OD</option>
+                                    <option value="Home">Home Pass</option>
+                                    <option value="Outing">Outing</option>
+                                    <option value="Emergency">Emergency</option>
+                                </select>
+                            </div>
+
+                            <div className="modal-field">
+                                <label>Timeline / Applied Date</label>
+                                <select 
+                                    value={exportFilterTime} 
+                                    onChange={e => setExportFilterTime(e.target.value)}
+                                >
+                                    <option value="All">All Time</option>
+                                    <option value="Today">Today</option>
+                                    <option value="This Week">This Week</option>
+                                    <option value="This Month">This Month</option>
+                                </select>
+                            </div>
+
+                            <div className="modal-field">
+                                <label>Status</label>
+                                <select 
+                                    value={exportFilterStatus} 
+                                    onChange={e => setExportFilterStatus(e.target.value)}
+                                >
+                                    <option value="All">All Statuses</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="rejected">Rejected</option>
+                                </select>
+                            </div>
+
+                            <div className="modal-field">
+                                <label>Search (Name / Register Number)</label>
+                                <input 
+                                    type="text" 
+                                    placeholder="Search by student name or register number..." 
+                                    value={exportSearchTerm}
+                                    onChange={e => setExportSearchTerm(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                        <div className="custom-modal-footer">
+                            <button className="cancel-btn" onClick={() => setShowExportModal(false)} disabled={exportLoading}>Cancel</button>
+                            <button className="confirm-btn" onClick={triggerExport} disabled={exportLoading}>
+                                {exportLoading ? 'Generating...' : 'Generate Report'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <style>{`
+                /* Custom Modal Styles */
+                .custom-modal-overlay {
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(15, 23, 42, 0.6);
+                    backdrop-filter: blur(4px);
+                    z-index: 9999;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    animation: modalFadeIn 0.2s ease-out;
+                }
+                .custom-modal-content {
+                    background: white;
+                    border-radius: 16px;
+                    width: min(90vw, 480px);
+                    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+                    overflow: hidden;
+                    animation: modalScaleIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+                }
+                @keyframes modalFadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes modalScaleIn {
+                    from { transform: scale(0.95); opacity: 0; }
+                    to { transform: scale(1); opacity: 1; }
+                }
+                .custom-modal-header {
+                    padding: 16px 20px;
+                    background: var(--primary);
+                    color: white;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                .custom-modal-header h3 {
+                    margin: 0;
+                    font-size: 1.1rem;
+                    font-weight: 650;
+                    color: white;
+                }
+                .custom-modal-header .close-btn {
+                    background: transparent;
+                    border: none;
+                    color: white;
+                    font-size: 1.1rem;
+                    cursor: pointer;
+                    opacity: 0.8;
+                    transition: opacity 0.2s;
+                }
+                .custom-modal-header .close-btn:hover {
+                    opacity: 1;
+                }
+                .custom-modal-body {
+                    padding: 20px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                }
+                .modal-desc {
+                    margin: 0 0 4px 0;
+                    color: var(--text-muted);
+                    font-size: 0.85rem;
+                }
+                .modal-field {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 6px;
+                }
+                .modal-field label {
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                    color: var(--text-main);
+                    text-align: left;
+                }
+                .modal-field select, .modal-field input {
+                    padding: 10px 12px;
+                    border: 1px solid var(--border-light);
+                    border-radius: 8px;
+                    font-size: 0.9rem;
+                    background: var(--bg-app);
+                    color: var(--text-main);
+                    outline: none;
+                    box-sizing: border-box;
+                    width: 100%;
+                }
+                .modal-field select:focus, .modal-field input:focus {
+                    border-color: var(--primary);
+                    background: white;
+                }
+                .custom-modal-footer {
+                    padding: 16px 20px;
+                    border-top: 1px solid var(--border-light);
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 12px;
+                    background: var(--bg-app);
+                }
+                .custom-modal-footer button {
+                    padding: 8px 16px;
+                    border-radius: 6px;
+                    font-size: 0.85rem;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .custom-modal-footer .cancel-btn {
+                    background: white;
+                    border: 1px solid var(--border-light);
+                    color: var(--text-main);
+                }
+                .custom-modal-footer .cancel-btn:hover {
+                    background: var(--bg-app);
+                }
+                .custom-modal-footer .confirm-btn {
+                    background: var(--primary);
+                    border: 1px solid var(--primary-hover);
+                    color: white;
+                }
+                .custom-modal-footer .confirm-btn:hover {
+                    background: var(--primary-hover);
+                }
+            `}</style>
         </AdminLayout>
     );
 };

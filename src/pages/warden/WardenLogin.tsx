@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Toast from '../../components/Toast';
 import axios from 'axios';
 import { toast, ToastContainer } from "react-toastify";
+import SEO from '../../components/SEO';
 
 /* ─────────────────────────────────────────────────────────────────────────────
    BACKGROUND CANVAS  — flowing light waves + floating dots (warden teal theme)
@@ -230,6 +231,12 @@ const Wardenlogin: React.FC = () => {
 
   return (
     <div className={`wlp-root ${mounted ? 'wlp-mounted' : ''} ${successAnim ? 'wlp-success-zoom' : ''}`}>
+      <SEO
+        title="Warden Login"
+        description="Warden portal login for JIT Permigo hostel management system."
+        canonical="/wardenlogin"
+        noIndex
+      />
       <ToastContainer />
       {showToast && (
         <Toast

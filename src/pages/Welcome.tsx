@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import SEO from '../components/SEO';
 
 /* ─── Intersection Observer Scroll Reveal ─── */
 function useScrollReveal() {
@@ -267,6 +268,12 @@ const Welcome: React.FC = () => {
 
   return (
     <div className="jit-root" ref={pageRef}>
+      <SEO
+        title="JIT Permigo — Smart Campus Management Portal"
+        description="JIT Permigo is the official digital campus management system of Jeppiaar Institute of Technology, Chennai. Manage outpass requests, track subjects, coordinate staff, and access all campus services in one place."
+        keywords="JIT Permigo, Jeppiaar Institute of Technology, JIT college portal, student outpass management, campus management system, JIT student portal, JIT staff portal, digital outpass, JIT Chennai, JIT campus"
+        canonical="/"
+      />
       <div className={`jit-page${mounted ? ' jit-page-in' : ''}`}>
 
         {/* ══════════ NAV ══════════ */}

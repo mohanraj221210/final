@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Toast from '../components/Toast';
 import axios from 'axios';
 import { toast, ToastContainer } from "react-toastify";
+import SEO from '../components/SEO';
 
 interface LoginProps {
   initialType?: 'student' | 'staff';
@@ -225,6 +226,12 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
 
   return (
     <div className={`lp-root ${mounted ? 'lp-mounted' : ''} ${successAnim ? 'lp-success-zoom' : ''}`}>
+      <SEO
+        title="Student & Staff Login"
+        description="Sign in to your JIT Permigo student or staff portal account. Access your academic dashboard, outpass management, and campus services."
+        canonical="/login"
+        noIndex
+      />
       <ToastContainer />
       {showToast && (
         <Toast message="Login successful! Redirecting..." type="success" onClose={() => setShowToast(false)} />
