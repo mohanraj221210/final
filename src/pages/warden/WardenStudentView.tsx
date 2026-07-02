@@ -85,7 +85,7 @@ const WardenStudentView: React.FC = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `${import.meta.env.VITE_API_URL}/warden/outpass/update`,
+        `${import.meta.env.VITE_API_URL}/warden/outpass/reject/${id}`,
         {
           outpassId: id,
           wardenapprovalstatus: modalType,

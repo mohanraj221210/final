@@ -10,7 +10,7 @@ import type {
     AdminProfile
 } from '../types/admin';
 
-const API_URL = "https://api.jit.college";
+const API_URL = "http://localhost:8000";
 
 // Create axios instance with interceptor for token
 const api = axios.create({
@@ -269,7 +269,7 @@ export const adminService = {
         search?: string;
     }) => {
         const params = new URLSearchParams();
-        
+
         // Map outpass type filter (as plain string, not array)
         const type = filters?.outpasstype;
         if (type && type !== 'All' && type.trim() !== '') {

@@ -14,7 +14,7 @@ export const API_ENDPOINTS = {
     }
 };
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = 'http://localhost:8000';
 
 // Create Axios client with authentication interceptor
 const api = axios.create({
