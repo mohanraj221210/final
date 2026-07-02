@@ -1036,6 +1036,7 @@ const StaffProfile: React.FC = () => {
                     transition: all 0.2s;
                     background: #F8FAFC;
                     font-weight: 500;
+                    color: #0F172A;
                 }
                 .edit-input:focus {
                     outline: none;

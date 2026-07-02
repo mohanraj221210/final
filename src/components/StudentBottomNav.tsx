@@ -40,6 +40,13 @@ const StudentBottomNav: React.FC<StudentBottomNavProps> = ({ activeTab }) => {
     }, []);
 
     const handleNavigation = (path: string) => {
+        if (path === '/subjects') {
+            toast.info("enabled in future updates", {
+                position: "top-center",
+                autoClose: 3000,
+            });
+            return;
+        }
         const restrictedPaths = ['/staffs', '/student-notice', '/subjects', '/outpass', '/new-outpass'];
         if (restrictedPaths.includes(path)) {
             if (isProfileComplete(user)) {
@@ -142,6 +149,7 @@ const StudentBottomNav: React.FC<StudentBottomNavProps> = ({ activeTab }) => {
                         className={`pb-nav-btn ${isTabActive ? 'active' : ''}`}
                         onClick={() => handleNavigation(item.path)}
                         aria-label={item.label}
+                        style={item.path === '/subjects' ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
                     >
                         <div className="pb-nav-icon">{item.icon}</div>
                         <span className="pb-nav-lbl">{item.label}</span>

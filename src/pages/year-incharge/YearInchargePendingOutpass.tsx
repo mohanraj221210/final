@@ -1,14 +1,14 @@
-﻿import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import YearInchargeNav from "../../components/YearInchargeNav";
 import { YearInchargeService, type MappedOutpass } from "../../services/yearInchargeService";
 
 type ApiFilter = 'total' | 'today' | 'weekly' | 'monthly';
 const FILTER_OPTIONS: { value: ApiFilter; label: string; icon: string }[] = [
-    { value: 'total', label: 'Total', icon: 'ðŸ“Š' },
-    { value: 'today', label: 'Today', icon: 'â˜€ï¸' },
-    { value: 'weekly', label: 'Weekly', icon: 'ðŸ“…' },
-    { value: 'monthly', label: 'Monthly', icon: 'ðŸ—“ï¸' },
+    { value: 'total', label: 'Total', icon: '📊' },
+    { value: 'today', label: 'Today', icon: '☀️' },
+    { value: 'weekly', label: 'Weekly', icon: '📅' },
+    { value: 'monthly', label: 'Monthly', icon: '🗓️' },
 ];
 
 const YearInchargePendingOutpass: React.FC = () => {
@@ -97,23 +97,25 @@ const YearInchargePendingOutpass: React.FC = () => {
         fetchStats(apiFilter);
     }, [apiFilter, fetchStats]);
 
-    // Re-fetch when page changes
-    useEffect(() => {
-        fetchPendingOutpasses(currentPage, apiFilter, searchTerm);
-    }, [currentPage]);
-
-    // Re-fetch when filters change â€” reset to page 1
+    // Reset page to 1 when filters or search change
     const isFirstRender = useRef(true);
     useEffect(() => {
-        if (isFirstRender.current) { isFirstRender.current = false; return; }
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+        setCurrentPage(1);
+    }, [apiFilter, searchTerm]);
 
+    // Unified fetch effect for outpasses
+    useEffect(() => {
         const handler = setTimeout(() => {
-            setCurrentPage(1);
-            fetchPendingOutpasses(1, apiFilter, searchTerm);
-        }, 500);
+            fetchPendingOutpasses(currentPage, apiFilter, searchTerm);
+        }, currentPage === 1 ? 500 : 0);
 
         return () => clearTimeout(handler);
-    }, [apiFilter, searchTerm]);
+    }, [currentPage, apiFilter, searchTerm]);
+
 
     const fetchPendingOutpasses = async (
         page: number = currentPage,
@@ -205,7 +207,7 @@ const YearInchargePendingOutpass: React.FC = () => {
             <YearInchargeNav />
             <div className="po-content">
 
-                {/* â”€â”€ Hero Header â”€â”€ */}
+                {/* ── Hero Header ── */}
                 <div className="po-hero">
                     <div className="po-hero-left">
                         <button className="po-back-btn" onClick={() => navigate('/year-incharge-dashboard')}>
@@ -215,7 +217,7 @@ const YearInchargePendingOutpass: React.FC = () => {
                             Back to Dashboard
                         </button>
                         <div className="po-title-group">
-                            <div className="po-title-badge">ðŸ“‹ Pending Review</div>
+                            <div className="po-title-badge">📋 Pending Review</div>
                             <h1 className="po-title">Pending Approvals</h1>
                             <p className="po-subtitle">Review and act on student outpass requests awaiting your decision</p>
                         </div>
@@ -230,7 +232,7 @@ const YearInchargePendingOutpass: React.FC = () => {
                                 {emergencyCount > 0 && (
                                     <div className="po-hero-stat po-hero-stat-emergency">
                                         <span className="po-hero-stat-num">{emergencyCount}</span>
-                                        <span className="po-hero-stat-label">ðŸš¨ Critical</span>
+                                        <span className="po-hero-stat-label">🚨 Critical</span>
                                     </div>
                                 )}
                             </>
@@ -238,7 +240,7 @@ const YearInchargePendingOutpass: React.FC = () => {
                     </div>
                 </div>
 
-                {/* â”€â”€ Stats Dashboard â”€â”€ */}
+                {/* ── Stats Dashboard ── */}
                 <div className="po-stats-dashboard">
                     {/* Approval Overview */}
                     <div className="po-stats-card">
@@ -254,15 +256,15 @@ const YearInchargePendingOutpass: React.FC = () => {
                         <div className="po-stats-grid">
                             <div className="po-stat-item po-stat-pending">
                                 <span className="po-stat-val">{statsLoading ? <span className="po-stat-skeleton" /> : (stats?.pending ?? 0)}</span>
-                                <span className="po-stat-label">â³ Pending</span>
+                                <span className="po-stat-label">⏳ Pending</span>
                             </div>
                             <div className="po-stat-item po-stat-approved">
                                 <span className="po-stat-val">{statsLoading ? <span className="po-stat-skeleton" /> : (stats?.approved ?? 0)}</span>
-                                <span className="po-stat-label">âœ… Approved</span>
+                                <span className="po-stat-label">✅ Approved</span>
                             </div>
                             <div className="po-stat-item po-stat-rejected">
                                 <span className="po-stat-val">{statsLoading ? <span className="po-stat-skeleton" /> : (stats?.rejected ?? 0)}</span>
-                                <span className="po-stat-label">âŒ Rejected</span>
+                                <span className="po-stat-label">❌ Rejected</span>
                             </div>
                         </div>
                     </div>
@@ -281,25 +283,25 @@ const YearInchargePendingOutpass: React.FC = () => {
                         <div className="po-stats-grid po-stats-grid-4">
                             <div className="po-stat-item po-stat-home">
                                 <span className="po-stat-val">{statsLoading ? <span className="po-stat-skeleton" /> : getTypeCount('Home')}</span>
-                                <span className="po-stat-label">ðŸ  Home</span>
+                                <span className="po-stat-label">🏠 Home</span>
                             </div>
                             <div className="po-stat-item po-stat-outing">
                                 <span className="po-stat-val">{statsLoading ? <span className="po-stat-skeleton" /> : getTypeCount('Outing')}</span>
-                                <span className="po-stat-label">ðŸš¶ Outing</span>
+                                <span className="po-stat-label">🚶 Outing</span>
                             </div>
                             <div className="po-stat-item po-stat-emerg">
                                 <span className="po-stat-val">{statsLoading ? <span className="po-stat-skeleton" /> : getTypeCount('Emergency')}</span>
-                                <span className="po-stat-label">ðŸš¨ Emergency</span>
+                                <span className="po-stat-label">🚨 Emergency</span>
                             </div>
                             <div className="po-stat-item po-stat-od">
                                 <span className="po-stat-val">{statsLoading ? <span className="po-stat-skeleton" /> : getTypeCount('OD')}</span>
-                                <span className="po-stat-label">ðŸ“‹ OD</span>
+                                <span className="po-stat-label">📋 OD</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* â”€â”€ Filter & Search Bar â”€â”€ */}
+                {/* ── Filter & Search Bar ── */}
                 <div className="po-filter-bar">
                     {/* API Filter Pills */}
                     <div className="po-pill-group">
@@ -345,7 +347,7 @@ const YearInchargePendingOutpass: React.FC = () => {
                                 className="po-search-input"
                             />
                             {searchTerm && (
-                                <button className="po-search-clear" onClick={() => setSearchTerm('')}>âœ•</button>
+                                <button className="po-search-clear" onClick={() => setSearchTerm('')}>✖</button>
                             )}
                         </div>
 
@@ -377,7 +379,7 @@ const YearInchargePendingOutpass: React.FC = () => {
                     </div>
                 </div>
 
-                {/* â”€â”€ Card List â”€â”€ */}
+                {/* ── Card List ── */}
                 <div className="po-list">
                     {loading ? (
                         [1, 2, 3, 4, 5].map((idx) => (
@@ -387,23 +389,23 @@ const YearInchargePendingOutpass: React.FC = () => {
                                     <div className="po-skeleton" style={{width:'55%', height:22}} />
                                     <div className="po-skeleton" style={{width:'80%', height:15, marginTop:6}} />
                                 </div>
-                                <div className="po-skeleton" style={{width:90, height:30, borderRadius:20}} />
+                                <div className="po-card-right"></div>
                             </div>
                         ))
                     ) : error ? (
                         <div className="po-state-card">
-                            <div className="po-state-icon">âš ï¸</div>
+                            <div className="po-state-icon">⚠️</div>
                             <p className="po-state-title">{error}</p>
                             <button
                                 onClick={() => fetchPendingOutpasses(currentPage, apiFilter)}
                                 className="po-retry-btn"
                             >
-                                ðŸ”„ Try Again
+                                🔄 Try Again
                             </button>
                         </div>
                     ) : filteredPending.length === 0 ? (
                         <div className="po-state-card">
-                            <div className="po-state-icon">âœ…</div>
+                            <div className="po-state-icon">✅</div>
                             <p className="po-state-title">All Clear!</p>
                             <p className="po-state-sub">No pending approvals for the selected filters.</p>
                         </div>
@@ -437,7 +439,7 @@ const YearInchargePendingOutpass: React.FC = () => {
                                 >
                                     {isEmergency && <div className="po-emergency-pulse" />}
 
-                                    {/* Left â€” Registration Badge */}
+                                    {/* Left ── Registration Badge */}
                                     <div className="po-card-left">
                                         <div className="po-reg-badge">
                                             <span className="po-reg-label">Reg No.</span>
@@ -449,32 +451,32 @@ const YearInchargePendingOutpass: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {/* Middle â€” Student Info */}
+                                    {/* Middle ── Student Info */}
                                     <div className="po-card-body">
                                         <div className="po-card-name-row">
                                             <span className="po-student-name">
                                                 {typeof studentDetails?.name === 'string' ? studentDetails.name : 'Unknown'}
                                             </span>
                                             {isEmergency && (
-                                                <span className="po-emergency-tag">ðŸš¨ EMERGENCY</span>
+                                                <span className="po-emergency-tag">🚨 EMERGENCY</span>
                                             )}
                                         </div>
                                         <div className="po-card-meta">
-                                            {dept && <span className="po-meta-chip">ðŸ›ï¸ {dept}</span>}
-                                            {year && <span className="po-meta-chip">ðŸŽ“ Year {year}</span>}
+                                            {dept && <span className="po-meta-chip">🏫 {dept}</span>}
+                                            {year && <span className="po-meta-chip">🎓 Year {year}</span>}
                                             <span className={`po-type-chip ${getTypeColor(outpassType)}`}>
                                                 {outpassType}
                                             </span>
                                             <span className="po-meta-chip">
-                                                ðŸ“… {new Date(item.fromDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                📅 {new Date(item.fromDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                                             </span>
                                         </div>
                                         {reason && (
-                                            <p className="po-card-reason">{reason.length > 90 ? reason.slice(0, 90) + 'â€¦' : reason}</p>
+                                            <p className="po-card-reason">{reason.length > 90 ? reason.slice(0, 90) + '…' : reason}</p>
                                         )}
                                     </div>
 
-                                    {/* Right â€” Actions */}
+                                    {/* Right ── Actions */}
                                     <div className="po-card-right">
                                         <span className="po-pending-badge">
                                             <span className="po-pending-dot" />
@@ -488,7 +490,7 @@ const YearInchargePendingOutpass: React.FC = () => {
                                                     handleViewDocument((item.proof || item.document || item.file)!);
                                                 }}
                                             >
-                                                ðŸ“„ Doc
+                                                📄 Doc
                                             </button>
                                         )}
                                         <span className="po-view-arrow">
@@ -503,7 +505,7 @@ const YearInchargePendingOutpass: React.FC = () => {
                     )}
                 </div>
 
-                {/* â”€â”€ Pagination â”€â”€ */}
+                {/* ── Pagination ── */}
                 {pendingOutpasses.length > 0 && (
                     <div className="po-pagination">
                         <button
@@ -511,20 +513,20 @@ const YearInchargePendingOutpass: React.FC = () => {
                             onClick={() => setCurrentPage(1)}
                             disabled={currentPage === 1}
                         >
-                            Â« First
+                            « First
                         </button>
                         <button
                             className="po-page-btn"
                             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                             disabled={currentPage === 1}
                         >
-                            â€¹ Prev
+                            ‹ Prev
                         </button>
 
                         <div className="po-page-numbers">
                             {getPageNumbers().map((pNum, idx) => {
                                 if (pNum === '...') {
-                                    return <span key={`dots-${idx}`} className="po-page-dots">Â·Â·Â·</span>;
+                                    return <span key={`dots-${idx}`} className="po-page-dots">...</span>;
                                 }
                                 const isActive = String(currentPage) === String(pNum);
                                 return (
@@ -544,25 +546,25 @@ const YearInchargePendingOutpass: React.FC = () => {
                             onClick={() => setCurrentPage(prev => isLastPage ? prev : prev + 1)}
                             disabled={isLastPage}
                         >
-                            Next â€º
+                            Next ›
                         </button>
                         <button
                             className="po-page-btn"
                             onClick={() => setCurrentPage(totalPages)}
                             disabled={isLastPage}
                         >
-                            Last Â»
+                            Last »
                         </button>
                     </div>
                 )}
 
-                {/* â”€â”€ Document Modal â”€â”€ */}
+                {/* ── Document Modal ── */}
                 {showDocumentModal && documentUrl && (
                     <div className="po-modal-overlay" onClick={() => setShowDocumentModal(false)}>
                         <div className="po-modal" onClick={(e) => e.stopPropagation()}>
                             <div className="po-modal-header">
                                 <div className="po-modal-title-group">
-                                    <span className="po-modal-icon">ðŸ“„</span>
+                                    <span className="po-modal-icon">📄</span>
                                     <h3 className="po-modal-title">Supporting Document</h3>
                                 </div>
                                 <button

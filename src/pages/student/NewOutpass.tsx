@@ -28,14 +28,13 @@ const Outpass: React.FC = () => {
 
     const now = new Date();
     const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    // Portal open: 6:00 AM to 7:30 PM (19:30)
-    const isPortalOpen = currentHour >= 6 && (currentHour < 19 || (currentHour === 19 && currentMinute <= 30));
+    // Portal open: 6:00 AM to 9:00 PM (21:00)
+    const isPortalOpen = currentHour >= 6 && currentHour < 21;
     const isEmergency = formData.outpasstype === 'Emergency';
 
     const portalClosesIn = (): string => {
         const close = new Date();
-        close.setHours(19, 30, 0, 0);
+        close.setHours(21, 0, 0, 0);
         const diff = close.getTime() - now.getTime();
         if (diff <= 0) return '';
         const hrs = Math.floor(diff / 3600000);
@@ -169,7 +168,7 @@ const Outpass: React.FC = () => {
         setIsSubmitting(true);
 
         if (!isEmergency && !isPortalOpen) {
-            toast.error("Portal is open from 6:00 AM to 7:30 PM only.");
+            toast.error("Portal is open from 6:00 AM to 9:00 PM only.");
             setIsSubmitting(false);
             return;
         }
@@ -383,7 +382,7 @@ const Outpass: React.FC = () => {
                                     {/* Portal hours info */}
                                     <div className="pb-info-strip">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                                        <span>Portal Hours: <strong>6:00 AM – 7:30 PM</strong> daily · Return must be by <strong>6 PM</strong></span>
+                                        <span>Portal Hours: <strong>6:00 AM – 9:00 PM</strong> daily · Return must be by <strong>6 PM</strong></span>
                                     </div>
 
                                     <div className="pb-grid-2" style={{ marginTop: '20px' }}>
@@ -630,7 +629,7 @@ const Outpass: React.FC = () => {
                     <div className={`pb-mob-portal-status ${isPortalOpen ? 'pb-portal-open' : 'pb-portal-closed'} pb-animate-stagger-2`}>
                         <span className={`pb-mob-portal-dot ${isPortalOpen ? 'open' : 'closed'}`} />
                         {isPortalOpen ? (
-                            <span>Portal <strong>Open</strong> · Closes 7:30 PM · <strong>{portalClosesIn()}</strong></span>
+                            <span>Portal <strong>Open</strong> · Closes 9:00 PM · <strong>{portalClosesIn()}</strong></span>
                         ) : (
                             <span>Portal <strong>Closed</strong> · Opens at 6:00 AM daily</span>
                         )}
@@ -670,7 +669,7 @@ const Outpass: React.FC = () => {
                             )}
 
                             <div className="pb-mob-info-strip">
-                                🕐 Portal: <strong>6:00 AM – 7:30 PM</strong> · Return by <strong>6:00 PM</strong>
+                                🕐 Portal: <strong>6:00 AM – 9:00 PM</strong> · Return by <strong>6:00 PM</strong>
                             </div>
 
                             <h3 className="pb-mob-form-section-title" style={{ marginTop: 20 }}>Schedule</h3>

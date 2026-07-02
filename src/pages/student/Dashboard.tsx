@@ -137,6 +137,13 @@ const Dashboard: React.FC = () => {
     }, []);
 
     const handleNavigation = (path: string) => {
+        if (path === '/subjects') {
+            toast.info("enabled in future updates", {
+                position: "top-center",
+                autoClose: 3000,
+            });
+            return;
+        }
         const restrictedPaths = ['/staffs', '/student-notice', '/subjects', '/outpass', '/new-outpass'];
         if (restrictedPaths.includes(path) && !isProfileComplete(user)) {
             toast.warn("Complete your profile to enable " + path.replace('/', ''), {
@@ -336,6 +343,7 @@ const Dashboard: React.FC = () => {
                                     key={action.path}
                                     className={`pb-action-card ${navigatingPath === action.path ? 'navigating' : ''}`}
                                     onClick={() => handleNavigation(action.path)}
+                                    style={action.path === '/subjects' ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
                                 >
                                     <div className="pb-action-icon">{action.icon}</div>
                                     <span className="pb-action-label" style={{ whiteSpace: 'pre-line' }}>{action.label}</span>
@@ -778,7 +786,7 @@ const Dashboard: React.FC = () => {
                         position: absolute;
                         top: 14px; right: 14px;
                         background: rgba(59,130,246,0.07);
-                        border: 1px solid rgba(59,130,246,0.12);
+                        border: 1px solid rgba(255, 30, 0, 0.71);
                         border-radius: 999px;
                         padding: 5px 10px;
                         font-size: 0.75rem;

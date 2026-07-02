@@ -59,6 +59,7 @@ export interface MappedOutpass {
         _id: string;
         name: string;
         contactNumber?: string;
+        status?: string;
     };
     yearincharge?: {
         status: string;
@@ -96,6 +97,7 @@ export interface MappedOutpass {
         _id: string;
         name: string;
         contactNumber?: string;
+        status?: string;
     };
     staffapprovalstatus?: string;
     staffapprovedAt?: string;
@@ -185,8 +187,8 @@ export function mapOutpassResponse(o: any): MappedOutpass {
         email: rawStudent.email,
     };
 
-    const staffapprovalstatus = o.staffapprovalstatus || (o.staff || o.staffid ? 'approved' : 'pending');
-    const staffapprovedAt = o.staffapprovedAt || o.staff?.actionAt || o.createdAt;
+    const staffapprovalstatus = o.staffapprovalstatus || o.staff?.status || o.staffid?.status || 'pending';
+    const staffapprovedAt = o.staffapprovedAt || o.staff?.actionAt || (staffapprovalstatus === 'approved' ? o.createdAt : undefined);
     const yearinchargeapprovalstatus = o.yearinchargeapprovalstatus || o.yearincharge?.status || o.status || 'pending';
     const yearinchargeapprovedAt = o.yearinchargeapprovedAt || o.yearincharge?.actionAt || o.approvedAt || o.rejectedAt;
     const yearinchargeremarks = o.yearinchargeremarks || o.yearincharge?.remarks || o.remarks || '';
@@ -197,6 +199,7 @@ export function mapOutpassResponse(o: any): MappedOutpass {
         _id: o.staff?._id || o.staffid?._id || o.staffid || '',
         name: o.staff?.name || o.staffid?.name || 'N/A',
         contactNumber: o.staff?.contactNumber || o.staffid?.contactNumber || o.staffid?.phone || 'N/A',
+        status: o.staff?.status || o.staffid?.status || o.staffapprovalstatus || 'pending',
     } : undefined;
 
     return {
