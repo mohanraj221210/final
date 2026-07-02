@@ -10,7 +10,11 @@ import type {
     AdminProfile
 } from '../types/admin';
 
+<<<<<<< HEAD
 const API_URL = "https://api.jit.college";
+=======
+const API_URL = import.meta.env.VITE_API_URL;
+>>>>>>> 070e71fd6b0e9fac36dc6a93b6f8241b7e36fdae
 
 // Create axios instance with interceptor for token
 const api = axios.create({
