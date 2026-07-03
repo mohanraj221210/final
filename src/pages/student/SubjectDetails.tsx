@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Toast from '../../components/Toast';
 import { SUBJECTS_DATA, UNITS_DATA, QUESTION_BANKS_DATA } from '../../data/sampleData';
+
 import StudentHeader from '../../components/StudentHeader';
 import StudentBottomNav from '../../components/StudentBottomNav';
 
@@ -18,18 +19,30 @@ const SubjectDetails: React.FC = () => {
 
     if (!subject) {
         return (
-            <div className="student-page subject-not-found-page">
+            <div className="pb-subj-details-page pb-not-found-state">
                 <StudentHeader />
-                <div className="content-wrapper">
-                    <div className="empty-state-card card" style={{ marginTop: '40px' }}>
-                        <span className="empty-state-icon">🔍</span>
-                        <h3>Subject not found</h3>
-                        <p>The academic subject details could not be loaded. Please return to the directory.</p>
-                        <button onClick={() => navigate('/subjects')} className="btn btn-primary">
-                            ← Back to Subjects
-                        </button>
+                <main className="student-content">
+                    <div className="content-wrapper">
+                        <div className="pb-empty-state-card pb-animate-enter">
+                            <div className="pb-empty-icon-wrap">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="11" cy="11" r="8" />
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                </svg>
+                            </div>
+                            <h3>Subject not found</h3>
+                            <p>The academic subject details could not be loaded. Please return to the subjects catalog.</p>
+                            <button onClick={() => navigate('/subjects')} className="pb-btn-primary">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}>
+                                    <line x1="19" y1="12" x2="5" y2="12" />
+                                    <polyline points="12 19 5 12 12 5" />
+                                </svg>
+                                Back to Subjects
+                            </button>
+                        </div>
                     </div>
-                </div>
+                </main>
+                <StudentBottomNav activeTab="subjects" />
             </div>
         );
     }
@@ -40,635 +53,671 @@ const SubjectDetails: React.FC = () => {
     };
 
     return (
-        <div className="student-page academic-subject-details animate-page-enter">
-
-            {/* ── DESKTOP VIEW ── */}
-            <div className="lux-desktop-view">
+        <div className="pb-subj-details-page pb-animate-enter">
             <StudentHeader />
+            <main className="student-content">
+                {showToast && (
+                    <Toast
+                        message={toastMessage}
+                        type="success"
+                        onClose={() => setShowToast(false)}
+                    />
+                )}
 
-            {showToast && (
-                <Toast
-                    message={toastMessage}
-                    type="success"
-                    onClose={() => setShowToast(false)}
-                />
-            )}
-
-            <div className="content-wrapper">
-                {/* Back button */}
-                <div className="back-link-wrapper" style={{ marginBottom: '24px' }}>
-                    <button onClick={() => navigate('/subjects')} className="btn-back">
-                        <span className="icon">←</span> Back to Subjects
-                    </button>
-                </div>
-
-                {/* Hero Header Banner */}
-                <div className="subject-hero-card card animate-stagger-1">
-                    <div className="hero-text-content">
-                        <span className="badge badge-purple">Semester {subject.semester}</span>
-                        <h1 className="subject-full-title">{subject.name}</h1>
-                        <p className="subject-code-subtitle">{subject.code || 'Code: N/A'} • {subject.type === 'laboratory' ? 'Laboratory Course' : 'Theory Course'}</p>
+                <div className="content-wrapper">
+                    {/* Back link */}
+                    <div className="pb-back-link-wrapper pb-animate-stagger-1">
+                        <button onClick={() => navigate('/subjects')} className="pb-btn-back">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="19" y1="12" x2="5" y2="12" />
+                                <polyline points="12 19 5 12 12 5" />
+                            </svg>
+                            Back to Subjects
+                        </button>
                     </div>
-                </div>
 
-                {/* Details layout grid */}
-                <div className="details-layout-grid">
-                    
-                    {/* Left Column: Study Units / Lab Manuals */}
-                    <div className="units-main-col animate-stagger-2">
-                        <h2 className="section-title">
-                            {subject.type === 'laboratory' ? '🔬 Lab Experiments' : '📖 Study Units'}
-                        </h2>
-                        
-                        <div className="units-card-list">
-                            {units && units.length > 0 ? (
-                                units.map((unit) => (
-                                    <div key={unit.unitNumber} className="unit-item-card card">
-                                        <div className="unit-card-header">
-                                            <div className="unit-badge-col">
-                                                <span className="unit-number-tag">
-                                                    {subject.type === 'laboratory' ? 'EXPERIMENT' : 'UNIT'} {unit.unitNumber}
-                                                </span>
-                                                <h3 className="unit-title">{unit.title}</h3>
-                                            </div>
-                                            
-                                            <a
-                                                href={unit.downloadUrl}
-                                                download
-                                                className="btn btn-primary btn-sm download-action-btn"
-                                                onClick={() => handleDownload(unit.title)}
-                                            >
-                                                <span className="icon">📥</span>
-                                                <span>Download PDF</span>
-                                            </a>
-                                        </div>
-                                        <p className="unit-desc">{unit.description}</p>
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="empty-state-card card">
-                                    <p>No study materials or manuals uploaded for this course yet.</p>
-                                </div>
-                            )}
+                    {/* Hero Header Banner */}
+                    <div className="pb-subject-hero-card pb-animate-stagger-1">
+                        <div className="pb-hero-left">
+                            <div className="pb-hero-badges-row">
+                                <span className="pb-hero-sem-badge">Semester {subject.semester}</span>
+                                <span className={`pb-hero-type-badge ${subject.type === 'laboratory' ? 'type-lab' : 'type-theory'}`}>
+                                    {subject.type === 'laboratory' ? 'Laboratory Course' : 'Theory Course'}
+                                </span>
+                            </div>
+                            <h1 className="pb-subject-full-title">{subject.name}</h1>
+                            <p className="pb-subject-code-subtitle">{subject.code || 'Code: N/A'}</p>
+                        </div>
+                        <div className="pb-hero-right">
+                            <div className="pb-hero-icon-circle">
+                                {subject.type === 'laboratory' ? (
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <line x1="6" y1="3" x2="18" y2="3" />
+                                        <line x1="12" y1="3" x2="12" y2="18" />
+                                        <line x1="8" y1="12" x2="16" y2="12" />
+                                        <path d="M12 18a4 4 0 0 0 4 4H8a4 4 0 0 0 4-4z" />
+                                        <path d="M6 18h12c1.1 0 2 .9 2 2H4c0-1.1.9-2 2-2z" />
+                                    </svg>
+                                ) : (
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                                    </svg>
+                                )}
+                            </div>
                         </div>
                     </div>
 
-                    {/* Right Column: Question Bank & Resources (Only for Theory) */}
-                    {subject.type !== 'laboratory' && (
-                        <div className="resources-sidebar-col animate-stagger-3">
-                            {/* Question Bank Card */}
-                            <div className="card qb-resources-card">
-                                <h3 className="sidebar-section-title">📋 Question Bank</h3>
-                                <div className="qb-links-list">
-                                    {questionBanks.length > 0 ? (
-                                        questionBanks.map((qb) => (
-                                            <div key={qb.id} className="qb-link-row">
-                                                <div className="qb-info-details">
-                                                    <span className="badge badge-gray">{qb.year}</span>
-                                                    <p className="qb-title-name">{qb.title}</p>
+                    {/* Details layout grid */}
+                    <div className="pb-details-layout-grid">
+
+                        {/* Left Column: Study Units / Lab Manuals */}
+                        <div className="pb-units-main-col pb-animate-stagger-2">
+                            <h2 className="pb-section-title">
+                                {subject.type === 'laboratory' ? (
+                                    <>
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="pb-section-title-icon" style={{ marginRight: '8px' }}>
+                                            <line x1="6" y1="3" x2="18" y2="3" />
+                                            <line x1="12" y1="3" x2="12" y2="18" />
+                                            <path d="M6 18h12c1.1 0 2 .9 2 2H4c0-1.1.9-2 2-2z" />
+                                        </svg>
+                                        Lab Experiments
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="pb-section-title-icon" style={{ marginRight: '8px' }}>
+                                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                                        </svg>
+                                        Study Units
+                                    </>
+                                )}
+                            </h2>
+
+                            <div className="pb-units-card-list">
+                                {units && units.length > 0 ? (
+                                    units.map((unit, index) => {
+                                        const cardStagger = (index % 6) + 1;
+                                        return (
+                                            <div key={unit.unitNumber} className={`pb-unit-item-card pb-animate-stagger-${cardStagger}`}>
+                                                <div className="pb-unit-card-header">
+                                                    <div className="pb-unit-badge-col">
+                                                        <span className="pb-unit-number-tag">
+                                                            {subject.type === 'laboratory' ? 'EXPERIMENT' : 'UNIT'} {unit.unitNumber}
+                                                        </span>
+                                                        <h3 className="pb-unit-title">{unit.title}</h3>
+                                                    </div>
+
+                                                    <a
+                                                        href={unit.downloadUrl}
+                                                        download
+                                                        className="pb-download-action-btn"
+                                                        onClick={() => handleDownload(unit.title)}
+                                                    >
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                                            <polyline points="7 10 12 15 17 10" />
+                                                            <line x1="12" y1="15" x2="12" y2="3" />
+                                                        </svg>
+                                                        <span>Download PDF</span>
+                                                    </a>
                                                 </div>
-                                                <a
-                                                    href={qb.downloadUrl}
-                                                    download
-                                                    className="btn btn-ghost btn-icon-sm"
-                                                    title="Download Question Bank"
-                                                    onClick={() => handleDownload(qb.title)}
-                                                    style={{ background: 'var(--bg-elevated)' }}
-                                                >
-                                                    📥
-                                                </a>
+                                                <p className="pb-unit-desc">{unit.description}</p>
                                             </div>
-                                        ))
-                                    ) : (
-                                        <p className="empty-sidebar-text">No question papers uploaded.</p>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Syllabus Card */}
-                            <div className="card syllabus-download-card">
-                                <h3 className="sidebar-section-title">📄 Syllabus</h3>
-                                <p className="desc-text">Download the official Anna University syllabus copy for this subject.</p>
-                                <button className="btn btn-secondary btn-block" onClick={() => handleDownload(`${subject.name} Syllabus`)}>
-                                    Download Syllabus
-                                </button>
+                                        );
+                                    })
+                                ) : (
+                                    <div className="pb-empty-units-card">
+                                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5, marginBottom: '8px' }}>
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                            <polyline points="14 2 14 8 20 8" />
+                                        </svg>
+                                        <p>No study materials or manuals uploaded for this course yet.</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
-                    )}
-                </div>
-            </div>
-            </div>
-                {/* ── MOBILE VIEW ── */}
-            <div className="lux-mobile-view cred-page-bg">
-                {/* Hero Header */}
-                <div className="mob-subject-hero animate-cred-enter cred-stagger-1">
-                    <button className="cred-back-btn" onClick={() => navigate('/subjects')} style={{position: 'absolute', top: '16px', left: '16px'}}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-                    </button>
-                    <div className="mob-hero-icon">{subject.type === 'laboratory' ? '🔬' : '📘'}</div>
-                    <h1 className="mob-hero-title">{subject.name}</h1>
-                    <div className="mob-hero-meta">
-                        <span className="mob-hero-badge">Semester {subject.semester}</span>
-                        <span className="mob-hero-badge mob-badge-alt">{subject.type === 'laboratory' ? 'Lab' : 'Theory'}</span>
-                        {subject.code && <span className="mob-hero-code">{subject.code}</span>}
-                    </div>
-                </div>
 
-                <div className="mob-scroll-body">
-                    {/* Study Units */}
-                    <div className="mob-section-header">
-                        <h2 className="cred-h2" style={{margin: 0}}>{subject.type === 'laboratory' ? 'Lab Experiments' : 'Study Units'}</h2>
-                        <p className="mob-section-subtitle">Course materials and resources</p>
-                    </div>
-
-                    {units && units.length > 0 ? (
-                        units.map((unit, index) => {
-                            const staggerIndex = (index % 6) + 1;
-                            return (
-                                <div key={unit.unitNumber} className={`cred-card mob-unit-card animate-cred-enter cred-stagger-${staggerIndex}`}>
-                                    <div className="mob-unit-badge-row">
-                                        <span className="mob-unit-num-tag">
-                                            {subject.type === 'laboratory' ? 'EXP' : 'UNIT'} {unit.unitNumber}
-                                        </span>
-                                    </div>
-                                    <h4 className="mob-unit-title">{unit.title}</h4>
-                                    <p className="mob-unit-desc">{unit.description}</p>
-                                    <div className="mob-unit-action-row">
-                                        <a
-                                            href={unit.downloadUrl}
-                                            download
-                                            className="mob-pdf-chip"
-                                            onClick={() => handleDownload(unit.title)}
-                                        >
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                                            Download Course Materials
-                                        </a>
+                        {/* Right Column: Question Bank & Resources (Only for Theory) */}
+                        {subject.type !== 'laboratory' && (
+                            <div className="pb-resources-sidebar-col pb-animate-stagger-3">
+                                {/* Question Bank Card */}
+                                <div className="pb-sidebar-card pb-qb-resources-card">
+                                    <h3 className="pb-sidebar-section-title">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}>
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                            <polyline points="14 2 14 8 20 8" />
+                                            <line x1="16" y1="13" x2="8" y2="13" />
+                                            <line x1="16" y1="17" x2="8" y2="17" />
+                                        </svg>
+                                        Question Bank
+                                    </h3>
+                                    <div className="pb-qb-links-list">
+                                        {questionBanks.length > 0 ? (
+                                            questionBanks.map((qb) => (
+                                                <div key={qb.id} className="pb-qb-link-row">
+                                                    <div className="pb-qb-info-details">
+                                                        <span className="pb-qb-year-badge">{qb.year}</span>
+                                                        <p className="pb-qb-title-name" title={qb.title}>{qb.title}</p>
+                                                    </div>
+                                                    <a
+                                                        href={qb.downloadUrl}
+                                                        download
+                                                        className="pb-qb-download-circle-btn"
+                                                        title="Download Question Bank"
+                                                        onClick={() => handleDownload(qb.title)}
+                                                    >
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                                            <polyline points="7 10 12 15 17 10" />
+                                                            <line x1="12" y1="15" x2="12" y2="3" />
+                                                        </svg>
+                                                    </a>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <p className="pb-empty-sidebar-text">No question papers uploaded.</p>
+                                        )}
                                     </div>
                                 </div>
-                            );
-                        })
-                    ) : (
-                        <div className="cred-card mob-empty-card" style={{padding: '32px 20px', textAlign: 'center', color: 'var(--cred-text-secondary)', fontWeight: '600'}}>
-                            <span>No study materials uploaded yet</span>
-                        </div>
-                    )}
 
-                    {/* Question Bank (Theory only) */}
-                    {subject.type !== 'laboratory' && (
-                        <>
-                            <div className="mob-section-header">
-                                <h2 className="cred-h2" style={{margin: 0}}>Question Bank</h2>
-                                <p className="mob-section-subtitle">Previous years question papers</p>
-                            </div>
-
-                            {questionBanks.length > 0 ? (
-                                questionBanks.map((qb, index) => {
-                                    const staggerIndex = (index % 6) + 1;
-                                    return (
-                                        <div key={qb.id} className={`cred-card mob-qb-row animate-cred-enter cred-stagger-${staggerIndex}`}>
-                                            <div className="mob-qb-info" style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
-                                                <span className="mob-qb-year">{qb.year}</span>
-                                                <span className="mob-qb-title" style={{fontSize: '15px', fontWeight: '700', color: 'var(--cred-text)'}}>{qb.title}</span>
-                                            </div>
-                                            <a href={qb.downloadUrl} download className="mob-qb-download" onClick={() => handleDownload(qb.title)}>
-                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                                            </a>
-                                        </div>
-                                    );
-                                })
-                            ) : (
-                                <div className="cred-card mob-empty-card" style={{padding: '32px 20px', textAlign: 'center', color: 'var(--cred-text-secondary)', fontWeight: '600'}}>
-                                    <span>No question papers uploaded</span>
+                                {/* Syllabus Card */}
+                                <div className="pb-sidebar-card pb-syllabus-download-card">
+                                    <h3 className="pb-sidebar-section-title">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}>
+                                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                                        </svg>
+                                        Syllabus Copy
+                                    </h3>
+                                    <p className="pb-syllabus-desc-text">Download the official Anna University syllabus copy for this subject.</p>
+                                    <button className="pb-btn-syllabus-download" onClick={() => handleDownload(`${subject.name} Syllabus`)}>
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                            <polyline points="7 10 12 15 17 10" />
+                                            <line x1="12" y1="15" x2="12" y2="3" />
+                                        </svg>
+                                        Download Syllabus
+                                    </button>
                                 </div>
-                            )}
-
-                            <div className="mob-section-header">
-                                <h2 className="cred-h2" style={{margin: 0}}>Syllabus</h2>
-                                <p className="mob-section-subtitle">Official course curriculum copy</p>
                             </div>
-
-                            <button className="mob-syllabus-btn animate-cred-enter cred-stagger-1" onClick={() => handleDownload(`${subject.name} Syllabus`)}>
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                                Download Official Syllabus
-                            </button>
-                        </>
-                    )}
+                        )}
+                    </div>
                 </div>
-
-                {/* Bottom Nav */}
-                <StudentBottomNav activeTab="subjects" />
-            </div>{/* end mobile */}
+            </main>
+            <StudentBottomNav activeTab="subjects" />
 
             <style>{`
-                .subject-details-page-view {
-                    background: var(--bg);
+                .pb-subj-details-page {
+                    min-height: 100vh;
+                    background: var(--pb-bg);
+                    padding-bottom: 60px;
                 }
-                .btn-back {
-                    background: none;
-                    border: none;
-                    color: var(--primary);
-                    font-size: 0.9rem;
-                    font-weight: 600;
-                    cursor: pointer;
+                .pb-not-found-state {
                     display: flex;
+                    flex-direction: column;
+                }
+
+                /* Animations */
+                .pb-animate-enter {
+                    animation: pbFadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                }
+                .pb-animate-stagger-1 { animation: pbFadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.05s forwards; opacity: 0; }
+                .pb-animate-stagger-2 { animation: pbFadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards; opacity: 0; }
+                .pb-animate-stagger-3 { animation: pbFadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards; opacity: 0; }
+                .pb-animate-stagger-4 { animation: pbFadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards; opacity: 0; }
+                .pb-animate-stagger-5 { animation: pbFadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.25s forwards; opacity: 0; }
+                .pb-animate-stagger-6 { animation: pbFadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards; opacity: 0; }
+
+                @keyframes pbFadeInUp {
+                    from {
+                        opacity: 0;
+                        transform: translateY(12px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+
+                /* Subject Hero Card */
+                .pb-subject-hero-card {
+                    display: flex;
+                    justify-content: space-between;
                     align-items: center;
-                    gap: 6px;
-                    padding: 8px 12px;
-                    border-radius: var(--radius-sm);
-                    transition: var(--transition-fast);
-                }
-                .btn-back:hover {
-                    background: var(--primary-light);
-                    color: var(--primary-dark);
-                }
-
-                /* Subject Hero card banner */
-                .subject-hero-card {
-                    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%) !important;
-                    color: white !important;
+                    background: var(--pb-glass) !important;
+                    backdrop-filter: blur(16px);
+                    -webkit-backdrop-filter: blur(16px);
+                    border: 1px solid var(--pb-card-border) !important;
+                    border-radius: var(--pb-radius) !important;
+                    box-shadow: var(--pb-shadow-md) !important;
+                    padding: 32px 40px !important;
                     margin-bottom: 32px;
-                    padding: var(--space-8) var(--space-6) !important;
+                    position: relative;
+                    overflow: hidden;
                 }
-                .hero-text-content {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: flex-start;
-                    gap: 8px;
+                .pb-subject-hero-card::before {
+                    content: '';
+                    position: absolute;
+                    top: -50%;
+                    right: -10%;
+                    width: 300px;
+                    height: 300px;
+                    background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
+                    z-index: 0;
+                    pointer-events: none;
                 }
-                .subject-full-title {
-                    font-size: 1.8rem;
-                    font-weight: 800;
-                    color: white !important;
-                    margin: 0;
-                    line-height: 1.25;
-                }
-                .subject-code-subtitle {
-                    font-size: 0.95rem;
-                    color: var(--text-4);
-                    margin: 0;
-                }
-
-                /* Layout Grids */
-                .details-layout-grid {
-                    display: grid;
-                    grid-template-columns: 2fr 1fr;
-                    gap: 32px;
-                    align-items: start;
-                }
-                
-                .units-card-list {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 16px;
-                    margin-top: 12px;
-                }
-                .unit-item-card {
+                .pb-hero-left {
+                    position: relative;
+                    z-index: 1;
                     display: flex;
                     flex-direction: column;
                     gap: 12px;
-                    border-left: 4px solid var(--primary);
                 }
-                .unit-card-header {
+                .pb-hero-badges-row {
+                    display: flex;
+                    gap: 8px;
+                    flex-wrap: wrap;
+                }
+                .pb-hero-sem-badge {
+                    font-size: 0.75rem;
+                    font-weight: 700;
+                    background: var(--pb-secondary);
+                    color: var(--pb-primary);
+                    padding: 4px 10px;
+                    border-radius: 99px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    border: 1px solid rgba(59, 130, 246, 0.15);
+                }
+                .pb-hero-type-badge {
+                    font-size: 0.75rem;
+                    font-weight: 700;
+                    padding: 4px 10px;
+                    border-radius: 99px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+                .pb-hero-type-badge.type-lab {
+                    background: #F0FDF4;
+                    color: #16A34A;
+                    border: 1px solid rgba(22, 163, 74, 0.15);
+                }
+                .pb-hero-type-badge.type-theory {
+                    background: #FAF5FF;
+                    color: #9333EA;
+                    border: 1px solid rgba(147, 51, 234, 0.15);
+                }
+                .pb-subject-full-title {
+                    font-size: 2rem;
+                    font-weight: 800;
+                    color: var(--pb-text) !important;
+                    line-height: 1.2;
+                    margin: 0;
+                }
+                .pb-subject-code-subtitle {
+                    font-size: 1rem;
+                    color: var(--pb-text-3);
+                    font-weight: 500;
+                    margin: 0;
+                }
+                .pb-hero-right {
+                    position: relative;
+                    z-index: 1;
+                }
+                .pb-hero-icon-circle {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 72px;
+                    height: 72px;
+                    border-radius: 50%;
+                    background: var(--pb-secondary);
+                    color: var(--pb-primary);
+                    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.8), 0 4px 12px rgba(59, 130, 246, 0.1);
+                }
+
+                /* Details Layout Grid */
+                .pb-details-layout-grid {
+                    display: grid;
+                    grid-template-columns: 2.2fr 1.1fr;
+                    gap: 32px;
+                    align-items: start;
+                }
+
+                /* Sections titles */
+                .pb-section-title {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    font-size: 1.25rem;
+                    font-weight: 700;
+                    color: var(--pb-text);
+                    margin-bottom: 20px;
+                }
+                .pb-section-title-icon {
+                    color: var(--pb-primary);
+                }
+
+                /* Left Column: Units list */
+                .pb-units-card-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                }
+                .pb-unit-item-card {
+                    background: var(--pb-glass) !important;
+                    backdrop-filter: blur(12px);
+                    -webkit-backdrop-filter: blur(12px);
+                    border: 1px solid var(--pb-card-border) !important;
+                    border-radius: var(--pb-radius) !important;
+                    box-shadow: var(--pb-shadow) !important;
+                    padding: 24px !important;
+                    border-left: 5px solid var(--pb-primary) !important;
+                    transition: var(--pb-transition);
+                }
+                .pb-unit-item-card:hover {
+                    transform: translateY(-2px);
+                    box-shadow: var(--pb-shadow-md) !important;
+                    border-left-color: var(--pb-primary-dark) !important;
+                }
+                .pb-unit-card-header {
                     display: flex;
                     justify-content: space-between;
                     align-items: flex-start;
                     gap: 16px;
-                    flex-wrap: wrap;
+                    margin-bottom: 12px;
                 }
-                .unit-badge-col {
+                .pb-unit-badge-col {
                     display: flex;
                     flex-direction: column;
                     gap: 4px;
                 }
-                .unit-number-tag {
-                    font-size: 0.72rem;
+                .pb-unit-number-tag {
+                    font-size: 0.7rem;
                     font-weight: 800;
-                    color: var(--primary);
-                    letter-spacing: 0.05em;
+                    color: var(--pb-primary);
+                    letter-spacing: 1px;
+                    text-transform: uppercase;
                 }
-                .unit-title {
-                    font-size: 1rem;
+                .pb-unit-title {
+                    font-size: 1.15rem;
                     font-weight: 700;
-                    color: var(--text-1);
+                    color: var(--pb-text);
                     margin: 0;
                 }
-                .unit-desc {
-                    font-size: 0.85rem;
-                    color: var(--text-3);
+                .pb-unit-desc {
+                    font-size: 0.9rem;
+                    color: var(--pb-text-3);
+                    line-height: 1.6;
                     margin: 0;
-                    line-height: 1.5;
-                }
-                .download-action-btn {
-                    padding: 0 var(--space-4) !important;
                 }
 
-                /* Sidebar resources styling */
-                .resources-sidebar-col {
+                /* Download PDF Action button */
+                .pb-download-action-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 8px 16px;
+                    background: var(--pb-primary);
+                    color: white !important;
+                    border-radius: var(--pb-radius-sm);
+                    font-size: 0.85rem;
+                    font-weight: 600;
+                    transition: var(--pb-transition);
+                    border: none;
+                    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+                    cursor: pointer;
+                }
+                .pb-download-action-btn:hover {
+                    background: var(--pb-primary-dark);
+                    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.25);
+                    transform: translateY(-1px);
+                }
+                .pb-download-action-btn svg {
+                    transition: transform 0.2s;
+                }
+                .pb-download-action-btn:hover svg {
+                    transform: translateY(1px);
+                }
+
+                /* Empty states */
+                .pb-empty-units-card, .pb-empty-state-card {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    text-align: center;
+                    padding: 48px 24px;
+                    background: var(--pb-glass) !important;
+                    backdrop-filter: blur(12px);
+                    -webkit-backdrop-filter: blur(12px);
+                    border: 1px solid var(--pb-card-border) !important;
+                    border-radius: var(--pb-radius) !important;
+                    box-shadow: var(--pb-shadow) !important;
+                    color: var(--pb-text-3);
+                }
+                .pb-empty-state-card {
+                    max-width: 500px;
+                    margin: 60px auto;
+                }
+                .pb-empty-icon-wrap {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 80px;
+                    height: 80px;
+                    border-radius: 50%;
+                    background: var(--pb-secondary);
+                    color: var(--pb-primary);
+                    margin-bottom: 20px;
+                }
+                .pb-empty-state-card h3 {
+                    font-size: 1.35rem;
+                    color: var(--pb-text);
+                    margin-bottom: 8px;
+                }
+                .pb-empty-state-card p {
+                    font-size: 0.95rem;
+                    margin-bottom: 24px;
+                    max-width: 80%;
+                }
+                .pb-btn-primary {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 12px 24px;
+                    background: var(--pb-primary);
+                    color: white;
+                    font-weight: 600;
+                    border: none;
+                    border-radius: var(--pb-radius-sm);
+                    cursor: pointer;
+                    transition: var(--pb-transition);
+                }
+                .pb-btn-primary:hover {
+                    background: var(--pb-primary-dark);
+                    transform: translateY(-1px);
+                }
+
+                /* Sidebar Resources styles */
+                .pb-resources-sidebar-col {
                     display: flex;
                     flex-direction: column;
                     gap: 24px;
                 }
-                .sidebar-section-title {
-                    font-size: 0.95rem;
-                    font-weight: 700;
-                    color: var(--text-1);
-                    margin: 0 0 12px 0;
-                    border-bottom: 1px solid var(--border);
-                    padding-bottom: 8px;
+                .pb-sidebar-card {
+                    background: var(--pb-glass) !important;
+                    backdrop-filter: blur(12px);
+                    -webkit-backdrop-filter: blur(12px);
+                    border: 1px solid var(--pb-card-border) !important;
+                    border-radius: var(--pb-radius) !important;
+                    box-shadow: var(--pb-shadow) !important;
+                    padding: 24px !important;
+                    transition: var(--pb-transition);
                 }
-                .qb-links-list {
+                .pb-sidebar-card:hover {
+                    box-shadow: var(--pb-shadow-md) !important;
+                }
+                .pb-sidebar-section-title {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    font-size: 1.05rem;
+                    font-weight: 700;
+                    color: var(--pb-text);
+                    margin: 0 0 16px 0;
+                    padding-bottom: 12px;
+                    border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+                }
+                .pb-sidebar-section-title svg {
+                    color: var(--pb-primary);
+                }
+
+                /* Question Bank Row */
+                .pb-qb-links-list {
                     display: flex;
                     flex-direction: column;
                     gap: 10px;
                 }
-                .qb-link-row {
+                .pb-qb-link-row {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    background: var(--bg);
-                    padding: 10px;
-                    border-radius: var(--radius-sm);
-                    border: 1px solid var(--border);
+                    background: rgba(255, 255, 255, 0.5);
+                    padding: 12px 14px !important;
+                    border-radius: var(--pb-radius-sm) !important;
+                    border: 1px solid rgba(59, 130, 246, 0.08) !important;
+                    transition: var(--pb-transition);
                 }
-                .qb-info-details {
+                .pb-qb-link-row:hover {
+                    background: var(--pb-secondary);
+                    border-color: rgba(59, 130, 246, 0.15) !important;
+                }
+                .pb-qb-info-details {
                     display: flex;
                     align-items: center;
-                    gap: 8px;
+                    gap: 10px;
                     min-width: 0;
                 }
-                .qb-title-name {
-                    font-size: 0.82rem;
+                .pb-qb-year-badge {
+                    font-size: 0.75rem;
+                    font-weight: 700;
+                    background: var(--pb-secondary);
+                    color: var(--pb-primary);
+                    padding: 2px 8px;
+                    border-radius: 6px;
+                    flex-shrink: 0;
+                    border: 1px solid rgba(59, 130, 246, 0.1);
+                }
+                .pb-qb-title-name {
+                    font-size: 0.85rem;
                     font-weight: 600;
-                    color: var(--text-2);
+                    color: var(--pb-text-2);
                     margin: 0;
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;
                 }
-                .empty-sidebar-text {
-                    font-size: 0.8rem;
-                    color: var(--text-4);
+                .pb-qb-download-circle-btn {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    background: white;
+                    border: 1px solid rgba(59, 130, 246, 0.1);
+                    color: var(--pb-primary);
+                    transition: var(--pb-transition);
+                    cursor: pointer;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+                }
+                .pb-qb-download-circle-btn:hover {
+                    background: var(--pb-primary);
+                    color: white !important;
+                    transform: scale(1.05);
+                    border-color: var(--pb-primary);
+                }
+
+                .pb-empty-sidebar-text {
+                    font-size: 0.85rem;
+                    color: var(--pb-text-3);
                     font-style: italic;
                     margin: 0;
-                }
-
-                .syllabus-download-card .desc-text {
-                    font-size: 0.82rem;
-                    color: var(--text-3);
-                    margin: 0 0 16px 0;
-                    line-height: 1.4;
-                }
-
-                /* ── DESKTOP / MOBILE SPLIT ── */
-                .lux-desktop-view { display: block; }
-                .lux-mobile-view  { display: none; }
-                @media (max-width: 768px) {
-                    .lux-desktop-view { display: none !important; }
-                    .lux-mobile-view  { display: flex !important; flex-direction: column; min-height: 100vh; background: linear-gradient(135deg, #F7F3E6 0%, #E8EEF5 45%, #C8D9F2 100%); font-family: 'Inter', -apple-system, sans-serif; }
-                }
-
-                /* ==========================================
-                   CRED PREMIUM MOBILE STYLES (SUBJECT DETAILS)
-                   ========================================== */
-                .cred-back-btn {
-                    width: 36px;
-                    height: 36px;
-                    border-radius: 10px;
-                    background: #FFFFFF;
-                    border: 1px solid #E2E8F0;
-                    color: #1E293B;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    flex-shrink: 0;
-                    transition: transform 0.2s;
-                }
-                .cred-back-btn:active {
-                    transform: scale(0.9);
-                    background: #F1F5F9;
-                }
-                .mob-subject-hero {
-                    background: rgba(255, 255, 255, 0.85);
-                    backdrop-filter: blur(20px);
-                    -webkit-backdrop-filter: blur(20px);
-                    border-bottom: 1px solid rgba(226, 232, 240, 0.6);
-                    padding: 20px 16px;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
                     text-align: center;
-                    position: relative;
-                }
-                .mob-hero-icon {
-                    font-size: 36px;
-                    line-height: 1;
-                    margin-top: 12px;
-                    margin-bottom: 8px;
-                }
-                .mob-hero-title {
-                    font-size: 18px;
-                    font-weight: 800;
-                    color: #0F172A;
-                    margin: 4px 0 8px 0;
-                    line-height: 1.3;
-                    max-width: 90%;
-                }
-                .mob-hero-meta {
-                    display: flex;
-                    gap: 8px;
-                    align-items: center;
-                    justify-content: center;
-                    margin-top: 4px;
-                }
-                .mob-hero-badge {
-                    font-size: 11px;
-                    font-weight: 700;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                    padding: 4px 8px;
-                    border-radius: 6px;
-                    background: rgba(37, 99, 235, 0.08);
-                    color: #2563EB;
-                    border: 1px solid rgba(37, 99, 235, 0.15);
-                }
-                .mob-hero-badge.mob-badge-alt {
-                    background: rgba(184, 134, 11, 0.10);
-                    color: #B8860B;
-                    border: 1px solid rgba(184, 134, 11, 0.15);
-                }
-                .mob-hero-code {
-                    font-size: 11px;
-                    font-weight: 600;
-                    color: var(--cred-text-2);
-                    opacity: 0.8;
-                    letter-spacing: 0.5px;
-                    text-transform: uppercase;
+                    padding: 12px 0;
                 }
 
-                .mob-scroll-body {
-                    flex: 1;
-                    overflow-y: auto;
-                    padding: 24px 16px 140px;
+                /* Syllabus Download block styling */
+                .pb-syllabus-desc-text {
+                    font-size: 0.85rem;
+                    color: var(--pb-text-3);
+                    line-height: 1.5;
+                    margin-bottom: 16px;
+                }
+                .pb-btn-syllabus-download {
                     display: flex;
-                    flex-direction: column;
-                    gap: 16px;
-                }
-                .mob-section-header {
-                    margin: 24px 0 12px 0;
-                    text-align: left;
-                }
-                .mob-section-subtitle {
-                    font-size: 12px;
-                    color: var(--cred-text-2);
-                    margin-top: 4px;
-                    font-weight: 500;
-                    letter-spacing: 0.2px;
-                }
-
-                .mob-unit-card {
-                    padding: 24px;
-                    background: rgba(255, 255, 255, 0.88);
-                    backdrop-filter: blur(12px);
-                    -webkit-backdrop-filter: blur(12px);
-                    border: 1px solid rgba(255, 255, 255, 0.55);
-                    border-radius: 24px;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: flex-start;
-                    gap: 16px;
-                    text-align: left;
-                    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
-                }
-                .mob-unit-badge-row {
-                    display: flex;
-                    align-items: center;
-                    width: 100%;
-                }
-                .mob-unit-num-tag {
-                    font-size: 11px;
-                    font-weight: 800;
-                    letter-spacing: 1px;
-                    color: var(--cred-gold);
-                    text-transform: uppercase;
-                    background: var(--cred-gold-light);
-                    padding: 4px 10px;
-                    border-radius: 8px;
-                    border: 1px solid rgba(212, 160, 23, 0.2);
-                    display: inline-block;
-                }
-                .mob-unit-title {
-                    font-size: 16px;
-                    font-weight: 700;
-                    color: var(--cred-text);
-                    margin: 0;
-                    line-height: 1.4;
-                }
-                .mob-unit-desc {
-                    font-size: 13px;
-                    font-weight: 400;
-                    color: var(--cred-text-2);
-                    margin: 0;
-                    line-height: 1.6;
-                }
-                .mob-unit-action-row {
-                    width: 100%;
-                    margin-top: 4px;
-                }
-                .mob-pdf-chip {
-                    display: inline-flex;
                     align-items: center;
                     justify-content: center;
                     gap: 8px;
                     width: 100%;
-                    padding: 14px 16px;
-                    background: #F8FAFC;
-                    border: 1px solid rgba(226, 232, 240, 0.8);
-                    border-radius: 14px;
-                    color: #0F172A;
-                    font-size: 13px;
+                    padding: 12px;
+                    background: var(--pb-secondary);
+                    color: var(--pb-primary);
+                    border: 1px solid rgba(59, 130, 246, 0.2);
                     font-weight: 600;
-                    text-decoration: none;
-                    transition: var(--transition-fast);
-                }
-                .mob-pdf-chip:active {
-                    background: #F1F5F9;
-                    transform: scale(0.98);
-                    border-color: #CBD5E1;
-                }
-                .mob-pdf-chip svg {
-                    color: var(--cred-gold);
-                    flex-shrink: 0;
-                }
-
-                .mob-qb-row {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    padding: 20px 24px;
-                    background: rgba(255, 255, 255, 0.88);
-                    backdrop-filter: blur(12px);
-                    -webkit-backdrop-filter: blur(12px);
-                    border: 1px solid rgba(255, 255, 255, 0.55);
-                    border-radius: 20px;
-                    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
-                }
-                .mob-qb-year {
-                    font-size: 11px;
-                    font-weight: 800;
-                    color: #B8860B;
-                    letter-spacing: 0.5px;
-                    text-transform: uppercase;
-                }
-                .mob-qb-title {
-                    font-size: 14px !important;
-                    font-weight: 600 !important;
-                    color: #0F172A !important;
-                    margin: 0;
-                }
-                .mob-qb-download {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    width: 44px;
-                    height: 44px;
-                    border-radius: 50%;
-                    background: #F1F5F9;
-                    border: 1px solid rgba(226, 232, 240, 0.8);
-                    color: #0F172A;
-                    transition: var(--transition-fast);
-                }
-                .mob-qb-download:active {
-                    background: #E2E8F0;
-                    transform: scale(0.9);
-                }
-                .mob-qb-download svg {
-                    color: var(--cred-gold);
-                }
-
-                .mob-syllabus-btn {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 10px;
-                    width: 100%;
-                    padding: 16px;
-                    background: linear-gradient(135deg, #1E3A8A, #0F172A);
-                    border: none;
-                    border-radius: 16px;
-                    color: #FFFFFF;
-                    font-size: 14px;
-                    font-weight: 700;
+                    font-size: 0.9rem;
+                    border-radius: var(--pb-radius-sm);
                     cursor: pointer;
-                    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.25);
-                    transition: var(--spring);
+                    transition: var(--pb-transition);
                 }
-                .mob-syllabus-btn:active {
-                    transform: scale(0.96);
-                    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+                .pb-btn-syllabus-download:hover {
+                    background: var(--pb-primary);
+                    color: white !important;
+                    border-color: var(--pb-primary);
+                    transform: translateY(-1px);
                 }
-                .mob-syllabus-btn svg {
-                    stroke: #FFFFFF;
+
+                /* Responsive Design queries */
+                @media (max-width: 850px) {
+                    .pb-details-layout-grid {
+                        grid-template-columns: 1fr;
+                        gap: 24px;
+                    }
+                    .pb-subj-details-page {
+                        padding-bottom: 100px;
+                    }
+                }
+
+                @media (max-width: 600px) {
+                    .pb-subject-hero-card {
+                        padding: 24px 20px !important;
+                        margin-bottom: 24px;
+                        flex-direction: column-reverse;
+                        align-items: flex-start;
+                        gap: 16px;
+                    }
+                    .pb-subject-full-title {
+                        font-size: 1.5rem;
+                    }
+                    .pb-hero-icon-circle {
+                        width: 56px;
+                        height: 56px;
+                    }
+                    .pb-hero-icon-circle svg {
+                        width: 24px;
+                        height: 24px;
+                    }
+                    .pb-unit-card-header {
+                        flex-direction: column;
+                        align-items: flex-start;
+                        gap: 12px;
+                    }
+                    .pb-download-action-btn {
+                        width: 100%;
+                        justify-content: center;
+                    }
                 }
             `}</style>
         </div>

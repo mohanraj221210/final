@@ -124,7 +124,7 @@ const EmergencyOutpassApply: React.FC = () => {
                                     >
                                         <div className="student-select-avatar">
                                             {student.photo ? (
-                                                <img src={`${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${student.photo.replace(/^\//, '')}`} alt={student.name} />
+                                                <img src={student.photo.startsWith('http') ? student.photo : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${student.photo.replace(/^\//, '')}`} alt={student.name} />
                                             ) : (
                                                 <div className="avatar-placeholder">{student.name.charAt(0)}</div>
                                             )}
@@ -257,6 +257,8 @@ const EmergencyOutpassApply: React.FC = () => {
                     font-size: 1.1rem;
                     outline: none;
                     transition: all 0.3s;
+                    background: white;
+                    color: black;
                 }
 
                 .room-input:focus {
@@ -395,6 +397,8 @@ const EmergencyOutpassApply: React.FC = () => {
                     font-family: inherit;
                     resize: vertical;
                     transition: all 0.3s;
+                    background: white;
+                    color: black;
                 }
 
                 .form-group textarea:focus {

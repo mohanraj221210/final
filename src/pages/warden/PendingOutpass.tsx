@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import WardenNav from "../../components/WardenNav";
+import { toast, ToastContainer } from "react-toastify";
 
 interface Student {
   _id?: string;
@@ -18,6 +19,25 @@ interface Student {
     name?: string;
     registerNumber?: string;
     year?: string;
+    photo?: string;
+  } | string;
+  student?: {
+    _id?: string;
+    name?: string;
+    department?: string;
+    semester?: number;
+    email?: string;
+    registerNumber?: string;
+    year?: string;
+    batch?: string;
+    cgpa?: number;
+    gender?: string;
+    hostelname?: string;
+    hostelroomno?: string;
+    parentnumber?: string;
+    phone?: string;
+    photo?: string;
+    residencetype?: string;
   };
   outpasstype?: string;
   proof?: string;
@@ -27,24 +47,75 @@ interface Student {
 
 const PendingOutpass: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'yesterday' | 'this_week' | 'this_month'>('all');
   const [showDocumentModal, setShowDocumentModal] = useState(false);
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
   const [documentType, setDocumentType] = useState<'image' | 'pdf'>('image');
-  const itemsPerPage = 8;
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [isLast, setIsLast] = useState(true);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [totalPages, setTotalPages] = useState(1);
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setPage(1);
+    }, 450);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [dateFilter]);
+
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    const windowSize = 1;
+
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      pages.push(1);
+
+      let start = Math.max(2, page - windowSize);
+      let end = Math.min(totalPages - 1, page + windowSize);
+
+      if (start > 2) {
+        pages.push('...');
+      }
+
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+
+      if (end < totalPages - 1) {
+        pages.push('...');
+      }
+
+      pages.push(totalPages);
+    }
+    return pages;
+  };
 
   useEffect(() => {
     fetchStudents();
-  }, []);
+  }, [debouncedSearchTerm, page]);
 
   const fetchStudents = async () => {
+    setLoading(true);
     try {
       const token = localStorage.getItem("token");
       const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/warden/outpass/list`,
+        `${import.meta.env.VITE_API_URL}/warden/pending/outpass/list?search=${debouncedSearchTerm}&page=${page}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -53,11 +124,11 @@ const PendingOutpass: React.FC = () => {
       const allData = res.data.outpasses || res.data.filterOutpass || res.data.data || res.data.students || [];
       const pendingData = allData.filter((item: any) => {
         const ws = item.wardenapprovalstatus?.toLowerCase() || "";
-        return ws !== 'Approved' && ws !== 'Rejected' && ws !== 'Declined';
+        return ws !== 'approved' && ws !== 'rejected' && ws !== 'declined';
       }).sort((a: any, b: any) => {
         // Priority 1: Emergency first
-        const isAEmergency = a.outpassType?.toLowerCase() === 'emergency';
-        const isBEmergency = b.outpassType?.toLowerCase() === 'emergency';
+        const isAEmergency = (a.outpasstype || a.outpassType || '').toLowerCase() === 'emergency';
+        const isBEmergency = (b.outpasstype || b.outpassType || '').toLowerCase() === 'emergency';
         if (isAEmergency && !isBEmergency) return -1;
         if (!isAEmergency && isBEmergency) return 1;
 
@@ -67,15 +138,23 @@ const PendingOutpass: React.FC = () => {
 
       // Sort Emergency first
       pendingData.sort((a: any, b: any) => {
-        if (a.outpasstype === 'Emergency' && b.outpasstype !== 'Emergency') return -1;
-        if (a.outpasstype !== 'Emergency' && b.outpasstype === 'Emergency') return 1;
+        const typeA = a.outpasstype || a.outpassType || '';
+        const typeB = b.outpasstype || b.outpassType || '';
+        if (typeA === 'Emergency' && typeB !== 'Emergency') return -1;
+        if (typeA !== 'Emergency' && typeB === 'Emergency') return 1;
         return 0;
       });
 
       setStudents(pendingData);
+      setIsLast(res.data.isLast ?? true);
+      if (res.data.pages !== undefined) {
+        setTotalPages(res.data.pages);
+      }
     } catch (error) {
       console.error("Failed to fetch data", error);
+      toast.error("Failed to fetch pending outpasses");
     } finally {
+      setLoading(false);
     }
   };
 
@@ -115,614 +194,1026 @@ const PendingOutpass: React.FC = () => {
       }
     }
 
-    const dateStr = appliedDate ? appliedDate.toLocaleDateString() : '';
-    const nameMatch = s.studentName?.toLowerCase().includes(searchTerm.toLowerCase()) || s.studentid?.name?.toLowerCase().includes(searchTerm.toLowerCase()) || '';
-    const regMatch = s.register_number?.toLowerCase().includes(searchTerm.toLowerCase()) || s.studentid?.registerNumber?.toLowerCase().includes(searchTerm.toLowerCase()) || '';
-
-    const matchesSearch = searchTerm === "" || nameMatch || regMatch || dateStr.includes(searchTerm.toLowerCase());
-
-    return matchesDate && matchesSearch;
+    return matchesDate;
   });
 
+  const getStudentAvatar = (s: Student) => {
+    const studentPhoto = s.student?.photo || (typeof s.studentid === 'object' ? s.studentid?.photo : undefined);
+    if (studentPhoto && !imageErrors[s._id || s.id || '']) {
+      const src = studentPhoto.startsWith('http') || studentPhoto.startsWith('data:')
+        ? studentPhoto
+        : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${studentPhoto.replace(/^\//, '')}`;
+      return (
+        <img
+          src={src}
+          alt="Student"
+          className="wd-avatar-img"
+          onError={() => {
+            setImageErrors(prev => ({ ...prev, [s._id || s.id || '']: true }));
+          }}
+        />
+      );
+    }
+    const name = s.student?.name || (typeof s.studentid === 'object' ? s.studentid?.name : undefined) || s.studentName || s.name || "?";
+    return (
+      <div className="wd-avatar-initials">
+        {name.charAt(0).toUpperCase()}
+      </div>
+    );
+  };
+
   return (
-    <div className="page-container">
+    <div className="wd-root">
       <WardenNav />
-      <div className="list-container">
-        <button className="back-btn" onClick={() => navigate("/warden-dashboard")}>
-          ← Back
-        </button>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
-          <h1 style={{ margin: 0 }}>Pending Outpass Students</h1>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
-              <span className="search-icon" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }}>🔍</span>
-              <input
-                type="text"
-                placeholder="Search by name, reg no, date..."
-                value={searchTerm}
-                onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-                style={{
-                  width: '100%',
-                  padding: '10px 16px 10px 40px',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '12px',
-                  fontSize: '14px',
-                  outline: 'none',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-                }}
-              />
+      <ToastContainer position="bottom-right" />
+
+      <main className="wd-main">
+        <div className="wd-container">
+          
+          {/* Header Controls */}
+          <div className="wd-header-row">
+            <div>
+              <button className="wd-back-btn" onClick={() => navigate("/warden-dashboard")}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 12H5M12 5l-7 7 7 7"/>
+                </svg>
+                Back to Dashboard
+              </button>
+              <h1 className="wd-title">Pending Approvals</h1>
+              <p className="wd-subtitle">Review and authorize student outpass requests</p>
             </div>
-            <div style={{ position: 'relative', display: 'inline-block' }}>
-              <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '14px', pointerEvents: 'none' }}>
-                📅
-              </span>
-              <select
-                className="date-filter-select"
-                value={dateFilter}
-                onChange={(e) => { setDateFilter(e.target.value as any); setPage(1); }}
-                style={{
-                  padding: '10px 32px 10px 36px',
-                  borderRadius: '12px',
-                  border: '1px solid #cbd5e1',
-                  background: 'white',
-                  color: '#1e293b',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  outline: 'none',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
-                  appearance: 'none',
-                  minWidth: '150px'
-                }}
-              >
-                <option value="all">All Time</option>
-                <option value="today">Today</option>
-                <option value="yesterday">Yesterday</option>
-                <option value="this_week">This Week</option>
-                <option value="this_month">This Month</option>
-              </select>
-              <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '10px', pointerEvents: 'none' }}>
-                ▼
-              </span>
+
+            <div className="wd-controls">
+              <div className="wd-search-wrapper">
+                <span className="wd-search-icon">🔍</span>
+                <input
+                  type="text"
+                  placeholder="Search name, register no..."
+                  value={searchTerm}
+                  onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
+                  className="wd-search-input"
+                />
+              </div>
+
+              <div className="wd-dropdown-wrapper">
+                <span className="wd-dropdown-icon">📅</span>
+                <select
+                  className="wd-filter-dropdown"
+                  value={dateFilter}
+                  onChange={(e) => { setDateFilter(e.target.value as any); setPage(1); }}
+                >
+                  <option value="all">All Time</option>
+                  <option value="today">Today</option>
+                  <option value="yesterday">Yesterday</option>
+                  <option value="this_week">This Week</option>
+                  <option value="this_month">This Month</option>
+                </select>
+                <span className="wd-dropdown-arrow">▼</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="student-list">
-          {(
-            filteredStudents.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((s) => (
-              <div
-                key={s._id || s.id}
-                className="student-card"
-                onClick={() => navigate(`/warden/student/${s._id || s.id}`)}
-              >
-                <div className="student-card-main">
-                  <div className="student-id-highlight">
-                    {s.studentid?.registerNumber || s.register_number || 'N/A'}
-                  </div>
-                  <div className="student-info">
-                    <div className="student-name">
-                      {s.studentid?.name || s.studentName || s.name}
-                      {s.outpasstype === 'Emergency' && <span className="emergency-badge">EMERGENCY</span>}
-                    </div>
-                    <div className="student-meta">
-                      {s.studentid?.year ? `Year ${s.studentid.year} • ` : ''} {s.outpasstype || 'General'} • Applied on {new Date(s.createdAt || s.outDate || Date.now()).toLocaleDateString()}
-                    </div>
-                  </div>
-                </div>
-                <div className="student-card-action">
-                  <span className="status-badge" style={{ color: '#f59e0b', backgroundColor: '#fef3c7', border: '2px solid #f59e0b' }}>
-                    <span className="status-dot">●</span>
-                    Pending
-                  </span>
-                  {(s.proof || s.document || s.file || (s as any).outpassdoc) && (
-                    <button
-                      className="view-doc-btn-list"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const url = (s.proof || s.document || s.file || (s as any).outpassdoc)!;
-                        handleViewDocument(url);
-                      }}
-                      style={{
-                        padding: '8px 16px',
-                        background: '#eff6ff',
-                        border: '1px solid #3b82f6',
-                        borderRadius: '8px',
-                        color: '#3b82f6',
-                        fontSize: '0.85rem',
-                        fontWeight: '600',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      📄 View Doc
-                    </button>
-                  )}
-                  <span className="view-arrow">View →</span>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+          {/* Cards Grid */}
+          {loading ? (
+            <div className="wd-loading-wrap">
+              <div className="wd-spinner" />
+              <h3>Fetching pending requests...</h3>
+            </div>
+          ) : filteredStudents.length === 0 ? (
+            <div className="wd-empty-state">
+              <span className="wd-empty-icon">✨</span>
+              <h3 className="wd-empty-title">All Caught Up!</h3>
+              <p className="wd-empty-desc">There are no pending outpass requests matching your criteria.</p>
+            </div>
+          ) : (
+            <div className="wd-cards-grid">
+              {filteredStudents.map((s) => {
+                const registerNumber = s.student?.registerNumber || (typeof s.studentid === 'object' ? s.studentid?.registerNumber : undefined) || s.register_number || 'N/A';
+                const studentName = s.student?.name || (typeof s.studentid === 'object' ? s.studentid?.name : undefined) || s.studentName || s.name || 'Unknown';
+                const studentYear = s.student?.year || (typeof s.studentid === 'object' ? s.studentid?.year : undefined);
+                const isEmergency = (s.outpasstype || '').toLowerCase().includes('emergency');
 
-        {filteredStudents.length > 0 && (
-          <div className="mobile-cards-view">
-            {filteredStudents.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((s) => (
-              <div className="mobile-card" key={s._id || s.id}>
-                <div className="card-badge">
-                  {s.studentid?.registerNumber || s.register_number || s.department || "N/A"}
-                </div>
-                <h3 className="card-name">
-                  {s.studentid?.name || s.studentName || s.name}
-                  {s.outpasstype === 'Emergency' && <span className="mobile-emergency-label"> (EMERGENCY)</span>}
-                </h3>
-                <p className="card-details">
-                  {s.studentid?.year ? `Year ${s.studentid.year} • ` : ''}
-                  {s.outpasstype || 'General'} •
-                  Applied on {new Date(s.createdAt || s.outDate || Date.now()).toLocaleDateString()}
-                  {s.outpasstype?.toLowerCase() === 'emergency' && (
-                    <div className="emergency-badge mobile">🚨 EMERGENCY</div>
-                  )}
-                </p>
-
-                <div className="card-footer" style={{ gap: '8px', flexWrap: 'wrap' }}>
-                  <span className="status-pill status-pending">
-                    • Pending
-                  </span>
-                  {(s.proof || s.document || s.file || (s as any).outpassdoc) && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const url = (s.proof || s.document || s.file || (s as any).outpassdoc)!;
-                        handleViewDocument(url);
-                      }}
-                      style={{
-                        padding: '4px 8px',
-                        background: '#eff6ff',
-                        border: '1px solid #3b82f6',
-                        borderRadius: '6px',
-                        color: '#3b82f6',
-                        fontSize: '0.75rem',
-                        fontWeight: '600',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      📄 Doc
-                    </button>
-                  )}
-                  <button
-                    className="card-view-link"
+                return (
+                  <div
+                    key={s._id || s.id}
+                    className={`wd-card ${isEmergency ? 'wd-card-emergency' : ''}`}
                     onClick={() => navigate(`/warden/student/${s._id || s.id}`)}
                   >
-                    View →
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                    <div className="wd-card-header">
+                      <div className="wd-avatar-wrapper">
+                        {getStudentAvatar(s)}
+                      </div>
+                      <div className="wd-student-info">
+                        <h3 className="wd-name">
+                          {studentName}
+                          {isEmergency && <span className="wd-emergency-tag">Emergency</span>}
+                        </h3>
+                        <span className="wd-reg-no sd-mono">{registerNumber}</span>
+                        <span className="wd-dept">
+                          {s.student?.department || "Hostel Student"}
+                          {studentYear && <span className="wd-year-tag">Yr {studentYear}</span>}
+                        </span>
+                      </div>
+                    </div>
 
-        {filteredStudents.length === 0 && (
-          <div className="mobile-empty-state">
-            <div className="empty-content">
-              <span className="empty-icon">✨</span>
-              <p>No pending outpasses</p>
+                    <div className="wd-card-body">
+                      <div className="wd-reason-label">Reason</div>
+                      <p className="wd-reason-text">{s.reason || "No reason specified"}</p>
+                    </div>
+
+                    <div className="wd-card-meta">
+                      <div className="wd-meta-row">
+                        <span className="label">Outpass Type</span>
+                        <span className={`value type-badge ${isEmergency ? 'emergency' : ''}`}>
+                          {s.outpasstype || 'General'}
+                        </span>
+                      </div>
+                      <div className="wd-meta-row">
+                        <span className="label">Applied Date</span>
+                        <span className="value date-val">
+                          {new Date(s.createdAt || s.outDate || Date.now()).toLocaleDateString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="wd-card-actions">
+                      {(s.proof || s.document || s.file || (s as any).outpassdoc) && (
+                        <button
+                          className="wd-btn-doc"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const url = (s.proof || s.document || s.file || (s as any).outpassdoc)!;
+                            handleViewDocument(url);
+                          }}
+                        >
+                          📄 View Document
+                        </button>
+                      )}
+                      <button className="wd-btn-review">
+                        Review Outpass
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {!loading && (students.length > 0 || page > 1) && (
+            <div className="wd-pagination">
+              {/* First */}
+              <button
+                disabled={page === 1}
+                onClick={() => setPage(1)}
+                className="wd-page-btn"
+              >
+                « First
+              </button>
+
+              {/* Prev */}
+              <button
+                disabled={page === 1}
+                onClick={() => setPage((p) => p - 1)}
+                className="wd-page-btn"
+              >
+                ← Prev
+              </button>
+
+              {/* Page Numbers */}
+              <div className="wd-page-numbers">
+                {getPageNumbers().map((pNum, idx) => {
+                  if (pNum === '...') {
+                    return <span key={`dots-${idx}`} className="wd-pnum-dots">...</span>;
+                  }
+                  return (
+                    <button
+                      key={`p-${pNum}`}
+                      className={`wd-pnum-btn ${page === pNum ? 'active' : ''}`}
+                      onClick={() => setPage(pNum as number)}
+                    >
+                      {pNum}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Next */}
+              <button
+                disabled={isLast}
+                onClick={() => setPage((p) => p + 1)}
+                className="wd-page-btn"
+              >
+                Next →
+              </button>
+
+              {/* Last */}
+              <button
+                disabled={isLast}
+                onClick={() => setPage(totalPages)}
+                className="wd-page-btn"
+              >
+                Last »
+              </button>
+            </div>
+          )}
+
+        </div>
+      </main>
+
+      {/* Document modal */}
+      {showDocumentModal && documentUrl && (
+        <div className="wd-modal-backdrop" onClick={() => setShowDocumentModal(false)}>
+          <div className="wd-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="wd-modal-header">
+              <h3>Supporting Document</h3>
+              <button onClick={() => setShowDocumentModal(false)} className="wd-modal-close">✕</button>
+            </div>
+            <div className="wd-modal-body">
+              {documentType === 'pdf' ? (
+                <iframe
+                  src={documentUrl}
+                  className="wd-modal-iframe"
+                  title="Document Viewer"
+                />
+              ) : (
+                <img
+                  src={documentUrl}
+                  alt="Proof"
+                  className="wd-modal-img"
+                />
+              )}
+            </div>
+            <div className="wd-modal-footer">
+              <a
+                href={documentUrl}
+                download={`proof_document.${documentType === 'pdf' ? 'pdf' : 'jpg'}`}
+                className="wd-btn-download"
+              >
+                Download File
+              </a>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Pagination logic ... */}
-        {filteredStudents.length > 0 && (
-          <div className="pagination">
-            <button
-              disabled={page === 1}
-              onClick={() => setPage((p) => p - 1)}
-            >
-              Prev
-            </button>
+      <style>{`
+        /* ====== DESIGN TOKENS ====== */
+        .wd-root {
+          --wdl-primary:       #3B82F6;
+          --wdl-primary-light: #60A5FA;
+          --wdl-bg:            linear-gradient(180deg, #F8FBFF 0%, #EFF6FF 55%, #F6FAFF 100%);
+          --wdl-card:          rgba(255, 255, 255, 0.90);
+          --wdl-blur:          18px;
+          --wdl-border:        1px solid rgba(255, 255, 255, 0.65);
+          --wdl-shadow:        0 18px 50px rgba(59, 130, 246, 0.12);
+          --wdl-radius:        28px;
+          --wdl-radius-sm:     16px;
+          --wdl-transition:    all 0.25s cubic-bezier(0.16,1,0.3,1);
 
-            <span>
-              Page {page} of {Math.ceil(filteredStudents.length / itemsPerPage)}
-            </span>
+          min-height: 100vh;
+          background: var(--wdl-bg);
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+          padding-top: var(--nav-height, 64px);
+          padding-bottom: calc(100px + env(safe-area-inset-bottom));
+        }
 
-            <button
-              disabled={page === Math.ceil(filteredStudents.length / itemsPerPage)}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Next
-            </button>
-          </div>
-        )}
+        .wd-main {
+          padding: 32px 40px;
+          max-width: var(--content-max, 1400px);
+          margin: 0 auto;
+          animation: fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) both;
+        }
 
-        {/* Document Modal */}
-        {showDocumentModal && documentUrl && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setShowDocumentModal(false)}>
-            <div className="bg-white rounded-lg p-4 w-full max-w-4xl h-[90vh] flex flex-col" style={{ background: 'white', padding: '20px', borderRadius: '12px', width: '90%', maxWidth: '1000px', height: '90vh', display: 'flex', flexDirection: 'column', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
-              <div className="flex justify-between items-center mb-4" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>Supporting Document</h3>
-                <button
-                  onClick={() => setShowDocumentModal(false)}
-                  style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#64748b' }}
-                >
-                  ✕
-                </button>
-              </div>
-              <div style={{ flex: 1, overflow: 'hidden', background: '#f1f5f9', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {documentType === 'pdf' ? (
-                  <iframe
-                    src={documentUrl}
-                    style={{ width: '100%', height: '100%', border: 'none' }}
-                    title="Document Viewer"
-                  />
-                ) : (
-                  <img
-                    src={documentUrl}
-                    alt="Proof"
-                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
-                  />
-                )}
-              </div>
-              <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
-                <a
-                  href={documentUrl}
-                  download={`proof_document.${documentType === 'pdf' ? 'pdf' : 'jpg'}`}
-                  style={{
-                    padding: '8px 16px',
-                    background: '#3b82f6',
-                    color: 'white',
-                    borderRadius: '6px',
-                    textDecoration: 'none',
-                    fontSize: '0.9rem',
-                    fontWeight: 500
-                  }}
-                >
-                  Download File
-                </a>
-              </div>
-            </div>
-          </div>
-        )}
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(16px); }
+          to { opacity: 1; transform: none; }
+        }
 
-        <style>{`
-/* Page Container */
-.list-container {
-  padding: 24px 40px;
-  animation: fadeInUp 0.6s ease;
-  margin-top: 10px; /* Reduced to move content upward */
-}
+        .wd-container {
+          display: flex;
+          flex-direction: column;
+          gap: 32px;
+        }
 
-.back-btn {
-  background: white;
-  border: 1px solid #cbd5e1;
-  font-size: 16px;
-  color: #1e3a8a;
-  cursor: pointer;
-  margin-bottom: 20px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-  padding: 10px 24px;
-  border-radius: 50px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  font-weight: 600;
-}
+        /* ====== HEADER ROW ====== */
+        .wd-header-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          flex-wrap: wrap;
+          gap: 20px;
+        }
 
-.back-btn:hover {
-  background: #f1f5f9;
-  transform: translateX(-5px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-}
+        .wd-back-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background: rgba(255,255,255,0.8);
+          backdrop-filter: blur(8px);
+          border: 1px solid rgba(59,130,246,0.15);
+          color: var(--wdl-primary);
+          font-size: 0.85rem;
+          font-weight: 700;
+          padding: 8px 16px;
+          border-radius: 100px;
+          cursor: pointer;
+          box-shadow: 0 4px 12px rgba(59,130,246,0.08);
+          transition: var(--wdl-transition);
+          font-family: inherit;
+          margin-bottom: 12px;
+        }
 
-.list-container h1 {
-  font-size: 22px; /* Reduced from 28px */
-  margin-bottom: 16px; /* Reduced from 24px */
-  color: #1e3a8a;
-  font-weight: 700;
-}
+        .wd-back-btn:hover {
+          background: white;
+          transform: translateX(-4px);
+          box-shadow: 0 6px 16px rgba(59,130,246,0.12);
+        }
 
-/* Reuse standard student-card styles */
-.student-list {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
+        .wd-title {
+          font-size: 1.85rem;
+          font-weight: 800;
+          color: #0F172A;
+          margin: 0 0 6px;
+          letter-spacing: -0.02em;
+        }
 
-.student-card {
-    background: white;
-    border-radius: 16px;
-    padding: 24px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-    transition: all 0.3s;
-    border: 2px solid transparent;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-}
+        .wd-subtitle {
+          font-size: 0.92rem;
+          color: #64748B;
+          margin: 0;
+          font-weight: 500;
+        }
 
-.student-card:hover {
-    border-color: #0047AB;
-    transform: translateX(8px);
-    box-shadow: 0 8px 24px rgba(0, 71, 171, 0.15);
-}
+        /* ====== CONTROLS ====== */
+        .wd-controls {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          flex-wrap: wrap;
+        }
 
-.student-card-main {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
+        .wd-search-wrapper {
+          position: relative;
+          min-width: 280px;
+        }
 
-.student-id-highlight {
-    background: linear-gradient(135deg, #0047AB, #2563eb);
-    color: white;
-    padding: 12px 20px;
-    border-radius: 12px;
-    font-weight: 700;
-    font-size: 1.1rem;
-    min-width: 140px;
-    text-align: center;
-    box-shadow: 0 4px 12px rgba(0, 71, 171, 0.3);
-}
+        .wd-search-icon {
+          position: absolute;
+          left: 16px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #94A3B8;
+          font-size: 1rem;
+        }
 
-.student-info {
-    flex: 1;
-}
+        .wd-search-input {
+          width: 100%;
+          padding: 12px 16px 12px 44px;
+          background: var(--wdl-card);
+          backdrop-filter: blur(var(--wdl-blur));
+          border: var(--wdl-border);
+          border-radius: 14px;
+          font-size: 0.9rem;
+          font-weight: 500;
+          color: #0F172A;
+          outline: none;
+          box-shadow: 0 4px 12px rgba(59,130,246,0.05);
+          transition: var(--wdl-transition);
+          box-sizing: border-box;
+        }
 
-.student-name {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 4px;
-}
+        .wd-search-input:focus {
+          border-color: var(--wdl-primary);
+          box-shadow: 0 0 0 4px rgba(59,130,246,0.15);
+          background: white;
+        }
 
-.student-meta {
-    color: #64748b;
-    font-size: 0.95rem;
-}
+        .wd-dropdown-wrapper {
+          position: relative;
+        }
 
-.student-card-action {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    margin-left: auto;
-}
+        .wd-dropdown-icon {
+          position: absolute;
+          left: 14px;
+          top: 50%;
+          transform: translateY(-50%);
+          font-size: 0.95rem;
+          pointer-events: none;
+        }
 
-.view-arrow {
-    color: #0047AB;
-    font-weight: 700;
-    font-size: 1rem;
-}
+        .wd-dropdown-arrow {
+          position: absolute;
+          right: 14px;
+          top: 50%;
+          transform: translateY(-50%);
+          font-size: 0.7rem;
+          color: #64748B;
+          pointer-events: none;
+        }
 
-.status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.9rem;
-}
+        .wd-filter-dropdown {
+          padding: 12px 34px 12px 38px;
+          background: var(--wdl-card);
+          backdrop-filter: blur(var(--wdl-blur));
+          border: var(--wdl-border);
+          border-radius: 14px;
+          font-size: 0.88rem;
+          font-weight: 600;
+          color: #334155;
+          outline: none;
+          cursor: pointer;
+          box-shadow: 0 4px 12px rgba(59,130,246,0.05);
+          appearance: none;
+          min-width: 160px;
+          transition: var(--wdl-transition);
+        }
 
-.status-dot {
-    font-size: 0.8rem;
-}
+        .wd-filter-dropdown:focus, .wd-filter-dropdown:hover {
+          border-color: var(--wdl-primary-light);
+          background: white;
+        }
 
-.emergency-badge {
-    background-color: #ef4444;
-    color: white;
-    font-size: 0.7rem;
-    padding: 2px 6px;
-    border-radius: 4px;
-    margin-left: 8px;
-    font-weight: 700;
-    vertical-align: middle;
-}
+        /* ====== CARDS GRID ====== */
+        .wd-cards-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+          gap: 24px;
+        }
 
-@media (max-width: 768px) {
-    .student-card {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 16px;
-    }
+        .wd-card {
+          background: var(--wdl-card);
+          backdrop-filter: blur(var(--wdl-blur));
+          -webkit-backdrop-filter: blur(var(--wdl-blur));
+          border: var(--wdl-border);
+          border-radius: var(--wdl-radius);
+          padding: 24px;
+          box-shadow: var(--wdl-shadow);
+          cursor: pointer;
+          transition: var(--wdl-transition);
+          position: relative;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          gap: 18px;
+        }
 
-    .student-card-main {
-        flex-direction: column;
-        align-items: flex-start;
-        width: 100%;
-    }
+        .wd-card:hover {
+          transform: translateY(-6px);
+          border-color: var(--wdl-primary);
+          box-shadow: 0 20px 40px rgba(59, 130, 246, 0.16);
+        }
 
-    .student-id-highlight {
-        width: 100%;
-    }
+        .wd-card-emergency {
+          border-left: 5px solid #EF4444;
+        }
 
-    .student-card-action {
-        width: 100%;
-        justify-content: space-between;
-        margin-left: 0;
-    }
-}
+        .wd-card-emergency:hover {
+          border-color: #EF4444;
+          box-shadow: 0 20px 40px rgba(239, 68, 68, 0.14);
+        }
 
-.emergency-badge {
-    display: inline-block;
-    background-color: #fee2e2;
-    color: #ef4444;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    margin-left: 8px;
-    border: 1px solid #ef4444;
-    vertical-align: middle;
-}
+        /* Card Header */
+        .wd-card-header {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }
 
-.emergency-badge.mobile {
-    margin-left: 0;
-    margin-top: 4px;
-    display: table;
-}
-      /* Mobile Cards View */
-.mobile-cards-view {
-  display: none;
-  flex-direction: column;
-  gap: 16px;
-}
+        .wd-avatar-wrapper {
+          width: 52px;
+          height: 52px;
+          border-radius: 50%;
+          overflow: hidden;
+          flex-shrink: 0;
+          box-shadow: 0 4px 10px rgba(59,130,246,0.2);
+        }
 
-.mobile-card {
-  background: white;
-  border-radius: 16px;
-  padding: 20px;
-  position: relative;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-  border: 1px solid rgba(0,0,0,0.02);
-  margin-bottom: 16px;
-}
+        .wd-avatar-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
 
-.card-badge {
-  background: linear-gradient(135deg, #2563eb, #1e40af);
-  color: white;
-  display: inline-block;
-  padding: 8px 0;
-  width: 100%;
-  text-align: center;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 14px;
-  margin-bottom: 16px;
-  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
-}
+        .wd-avatar-initials {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+          color: white;
+          font-weight: 700;
+          font-size: 1.3rem;
+        }
 
-.card-name {
-  font-size: 18px;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 4px;
-}
+        .wd-student-info {
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+          flex-grow: 1;
+        }
 
-.card-details {
-  font-size: 13px;
-  color: #64748b;
-  margin-bottom: 20px;
-}
+        .wd-name {
+          font-size: 1.05rem;
+          font-weight: 800;
+          color: #0F172A;
+          margin: 0;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          line-height: 1.2;
+        }
 
-.card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px solid #f1f5f9;
-  padding-top: 16px;
-}
+        .wd-emergency-tag {
+          font-size: 0.65rem;
+          font-weight: 800;
+          background: #FEF2F2;
+          color: #EF4444;
+          padding: 2px 7px;
+          border-radius: 6px;
+          border: 1px solid rgba(239, 68, 68, 0.2);
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+        }
 
-.status-pill {
-  padding: 10px 20px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  text-transform: capitalize;
-}
+        .wd-reg-no {
+          font-size: 0.82rem;
+          font-weight: 600;
+          color: #64748B;
+        }
 
-.status-pending {
-  background: #fef3c7;
-  color: #d97706;
-  border: 1px solid #fcd34d;
-}
+        .wd-dept {
+          font-size: 0.8rem;
+          font-weight: 500;
+          color: #64748B;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
 
-.card-view-link {
-  background: none;
-  border: none;
-  color: #1e3a8a;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
+        .wd-year-tag {
+          background: rgba(59,130,246,0.08);
+          color: var(--wdl-primary);
+          padding: 1px 6px;
+          border-radius: 4px;
+          font-weight: 700;
+          font-size: 0.68rem;
+        }
 
-/* Pagination */
-.pagination {
-  margin-top: 24px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 20px;
-}
+        /* Card Body */
+        .wd-card-body {
+          background: rgba(248,250,252,0.8);
+          border-radius: 14px;
+          padding: 14px 16px;
+          border: 1px solid rgba(226, 232, 240, 0.6);
+          flex-grow: 1;
+        }
 
-.pagination button {
-  padding: 8px 18px;
-  border-radius: 10px;
-  border: none;
-  background: #1e3a8a;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.3s;
-}
+        .wd-reason-label {
+          font-size: 0.72rem;
+          font-weight: 700;
+          color: #94A3B8;
+          text-transform: uppercase;
+          margin-bottom: 6px;
+          letter-spacing: 0.04em;
+        }
 
-.pagination button:hover {
-  background: #2563eb;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
-}
+        .wd-reason-text {
+          font-size: 0.86rem;
+          color: #475569;
+          font-weight: 500;
+          margin: 0;
+          line-height: 1.45;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
 
-.pagination button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
+        /* Card Meta */
+        .wd-card-meta {
+          border-top: 1px dashed rgba(226,232,240,0.8);
+          padding-top: 14px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
 
-/* Empty State */
-.mobile-empty-state, .no-data-message {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 200px;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-}
+        .wd-meta-row {
+          display: flex;
+          justify-content: space-between;
+          font-size: 0.84rem;
+        }
 
-.empty-content {
-  text-align: center;
-  color: #64748b;
-  font-size: 1.1rem;
-  font-weight: 500;
-}
+        .wd-meta-row .label {
+          color: #64748B;
+          font-weight: 600;
+        }
 
-.empty-icon {
-  font-size: 48px;
-  display: block;
-  margin-bottom: 16px;
-}
+        .wd-meta-row .value {
+          font-weight: 700;
+          color: #0F172A;
+        }
 
-/* Responsive Media Queries */
-@media (max-width: 768px) {
-  .list-container {
-    padding: 16px;
-  }
-  
-  .student-list {
-    display: none;
-  }
+        .wd-meta-row .type-badge {
+          background: #EFF6FF;
+          color: var(--wdl-primary);
+          padding: 2px 8px;
+          border-radius: 6px;
+          font-size: 0.7rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+        }
 
-  .mobile-cards-view {
-    display: flex;
-  }
+        .wd-meta-row .type-badge.emergency {
+          background: #FEF2F2;
+          color: #EF4444;
+        }
 
-  .pagination {
-    gap: 10px;
-  }
+        .wd-meta-row .date-val {
+          color: #0F172A;
+        }
 
-  .pagination button {
-    padding: 8px 14px;
-    font-size: 14px;
-  }
-}
+        /* Card Actions */
+        .wd-card-actions {
+          display: flex;
+          gap: 10px;
+          margin-top: auto;
+        }
+
+        .wd-btn-doc {
+          flex: 1;
+          padding: 10px 14px;
+          background: rgba(59,130,246,0.08);
+          border: 1px solid rgba(59,130,246,0.2);
+          color: var(--wdl-primary);
+          font-size: 0.78rem;
+          font-weight: 700;
+          border-radius: 12px;
+          cursor: pointer;
+          transition: var(--wdl-transition);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+        }
+
+        .wd-btn-doc:hover {
+          background: rgba(59,130,246,0.15);
+          border-color: var(--wdl-primary-light);
+        }
+
+        .wd-btn-review {
+          flex: 1.4;
+          padding: 10px 14px;
+          background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+          border: none;
+          color: white;
+          font-size: 0.78rem;
+          font-weight: 700;
+          border-radius: 12px;
+          cursor: pointer;
+          transition: var(--wdl-transition);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          box-shadow: 0 4px 10px rgba(59,130,246,0.2);
+        }
+
+        .wd-btn-review svg {
+          transition: transform 0.2s ease;
+        }
+
+        .wd-btn-review:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(59,130,246,0.3);
+        }
+
+        .wd-btn-review:hover svg {
+          transform: translateX(3px);
+        }
+
+        /* ====== EMPTY & LOADING STATE ====== */
+        .wd-loading-wrap {
+          text-align: center;
+          padding: 80px 24px;
+          background: var(--wdl-card);
+          backdrop-filter: blur(var(--wdl-blur));
+          border-radius: var(--wdl-radius);
+          border: var(--wdl-border);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 18px;
+          box-shadow: var(--wdl-shadow);
+        }
+
+        .wd-spinner {
+          width: 44px;
+          height: 44px;
+          border: 4px solid rgba(59,130,246,0.15);
+          border-top-color: var(--wdl-primary);
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+        }
+
+        .wd-empty-state {
+          text-align: center;
+          padding: 90px 24px;
+          background: var(--wdl-card);
+          backdrop-filter: blur(var(--wdl-blur));
+          border-radius: var(--wdl-radius);
+          border: var(--wdl-border);
+          box-shadow: var(--wdl-shadow);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 16px;
+        }
+
+        .wd-empty-icon {
+          font-size: 3.5rem;
+          display: block;
+          opacity: 0.5;
+        }
+
+        .wd-empty-title {
+          font-size: 1.3rem;
+          font-weight: 800;
+          color: #0F172A;
+          margin: 0;
+        }
+
+        .wd-empty-desc {
+          font-size: 0.9rem;
+          color: #64748B;
+          margin: 0;
+        }
+
+        /* ====== PAGINATION ====== */
+        .wd-pagination {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 8px;
+          margin-top: 24px;
+          flex-wrap: wrap;
+        }
+
+        .wd-page-numbers {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .wd-pnum-btn {
+          width: 36px;
+          height: 36px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 10px;
+          border: 1px solid rgba(59,130,246,0.2);
+          background: var(--wdl-card);
+          backdrop-filter: blur(var(--wdl-blur));
+          color: var(--wdl-primary);
+          font-weight: 700;
+          font-size: 0.85rem;
+          cursor: pointer;
+          transition: var(--wdl-transition);
+          font-family: inherit;
+        }
+
+        .wd-pnum-btn:hover {
+          background: rgba(59,130,246,0.1);
+          border-color: var(--wdl-primary);
+        }
+
+        .wd-pnum-btn.active {
+          background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+          color: white;
+          border-color: transparent;
+          box-shadow: 0 4px 12px rgba(59,130,246,0.25);
+        }
+
+        .wd-pnum-dots {
+          color: #94A3B8;
+          font-weight: 700;
+          padding: 0 4px;
+          font-size: 0.9rem;
+        }
+
+        .wd-page-btn {
+          padding: 8px 16px;
+          border-radius: 10px;
+          border: 1px solid rgba(59,130,246,0.2);
+          background: var(--wdl-card);
+          backdrop-filter: blur(var(--wdl-blur));
+          color: var(--wdl-primary);
+          font-weight: 700;
+          font-size: 0.85rem;
+          cursor: pointer;
+          transition: var(--wdl-transition);
+          font-family: inherit;
+        }
+
+        .wd-page-btn:hover:not(:disabled) {
+          background: rgba(59,130,246,0.1);
+          border-color: var(--wdl-primary);
+        }
+
+        .wd-page-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+          background: rgba(241,245,249,0.5);
+          color: #94A3B8;
+          border-color: rgba(226,232,240,0.5);
+        }
+
+        .wd-page-indicator {
+          font-size: 0.88rem;
+          color: #64748B;
+        }
+
+        /* ====== MODAL ====== */
+        .wd-modal-backdrop {
+          position: fixed;
+          inset: 0;
+          background: rgba(15, 23, 42, 0.4);
+          backdrop-filter: blur(8px);
+          z-index: 1000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 24px;
+          animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        .wd-modal-card {
+          background: var(--wdl-card);
+          backdrop-filter: blur(var(--wdl-blur));
+          border: var(--wdl-border);
+          border-radius: var(--wdl-radius);
+          width: 100%;
+          max-width: 900px;
+          height: 80vh;
+          display: flex;
+          flex-direction: column;
+          box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+          overflow: hidden;
+          animation: modalSlideUp 0.3s cubic-bezier(0.16,1,0.3,1);
+        }
+
+        @keyframes modalSlideUp {
+          from { opacity: 0; transform: translateY(20px) scale(0.98); }
+          to { opacity: 1; transform: none; }
+        }
+
+        .wd-modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 20px 28px;
+          border-bottom: 1px solid rgba(226,232,240,0.6);
+        }
+
+        .wd-modal-header h3 {
+          margin: 0;
+          font-size: 1.2rem;
+          font-weight: 800;
+          color: #0F172A;
+        }
+
+        .wd-modal-close {
+          background: rgba(241,245,249,0.8);
+          border: none;
+          color: #64748B;
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1rem;
+          font-weight: bold;
+          transition: var(--wdl-transition);
+        }
+
+        .wd-modal-close:hover {
+          background: #FEF2F2;
+          color: #EF4444;
+          transform: rotate(90deg);
+        }
+
+        .wd-modal-body {
+          flex-grow: 1;
+          background: rgba(248,250,252,0.5);
+          overflow: auto;
+          padding: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .wd-modal-iframe, .wd-modal-img {
+          width: 100%;
+          height: 100%;
+          max-width: 100%;
+          max-height: 100%;
+          border: none;
+          border-radius: 16px;
+          object-fit: contain;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+          background: white;
+        }
+
+        .wd-modal-footer {
+          padding: 16px 28px;
+          border-top: 1px solid rgba(226,232,240,0.6);
+          display: flex;
+          justify-content: flex-end;
+        }
+
+        .wd-btn-download {
+          padding: 10px 24px;
+          background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+          color: white;
+          border-radius: 12px;
+          text-decoration: none;
+          font-size: 0.9rem;
+          font-weight: 700;
+          transition: var(--wdl-transition);
+          box-shadow: 0 4px 12px rgba(59,130,246,0.25);
+        }
+
+        .wd-btn-download:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(59,130,246,0.3);
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        .sd-mono {
+          font-family: 'SF Mono', 'Fira Code', monospace;
+          font-weight: 600;
+        }
+
+        /* ====== RESPONSIVE ====== */
+        @media (max-width: 1024px) {
+          .wd-main { padding: 24px; }
+        }
+
+        @media (max-width: 768px) {
+          .wd-main { padding: 16px 16px 0; }
+          .wd-header-row { flex-direction: column; align-items: stretch; gap: 16px; margin-bottom: 8px; }
+          .wd-controls { flex-direction: column; align-items: stretch; gap: 12px; }
+          .wd-search-wrapper { min-width: 100%; }
+          .wd-filter-dropdown { width: 100%; }
+
+          .wd-cards-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+          }
+          
+          .wd-card {
+            padding: 20px;
+          }
+          
+          .wd-card-actions .wd-btn-doc, .wd-card-actions .wd-btn-review {
+            padding: 10px 12px;
+            font-size: 0.75rem;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .wd-title { font-size: 1.5rem; }
+          .wd-card { padding: 16px; gap: 14px; }
+          .wd-avatar-wrapper { width: 44px; height: 44px; }
+          .wd-avatar-initials { font-size: 1.15rem; }
+          .wd-name { font-size: 0.95rem; }
+          .wd-reason-text { font-size: 0.82rem; }
+          .wd-meta-row { font-size: 0.8rem; }
+        }
       `}</style>
-      </div>
     </div>
   );
 };

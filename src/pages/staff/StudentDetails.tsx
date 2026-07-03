@@ -53,8 +53,7 @@ const StudentDetails: React.FC = () => {
         try {
             const token = localStorage.getItem('token');
             // Using POST with body { id } as per requirements
-            const response = await axios.post(`${API_URL}/staff/student`,
-                { id },
+            const response = await axios.get(`${API_URL}/staff/student/${id}`,
                 { headers: { 'Authorization': `Bearer ${token}` } }
             );
 
@@ -80,7 +79,7 @@ const StudentDetails: React.FC = () => {
     const handleUpdate = async () => {
         try {
             const token = localStorage.getItem('token');
-            await axios.post(`${API_URL}/staff/student/update/${id}`, formData, {
+            await axios.put(`${API_URL}/staff/student/update/${id}`, formData, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             toast.success("Student updated successfully");
@@ -119,7 +118,7 @@ const StudentDetails: React.FC = () => {
         try {
             const token = localStorage.getItem('token');
             // DELETE /staff/student/delete with body { id }
-            await axios.delete(`${API_URL}/staff/student/delete`, {
+            await axios.delete(`${API_URL}/staff/student/delete/${id}`, {
                 headers: { 'Authorization': `Bearer ${token}` },
                 data: { id } // Axios way to send body with DELETE
             });
@@ -149,7 +148,7 @@ const StudentDetails: React.FC = () => {
     if (!student) return <div className="error-screen">Student not found</div>;
 
     return (
-        <div className="details-page">
+        <div className="details-page mobile-page-content">
             <ToastContainer position="bottom-right" />
             <StaffHeader activeMenu="registration" />
 
@@ -218,7 +217,7 @@ const StudentDetails: React.FC = () => {
                                         value={formData.registerNumber || ''}
                                         onChange={handleInputChange}
                                         style={{
-                                            background: 'rgba(255,255,255,0.15)',
+                                            background: 'rgba(255, 255, 255, 0.15)',
                                             padding: '4px 12px',
                                             borderRadius: '20px',
                                             fontSize: '0.9rem',
@@ -561,7 +560,7 @@ const StudentDetails: React.FC = () => {
                 }
 
                 .badge-reg {
-                    background: rgba(255,255,255,0.15);
+                    background: rgba(255, 255, 255, 0.14);
                     padding: 4px 12px;
                     border-radius: 20px;
                     font-size: 0.9rem;
@@ -641,7 +640,7 @@ const StudentDetails: React.FC = () => {
 
                 .info-row-modern p {
                     font-size: 1rem;
-                    color: #1e293b;
+                    color: #1f2e3dff;
                     font-weight: 600;
                     margin: 0;
                 }
@@ -734,6 +733,8 @@ const StudentDetails: React.FC = () => {
                     border-radius: 6px;
                     font-size: 0.95rem;
                     width: 100%;
+                    background: #ffffff;
+                    color: #0f172a;
                 }
                 .field-input:focus {
                     outline: none;

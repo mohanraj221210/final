@@ -6,7 +6,8 @@ export const DEPARTMENTS = [
     "Artificial Intelligence and Data Science",
     "Master of Business Administration",
     "Civil Engineering",
-    "Electrical and Electronics Engineering"
+    "Electrical and Electronics Engineering",
+    "Computer Science and Business System"
 ];
 
 export const DESIGNATIONS = [
@@ -18,9 +19,8 @@ export const DESIGNATIONS = [
 ];
 
 export const GENDERS = [
-    "Male",
-    "Female",
-    "Other"
+    "male",
+    "female",
 ];
 
 export const YEARS = [

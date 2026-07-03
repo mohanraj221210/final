@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import YearInchargeNav from '../../components/YearInchargeNav';
-import LoadingSpinner from '../../components/LoadingSpinner';
+import { YearInchargeService } from '../../services/yearInchargeService';
 
 const YearInchargeStudentView: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -16,6 +15,7 @@ const YearInchargeStudentView: React.FC = () => {
     const [documentUrl, setDocumentUrl] = useState<string | null>(null);
     const [documentType, setDocumentType] = useState<'image' | 'pdf'>('image');
     const [imageError, setImageError] = useState(false);
+    const [showApproveModal, setShowApproveModal] = useState(false);
 
     useEffect(() => {
         const fetchOutpassDetails = async () => {
@@ -26,22 +26,13 @@ const YearInchargeStudentView: React.FC = () => {
             }
 
             try {
-                // Get all list and find by ID since there's no single fetch API mentioned in user prompt for 'incharge'
-                // Re-using list API as per prompt instructions "Use ONLY the APIs provided below"
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}/incharge/outpass/list`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (response.status === 200) {
-                    const list = response.data.outpasses || response.data.outpasslist || response.data.filterOutpass || [];
-                    const found = list.find((o: any) => o._id === id);
-                    if (found) {
-                        setOutpass(found);
-                        setImageError(false);
-                    } else {
-                        toast.error("Outpass record not found");
-                        navigate('/year-incharge/pending-outpass');
-                    }
+                const data = await YearInchargeService.getOutpassDetails(id!);
+                if (data && data._id) {
+                    setOutpass(data);
+                    setImageError(false);
+                } else {
+                    toast.error("Outpass record not found");
+                    navigate('/year-incharge/pending-outpass');
                 }
             } catch (error) {
                 console.error("Error details:", error);
@@ -55,38 +46,25 @@ const YearInchargeStudentView: React.FC = () => {
     }, [id, navigate]);
 
     const handleAction = async (status: 'approved' | 'rejected') => {
-        if (!remarks.trim()) {
-            toast.warning("Remarks are required for this action");
+        if (status === 'rejected' && !remarks.trim()) {
+            toast.warning("Remarks are required for rejection");
             return;
         }
 
         setActionLoading(true);
-        const token = localStorage.getItem('token');
 
         try {
-            const payload = {
-                outpassId: id,
-                yearinchargeapprovalstatus: status,
-                yearinchargeremarks: remarks
-            };
-
-            const response = await axios.put(
-                `${import.meta.env.VITE_API_URL}/incharge/outpass/approval`,
-                payload,
-                { headers: { 'Authorization': `Bearer ${token}` } }
-            );
-
-            if (response.status === 200) {
-                toast.success("Outpass Updated Successfully");
-                setTimeout(() => navigate('/year-incharge/pending-outpass'), 1500);
+            if (status === 'approved') {
+                await YearInchargeService.approveOutpass(id!);
+            } else {
+                await YearInchargeService.rejectOutpass(id!, remarks);
             }
+            toast.success(`Outpass ${status === 'approved' ? 'Approved' : 'Rejected'} Successfully`);
+            setTimeout(() => navigate('/year-incharge/pending-outpass'), 1500);
         } catch (error: any) {
             console.error("Update error:", error);
             if (error.response) {
                 switch (error.response.status) {
-                    case 400:
-                        toast.error("All fields are required");
-                        break;
                     case 401:
                         toast.error("Session expired. Please login again.");
                         navigate('/year-incharge-login');
@@ -110,7 +88,7 @@ const YearInchargeStudentView: React.FC = () => {
             toast.error("Document not found");
             return;
         }
-        const fullUrl = `${import.meta.env.VITE_CDN_URL}${url}`;
+        const fullUrl = url.startsWith('http') ? url : `${import.meta.env.VITE_CDN_URL}${url}`;
         setDocumentUrl(fullUrl);
         // Basic check for PDF
         if (url.toLowerCase().endsWith('.pdf')) {
@@ -121,8 +99,82 @@ const YearInchargeStudentView: React.FC = () => {
         setShowDocumentModal(true);
     };
 
-    if (loading) return <LoadingSpinner />;
+    if (loading) {
+        return (
+            <div className="page-container">
+                <ToastContainer position="bottom-right" />
+                <YearInchargeNav />
+                <div className="content-wrapper">
+                    <div className="lux-skeleton" style={{ width: '120px', height: '36px', borderRadius: '8px', marginBottom: '24px' }}></div>
+                    <div className="details-grid">
+                        {/* Student Profile Skeleton */}
+                        <div className="student-card-modern" style={{ minHeight: '400px' }}>
+                            <div className="card-header-gradient" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '24px' }}>
+                                <div className="lux-skeleton" style={{ width: '100px', height: '100px', borderRadius: '50%' }}></div>
+                                <div className="lux-skeleton" style={{ width: '150px', height: '24px', borderRadius: '6px' }}></div>
+                                <div className="lux-skeleton" style={{ width: '100px', height: '18px', borderRadius: '6px' }}></div>
+                            </div>
+                            <div className="card-body-modern" style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '24px' }}>
+                                {[1, 2, 3].map((i) => (
+                                    <div key={i} style={{ display: 'flex', gap: '12px' }}>
+                                        <div className="lux-skeleton" style={{ width: '24px', height: '24px', borderRadius: '4px' }}></div>
+                                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                            <div className="lux-skeleton" style={{ width: '80px', height: '12px', borderRadius: '4px' }}></div>
+                                            <div className="lux-skeleton" style={{ width: '140px', height: '16px', borderRadius: '4px' }}></div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        {/* Outpass Details Skeleton */}
+                        <div className="outpass-details-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <div className="lux-skeleton" style={{ width: '200px', height: '28px', borderRadius: '6px' }}></div>
+                            <div className="status-timeline" style={{ display: 'flex', gap: '16px', margin: '20px 0' }}>
+                                {[1, 2, 3].map((i) => (
+                                    <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', flex: 1 }}>
+                                        <div className="lux-skeleton" style={{ width: '32px', height: '32px', borderRadius: '50%' }}></div>
+                                        <div className="lux-skeleton" style={{ width: '80px', height: '14px', borderRadius: '4px' }}></div>
+                                    </div>
+                                ))}
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                <div className="lux-skeleton" style={{ width: '100px', height: '14px', borderRadius: '4px' }}></div>
+                                <div className="lux-skeleton" style={{ width: '100%', height: '40px', borderRadius: '6px' }}></div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '16px' }}>
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    <div className="lux-skeleton" style={{ width: '80px', height: '14px', borderRadius: '4px' }}></div>
+                                    <div className="lux-skeleton" style={{ width: '100%', height: '32px', borderRadius: '6px' }}></div>
+                                </div>
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    <div className="lux-skeleton" style={{ width: '80px', height: '14px', borderRadius: '4px' }}></div>
+                                    <div className="lux-skeleton" style={{ width: '100%', height: '32px', borderRadius: '6px' }}></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
     if (!outpass) return null;
+
+    // Resolve Staff Approval Details
+    const staffStatus = (outpass.staffapprovalstatus || outpass.staff?.status || outpass.status || 'pending').toLowerCase();
+    const staffName = outpass.staffid?.name || outpass.staff?.name || outpass.staffname || 'N/A';
+    const staffTime = outpass.staffapprovedAt || outpass.staff?.actionAt || outpass.staffapprovedtime;
+
+    // Resolve Year Incharge Approval Details
+    const yearInchargeStatus = (outpass.yearinchargeapprovalstatus || outpass.yearincharge?.status || 'pending').toLowerCase();
+    const yearInchargeName = outpass.incharge?.name || outpass.inchargeid?.name || outpass.yearincharge?.name || outpass.yearinchargename || 'N/A';
+    const yearInchargeTime = outpass.yearinchargeapprovedAt || outpass.yearincharge?.actionAt || outpass.yearinchargeapprovedtime;
+    const yearInchargeRemarks = outpass.yearinchargeremarks || outpass.yearincharge?.remarks || outpass.yearinchargeremarksvalue;
+
+    // Resolve Warden Approval Details
+    const wardenStatus = (outpass.wardenapprovalstatus || outpass.warden?.status || 'pending').toLowerCase();
+    const wardenName = outpass.warden?.name || outpass.wardenname || 'N/A';
+    const wardenTime = outpass.wardenapprovedAt || outpass.warden?.actionAt || outpass.wardenapprovedtime;
+    const wardenRemarks = outpass.wardenremarks || outpass.warden?.remarks || outpass.wardenremarksvalue;
 
     return (
         <div className="page-container">
@@ -236,36 +288,36 @@ const YearInchargeStudentView: React.FC = () => {
                         <h2>Outpass Application</h2>
 
                         <div className="status-timeline">
-                            <div className={`status-step completed`}>
+                            <div className="status-step completed">
                                 <div className="step-dot">✓</div>
                                 <div className="step-content">
                                     <h4>Request Submitted</h4>
                                     <p>{new Date(outpass.fromDate).toLocaleDateString()}</p>
                                 </div>
                             </div>
-                            <div className={`status-step ${outpass.staffapprovalstatus === 'approved' ? 'completed' : 'pending'}`}>
-                                <div className="step-dot">{outpass.staffapprovalstatus === 'approved' ? '✓' : '•'}</div>
+                            <div className={`status-step ${staffStatus === 'approved' ? 'completed' : staffStatus === 'rejected' ? 'rejected' : 'active'}`}>
+                                <div className="step-dot">{staffStatus === 'approved' ? '✓' : staffStatus === 'rejected' ? '✕' : '●'}</div>
                                 <div className="step-content">
                                     <h4>Staff Approval</h4>
-                                    <p>Status: {outpass.staffapprovalstatus}</p>
-                                    {outpass.staffid?.name && (
-                                        <p className="step-person">By: {outpass.staffid.name}</p>
+                                    <p>Status: {staffStatus.charAt(0).toUpperCase() + staffStatus.slice(1)}</p>
+                                    {staffName && staffName !== 'N/A' && (
+                                        <p className="step-person">By: {staffName}</p>
                                     )}
-                                    {outpass.staffapprovedAt && (
-                                        <p className="step-time">{new Date(outpass.staffapprovedAt).toLocaleDateString()}</p>
+                                    {staffTime && (
+                                        <p className="step-time">{new Date(staffTime).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                                     )}
                                 </div>
                             </div>
-                            <div className={`status-step ${outpass.yearinchargeapprovalstatus === 'approved' ? 'completed' : outpass.yearinchargeapprovalstatus === 'rejected' ? 'rejected' : 'active'}`}>
+                            <div className={`status-step ${yearInchargeStatus === 'approved' ? 'completed' : yearInchargeStatus === 'rejected' ? 'rejected' : (staffStatus === 'approved' ? 'active' : 'pending')}`}>
                                 <div className="step-dot">
-                                    {outpass.yearinchargeapprovalstatus === 'approved' ? '✓' :
-                                        outpass.yearinchargeapprovalstatus === 'rejected' ? '✕' : '●'}
+                                    {yearInchargeStatus === 'approved' ? '✓' :
+                                        yearInchargeStatus === 'rejected' ? '✕' : (staffStatus === 'approved' ? '●' : '•')}
                                 </div>
                                 <div className="step-content">
                                     <h4>Year Incharge</h4>
-                                    <p>{outpass.yearinchargeapprovalstatus === 'pending' ? 'Pending Decision' : `Status: ${outpass.yearinchargeapprovalstatus}`}</p>
-                                    {outpass.yearinchargeapprovedAt && (
-                                        <p className="step-time">{new Date(outpass.yearinchargeapprovedAt).toLocaleDateString()}</p>
+                                    <p>Status: {yearInchargeStatus.charAt(0).toUpperCase() + yearInchargeStatus.slice(1)}</p>
+                                    {yearInchargeTime && (
+                                        <p className="step-time">{new Date(yearInchargeTime).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                                     )}
                                 </div>
                             </div>
@@ -275,11 +327,14 @@ const YearInchargeStudentView: React.FC = () => {
                                 const isDayScholar = type === 'dayscholar';
 
                                 return !isDayScholar && (
-                                    <div className={`status-step ${outpass.wardenapprovalstatus === 'approved' ? 'completed' : 'pending'}`}>
-                                        <div className="step-dot">{outpass.wardenapprovalstatus === 'approved' ? '✓' : '•'}</div>
+                                    <div className={`status-step ${wardenStatus === 'approved' ? 'completed' : wardenStatus === 'rejected' ? 'rejected' : (yearInchargeStatus === 'approved' ? 'active' : 'pending')}`}>
+                                        <div className="step-dot">{wardenStatus === 'approved' ? '✓' : wardenStatus === 'rejected' ? '✕' : (yearInchargeStatus === 'approved' ? '●' : '•')}</div>
                                         <div className="step-content">
                                             <h4>Warden Approval</h4>
-                                            <p>Status: {outpass.wardenapprovalstatus}</p>
+                                            <p>Status: {wardenStatus.charAt(0).toUpperCase() + wardenStatus.slice(1)}</p>
+                                            {wardenTime && (
+                                                <p className="step-time">{new Date(wardenTime).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                                            )}
                                         </div>
                                     </div>
                                 );
@@ -344,33 +399,211 @@ const YearInchargeStudentView: React.FC = () => {
                             </div>
                         </div>
 
+                        {/* Audit Log / History */}
+                        <div className="audit-log-section" style={{
+                            marginTop: '24px',
+                            paddingTop: '20px',
+                            borderTop: '1px dashed #cbd5e1'
+                        }}>
+                            <h3 style={{
+                                fontSize: '1.1rem',
+                                color: '#1e293b',
+                                fontWeight: 700,
+                                marginBottom: '16px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px'
+                            }}>
+                                📋 Audit Log & History
+                            </h3>
+                            <div className="audit-timeline" style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '16px'
+                            }}>
+                                {/* Applied Entry */}
+                                <div style={{ display: 'flex', gap: '12px' }}>
+                                    <div style={{ fontSize: '1rem' }}>📝</div>
+                                    <div>
+                                        <p style={{ margin: 0, fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Applied At</p>
+                                        <p style={{ margin: 0, color: '#64748b', fontSize: '0.85rem' }}>
+                                            {outpass.createdAt ? new Date(outpass.createdAt).toLocaleString('en-IN', {
+                                                day: '2-digit', month: 'short', year: 'numeric',
+                                                hour: '2-digit', minute: '2-digit', hour12: true
+                                            }) : 'N/A'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Staff Entry */}
+                                {(staffName !== 'N/A' || staffStatus !== 'pending') && (
+                                    <div style={{ display: 'flex', gap: '12px' }}>
+                                        <div style={{ fontSize: '1rem' }}>
+                                            {staffStatus === 'approved' ? '✅' : staffStatus === 'rejected' ? '❌' : '⏳'}
+                                        </div>
+                                        <div>
+                                            <p style={{ margin: 0, fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>
+                                                Staff Decision: {staffStatus.charAt(0).toUpperCase() + staffStatus.slice(1)}
+                                            </p>
+                                            <p style={{ margin: 0, color: '#64748b', fontSize: '0.85rem' }}>
+                                                {staffName && staffName !== 'N/A' ? `Approved By: ${staffName}` : ''}
+                                                {staffTime ? ` on ${new Date(staffTime).toLocaleString('en-IN', {
+                                                    day: '2-digit', month: 'short', year: 'numeric',
+                                                    hour: '2-digit', minute: '2-digit', hour12: true
+                                                })}` : ''}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Year Incharge Entry */}
+                                {yearInchargeStatus !== 'pending' && (
+                                    <div style={{ display: 'flex', gap: '12px' }}>
+                                        <div style={{ fontSize: '1rem' }}>
+                                            {yearInchargeStatus === 'approved' ? '✅' : '❌'}
+                                        </div>
+                                        <div>
+                                            <p style={{ margin: 0, fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>
+                                                Year Incharge Decision: {yearInchargeStatus.charAt(0).toUpperCase() + yearInchargeStatus.slice(1)}
+                                            </p>
+                                            <p style={{ margin: 0, color: '#64748b', fontSize: '0.85rem' }}>
+                                                {yearInchargeName && yearInchargeName !== 'N/A' ? `Processed By: ${yearInchargeName}` : ''}
+                                                {yearInchargeTime ? ` on ${new Date(yearInchargeTime).toLocaleString('en-IN', {
+                                                    day: '2-digit', month: 'short', year: 'numeric',
+                                                    hour: '2-digit', minute: '2-digit', hour12: true
+                                                })}` : ''}
+                                            </p>
+                                            {yearInchargeRemarks && (
+                                                <p style={{
+                                                    margin: '4px 0 0 0',
+                                                    padding: '8px 12px',
+                                                    background: yearInchargeStatus === 'approved' ? '#f0fdf4' : '#fef2f2',
+                                                    borderLeft: `3px solid ${yearInchargeStatus === 'approved' ? '#22c55e' : '#ef4444'}`,
+                                                    color: yearInchargeStatus === 'approved' ? '#166534' : '#991b1b',
+                                                    fontSize: '0.85rem',
+                                                    borderRadius: '4px',
+                                                    fontStyle: 'italic'
+                                                }}>
+                                                    Remarks: "{yearInchargeRemarks}"
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Warden Entry */}
+                                {wardenStatus !== 'pending' && (
+                                    <div style={{ display: 'flex', gap: '12px' }}>
+                                        <div style={{ fontSize: '1rem' }}>
+                                            {wardenStatus === 'approved' ? '✅' : '❌'}
+                                        </div>
+                                        <div>
+                                            <p style={{ margin: 0, fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>
+                                                Warden Decision: {wardenStatus.charAt(0).toUpperCase() + wardenStatus.slice(1)}
+                                            </p>
+                                            <p style={{ margin: 0, color: '#64748b', fontSize: '0.85rem' }}>
+                                                {wardenName && wardenName !== 'N/A' ? `Processed By: ${wardenName}` : ''}
+                                                {wardenTime ? ` on ${new Date(wardenTime).toLocaleString('en-IN', {
+                                                    day: '2-digit', month: 'short', year: 'numeric',
+                                                    hour: '2-digit', minute: '2-digit', hour12: true
+                                                })}` : ''}
+                                            </p>
+                                            {wardenRemarks && (
+                                                <p style={{
+                                                    margin: '4px 0 0 0',
+                                                    padding: '8px 12px',
+                                                    background: wardenStatus === 'approved' ? '#f0fdf4' : '#fef2f2',
+                                                    borderLeft: `3px solid ${wardenStatus === 'approved' ? '#22c55e' : '#ef4444'}`,
+                                                    color: wardenStatus === 'approved' ? '#166534' : '#991b1b',
+                                                    fontSize: '0.85rem',
+                                                    borderRadius: '4px',
+                                                    fontStyle: 'italic'
+                                                }}>
+                                                    Remarks: "{wardenRemarks}"
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
                         {/* Approval Actions */}
                         <div className="action-section">
                             <h3>Take Action</h3>
                             <textarea
                                 className="remarks-input"
-                                placeholder="Enter remarks (required)..."
+                                placeholder="Enter remarks (required for rejection)..."
                                 value={remarks}
                                 onChange={(e) => setRemarks(e.target.value)}
                                 rows={3}
                             />
-                            <div className="action-buttons">
-                                <button
-                                    className="btn-reject"
-                                    onClick={() => handleAction('rejected')}
-                                    disabled={actionLoading}
-                                >
-                                    {actionLoading ? 'Processing...' : 'Reject Request'}
-                                </button>
-                                <button
-                                    className="btn-approve"
-                                    onClick={() => handleAction('approved')}
-                                    disabled={actionLoading}
-                                >
-                                    {actionLoading ? 'Processing...' : 'Approve Request'}
-                                </button>
-                            </div>
+                            {outpass.outpasstype !== 'HostelEmergency' && (
+                                <div className="action-buttons">
+                                    <button
+                                        className="btn-reject"
+                                        onClick={() => handleAction('rejected')}
+                                        disabled={actionLoading}
+                                    >
+                                        {actionLoading ? 'Processing...' : 'Reject Request'}
+                                    </button>
+                                    <button
+                                        className="btn-approve"
+                                        onClick={() => setShowApproveModal(true)}
+                                        disabled={actionLoading}
+                                    >
+                                        {actionLoading ? 'Processing...' : 'Approve Request'}
+                                    </button>
+                                </div>
+                            )}
                         </div>
+
+                        {/* Approval Confirmation Modal */}
+                        {showApproveModal && (
+                            <div className="modal-overlay" onClick={() => setShowApproveModal(false)}>
+                                <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', padding: '32px', textAlign: 'center', borderRadius: '24px' }}>
+                                    <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px' }}>✅</span>
+                                    <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1e293b', marginBottom: '12px' }}>Confirm Approval</h3>
+                                    <p style={{ color: '#64748b', fontSize: '0.95rem', marginBottom: '24px', lineHeight: 1.5 }}>
+                                        Are you sure you want to approve this outpass request? This action cannot be undone.
+                                    </p>
+                                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                                        <button
+                                            onClick={() => setShowApproveModal(false)}
+                                            style={{
+                                                padding: '10px 20px',
+                                                borderRadius: '10px',
+                                                border: '1px solid #cbd5e1',
+                                                background: 'white',
+                                                color: '#475569',
+                                                fontWeight: '600',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setShowApproveModal(false);
+                                                handleAction('approved');
+                                            }}
+                                            disabled={actionLoading}
+                                            style={{
+                                                padding: '10px 20px',
+                                                borderRadius: '10px',
+                                                border: 'none',
+                                                background: '#10b981',
+                                                color: 'white',
+                                                fontWeight: '600',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            {actionLoading ? 'Approving...' : 'Confirm Approve'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -693,6 +926,12 @@ const YearInchargeStudentView: React.FC = () => {
                     color: white;
                 }
 
+                .status-step.rejected .step-dot {
+                    background: #ef4444;
+                    border-color: #ef4444;
+                    color: white;
+                }
+
                 .status-step.active .step-dot {
                     border-color: #3b82f6;
                     color: #3b82f6;
@@ -770,11 +1009,18 @@ const YearInchargeStudentView: React.FC = () => {
                 .remarks-input {
                     width: 100%;
                     padding: 12px;
-                    border: 1px solid #e2e8f0;
+                    border: 1.5px solid #cbd5e1;
                     border-radius: 12px;
                     margin: 16px 0;
                     font-family: inherit;
                     resize: vertical;
+                    background: #ffffff !important;
+                    color: #0f172a !important;
+                    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+                }
+
+                .remarks-input::placeholder {
+                    color: #64748b !important;
                 }
 
                 .remarks-input:focus {

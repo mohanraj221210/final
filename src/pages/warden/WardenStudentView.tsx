@@ -59,17 +59,35 @@ const WardenStudentView: React.FC = () => {
     setShowModal(true);
   };
 
+  const handleApprove = async () => {
+    if (!window.confirm("Are you sure you want to approve this outpass request?")) {
+      return;
+    }
+    try {
+      const token = localStorage.getItem("token");
+      await axios.get(
+        `${import.meta.env.VITE_API_URL}/warden/outpass/approve/${id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      toast.success("Outpass approved successfully!");
+      fetchStudent();
+    } catch (err: any) {
+      console.error("Failed to update status:", err);
+      toast.error("Failed to update status");
+    }
+  };
+
   const handleConfirmAction = async () => {
-    if (!modalType || !remarks.trim()) return;
+    if (!modalType) return;
+    if (modalType === 'rejected' && !remarks.trim()) return;
 
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `${import.meta.env.VITE_API_URL}/warden/outpass/update`,
+        `${import.meta.env.VITE_API_URL}/warden/outpass/reject/${id}`,
         {
-          outpassId: id,
-          wardenapprovalstatus: modalType,
-          wardenremarks: remarks,
+          remarks: remarks,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -135,6 +153,18 @@ const WardenStudentView: React.FC = () => {
   }
 
   const s = student.studentid || {};
+  const wardenStatus = student.warden?.status || student.wardenapprovalstatus;
+
+  // Resolve Staff Approval Details
+  const staffStatus = student.staffapprovalstatus || student.staff?.status || student.status || 'pending';
+  const staffName = student.staffid?.name || student.staff?.name || student.staffname || 'N/A';
+  const staffTime = student.staffapprovedAt || student.staff?.actionAt || student.staffapprovedtime;
+
+  // Resolve Year Incharge Approval Details
+  const yearInchargeStatus = student.yearinchargeapprovalstatus || student.yearincharge?.status || 'pending';
+  const yearInchargeName = student.incharge?.name || student.inchargeid?.name || student.yearincharge?.name || student.yearinchargename || 'N/A';
+  const yearInchargeTime = student.yearinchargeapprovedAt || student.yearincharge?.actionAt || student.yearinchargeapprovedtime;
+  const yearInchargeRemarks = student.yearinchargeremarks || student.yearincharge?.remarks || student.yearinchargeremarksvalue;
 
   return (
     <div className="page-container warden-view-page">
@@ -324,41 +354,111 @@ const WardenStudentView: React.FC = () => {
         </div>
 
         {/* Section 5: Approval Workflow */}
-
-        {/* <div className="section-header">
-            <h3>✅ Approval Workflow</h3>
-          </div> */}
-        <div className="section-body workflow-container">
-          {/* <div className="workflow-step">
-              <div className={`step-icon ${student.status === 'approved' ? 'success' : 'pending'}`}>
-                {student.status === 'approved' ? '✓' : '•'}
+        <div className="section-card">
+          <div className="section-header">
+            <h3>✅ Approval Status &amp; Workflow</h3>
+          </div>
+          <div className="section-body">
+            <div className="workflow-status-grid">
+              {/* Staff Approval */}
+              <div className="workflow-card">
+                <div className="workflow-card-header">
+                  <span className="workflow-role">Staff / Mentor</span>
+                  <span className={`status-pill ${staffStatus}`}>
+                    {staffStatus}
+                  </span>
+                </div>
+                <div className="workflow-card-body">
+                  <div className="workflow-field">
+                    <label>Approved By</label>
+                    <div className="workflow-value">{staffName}</div>
+                  </div>
+                  {staffTime && (
+                    <div className="workflow-field mt-2">
+                      <label>Action Date &amp; Time</label>
+                      <div className="workflow-value">
+                        {new Date(staffTime).toLocaleString('en-IN', {
+                          day: '2-digit', month: 'short', year: 'numeric',
+                          hour: '2-digit', minute: '2-digit', hour12: true
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="step-content">
-                <span className="step-title">Staff/Mentor Approval</span>
-                {student.status && <span className={`status-pill ${student.status}`}>{student.status}</span>}
-              </div>
-            </div> */}
 
-          {/* <div className="step-connector"></div>
-
-            <div className="workflow-step">
-              <div className={`step-icon ${student.wardenapprovalstatus === 'approved' ? 'success' : (student.wardenapprovalstatus === 'rejected' ? 'error' : 'pending')}`}>
-                {student.wardenapprovalstatus === 'approved' ? '✓' : (student.wardenapprovalstatus === 'rejected' ? '✕' : '•')}
+              {/* Year Incharge Approval */}
+              <div className="workflow-card">
+                <div className="workflow-card-header">
+                  <span className="workflow-role">Year Incharge</span>
+                  <span className={`status-pill ${yearInchargeStatus}`}>
+                    {yearInchargeStatus}
+                  </span>
+                </div>
+                <div className="workflow-card-body">
+                  <div className="workflow-field">
+                    <label>Approved By</label>
+                    <div className="workflow-value">{yearInchargeName}</div>
+                  </div>
+                  {yearInchargeTime && (
+                    <div className="workflow-field mt-2">
+                      <label>Action Date &amp; Time</label>
+                      <div className="workflow-value">
+                        {new Date(yearInchargeTime).toLocaleString('en-IN', {
+                          day: '2-digit', month: 'short', year: 'numeric',
+                          hour: '2-digit', minute: '2-digit', hour12: true
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  {yearInchargeRemarks && (
+                    <div className="workflow-field mt-2">
+                      <label>Remarks</label>
+                      <div className="workflow-value remarks-value">"{yearInchargeRemarks}"</div>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="step-content">
-                <span className="step-title">Warden Approval</span>
-                <span className={`status-pill ${student.wardenapprovalstatus || 'pending'}`}>
-                  {student.wardenapprovalstatus || 'pending'}
-                </span>
-              </div>
-            </div> */}
 
+              {/* Warden Approval */}
+              <div className="workflow-card">
+                <div className="workflow-card-header">
+                  <span className="workflow-role">Warden Decision</span>
+                  <span className={`status-pill ${wardenStatus || 'pending'}`}>
+                    {wardenStatus || 'pending'}
+                  </span>
+                </div>
+                <div className="workflow-card-body">
+                  {student.wardenapprovedAt && (
+                    <div className="workflow-field">
+                      <label>Action Date &amp; Time</label>
+                      <div className="workflow-value">
+                        {new Date(student.wardenapprovedAt).toLocaleString('en-IN', {
+                          day: '2-digit', month: 'short', year: 'numeric',
+                          hour: '2-digit', minute: '2-digit', hour12: true
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  {student.wardenremarks && (
+                    <div className="workflow-field mt-2">
+                      <label>Remarks</label>
+                      <div className="workflow-value remarks-value">"{student.wardenremarks}"</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="section-body workflow-container" style={{ padding: 0 }}>
           {/* Action Buttons if Pending */}
-          {(!student.wardenapprovalstatus || student.wardenapprovalstatus === 'pending') && (
+          {(!wardenStatus || wardenStatus === 'pending') && student.outpasstype !== 'HostelEmergency' && (
             <div className="workflow-actions">
               <button
                 className="btn-approve"
-                onClick={() => openConfirmation("approved")}
+                onClick={handleApprove}
               >
                 Approve Request
               </button>
@@ -933,6 +1033,82 @@ const WardenStudentView: React.FC = () => {
             width: 100%;
             height: 100%;
             border: none;
+        }
+
+        /* Approval Workflow Custom Styles */
+        .workflow-status-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 20px;
+        }
+
+        .workflow-card {
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .workflow-card-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 1px solid #e2e8f0;
+          padding-bottom: 8px;
+        }
+
+        .workflow-role {
+          font-weight: 700;
+          font-size: 13px;
+          color: #1e3a8a;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .workflow-card-body {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .workflow-field {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .workflow-field label {
+          font-size: 10px;
+          font-weight: 700;
+          color: #64748b;
+          text-transform: uppercase;
+        }
+
+        .workflow-value {
+          font-size: 13px;
+          font-weight: 600;
+          color: #334155;
+        }
+
+        .remarks-value {
+          font-style: italic;
+          color: #475569;
+          background: #f1f5f9;
+          padding: 6px 10px;
+          border-radius: 6px;
+          font-size: 12px;
+          margin-top: 2px;
+          border-left: 3px solid #cbd5e1;
+        }
+
+        @media (max-width: 768px) {
+          .workflow-status-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+          }
         }
       `}</style>
     </div >

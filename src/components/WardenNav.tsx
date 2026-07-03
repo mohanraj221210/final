@@ -28,9 +28,9 @@ const WardenNav: React.FC = () => {
         { path: '/warden-dashboard',              label: 'Dashboard',       icon: '🏠' },
         { path: '/warden/pending-outpass',         label: 'Pending',         icon: '⏳' },
         { path: '/warden/outpass-list',            label: 'Outpass List',    icon: '📋' },
-        { path: '/warden/apply-emergency',         label: '🚨 Emergency',   icon: '🚨' },
-        { path: '/warden/emergency-outpass-list',  label: 'Emergency List',  icon: '📝' },
+        { path: '/warden/scan',                    label: 'Scan QR',         icon: '📷' },
         { path: '/warden-profile',                 label: 'Profile',         icon: '👤' },
+        { path: '/warden/apply-emergency',         label: '🚨 Emergency',   icon: '🚨' },
     ];
 
     return (
@@ -43,7 +43,7 @@ const WardenNav: React.FC = () => {
                     </div>
 
                     <nav className="wn-desktop-nav">
-                        {navItems.slice(0, 5).map(item => (
+                        {navItems.map(item => (
                             <button
                                 key={item.path}
                                 className={`wn-nav-link ${isActive(item.path) ? 'wn-active' : ''} ${item.path === '/warden/apply-emergency' ? 'wn-emergency' : ''}`}

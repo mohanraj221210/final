@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import PremiumStaffLoader from '../../components/PremiumStaffLoader'; // Refresh TS cache
 import { useNavigate } from 'react-router-dom';
 import StaffHeader from '../../components/StaffHeader';
 import axios from 'axios';
@@ -7,9 +8,9 @@ import ImageCropper from '../../components/ImageCropper';
 import imageCompression from 'browser-image-compression';
 import { DEPARTMENTS, DESIGNATIONS } from '../../constants/dropdownOptions';
 
-
 const StaffProfile: React.FC = () => {
     const [loading, setLoading] = useState(true);
+    const [appReady, setAppReady] = useState(false);
     const [staff, setStaff] = useState<any>(null);
     const [isEditing, setIsEditing] = useState(false);
 
@@ -40,14 +41,12 @@ const StaffProfile: React.FC = () => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Validation: Max 5MB (increased for cropping)
         if (file.size > 5 * 1024 * 1024) {
             toast.error("Image size must be less than 5 MB");
             e.target.value = '';
             return;
         }
 
-        // Validation: Allowed types
         const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
         if (!allowedTypes.includes(file.type)) {
             toast.error("Only JPG, JPEG, and PNG formats are allowed");
@@ -66,7 +65,7 @@ const StaffProfile: React.FC = () => {
             const file = new File([croppedBlob], "profile_cropped.jpg", { type: "image/jpeg" });
 
             const options = {
-                maxSizeMB: 0.2, // 200KB
+                maxSizeMB: 0.2,
                 maxWidthOrHeight: 1024,
                 useWebWorker: true,
             };
@@ -76,7 +75,6 @@ const StaffProfile: React.FC = () => {
 
             setSelectedFile(compressedBlob);
 
-            // Preview
             const reader = new FileReader();
             reader.onloadend = () => {
                 setFormData((prev: any) => ({
@@ -111,13 +109,23 @@ const StaffProfile: React.FC = () => {
                 }
             });
             if (response.status === 200) {
-                setStaff(response.data.staff);
-                setFormData({
-                    ...response.data.staff,
-                    subjects: response.data.staff.subjects || [],
-                    skills: response.data.staff.skills || [],
-                    achievements: response.data.staff.achievements || []
-                });
+                const staffData = response.data.staff;
+                const cleanArray = (arr: any) => {
+                    if (!arr) return [];
+                    if (Array.isArray(arr)) return arr.filter((s: string) => s && s.trim() !== '');
+                    if (typeof arr === 'string') return arr.split(',').map((s: string) => s.trim()).filter((s: string) => s !== '');
+                    return [];
+                };
+
+                const cleanStaff = {
+                    ...staffData,
+                    subjects: cleanArray(staffData.subjects),
+                    skills: cleanArray(staffData.skills),
+                    achievements: cleanArray(staffData.achievements)
+                };
+
+                setStaff(cleanStaff);
+                setFormData(cleanStaff);
             }
         } catch (error) {
             console.error("Error fetching staff profile:", error);
@@ -156,48 +164,71 @@ const StaffProfile: React.FC = () => {
     };
 
     const handleSave = async () => {
-        setIsEditing(false); // Optimistically close edit mode or show loading
+        setIsEditing(false);
         const loadingToast = toast.loading("Updating profile...");
 
         try {
-            const submitData = new FormData();
+            let response;
 
-            // Append basic fields
-            Object.keys(formData).forEach(key => {
-                if (key === 'subjects' || key === 'skills' || key === 'achievements' || key === 'photo') return;
-                submitData.append(key, formData[key]);
-            });
-
-            // Append arrays
-            if (formData.subjects) formData.subjects.forEach((item: string) => submitData.append('subjects', item));
-            if (formData.skills) formData.skills.forEach((item: string) => submitData.append('skills', item));
-            if (formData.achievements) formData.achievements.forEach((item: string) => submitData.append('achievements', item));
-
-            // Append photo only if changed
             if (selectedFile) {
-                submitData.append('file', selectedFile);
-            }
+                // If photo is changed, we must use FormData
+                const submitData = new FormData();
 
-            const response = await axios.put(`${import.meta.env.VITE_API_URL}/staff/profile/update`, submitData, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    // Content-Type is set automatically by axios for FormData
-                }
-            });
+                Object.keys(formData).forEach(key => {
+                    if (key === 'subjects' || key === 'skills' || key === 'achievements' || key === 'photo') return;
+                    submitData.append(key, formData[key]);
+                });
+
+                const appendArray = (key: string, arr: string[]) => {
+                    if (!arr || arr.length === 0) return;
+                    if (arr.length === 1) {
+                        submitData.append(key, arr[0]);
+                        submitData.append(key, ''); // Force array parsing on backend
+                    } else {
+                        arr.forEach((item: string) => submitData.append(key, item));
+                    }
+                };
+
+                appendArray('subjects', formData.subjects || []);
+                appendArray('skills', formData.skills || []);
+                appendArray('achievements', formData.achievements || []);
+
+                submitData.append('file', selectedFile);
+
+                response = await axios.put(`${import.meta.env.VITE_API_URL}/staff/profile/update`, submitData, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    }
+                });
+            } else {
+                // If photo is not changed, send a standard JSON payload
+                const payload = {
+                    ...formData,
+                    subjects: formData.subjects || [],
+                    skills: formData.skills || [],
+                    achievements: formData.achievements || []
+                };
+
+                response = await axios.put(`${import.meta.env.VITE_API_URL}/staff/profile/update`, payload, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+            }
 
             if (response.status === 200) {
                 toast.update(loadingToast, { render: "Profile updated successfully!", type: "success", isLoading: false, autoClose: 3000 });
-                // Refetch to ensure we have the persisted data from backend
                 await fetchStaffProfile();
-                setSelectedFile(null); // Reset file selection
+                setSelectedFile(null);
             } else {
                 toast.update(loadingToast, { render: "Update failed.", type: "error", isLoading: false, autoClose: 3000 });
-                setIsEditing(true); // Re-enable edit on soft fail
+                setIsEditing(true);
             }
         } catch (error) {
             console.error("Error updating profile:", error);
             toast.update(loadingToast, { render: "Failed to update profile", type: "error", isLoading: false, autoClose: 3000 });
-            setIsEditing(true); // Re-enable edit on error
+            setIsEditing(true);
         }
     };
 
@@ -223,27 +254,18 @@ const StaffProfile: React.FC = () => {
 
     const completionPercentage = (() => {
         const missingCount = getMissingFields().length;
-        // Total 9 fields now (Name, Email, Phone, Dept, Designation, Photo, Subjects, Skills, Achievements)
         return Math.round(((9 - missingCount) / 9) * 100);
     })();
 
-    const missingFields = getMissingFields();
-
-    const getProgressColor = (percent: number) => {
-        if (percent < 50) return '#ef4444'; // Red
-        if (percent < 80) return '#f59e0b'; // Orange
-        return '#10b981'; // Green
-    };
-
-    if (loading) {
-        return <div className="card staff-card">Loading...</div>;
+    if (!appReady) {
+        return <PremiumStaffLoader isDataReady={!loading} onComplete={() => setAppReady(true)} />;
     }
 
     if (!staff) {
         return (
             <>
                 <StaffHeader activeMenu="profile" />
-                <div className="page-container">
+                <div className="page-container mobile-page-content">
                     <div className="content-wrapper">
                         <div className="error-message">
                             <h2>Profile not found</h2>
@@ -257,12 +279,23 @@ const StaffProfile: React.FC = () => {
         );
     }
 
+    // Default avatars and static counts for UX demonstration
+    const totalStudents = 124;
+    const researchPapers = 8;
+    const projectsGuided = 15;
+    
+    // Calculate SVG circle dashoffset
+    const circleRadius = 30;
+    const circleCircumference = 2 * Math.PI * circleRadius;
+    const circleOffset = circleCircumference - (completionPercentage / 100) * circleCircumference;
+
     return (
         <>
             <StaffHeader activeMenu="profile" />
-            <div className="page-container staff-profile-page">
+            <div className="page-container premium-profile-page mobile-page-content">
                 <ToastContainer position="bottom-right" />
                 <div className="content-wrapper">
+                    
                     {/* Header Actions */}
                     <div className="header-actions">
                         <button className="back-btn" onClick={() => navigate('/staff-dashboard')}>
@@ -288,382 +321,297 @@ const StaffProfile: React.FC = () => {
                         )}
                     </div>
 
-                    {/* Completion Progress Bar */}
-                    <div className="completion-card">
-                        <div className="completion-header">
-                            <div>
-                                <span className="completion-title">Profile Completion</span>
-                                {missingFields.length > 0 && (
-                                    <div className="missing-fields-text">
-                                        Missing: {missingFields.join(', ')}
-                                    </div>
-                                )}
-                            </div>
-                            <span className="completion-value" style={{ color: getProgressColor(completionPercentage) }}>
-                                {completionPercentage}%
-                            </span>
-                        </div>
-                        <div className="progress-track">
-                            <div
-                                className="progress-fill"
-                                style={{
-                                    width: `${completionPercentage}%`,
-                                    backgroundColor: getProgressColor(completionPercentage)
-                                }}
-                            ></div>
-                        </div>
-                        {completionPercentage < 100 && (
-                            <p className="completion-hint">Complete your profile to ensure accurate records.</p>
-                        )}
-                    </div>
-
-                    {/* Profile Header */}
-                    <div className="profile-header">
-                        <div className="profile-image-wrapper">
-                            {((formData.photo && formData.photo.trim() !== '') || (staff.photo && staff.photo.trim() !== '')) ? (
-                                <img
-                                    src={formData.photo
-                                        ? formData.photo.startsWith("data:") ||
-                                            formData.photo.startsWith("blob:") ||
-                                            formData.photo.startsWith("http")
-                                            ? formData.photo
-                                            : `${import.meta.env.VITE_CDN_URL}${formData.photo}`
-                                        : `${import.meta.env.VITE_CDN_URL}${staff.photo}`}
-                                    alt={formData.name}
-                                    onError={(e) => {
-                                        e.currentTarget.style.display = 'none';
-                                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                                    }}
-                                    className="profile-image"
-                                />
-                            ) : (
-                                <div className="profile-initials-avatar">
-                                    {(() => {
-                                        const name = formData.name || staff.name;
-                                        if (!name || name.trim() === '') {
-                                            return (
-                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="60%" height="60%">
-                                                    <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clipRule="evenodd" />
-                                                </svg>
-                                            );
-                                        }
-                                        const initials = name
-                                            .trim()
-                                            .split(' ')
-                                            .map((n: string) => n[0])
-                                            .join('')
-                                            .substring(0, 2)
-                                            .toUpperCase();
-                                        return initials;
-                                    })()}
-                                </div>
-                            )}
-                            {/* Fallback for onError */}
-                            <div className="profile-initials-avatar hidden">
-                                {(() => {
-                                    const name = formData.name || staff.name;
-                                    if (!name || name.trim() === '') {
-                                        return (
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="60%" height="60%">
-                                                <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clipRule="evenodd" />
-                                            </svg>
-                                        );
-                                    }
-                                    const initials = name
-                                        .trim()
-                                        .split(' ')
-                                        .map((n: string) => n[0])
-                                        .join('')
-                                        .substring(0, 2)
-                                        .toUpperCase();
-                                    return initials;
-                                })()}
-                            </div>
-                            {isEditing && (
-                                <>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        id="photo-upload"
-                                        style={{ display: 'none' }}
-                                        onChange={handleImageUpload}
-                                    />
-                                    <label htmlFor="photo-upload" className="photo-edit-btn" title="Change Photo">
-                                        📷
-                                    </label>
-                                </>
-                            )}
-                        </div>
-                        <div className="profile-header-info">
-                            {isEditing ? (
-                                <input
-                                    type="text"
-                                    name="name"
-                                    value={formData.name}
-                                    onChange={handleChange}
-                                    className="edit-input header-input"
-                                    placeholder="Full Name"
-                                />
-                            ) : (
-                                <h1 className="profile-name">{staff.name}</h1>
-                            )}
-
-                            <div className="profile-badges">
-                                {isEditing ? (
-                                    <>
-                                        <select
-                                            name="designation"
-                                            value={formData.designation}
-                                            onChange={handleChange}
-                                            className="edit-input"
-                                            style={{ width: 'auto', maxWidth: '300px' }}
-                                        >
-                                            <option value="">Select Designation</option>
-                                            {DESIGNATIONS.map((opt) => (
-                                                <option key={opt} value={opt}>{opt}</option>
-                                            ))}
-                                        </select>
-                                        <select
-                                            name="department"
-                                            value={formData.department}
-                                            onChange={handleChange}
-                                            className="edit-input"
-                                            style={{ width: 'auto', maxWidth: '300px' }}
-                                        >
-                                            <option value="">Select Department</option>
-                                            {DEPARTMENTS.map((opt) => (
-                                                <option key={opt} value={opt}>{opt}</option>
-                                            ))}
-                                        </select>
-                                    </>
-                                ) : (
-                                    <>
-                                        <span className="badge badge-secondary">{staff.designation}</span>
-                                        <span className="badge badge-secondary">{staff.department}</span>
-                                    </>
-                                )}
-                            </div>
-
-                            {isEditing ? (
-                                <input
-                                    type="text"
-                                    name="qualification"
-                                    value={formData.qualification}
-                                    onChange={handleChange}
-                                    className="edit-input"
-                                    placeholder="Qualification (e.g. Ph.D, M.Tech)"
-                                    style={{ marginTop: '10px', width: '100%', maxWidth: '300px' }}
-                                />
-                            ) : (
-                                <p className="profile-qualification">{staff.qualification}</p>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Profile Content */}
-                    <div className="profile-content">
-                        {/* Basic Information Section */}
-                        <div className="section">
-                            <h2 className="section-heading">
-                                <span className="heading-icon">📋</span>
-                                Basic Information
-                            </h2>
-                            <div className="info-list">
-                                <div className="info-item">
-                                    <span className="info-label">Experience</span>
-                                    {isEditing ? (
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
-                                            <input
-                                                type="text"
-                                                name="experience"
-                                                value={formData.experience}
-                                                onChange={handleChange}
-                                                className="edit-input"
-                                                style={{ width: '80px' }}
-                                            />
-                                            <span>Years</span>
-                                        </div>
+                    {/* NEW FACULTY HERO CARD */}
+                    <div className="lux-faculty-hero">
+                        <div className="hero-bg-sweep"></div>
+                        <div className="particles"></div>
+                        
+                        <div className="hero-content">
+                            <div className="hero-left">
+                                <div className="hero-avatar-wrapper">
+                                    {((formData.photo && formData.photo.trim() !== '') || (staff.photo && staff.photo.trim() !== '')) ? (
+                                        <img
+                                            src={formData.photo
+                                                ? formData.photo.startsWith("data:") ||
+                                                    formData.photo.startsWith("blob:") ||
+                                                    formData.photo.startsWith("http")
+                                                    ? formData.photo
+                                                    : `${import.meta.env.VITE_CDN_URL}${formData.photo}`
+                                                : `${import.meta.env.VITE_CDN_URL}${staff.photo}`}
+                                            alt={formData.name}
+                                            className="hero-avatar"
+                                            onError={(e) => {
+                                                e.currentTarget.src = "https://ui-avatars.com/api/?name=" + (formData.name || "Faculty") + "&background=1E3A8A&color=fff";
+                                            }}
+                                        />
                                     ) : (
-                                        <span className="info-value">{staff.experience} Years</span>
+                                        <img 
+                                            src={"https://ui-avatars.com/api/?name=" + (formData.name || "Faculty") + "&background=1E3A8A&color=fff"} 
+                                            alt="Faculty Avatar" 
+                                            className="hero-avatar" 
+                                        />
+                                    )}
+                                    {isEditing && (
+                                        <>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                id="photo-upload"
+                                                style={{ display: 'none' }}
+                                                onChange={handleImageUpload}
+                                            />
+                                            <label htmlFor="photo-upload" className="photo-edit-btn" title="Change Photo">
+                                                📷
+                                            </label>
+                                        </>
                                     )}
                                 </div>
-                                <div className="info-item">
-                                    <span className="info-label">Designation</span>
-                                    <span className="info-value">{isEditing ? formData.designation : staff.designation}</span>
-                                </div>
-                                <div className="info-item">
-                                    <span className="info-label">Qualification</span>
-                                    <span className="info-value">{isEditing ? formData.qualification : staff.qualification}</span>
-                                </div>
-                                <div className="info-item">
-                                    <span className="info-label">Department</span>
-                                    <span className="info-value">{isEditing ? formData.department : staff.department}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Contact Information Section */}
-                        <div className="section">
-                            <h2 className="section-heading">
-                                <span className="heading-icon">📞</span>
-                                Contact Information
-                            </h2>
-                            <div className="contact-list">
-                                <div className="contact-item-new">
-                                    <span className="contact-icon-new">📧</span>
-                                    <div className="contact-info" style={{ width: '100%' }}>
-                                        <span className="contact-label-new">EMAIL</span>
-                                        {isEditing ? (
-                                            <input
-                                                type="email"
-                                                name="email"
-                                                value={formData.email}
-                                                onChange={handleChange}
-                                                className="edit-input"
-                                                placeholder="Email Address"
-                                            />
-                                        ) : (
-                                            <a href={`mailto:${staff.email}`} className="contact-value">{staff.email}</a>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="contact-item-new">
-                                    <span className="contact-icon-new">📱</span>
-                                    <div className="contact-info" style={{ width: '100%' }}>
-                                        <span className="contact-label-new">PHONE</span>
-                                        {isEditing ? (
-                                            <input
-                                                type="text"
-                                                name="contactNumber"
-                                                value={formData.contactNumber}
-                                                onChange={handleChange}
-                                                className="edit-input"
-                                                placeholder="Phone Number"
-                                            />
-                                        ) : (
-                                            <a href={`tel:${staff.contactNumber}`} className="contact-value">{staff.contactNumber}</a>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Handling Subjects Section */}
-                        <div className="section">
-                            <h2 className="section-heading">
-                                <span className="heading-icon">📚</span>
-                                Handling Subjects
-                            </h2>
-                            <div className="subjects-list-new">
-                                {(isEditing ? formData.subjects : staff.subjects)?.map((subject: string, idx: number) => (
-                                    <div key={idx} className="subject-item-new">
-                                        <span className="subject-bullet">📖</span>
-                                        <span className="subject-text">{subject}</span>
-                                        {isEditing && (
-                                            <button
-                                                onClick={() => handleArrayRemove('subjects', idx)}
-                                                className="remove-btn"
-                                            >✖</button>
-                                        )}
-                                    </div>
-                                ))}
-                                {isEditing && (
-                                    <div className="add-item-row">
+                                <div className="hero-info">
+                                    <div className="active-badge"><span className="dot"></span> Active Faculty</div>
+                                    {isEditing ? (
                                         <input
                                             type="text"
-                                            value={newSubject}
-                                            onChange={(e) => setNewSubject(e.target.value)}
-                                            placeholder="Add new subject"
-                                            className="edit-input"
+                                            name="name"
+                                            value={formData.name}
+                                            onChange={handleChange}
+                                            className="edit-input hero-name-input"
+                                            placeholder="Full Name"
                                         />
-                                        <button
-                                            onClick={() => handleArrayAdd('subjects', newSubject, setNewSubject)}
-                                            className="add-btn"
-                                        >Add</button>
+                                    ) : (
+                                        <h1 className="faculty-name">{staff.name}</h1>
+                                    )}
+                                    
+                                    <div className="hero-badges">
+                                        {isEditing ? (
+                                            <>
+                                                <select
+                                                    name="designation"
+                                                    value={formData.designation}
+                                                    onChange={handleChange}
+                                                    className="edit-input hero-select"
+                                                >
+                                                    <option value="">Select Designation</option>
+                                                    {DESIGNATIONS.map((opt) => (
+                                                        <option key={opt} value={opt}>{opt}</option>
+                                                    ))}
+                                                </select>
+                                                <select
+                                                    name="department"
+                                                    value={formData.department}
+                                                    onChange={handleChange}
+                                                    className="edit-input hero-select"
+                                                >
+                                                    <option value="">Select Department</option>
+                                                    {DEPARTMENTS.map((opt) => (
+                                                        <option key={opt} value={opt}>{opt}</option>
+                                                    ))}
+                                                </select>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <p className="faculty-designation">{staff.designation}</p>
+                                                <span className="dot-separator">•</span>
+                                                <p className="faculty-department">{staff.department}</p>
+                                            </>
+                                        )}
                                     </div>
-                                )}
+                                </div>
+                            </div>
+                            
+                            <div className="hero-right">
+                                {/* Circular Progress Ring */}
+                                <div className="progress-ring-container">
+                                    <svg className="progress-ring" width="80" height="80">
+                                        <circle className="progress-ring__circle-bg" stroke="rgba(255,255,255,0.15)" strokeWidth="6" fill="transparent" r={circleRadius} cx="40" cy="40" />
+                                        <circle 
+                                            className="progress-ring__circle" 
+                                            stroke={completionPercentage === 100 ? "#10B981" : "#38BDF8"} 
+                                            strokeWidth="6" 
+                                            strokeDasharray={circleCircumference} 
+                                            strokeDashoffset={circleOffset} 
+                                            strokeLinecap="round" 
+                                            fill="transparent" 
+                                            r={circleRadius} 
+                                            cx="40" 
+                                            cy="40" 
+                                        />
+                                    </svg>
+                                    <div className="progress-ring-content">
+                                        <div className="progress-ring-text">{completionPercentage}%</div>
+                                        <div className="progress-ring-label">Profile</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+                    </div>
 
-                        {/* Knowledge & Skills Section */}
-                        <div className="section">
-                            <h2 className="section-heading">
-                                <span className="heading-icon">💡</span>
-                                Knowledge & Skills
-                            </h2>
-                            <div className="skills-list">
-                                {(isEditing ? formData.skills : staff.skills)?.map((skill: string, idx: number) => (
-                                    <span key={idx} className="skill-badge">
-                                        {skill}
-                                        {isEditing && (
-                                            <button
-                                                onClick={() => handleArrayRemove('skills', idx)}
-                                                className="remove-btn-badge"
-                                            >✖</button>
-                                        )}
-                                    </span>
-                                ))}
-                                {isEditing && (
-                                    <div className="add-item-row" style={{ marginTop: '10px', width: '100%' }}>
-                                        <input
-                                            type="text"
-                                            value={newSkill}
-                                            onChange={(e) => setNewSkill(e.target.value)}
-                                            placeholder="Add skill"
-                                            className="edit-input"
-                                            style={{ maxWidth: '200px' }}
-                                        />
-                                        <button
-                                            onClick={() => handleArrayAdd('skills', newSkill, setNewSkill)}
-                                            className="add-btn"
-                                        >Add</button>
-                                    </div>
-                                )}
-                            </div>
+                    {/* PROFESSIONAL STATISTICS ROW */}
+                    <div className="lux-stats-grid">
+                        <div className="lux-stat-card">
+                            <span className="stat-value">{totalStudents}</span>
+                            <span className="stat-label">Students Managed</span>
                         </div>
+                        <div className="lux-stat-card">
+                            <span className="stat-value">{researchPapers}</span>
+                            <span className="stat-label">Research Papers</span>
+                        </div>
+                        <div className="lux-stat-card">
+                            <span className="stat-value">{projectsGuided}</span>
+                            <span className="stat-label">Projects Guided</span>
+                        </div>
+                        <div className="lux-stat-card">
+                            <span className="stat-value">{isEditing ? formData.experience : staff.experience}</span>
+                            <span className="stat-label">Years Experience</span>
+                        </div>
+                    </div>
 
-                        {/* Achievements Section */}
-                        <div className="section">
-                            <h2 className="section-heading">
-                                <span className="heading-icon">🏆</span>
-                                Achievements
-                            </h2>
-                            <ul className="achievements-list-new">
-                                {(isEditing ? formData.achievements : staff.achievements)?.map((achievement: string, idx: number) => (
-                                    <li key={idx} className="achievement-item-new">
-                                        <span className="achievement-check">✓</span>
-                                        <span className="achievement-content">{achievement}</span>
-                                        {isEditing && (
-                                            <button
-                                                onClick={() => handleArrayRemove('achievements', idx)}
-                                                className="remove-btn"
-                                            >✖</button>
+                    {/* PREMIUM INFORMATION CARDS */}
+                    <div className="lux-info-layout">
+                        {/* Academic & Dept Info */}
+                        <div className="lux-info-col">
+                            <div className="lux-info-card">
+                                <h3><span className="icon">🎓</span> Academic Information</h3>
+                                <div className="info-list">
+                                    <div className="info-row">
+                                        <span className="info-label">Qualification</span>
+                                        {isEditing ? (
+                                            <input type="text" name="qualification" value={formData.qualification} onChange={handleChange} className="edit-input" />
+                                        ) : (
+                                            <span className="info-value">{staff.qualification}</span>
                                         )}
-                                    </li>
-                                ))}
-                                {isEditing && (
-                                    <li className="achievement-item-new" style={{ background: 'transparent', border: 'none', padding: 0 }}>
-                                        <div className="add-item-row" style={{ width: '100%' }}>
-                                            <input
-                                                type="text"
-                                                value={newAchievement}
-                                                onChange={(e) => setNewAchievement(e.target.value)}
-                                                placeholder="Add achievement"
-                                                className="edit-input"
-                                                style={{ flex: 1 }}
-                                            />
-                                            <button
-                                                onClick={() => handleArrayAdd('achievements', newAchievement, setNewAchievement)}
-                                                className="add-btn"
-                                            >Add</button>
+                                    </div>
+                                    <div className="info-row">
+                                        <span className="info-label">Designation</span>
+                                        <span className="info-value">{isEditing ? formData.designation : staff.designation}</span>
+                                    </div>
+                                    <div className="info-row align-top">
+                                        <span className="info-label">Handling Subjects</span>
+                                        <div className="info-value">
+                                            <div className="lux-pills">
+                                                {(isEditing ? formData.subjects : staff.subjects)?.map((sub: string, idx: number) => (
+                                                    <span key={idx} className="lux-pill blue">
+                                                        {sub} {isEditing && <button onClick={() => handleArrayRemove('subjects', idx)} className="remove-pill">×</button>}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                            {isEditing && (
+                                                <div className="add-row">
+                                                    <input type="text" value={newSubject} onChange={e => setNewSubject(e.target.value)} placeholder="Add subject..." className="edit-input" />
+                                                    <button onClick={() => handleArrayAdd('subjects', newSubject, setNewSubject)} className="btn-add">Add</button>
+                                                </div>
+                                            )}
                                         </div>
-                                    </li>
-                                )}
-                            </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="lux-info-card">
+                                <h3><span className="icon">🏢</span> Department Information</h3>
+                                <div className="info-list">
+                                    <div className="info-row">
+                                        <span className="info-label">Department</span>
+                                        <span className="info-value">{isEditing ? formData.department : staff.department}</span>
+                                    </div>
+                                    <div className="info-row">
+                                        <span className="info-label">Role Category</span>
+                                        <span className="info-value">Teaching Staff</span>
+                                    </div>
+                                    <div className="info-row">
+                                        <span className="info-label">Status</span>
+                                        <span className="info-value text-success">Active</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div >
-                </div >
-            </div >
+
+                        {/* Professional & Contact Info */}
+                        <div className="lux-info-col">
+                            <div className="lux-info-card">
+                                <h3><span className="icon">💼</span> Professional Profile</h3>
+                                <div className="info-list">
+                                    <div className="info-row">
+                                        <span className="info-label">Experience</span>
+                                        {isEditing ? (
+                                            <div className="input-group">
+                                                <input type="number" name="experience" value={formData.experience} onChange={handleChange} className="edit-input short" />
+                                                <span className="input-addon">Years</span>
+                                            </div>
+                                        ) : (
+                                            <span className="info-value">{staff.experience} Years</span>
+                                        )}
+                                    </div>
+                                    <div className="info-row align-top">
+                                        <span className="info-label">Skills & Knowledge</span>
+                                        <div className="info-value">
+                                            <div className="lux-pills">
+                                                {(isEditing ? formData.skills : staff.skills)?.map((skill: string, idx: number) => (
+                                                    <span key={idx} className="lux-pill navy">
+                                                        {skill} {isEditing && <button onClick={() => handleArrayRemove('skills', idx)} className="remove-pill">×</button>}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                            {isEditing && (
+                                                <div className="add-row">
+                                                    <input type="text" value={newSkill} onChange={e => setNewSkill(e.target.value)} placeholder="Add skill..." className="edit-input" />
+                                                    <button onClick={() => handleArrayAdd('skills', newSkill, setNewSkill)} className="btn-add">Add</button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="info-row align-top">
+                                        <span className="info-label">Achievements</span>
+                                        <div className="info-value">
+                                            <ul className="lux-list">
+                                                {(Array.isArray(isEditing ? formData.achievements : staff.achievements)
+                                                    ? (isEditing ? formData.achievements : staff.achievements)
+                                                    : typeof (isEditing ? formData.achievements : staff.achievements) === 'string'
+                                                        ? (isEditing ? formData.achievements : staff.achievements).split(',').map((s: string) => s.trim()).filter(Boolean)
+                                                        : []
+                                                ).map((ach: string, idx: number) => (
+                                                    <li key={idx}>
+                                                        <span className="bullet">🏆</span>
+                                                        <span className="text">{ach}</span>
+                                                        {isEditing && <button onClick={() => handleArrayRemove('achievements', idx)} className="remove-pill text-red">×</button>}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                            {isEditing && (
+                                                <div className="add-row mt-2">
+                                                    <input type="text" value={newAchievement} onChange={e => setNewAchievement(e.target.value)} placeholder="Add achievement..." className="edit-input" />
+                                                    <button onClick={() => handleArrayAdd('achievements', newAchievement, setNewAchievement)} className="btn-add">Add</button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="lux-info-card">
+                                <h3><span className="icon">📞</span> Contact Details</h3>
+                                <div className="info-list">
+                                    <div className="info-row">
+                                        <span className="info-label">Email Address</span>
+                                        {isEditing ? (
+                                            <input type="email" name="email" value={formData.email} onChange={handleChange} className="edit-input" />
+                                        ) : (
+                                            <a href={`mailto:${staff.email}`} className="info-value link">{staff.email}</a>
+                                        )}
+                                    </div>
+                                    <div className="info-row">
+                                        <span className="info-label">Phone Number</span>
+                                        {isEditing ? (
+                                            <input type="text" name="contactNumber" value={formData.contactNumber} onChange={handleChange} className="edit-input" />
+                                        ) : (
+                                            <a href={`tel:${staff.contactNumber}`} className="info-value link">{staff.contactNumber}</a>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {showCropper && tempImage && (
                 <ImageCropper
                     imageSrc={tempImage}
@@ -673,671 +621,22 @@ const StaffProfile: React.FC = () => {
             )}
 
             <style>{`
-                .staff-profile-page {
-                    background: linear-gradient(135deg, var(--bg) 0%, #E0E8F0 100%);
-                    animation: fadeIn 0.5s ease-out;
-                    padding-bottom: 40px;
-                    padding-top: 20px; /* Reduced specific top padding */
-                }
-
-                @keyframes fadeIn {
-                    from { opacity: 0; transform: translateY(10px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-
-                .completion-card {
-                    background: white;
-                    border-radius: var(--radius-lg);
-                    padding: 20px 24px;
-                    margin-bottom: 24px;
-                    box-shadow: var(--shadow-sm);
-                    border: 1px solid rgba(0,0,0,0.05);
-                }
-
-                .completion-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 12px;
-                }
-
-                .completion-title {
-                    font-weight: 700;
-                    color: var(--text-main);
-                    font-size: 16px;
-                }
-
-                .completion-value {
-                    font-weight: 800;
-                    font-size: 18px;
-                }
-
-                .missing-fields-text {
-                    font-size: 0.85rem;
-                    color: #ef4444;
-                    margin-top: 4px;
-                    font-weight: 500;
-                }
-
-                .progress-track {
-                    width: 100%;
-                    height: 10px;
-                    background: #f1f5f9;
-                    border-radius: 20px;
-                    overflow: hidden;
-                }
-
-                .progress-fill {
-                    height: 100%;
-                    border-radius: 20px;
-                    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s;
-                }
-
-                .completion-hint {
-                    margin: 8px 0 0 0;
-                    font-size: 13px;
-                    color: #64748b;
-                    font-style: italic;
-                }
-
-                .content-wrapper {
-                    max-width: 900px;
-                    margin: 0 auto;
-                    padding: 0 20px;
-                }
-
-                .header-actions {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 24px;
-                }
-
-                .staff-profile-page .back-btn {
-                    background: white;
-                    border: 1px solid rgba(0,0,0,0.1);
-                    color: var(--primary);
-                    font-size: 13px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    padding: 6px 10px;
-                    border-radius: var(--radius-sm);
-                    transition: var(--transition);
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 6px;
-                    box-shadow: var(--shadow-sm);
+                /* Base & Layout */
+                .premium-profile-page {
+                    background: var(--bg);
+                    animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                    padding-bottom: 60px;
                 }
                 
-                .back-btn:hover {
-                    box-shadow: var(--shadow-md);
-                    transform: translateY(-1px);
+                .content-wrapper {
+                    max-width: 1040px;
+                    margin: 0 auto;
+                    padding: 24px;
                 }
 
-                .action-btn {
-                    padding: 5px 16px;
-                    margin-top: -35px;
-                    border-radius: var(--radius-sm);
-                    font-weight: 600;
-                    cursor: pointer;
-                    border: none;
-                    transition: all 0.2s;
-                }
-
-                .edit-btn {
-                    background: var(--primary);
-                    color: white;
-                }
-
-                .save-btn {
-                    background: #28a745;
-                    color: white;
-                }
-
-                .cancel-btn {
-                    background: #dc3545;
-                    color: white;
-                }
-
-                /* Inputs */
-                .edit-input {
-                    padding: 8px 12px;
-                    border: 1px solid #ccc;
-                    border-radius: 6px;
-                    font-family: inherit;
-                    font-size: 14px;
-                    transition: border-color 0.2s;
-                    background: rgba(255,255,255,0.9);
-                    width: 100%;
-                }
-
-                .edit-input:focus {
-                    border-color: var(--primary);
-                    outline: none;
-                    box-shadow: 0 0 0 2px rgba(0, 71, 171, 0.2);
-                }
-
-                .header-input {
-                    font-size: 24px;
-                    font-weight: 700;
-                    margin-bottom: 10px;
-                    color: #333;
-                }
-
-                .badge-input {
-                    font-size: 14px;
-                    width: 150px;
-                }
-
-                .add-item-row {
-                    display: flex;
-                    gap: 8px;
-                    margin-top: 8px;
-                }
-
-                .add-btn {
-                    padding: 6px 12px;
-                    background: var(--primary);
-                    color: white;
-                    border: none;
-                    border-radius: 4px;
-                    cursor: pointer;
-                    font-size: 13px;
-                }
-
-                .remove-btn {
-                    background: none;
-                    border: none;
-                    color: #ff4d4f;
-                    cursor: pointer;
-                    font-size: 14px;
-                    margin-left: 8px;
-                    padding: 0 4px;
-                }
-
-                .remove-btn-badge {
-                    background: rgba(255,255,255,0.2);
-                    border: none;
-                    color: white;
-                    border-radius: 50%;
-                    width: 18px;
-                    height: 18px;
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 10px;
-                    margin-left: 6px;
-                    cursor: pointer;
-                }
-
-                .remove-btn-badge:hover {
-                    background: rgba(255,255,255,0.4);
-                }
-
-                /* Header */
-                .profile-header {
-                    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-                    border-radius: var(--radius-lg);
-                    padding: 32px;
-                    display: flex;
-                    gap: 32px;
-                    margin-bottom: 32px;
-                    box-shadow: var(--shadow-lg);
-                    position: relative;
-                    overflow: hidden;
-                    color: white;
-                }
-
-                .profile-image-wrapper {
-                    flex-shrink: 0;
-                    width: 180px;
-                    height: 180px;
-                    border-radius: 50%;
-                    padding: 6px;
-                    background: rgba(255, 255, 255, 0.2);
-                    backdrop-filter: blur(8px);
-                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-                    position: relative;
-                }
-
-                .photo-edit-btn {
-                    position: absolute;
-                    bottom: 10px;
-                    right: 10px;
-                    background: var(--primary);
-                    color: white;
-                    width: 40px;
-                    height: 40px;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    border: 3px solid white;
-                }
-
-                @media (max-width: 768px) {
-                    .content-wrapper {
-                        padding: 0 16px;
-                    }
-
-                    .profile-header {
-                        flex-direction: column;
-                        align-items: center;
-                        text-align: center;
-                        gap: 20px;
-                        padding: 24px;
-                    }
-
-                    .profile-input-wrapper {
-                        margin: 0 auto;
-                    }
-                    
-                    .profile-header-info {
-                        width: 100%;
-                        display: flex; 
-                        flex-direction: column;
-                        align-items: center;
-                    }
-
-                    .profile-badges {
-                        justify-content: center;
-                    }
-
-                    .completion-header {
-                        flex-direction: column;
-                        align-items: flex-start;
-                        gap: 12px;
-                    }
-                    
-                    .completion-title {
-                        margin-bottom: 4px;
-                    }
-                    
-                    .completion-value {
-                        align-self: flex-end;
-                    }
-
-                    .header-actions {
-                        flex-direction: column;
-                        gap: 12px;
-                    }
-                    
-                    .staff-profile-page .back-btn {
-                        width: auto;
-                        min-width: 140px;
-                        justify-content: center;
-                        align-self: flex-start;
-                    }
-                    
-                    .header-actions .action-btn {
-                        width: 100%;
-                    }
-                    
-                    .edit-actions {
-                        width: 100%;
-                        display: flex;
-                        gap: 10px;
-                    }
-                    
-                    .edit-actions .action-btn {
-                        flex: 1;
-                    }
-
-                    .info-list, .contact-list {
-                        grid-template-columns: 1fr;
-                    }
-                    
-                    .fields-row {
-                        grid-template-columns: 1fr;
-                    }
-                }
-                .photo-edit-btn {
-                    position: absolute;
-                    bottom: 10px;
-                    right: 10px;
-                    background: var(--primary);
-                    color: white;
-                    width: 40px;
-                    height: 40px;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    border: 3px solid white;
-                    z-index: 20; /* Ensure above avatar */
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-                    transition: transform 0.2s;
-                    font-size: 18px;
-                }
-
-                .photo-edit-btn:hover {
-                    transform: scale(1.1);
-                    background: var(--primary-dark);
-                }
-
-                .profile-image, .profile-initials-avatar {
-                    width: 100%;
-                    height: 100%;
-                    border-radius: 50%;
-                    object-fit: cover;
-                    border: 4px solid white;
-                    background: white;
-                }
-
-                .profile-initials-avatar {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: linear-gradient(135deg, #0047AB, #2563eb);
-                    color: white;
-                    font-size: 64px;
-                    font-weight: 700;
-                    letter-spacing: 2px;
-                }
-
-                .hidden {
-                    display: none !important;
-                }
-
-                .profile-header-info {
-                    flex: 1;
-                    justify-content: center;
-                    display: flex;
-                    flex-direction: column;
-                }
-
-                .profile-name {
-                    font-size: 32px;
-                    font-weight: 700;
-                    margin: 0 0 12px 0;
-                    letter-spacing: -0.5px;
-                    color: white;
-                    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-                }
-
-                .profile-badges {
-                    display: flex;
-                    gap: 12px;
-                    margin-bottom: 16px;
-                    flex-wrap: wrap;
-                }
-
-                .badge {
-                    padding: 6px 14px;
-                    border-radius: 50px;
-                    font-size: 13px;
-                    font-weight: 600;
-                    letter-spacing: 0.5px;
-                    text-transform: uppercase;
-                }
-
-                .badge-primary {
-                    background: rgba(255, 255, 255, 0.2);
-                    backdrop-filter: blur(4px);
-                    border: 1px solid rgba(255, 255, 255, 0.3);
-                }
-
-                .badge-secondary {
-                    background: white;
-                    color: var(--primary);
-                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-                }
-
-                .profile-qualification {
-                    opacity: 0.9;
-                    font-size: 16px;
-                    font-weight: 500;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                }
-
-                /* Profile Content */
-                .profile-content {
-                    background: white;
-                    border-radius: var(--radius-lg);
-                    padding: 40px;
-                    box-shadow: var(--shadow-md);
-                }
-
-                .section {
-                    margin-bottom: 40px;
-                }
-
-                .section:last-child {
-                    margin-bottom: 0;
-                }
-
-                .section-heading {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    font-size: 20px;
-                    font-weight: 700;
-                    color: var(--primary);
-                    margin-bottom: 24px;
-                    padding-bottom: 16px;
-                    border-bottom: 2px solid #F0F4F8;
-                }
-
-                .heading-icon {
-                    width: 36px;
-                    height: 36px;
-                    background: #F0F7FF;
-                    border-radius: 10px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 18px;
-                }
-
-                .info-list {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-                    gap: 24px;
-                }
-
-                .info-item {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 8px;
-                }
-
-                .info-label {
-                    font-size: 13px;
-                    text-transform: uppercase;
-                    color: var(--text-light);
-                    font-weight: 600;
-                    letter-spacing: 0.5px;
-                }
-
-                .info-value {
-                    font-size: 16px;
-                    color: var(--text-main);
-                    font-weight: 500;
-                }
-
-                /* Contact List */
-                .contact-list {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-                    gap: 20px;
-                }
-
-                .contact-item-new {
-                    display: flex;
-                    align-items: center;
-                    gap: 16px;
-                    padding: 20px;
-                    border-radius: var(--radius-sm);
-                    background: #F8FAFC;
-                    border: 1px solid #E2E8F0;
-                    transition: var(--transition);
-                }
-
-                .contact-item-new:hover {
-                    border-color: var(--primary-light);
-                    background: white;
-                    box-shadow: var(--shadow-sm);
-                }
-
-                .contact-icon-new {
-                    width: 44px;
-                    height: 44px;
-                    background: white;
-                    border-radius: 12px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 20px;
-                    box-shadow: var(--shadow-sm);
-                    color: var(--primary);
-                }
-
-                .contact-info {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 4px;
-                }
-
-                .contact-label-new {
-                    font-size: 12px;
-                    font-weight: 700;
-                    color: var(--text-light);
-                    letter-spacing: 0.5px;
-                }
-
-                .contact-value {
-                    font-size: 16px;
-                    color: var(--primary);
-                    font-weight: 600;
-                    text-decoration: none;
-                    transition: color 0.2s;
-                    word-break: break-all;
-                }
-
-                /* Subjects List */
-                .subjects-list-new {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-                    gap: 16px;
-                }
-
-                .subject-item-new {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    padding: 16px;
-                    background: #F8FAFC;
-                    border-radius: var(--radius-sm);
-                    transition: var(--transition);
-                    border: 1px solid transparent;
-                }
-
-                .subject-item-new:hover {
-                    background: white;
-                    box-shadow: var(--shadow-sm);
-                    border-color: #E2E8F0;
-                    transform: translateY(-2px);
-                }
-
-                .subject-bullet {
-                    font-size: 18px;
-                }
-
-                .subject-text {
-                    font-weight: 500;
-                    color: var(--text-main);
-                    font-size: 15px;
-                    flex: 1;
-                }
-
-                /* Skills List */
-                .skills-list {
-                    display: flex;
-                    flex-wrap: wrap;
-                    gap: 12px;
-                }
-
-                .skill-badge {
-                    padding: 10px 20px;
-                    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-                    color: white;
-                    border-radius: var(--radius-full);
-                    font-size: 14px;
-                    font-weight: 500;
-                    transition: var(--transition);
-                    cursor: default;
-                    box-shadow: 0 2px 8px rgba(0, 71, 171, 0.25);
-                    display: flex;
-                    align-items: center;
-                }
-
-                .skill-badge:hover {
-                    transform: translateY(-3px) scale(1.05);
-                    box-shadow: 0 6px 16px rgba(0, 71, 171, 0.35);
-                }
-
-                /* Achievements List */
-                .achievements-list-new {
-                    list-style: none;
-                    padding: 0;
-                    margin: 0;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 14px;
-                }
-
-                .achievement-item-new {
-                    display: flex;
-                    align-items: flex-start;
-                    gap: 18px;
-                    padding: 18px 20px;
-                    background: linear-gradient(135deg, #FFF9E6 0%, #FFFBF0 100%);
-                    border-radius: var(--radius-sm);
-                    border-left: 4px solid var(--accent);
-                    transition: var(--transition);
-                }
-
-                .achievement-item-new:hover {
-                    transform: translateX(6px);
-                    box-shadow: var(--shadow-sm);
-                    background: linear-gradient(135deg, #FFF4CC 0%, #FFF9E6 100%);
-                }
-
-                .achievement-check {
-                    flex-shrink: 0;
-                    width: 32px;
-                    height: 32px;
-                    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
-                    color: var(--primary-dark);
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-weight: 700;
-                    font-size: 16px;
-                    box-shadow: 0 3px 10px rgba(255, 215, 0, 0.35);
-                }
-
-                .achievement-content {
-                    flex: 1;
-                    color: var(--text-main);
-                    font-size: 15px;
-                    line-height: 1.7;
-                    padding-top: 4px;
-                }
-
-                .error-message {
-                    text-align: center;
-                    padding: 60px 20px;
-                }
-
-                .error-message h2 {
-                    margin-bottom: 24px;
-                    color: var(--text-muted);
+                @keyframes fadeUp {
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
                 }
 
                 /* Header Actions */
@@ -1346,98 +645,532 @@ const StaffProfile: React.FC = () => {
                     justify-content: space-between;
                     align-items: center;
                     margin-bottom: 24px;
-                    flex-wrap: wrap;
+                }
+
+                .back-btn {
+                    background: rgba(255,255,255,0.8);
+                    backdrop-filter: blur(8px);
+                    border: 1px solid rgba(0,0,0,0.05);
+                    color: var(--primary-dark);
+                    font-size: 14px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    padding: 8px 16px;
+                    border-radius: var(--radius-full);
+                    transition: all 0.2s ease;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    box-shadow: var(--shadow-sm);
+                }
+                .back-btn:hover {
+                    box-shadow: var(--shadow-md);
+                    background: white;
+                    transform: translateY(-1px);
+                }
+
+                .action-btn {
+                    padding: 8px 20px;
+                    border-radius: var(--radius-full);
+                    font-weight: 600;
+                    font-size: 14px;
+                    cursor: pointer;
+                    border: none;
+                    transition: all 0.2s ease;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    box-shadow: var(--shadow-sm);
+                }
+                .edit-btn { background: var(--primary); color: white; }
+                .edit-btn:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+                .save-btn { background: #10B981; color: white; }
+                .save-btn:hover { background: #059669; transform: translateY(-1px); }
+                .cancel-btn { background: white; color: #EF4444; border: 1px solid #FECACA; }
+                .cancel-btn:hover { background: #FEF2F2; }
+                .edit-actions { display: flex; gap: 12px; }
+
+                /* NEW FACULTY HERO CARD */
+                .lux-faculty-hero {
+                    background: linear-gradient(135deg, #0F172A 0%, #1E3A8A 50%, #3B82F6 100%);
+                    border-radius: 32px;
+                    padding: 24px;
+                    color: white;
+                    position: relative;
+                    overflow: hidden;
+                    box-shadow: 0 20px 40px rgba(30, 58, 138, 0.2);
+                    margin-bottom: 24px;
+                    border: 1px solid rgba(255,255,255,0.1);
+                }
+
+                .hero-bg-sweep {
+                    position: absolute;
+                    top: 0; left: -100%;
+                    width: 50%; height: 100%;
+                    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+                    transform: skewX(-20deg);
+                    animation: sweep 6s infinite;
+                    pointer-events: none;
+                }
+                @keyframes sweep {
+                    0% { left: -100%; }
+                    20%, 100% { left: 200%; }
+                }
+
+                .hero-content {
+                    position: relative;
+                    z-index: 2;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 20px;
+                }
+
+                .hero-left {
+                    display: flex;
+                    align-items: center;
+                    gap: 20px;
+                }
+
+                .hero-avatar-wrapper {
+                    position: relative;
+                    width: 100px;
+                    height: 100px;
+                    border-radius: 24px;
+                    padding: 4px;
+                    background: rgba(255,255,255,0.1);
+                    backdrop-filter: blur(10px);
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+                    flex-shrink: 0;
+                    transition: transform 0.3s ease;
+                }
+                .hero-avatar-wrapper:hover {
+                    transform: scale(1.02);
+                }
+
+                .hero-avatar {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    border-radius: 20px;
+                    border: 2px solid rgba(255,255,255,0.2);
+                }
+
+                .photo-edit-btn {
+                    position: absolute;
+                    bottom: -10px; right: -10px;
+                    background: white;
+                    color: var(--primary);
+                    width: 44px; height: 44px;
+                    border-radius: 50%;
+                    display: flex; align-items: center; justify-content: center;
+                    cursor: pointer;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                    font-size: 20px;
+                    transition: all 0.2s ease;
+                    border: 2px solid var(--primary-light);
+                }
+                .photo-edit-btn:hover { transform: scale(1.1); color: var(--primary-dark); }
+
+                .hero-info {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                }
+
+                .active-badge {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    background: rgba(16, 185, 129, 0.15);
+                    border: 1px solid rgba(16, 185, 129, 0.3);
+                    color: #34D399;
+                    padding: 4px 12px;
+                    border-radius: 20px;
+                    font-size: 12px;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    width: fit-content;
+                    margin-bottom: 4px;
+                }
+                .active-badge .dot {
+                    width: 6px; height: 6px;
+                    background: #34D399;
+                    border-radius: 50%;
+                    box-shadow: 0 0 8px #34D399;
+                    animation: pulse 2s infinite;
+                }
+                @keyframes pulse {
+                    0% { opacity: 1; box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7); }
+                    70% { opacity: 0.5; box-shadow: 0 0 0 6px rgba(52, 211, 153, 0); }
+                    100% { opacity: 1; box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+                }
+
+                .faculty-name {
+                    font-size: 24px;
+                    font-weight: 800;
+                    margin: 0;
+                    letter-spacing: -0.5px;
+                    color: white;
+                    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                }
+
+                .hero-badges {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    margin-top: 4px;
+                }
+
+                .faculty-designation, .faculty-department {
+                    font-size: 16px;
+                    font-weight: 500;
+                    color: rgba(255,255,255,0.9);
+                    margin: 0;
+                }
+                .dot-separator {
+                    color: rgba(255,255,255,0.4);
+                    font-size: 12px;
+                }
+
+                .hero-name-input {
+                    font-size: 24px;
+                    font-weight: 700;
+                    margin-bottom: 8px;
+                    max-width: 300px;
+                }
+                .hero-select {
+                    max-width: 200px;
+                }
+
+                /* Circular Progress Ring */
+                .hero-right {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: rgba(255,255,255,0.05);
+                    border: 1px solid rgba(255,255,255,0.1);
+                    padding: 16px;
+                    border-radius: 24px;
+                    backdrop-filter: blur(10px);
+                }
+
+                .progress-ring-container {
+                    position: relative;
+                    width: 80px;
+                    height: 80px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .progress-ring {
+                    transform: rotate(-90deg);
+                }
+                
+                .progress-ring__circle {
+                    transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+
+                .progress-ring-content {
+                    position: absolute;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .progress-ring-text {
+                    font-size: 16px;
+                    font-weight: 800;
+                    color: white;
+                    line-height: 1;
+                }
+                .progress-ring-label {
+                    font-size: 9px;
+                    color: rgba(255,255,255,0.7);
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    margin-top: 2px;
+                    font-weight: 600;
+                }
+
+                /* PROFESSIONAL STATISTICS ROW */
+                .lux-stats-grid {
+                    display: grid;
+                    grid-template-columns: repeat(4, 1fr);
+                    gap: 12px;
+                    margin-bottom: 24px;
+                }
+
+                .lux-stat-card {
+                    background: rgba(255, 255, 255, 0.7);
+                    backdrop-filter: blur(12px);
+                    border: 1px solid rgba(255,255,255,0.9);
+                    border-radius: 24px;
+                    padding: 10px 14px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+                    transition: all 0.3s ease;
+                }
+                .lux-stat-card:hover {
+                    transform: translateY(-4px);
+                    box-shadow: 0 12px 24px rgba(0,0,0,0.06);
+                    background: white;
+                }
+
+                .stat-value {
+                    font-size: 22px;
+                    font-weight: 800;
+                    color: var(--primary-dark);
+                    line-height: 1;
+                }
+
+                .stat-label {
+                    font-size: 13px;
+                    color: var(--text-3);
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+
+                /* PREMIUM INFORMATION CARDS */
+                .lux-info-layout {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
                     gap: 16px;
                 }
 
-                .edit-actions {
+                .lux-info-col {
                     display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                }
+
+                .lux-info-card {
+                    background: white;
+                    border-radius: 24px;
+                    padding: 16px;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+                    border: 1px solid rgba(0,0,0,0.02);
+                    transition: transform 0.3s ease, box-shadow 0.3s;
+                }
+                .lux-info-card:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+                }
+
+                .lux-info-card h3 {
+                    margin: 0 0 12px 0;
+                    font-size: 16px;
+                    font-weight: 700;
+                    color: var(--primary-dark);
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    padding-bottom: 10px;
+                    border-bottom: 1px solid #F1F5F9;
+                }
+                .lux-info-card h3 .icon {
+                    background: var(--primary-light);
+                    width: 30px; height: 30px;
+                    display: flex; align-items: center; justify-content: center;
+                    border-radius: 10px;
+                    font-size: 15px;
+                }
+
+                .info-list {
+                    display: flex;
+                    flex-direction: column;
                     gap: 12px;
                 }
 
+                .info-row {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 6px 0;
+                }
+                .info-row.align-top {
+                    align-items: flex-start;
+                }
+
+                .info-label {
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: var(--text-3);
+                    width: 140px;
+                    flex-shrink: 0;
+                }
+
+                .info-value {
+                    font-size: 15px;
+                    font-weight: 600;
+                    color: var(--text-1);
+                    text-align: right;
+                    flex: 1;
+                    display: flex;
+                    justify-content: flex-end;
+                    flex-wrap: wrap;
+                }
+                .info-row.align-top .info-value {
+                    justify-content: flex-end;
+                }
+
+                .text-success { color: #10B981; }
+                .link { color: var(--primary); text-decoration: none; transition: color 0.2s; }
+                .link:hover { color: var(--primary-dark); text-decoration: underline; }
+
+                /* Inputs */
+                .edit-input {
+                    padding: 8px 14px;
+                    border: 1px solid #E2E8F0;
+                    border-radius: 8px;
+                    font-size: 14px;
+                    font-family: inherit;
+                    width: 100%;
+                    max-width: 250px;
+                    transition: all 0.2s;
+                    background: #F8FAFC;
+                    font-weight: 500;
+                    color: #0F172A;
+                }
+                .edit-input:focus {
+                    outline: none;
+                    border-color: var(--primary);
+                    background: white;
+                    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+                }
+                .edit-input.short { width: 80px; max-width: none; }
+
+                .input-group {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    justify-content: flex-end;
+                }
+                .input-addon {
+                    font-size: 14px;
+                    color: var(--text-3);
+                    font-weight: 500;
+                }
+
+                /* Pills & Arrays */
+                .lux-pills {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 8px;
+                    justify-content: flex-end;
+                }
+                .lux-pill {
+                    padding: 6px 14px;
+                    border-radius: 20px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+                .lux-pill.blue { background: #EFF6FF; color: var(--primary); border: 1px solid #BFDBFE; }
+                .lux-pill.navy { background: #F1F5F9; color: var(--primary-dark); border: 1px solid #E2E8F0; }
+                
+                .remove-pill {
+                    background: none; border: none; color: inherit; font-size: 16px; font-weight: bold; cursor: pointer; opacity: 0.6; padding: 0 2px;
+                }
+                .remove-pill:hover { opacity: 1; }
+                .text-red { color: #EF4444; }
+
+                .add-row {
+                    display: flex; gap: 8px; margin-top: 12px; width: 100%; justify-content: flex-end;
+                }
+                .mt-2 { margin-top: 12px; }
+                .btn-add {
+                    padding: 8px 16px;
+                    background: var(--primary);
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                }
+                .btn-add:hover { background: var(--primary-dark); }
+
+                /* Lists */
+                .lux-list {
+                    list-style: none; padding: 0; margin: 0;
+                    display: flex; flex-direction: column; gap: 8px; width: 100%;
+                }
+                .lux-list li {
+                    display: flex; align-items: flex-start; gap: 12px;
+                    padding: 8px 12px;
+                    background: #F8FAFC;
+                    border-radius: 12px;
+                    text-align: left;
+                }
+                .lux-list .bullet { font-size: 16px; flex-shrink: 0; }
+                .lux-list .text { font-size: 14px; color: var(--text-2); line-height: 1.5; flex: 1; font-weight: 500; }
+
+                /* Responsive Mobile View */
+                @media (max-width: 1024px) {
+                    .lux-info-layout { grid-template-columns: 1fr; }
+                }
+
                 @media (max-width: 768px) {
-                    .header-actions {
+                    .premium-profile-page { padding-top: 16px; }
+                    .content-wrapper { padding: 16px; }
+                    
+                    .lux-faculty-hero {
+                        padding: 32px 24px;
+                        border-radius: 24px;
+                    }
+                    .hero-content {
                         flex-direction: column;
-                        align-items: stretch;
+                        text-align: center;
+                        gap: 24px;
+                    }
+                    .hero-left {
+                        flex-direction: column;
+                        gap: 20px;
+                    }
+                    .hero-badges {
+                        flex-direction: column;
+                        gap: 8px;
+                    }
+                    .dot-separator { display: none; }
+                    .active-badge { margin: 0 auto 8px auto; }
+
+                    .lux-stats-grid {
+                        grid-template-columns: 1fr 1fr;
                         gap: 12px;
                     }
 
-                    .back-btn, .action-btn {
-                        width: 100%;
-                        justify-content: center;
+                    .info-row {
+                        flex-direction: column;
+                        align-items: flex-start !important;
+                        gap: 8px;
+                        padding: 12px 0;
+                        border-bottom: 1px dashed #E2E8F0;
                     }
+                    .info-row:last-child { border-bottom: none; }
                     
-                    .edit-actions {
+                    .info-label { width: 100%; }
+                    .info-value { width: 100%; justify-content: flex-start; text-align: left; }
+                    .lux-pills { justify-content: flex-start; }
+                    .input-group, .add-row { justify-content: flex-start; }
+                    .edit-input { max-width: 100%; }
+                    
+                    .header-actions {
                         flex-direction: column;
-                        width: 100%;
+                        gap: 12px;
+                        align-items: stretch;
                     }
-                }
-
-                /* Responsive Design */
-                @media (max-width: 768px) {
-                    .action-btn {
-                        margin-top: -25px;
-                        padding: 9px 16px;
-                    }
-                    .profile-header {
-                        flex-direction: column;
-                        text-align: center;
-                        padding: 32px 24px;
-                    }
-
-                    .profile-image-wrapper {
-                        width: 150px;
-                        height: 150px;
-                        margin: 0 auto;
-                    }
-
-                    .profile-name {
-                        font-size: 28px;
-                    }
-
-                    .profile-badges {
-                        justify-content: center;
-                    }
-
-                    .profile-content {
-                        padding: 24px;
-                    }
-
-                    .section {
-                        margin-bottom: 36px;
-                    }
-
-                    .section-heading {
-                        font-size: 18px;
-                    }
-
-                    .info-item {
-                        flex-direction: column;
-                        align-items: flex-start;
-                        gap: 6px;
-                    }
-
-                    .info-label {
-                        min-width: auto;
-                    }
-
-                    .info-value {
-                        text-align: left;
-                    }
-
-                    .back-btn {
-                        font-size: 14px;
-                    }
-
-                    .contact-value {
-                        font-size: 14px;
-                    }
-                }
-
-                @media (min-width: 769px) and (max-width: 1024px) {
-                    .profile-content {
-                        padding: 32px;
-                    }
+                    .back-btn, .action-btn { justify-content: center; }
+                    .edit-actions { flex-direction: column; }
                 }
             `}</style>
         </>

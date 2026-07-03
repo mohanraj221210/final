@@ -9,780 +9,835 @@ const WatchmanOutpassList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [outpasses, setOutpasses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dateFilter, setDateFilter] = useState<'All' | 'Today' | 'Yesterday' | 'This Week' | 'This Month'>('All');
+  const [dateFilter, setDateFilter] = useState<'All' | 'Today' | 'This Week' | 'This Month'>('All');
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const itemsPerPage = 8;
 
+  // Debounce search input to limit API calls
   useEffect(() => {
-    fetchOutpasses();
-  }, []);
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 450);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
 
-  const fetchOutpasses = async () => {
+  useEffect(() => {
+    fetchOutpasses(dateFilter, debouncedSearch);
+  }, [dateFilter, debouncedSearch]);
+
+  const fetchOutpasses = async (filterVal: string, searchVal: string) => {
     try {
+      setLoading(true);
       const token = localStorage.getItem("token");
 
-      // Using the same endpoint as warden for now, assuming watchman has access or it's public enough
-      // In a real scenario, this might need a specific /watchman endpoint
-      // Watchman API Endpoint
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/watchman/outpass/list`, {
+      const params = new URLSearchParams();
+      let backendAppliedDate = 'total';
+      if (filterVal === 'Today') backendAppliedDate = 'today';
+      else if (filterVal === 'This Week') backendAppliedDate = 'weekly';
+      else if (filterVal === 'This Month') backendAppliedDate = 'monthly';
+
+      params.append('appliedDate', backendAppliedDate);
+      if (searchVal.trim()) {
+        params.append('search', searchVal.trim());
+      }
+
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/watchman/outpass/list?${params.toString()}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-
-      // Data extraction based on confirmed API response structure (outpass)
       const outpassData = res.data.outpass || [];
 
-      // Filter for approved outpasses based on residence type
-      const approvedOutpasses = outpassData.filter((item: any) => {
-        const resType = (item.studentid?.residencetype || '').toLowerCase().trim().replace(/\s/g, '');
-        const isDayScholar = resType === 'dayscholar';
-        if (isDayScholar) {
-          return item.yearinchargeapprovalstatus === 'approved';
-        }
-        return item.wardenapprovalstatus === 'approved';
-      });
+      const approvedOutpasses = outpassData
+        .filter((item: any) => {
+          if (!item.studentid) return false; // Filter out populated null students due to backend search match
+          const resType = (item.studentid.residencetype || '').toLowerCase().trim().replace(/\s/g, '');
+          const isDayScholar = resType === 'dayscholar';
+          const isHostelEmergency = item.outpasstype === 'HostelEmergency';
+
+          if (isHostelEmergency) {
+            return item.status === 'approved';
+          }
+          if (isDayScholar) {
+            return item.yearincharge?.status === 'approved';
+          }
+          return item.warden?.status === 'approved';
+        })
+        .sort((a: any, b: any) => {
+          const isAEmergency = a.outpasstype?.toLowerCase().includes('emergency');
+          const isBEmergency = b.outpasstype?.toLowerCase().includes('emergency');
+          if (isAEmergency && !isBEmergency) return -1;
+          if (!isAEmergency && isBEmergency) return 1;
+          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+        });
 
       setOutpasses(approvedOutpasses);
     } catch (err: any) {
       console.error("Failed to fetch outpasses", err);
-      // Handle errors gracefully
-      if (err.response?.status === 401) {
-        // Token might be invalid or maybe watchman type isn't allowed on this specific endpoint
-        // For now we just alert
-        console.error("Authentication error");
-      }
     } finally {
       setLoading(false);
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'approved': return 'bg-green-100 text-green-800 border-green-200';
-      case 'rejected': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+  const getStatusBadgeClass = (status: string) => {
+    switch ((status || 'pending').toLowerCase()) {
+      case 'approved': return 'sd-status-approved';
+      case 'rejected': return 'sd-status-rejected';
+      default: return 'sd-status-pending';
     }
   };
 
-  // Filter logic
-  const filteredOutpasses = outpasses.filter((item) => {
-    const itemDate = new Date(item.createdAt || item.outDate);
-    const dateStr = itemDate.toLocaleDateString();
-
-    // Evaluate searching
-    const studentName = item.studentid?.name || '';
-    const registerNo = item.studentid?.registerNumber || '';
-
-    const matchesSearch = searchTerm === "" ||
-      studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      registerNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      dateStr.includes(searchTerm.toLowerCase());
-
-    let matchesDate = true;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    if (dateFilter === 'Today') {
-      matchesDate = itemDate >= today;
-    } else if (dateFilter === 'Yesterday') {
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const endYesterday = new Date(yesterday);
-      endYesterday.setHours(23, 59, 59, 999);
-      matchesDate = itemDate >= yesterday && itemDate <= endYesterday;
-    } else if (dateFilter === 'This Week') {
-      const startOfWeek = new Date(today);
-      const day = startOfWeek.getDay() || 7;
-      if (day !== 1) startOfWeek.setHours(-24 * (day - 1));
-      else startOfWeek.setHours(0, 0, 0, 0);
-      startOfWeek.setHours(0, 0, 0, 0);
-      matchesDate = itemDate >= startOfWeek;
-    } else if (dateFilter === 'This Month') {
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      matchesDate = itemDate >= startOfMonth;
-    }
-
-    return matchesDate && matchesSearch;
-  });
-
-  const totalPages = Math.ceil(filteredOutpasses.length / itemsPerPage);
+  const totalPages = Math.ceil(outpasses.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentData = filteredOutpasses.slice(startIndex, startIndex + itemsPerPage);
+  const currentData = outpasses.slice(startIndex, startIndex + itemsPerPage);
 
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="page-container">
+    <div className="sd-root">
       <WatchmanNav />
 
-      <div className="list-container">
-        <div className="header-row">
-          <div>
-            <button className="back-btn" onClick={() => navigate("/watchman-dashboard")}>
-              ← Back
-            </button>
-            <h1 style={{ marginTop: "10px", marginBottom: "10px" }}>Watchman Approved Outpass List</h1>
-          </div>
-
-          <div className="filter-controls" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
-            <div style={{ position: 'relative', flex: 1, minWidth: '200px', maxWidth: '300px' }}>
-              <span className="search-icon" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }}>🔍</span>
-              <input
-                type="text"
-                placeholder="Search by name, reg no, date..."
-                value={searchTerm}
-                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                style={{
-                  width: '100%',
-                  padding: '10px 16px 10px 40px',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '12px',
-                  fontSize: '14px',
-                  outline: 'none',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-            <div className="filter-tabs desktop-only">
-              {['All', 'Today', 'Yesterday', 'This Week', 'This Month'].map((filter) => (
-                <button
-                  key={filter}
-                  className={`filter-btn ${dateFilter === filter ? 'active' : ''}`}
-                  onClick={() => setDateFilter(filter as any)}
-                >
-                  {filter}
-                </button>
-              ))}
+      <main className="sd-main">
+        <div className="sd-container">
+          
+          {/* Header Row */}
+          <div className="sd-header-row">
+            <div>
+              <button className="sd-back-btn" onClick={() => navigate("/watchman-dashboard")}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 12H5M12 5l-7 7 7 7"/>
+                </svg>
+                Back to Dashboard
+              </button>
+              <h1 className="sd-title">Approved Outpass List</h1>
+              <p className="sd-subtitle">Verify and monitor student gate activity logs</p>
             </div>
 
-            <div className="mobile-only" style={{ position: 'relative', display: 'inline-block' }}>
-              <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '14px', pointerEvents: 'none' }}>
-                📅
-              </span>
-              <select
-                className="filter-dropdown"
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value as any)}
-                style={{
-                  padding: '10px 32px 10px 36px',
-                  borderRadius: '12px',
-                  border: '1px solid #cbd5e1',
-                  background: 'white',
-                  color: '#1e293b',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  outline: 'none',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
-                  appearance: 'none',
-                  width: '100%'
-                }}
-              >
-                {['All', 'Today', 'Yesterday', 'This Week', 'This Month'].map((filter) => (
-                  <option key={filter} value={filter}>{filter}</option>
+            {/* Filter and Search Controls */}
+            <div className="sd-controls">
+              <div className="sd-search-wrapper">
+                <span className="sd-search-icon">🔍</span>
+                <input
+                  type="text"
+                  placeholder="Search name, register no..."
+                  value={searchTerm}
+                  onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                  className="sd-search-input"
+                />
+              </div>
+
+              {/* Desktop Filters */}
+              <div className="sd-filter-tabs desktop-only">
+                {['All', 'Today', 'This Week', 'This Month'].map((filter) => (
+                  <button
+                    key={filter}
+                    className={`sd-filter-btn ${dateFilter === filter ? 'sd-filter-active' : ''}`}
+                    onClick={() => { setDateFilter(filter as any); setCurrentPage(1); }}
+                  >
+                    {filter}
+                  </button>
                 ))}
-              </select>
-              <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '10px', pointerEvents: 'none' }}>
-                ▼
-              </span>
+              </div>
+
+              {/* Mobile Filters Dropdown */}
+              <div className="mobile-only sd-dropdown-wrapper">
+                <span className="sd-dropdown-icon">📅</span>
+                <select
+                  className="sd-filter-dropdown"
+                  value={dateFilter}
+                  onChange={(e) => { setDateFilter(e.target.value as any); setCurrentPage(1); }}
+                >
+                  {['All', 'Today', 'This Week', 'This Month'].map((filter) => (
+                    <option key={filter} value={filter}>{filter}</option>
+                  ))}
+                </select>
+                <span className="sd-dropdown-arrow">▼</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="outpass-card">
-          <table className="outpass-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Reg No</th>
-                <th>Dept / Year</th>
-                <th>Date</th>
-                <th>Reason</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentData.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="no-data-cell" style={{ textAlign: "center", padding: "20px" }}>
-                    No approved outpasses found
-                  </td>
-                </tr>
-              ) : (
-                currentData.map((item, index) => (
-                  <tr key={item.id || index}>
-                    <td data-label="#">{startIndex + index + 1}</td>
-                    <td data-label="Name">
-                      {item.studentid?.name || "N/A"}
-                    </td>
-                    <td data-label="Register No">
-                      {item.studentid?.registerNumber || "N/A"}
-                    </td>
-                    <td data-label="Dept / Year">
-                      {item.studentid?.department || "-"} / {item.studentid?.year || "-"}
-                    </td>
-                    <td data-label="Date">
-                      {new Date(item.createdAt || item.outDate).toLocaleDateString()}
-                    </td>
-                    <td data-label="Reason">{item.reason}</td>
-                    <td data-label="Status">
-                      <div className="status-stack">
-                        <span className={`status-badge ${getStatusColor(item.staffapprovalstatus)}`}>
-                          Staff: {item.staffapprovalstatus}
+          {/* Table Container Card */}
+          <div className="sd-table-card">
+            <div className="sd-table-scroll">
+              <table className="sd-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: '60px' }}>#</th>
+                    <th>Name</th>
+                    <th>Register No</th>
+                    <th>Dept / Year</th>
+                    <th>Pass Type</th>
+                    <th>Outpass Date</th>
+                    <th style={{ width: '280px' }}>Approval Hierarchy</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentData.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="sd-empty-cell">
+                        <div className="sd-empty-state">
+                          <span className="sd-empty-icon">📋</span>
+                          <h3 className="sd-empty-title">No Approved Outpasses</h3>
+                          <p className="sd-empty-desc">No approved student outpasses match your filters.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    currentData.map((item, index) => (
+                      <tr key={item._id || index} onClick={() => navigate(`/watchman/student/${item._id}`)}>
+                        <td><span className="sd-mono">{startIndex + index + 1}</span></td>
+                        <td>
+                          <div className="sd-student-cell">
+                            <div className="sd-avatar-placeholder">
+                              {item.studentid?.name ? item.studentid.name.charAt(0).toUpperCase() : "?"}
+                            </div>
+                            <span className="sd-name">{item.studentid?.name || "N/A"}</span>
+                          </div>
+                        </td>
+                        <td><span className="sd-mono">{item.studentid?.registerNumber || "N/A"}</span></td>
+                        <td>
+                          <div style={{ fontWeight: 500 }}>
+                            {item.studentid?.department || "-"}
+                            <span className="sd-year-tag">Yr {item.studentid?.year || "-"}</span>
+                          </div>
+                        </td>
+                        <td>
+                          <span className={`sd-type-badge ${item.outpasstype?.toLowerCase().includes('emergency') ? 'emergency' : ''}`}>
+                            {item.outpasstype || "General"}
+                          </span>
+                        </td>
+                        <td>
+                          <span className="sd-date">
+                            {new Date(item.createdAt || item.outDate).toLocaleDateString(undefined, {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric'
+                            })}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="sd-status-stack">
+                            <span className={`sd-status-badge ${getStatusBadgeClass(item.staff?.status)}`}>
+                              Staff: {item.staff?.status || 'pending'}
+                            </span>
+                            <span className={`sd-status-badge ${getStatusBadgeClass(item.yearincharge?.status)}`}>
+                              Incharge: {item.yearincharge?.status || 'pending'}
+                            </span>
+                            {(item.studentid?.residencetype || '').toLowerCase().trim().replace(/\s/g, '') !== 'dayscholar' && (
+                              <span className={`sd-status-badge ${getStatusBadgeClass(item.warden?.status)}`}>
+                                Warden: {item.warden?.status || 'pending'}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards List View */}
+            {!loading && currentData.length > 0 && (
+              <div className="mobile-cards-view">
+                {currentData.map((item, index) => (
+                  <div 
+                    className="sd-mobile-card" 
+                    key={item._id || index}
+                    onClick={() => navigate(`/watchman/student/${item._id}`)}
+                  >
+                    <div className="sd-mobile-card-header">
+                      <div className="sd-mobile-avatar">
+                        {item.studentid?.name ? item.studentid.name.charAt(0).toUpperCase() : "?"}
+                      </div>
+                      <div>
+                        <h3 className="sd-mobile-name">{item.studentid?.name || "Student"}</h3>
+                        <span className="sd-mobile-reg sd-mono">{item.studentid?.registerNumber || "N/A"}</span>
+                      </div>
+                      <span className={`sd-type-badge ${item.outpasstype?.toLowerCase().includes('emergency') ? 'emergency' : ''}`}>
+                        {item.outpasstype || "General"}
+                      </span>
+                    </div>
+
+                    <div className="sd-mobile-details">
+                      <div className="sd-mobile-row">
+                        <span className="label">Dept / Year</span>
+                        <span className="value">{item.studentid?.department || "-"} (Yr {item.studentid?.year || "-"})</span>
+                      </div>
+                      <div className="sd-mobile-row">
+                        <span className="label">Date Applied</span>
+                        <span className="value">{new Date(item.createdAt || item.outDate).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+
+                    <div className="sd-mobile-footer">
+                      <div className="sd-status-stack-horizontal">
+                        <span className={`sd-status-badge ${getStatusBadgeClass(item.staff?.status)}`}>
+                          Staff: {item.staff?.status || 'pnd'}
                         </span>
-                        <span className={`status-badge ${getStatusColor(item.yearinchargeapprovalstatus)}`}>
-                          Incharge: {item.yearinchargeapprovalstatus}
+                        <span className={`sd-status-badge ${getStatusBadgeClass(item.yearincharge?.status)}`}>
+                          Incharge: {item.yearincharge?.status || 'pnd'}
                         </span>
                         {(item.studentid?.residencetype || '').toLowerCase().trim().replace(/\s/g, '') !== 'dayscholar' && (
-                          <span className={`status-badge ${getStatusColor(item.wardenapprovalstatus)}`}>
-                            Warden: {item.wardenapprovalstatus}
+                          <span className={`sd-status-badge ${getStatusBadgeClass(item.warden?.status)}`}>
+                            Warden: {item.warden?.status || 'pnd'}
                           </span>
                         )}
                       </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-
-
-          {!loading && currentData.length > 0 && (
-            <div className="mobile-cards-view">
-              {currentData.map((item, index) => (
-                <div className="mobile-card" key={item.id || index}>
-                  <div className="card-badge">
-                    {item.studentid?.registerNumber || item.register_number}
-                  </div>
-                  <h3 className="card-name">{item.studentid?.name || item.studentName}</h3>
-                  <div className="card-details-grid">
-                    <div className="detail-row">
-                      <span className="label">Pass Type:</span>
-                      <span className="value">{item.outpasstype}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="label">Dept/Year:</span>
-                      <span className="value">{item.studentid?.department} - {item.studentid?.year}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="label">From:</span>
-                      <span className="value">{new Date(item.fromDate).toLocaleString()}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="label">To:</span>
-                      <span className="value">{new Date(item.toDate).toLocaleString()}</span>
                     </div>
                   </div>
+                ))}
+              </div>
+            )}
+          </div>
 
-                  <div className="card-footer-grid">
-                    <span className={`status-badge-mobile ${getStatusColor(item.staffapprovalstatus)}`}>
-                      Staff: {item.staffapprovalstatus}
-                    </span>
-                    <span className={`status-badge-mobile ${getStatusColor(item.yearinchargeapprovalstatus)}`}>
-                      Incharge: {item.yearinchargeapprovalstatus}
-                    </span>
-                    {(item.studentid?.residencetype || '').toLowerCase().trim().replace(/\s/g, '') !== 'dayscholar' && (
-                      <span className={`status-badge-mobile ${getStatusColor(item.wardenapprovalstatus)}`}>
-                        Warden: {item.wardenapprovalstatus}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
+          {/* Pagination */}
+          {!loading && outpasses.length > itemsPerPage && (
+            <div className="sd-pagination">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => p - 1)}
+                className="sd-page-btn"
+              >
+                ← Prev
+              </button>
+
+              <span className="sd-page-indicator">
+                Page <strong>{currentPage}</strong> of {totalPages}
+              </span>
+
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => p + 1)}
+                className="sd-page-btn"
+              >
+                Next →
+              </button>
             </div>
           )}
+
         </div>
+      </main>
 
-        {/* Pagination logic */}
-        {!loading && filteredOutpasses.length > itemsPerPage && (
-          <div className="pagination">
-            <button
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => p - 1)}
-            >
-              Prev
-            </button>
+      <style>{`
+        /* ====== LAYOUT & BASE ====== */
+        .sd-root {
+          min-height: 100vh;
+          background: linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 45%, #DBEAFE 100%);
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+          padding-top: var(--nav-height, 64px);
+          padding-bottom: 80px;
+        }
 
-            <span>
-              Page {currentPage} of {totalPages}
-            </span>
+        .sd-main {
+          padding: 24px 32px;
+          max-width: var(--content-max, 1280px);
+          margin: 0 auto;
+        }
 
-            <button
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((p) => p + 1)}
-            >
-              Next
-            </button>
-          </div>
-        )}
+        .sd-container {
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
+        }
 
-        <style>{`
-/* Page Container */
-.list-container {
-  padding: 24px 40px;
-  animation: fadeInUp 0.6s ease;
-  margin-top: 10px; 
-}
+        /* ====== HEADER ROW ====== */
+        .sd-header-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          flex-wrap: wrap;
+          gap: 20px;
+        }
 
-.header-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-    gap: 16px;
-}
+        .sd-back-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background: white;
+          border: 1px solid #E2E8F0;
+          color: #3B82F6;
+          font-size: 0.85rem;
+          font-weight: 700;
+          padding: 10px 18px;
+          border-radius: 100px;
+          cursor: pointer;
+          box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+          transition: all 0.2s ease;
+          font-family: inherit;
+        }
 
-.filter-tabs {
-    display: flex;
-    background: #f1f5f9;
-    padding: 4px;
-    border-radius: 12px;
-    gap: 4px;
-    overflow-x: auto; /* Handle overflow on smaller screens */
-}
+        .sd-back-btn:hover {
+          background: #EFF6FF;
+          transform: translateX(-4px);
+          box-shadow: 0 6px 12px rgba(59, 130, 246, 0.08);
+        }
 
-.filter-btn {
-    padding: 8px 16px;
-    border: none;
-    background: transparent;
-    color: #64748b;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    white-space: nowrap;
-}
+        .sd-title {
+          font-size: 1.8rem;
+          font-weight: 800;
+          color: #0F172A;
+          margin: 12px 0 4px;
+          letter-spacing: -0.02em;
+        }
 
-.filter-btn:hover {
-    color: #1e293b;
-    background: rgba(255,255,255,0.5);
-}
+        .sd-subtitle {
+          font-size: 0.9rem;
+          color: #64748B;
+          margin: 0;
+          font-weight: 500;
+        }
 
-.filter-btn.active {
-    background: white;
-    color: #1e3a8a;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
+        /* ====== CONTROLS (SEARCH & FILTERS) ====== */
+        .sd-controls {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          flex-wrap: wrap;
+        }
 
-.back-btn {
-  background: white;
-  border: 1px solid #cbd5e1;
-  font-size: 16px;
-  color: #1e3a8a;
-  cursor: pointer;
-  margin-bottom: 20px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-  padding: 10px 24px;
-  border-radius: 50px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  font-weight: 600;
-}
+        .sd-search-wrapper {
+          position: relative;
+          min-width: 260px;
+        }
 
-.back-btn:hover {
-  background: #f1f5f9;
-  transform: translateX(-5px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-}
+        .sd-search-icon {
+          position: absolute;
+          left: 14px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #94A3B8;
+          font-size: 0.95rem;
+        }
 
-.list-container h1 {
-  font-size: 22px; 
-  margin-bottom: 16px; 
-  color: #1e3a8a;
-  font-weight: 700;
-}
+        .sd-search-input {
+          width: 100%;
+          padding: 12px 16px 12px 42px;
+          background: white;
+          border: 1px solid rgba(226, 232, 240, 0.8);
+          border-radius: 14px;
+          font-size: 0.88rem;
+          font-weight: 500;
+          color: #0F172A;
+          outline: none;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+          transition: all 0.2s ease;
+          box-sizing: border-box;
+        }
 
-/* Table Card */
-.outpass-card {
-  background: white;
-  border-radius: 24px;
-  padding: 24px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
-  border: 1px solid rgba(0,0,0,0.05);
-  overflow: hidden;
-}
+        .sd-search-input:focus {
+          border-color: #3B82F6;
+          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
 
-/* Table */
-.outpass-table {
-  width: 100%;
-  border-collapse: collapse;
-}
+        .sd-filter-tabs {
+          display: flex;
+          background: #F1F5F9;
+          padding: 4px;
+          border-radius: 12px;
+          gap: 2px;
+          border: 1px solid rgba(226,232,240,0.5);
+        }
 
-.outpass-table thead {
-  background: linear-gradient(135deg, #1e3a8a, #0f172a);
-  color: white;
-}
+        .sd-filter-btn {
+          padding: 8px 16px;
+          border: none;
+          background: transparent;
+          color: #64748B;
+          font-weight: 600;
+          font-size: 0.82rem;
+          cursor: pointer;
+          border-radius: 8px;
+          transition: all 0.2s ease;
+          font-family: inherit;
+        }
 
-.outpass-table th {
-  padding: 14px;
-  text-align: left;
-  font-weight: 600;
-}
+        .sd-filter-btn:hover {
+          color: #0f172a;
+        }
 
-.outpass-table td {
-  padding: 14px;
-  border-bottom: 1px solid #f1f5f9;
-  color: #334155;
-}
+        .sd-filter-btn.sd-filter-active {
+          background: white;
+          color: #3B82F6;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
 
-.outpass-table tbody tr {
-  transition: all 0.3s ease;
-}
+        /* ====== GLASS TABLE CARD ====== */
+        .sd-table-card {
+          background: rgba(255, 255, 255, 0.9);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid rgba(255, 255, 255, 0.7);
+          border-radius: 20px;
+          overflow: hidden;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.03), 0 0 0 1px rgba(226,232,240,0.5);
+        }
 
-.outpass-table tbody tr:hover {
-  background: #eff6ff;
-  transform: translateX(4px);
-}
+        .sd-table-scroll {
+          overflow-x: auto;
+        }
 
-/* Status */
-.status {
-  padding: 8px 18px;
-  border-radius: 999px;
-  font-size: 16px;
-  font-weight: 700;
-}
+        .sd-table {
+          width: 100%;
+          border-collapse: collapse;
+          text-align: left;
+        }
 
-.status.approved {
-  background: #dcfce7;
-  color: #166534;
-}
+        .sd-table th {
+          background: #F8FAFC;
+          padding: 16px 24px;
+          font-size: 0.72rem;
+          font-weight: 700;
+          color: #64748B;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          border-bottom: 1px solid #E2E8F0;
+        }
 
-.status.rejected {
-  background: #fee2e2;
-  color: #991b1b;
-}
+        .sd-table td {
+          padding: 16px 24px;
+          font-size: 0.88rem;
+          color: #334155;
+          border-bottom: 1px solid #F1F5F9;
+          transition: background 0.15s ease;
+        }
 
-/* View Button */
-.view-btn {
-  padding: 6px 14px;
-  border-radius: 10px;
-  border: none;
-  background: linear-gradient(135deg, #2563eb, #1e3a8a);
-  color: white;
-  font-weight: 500;
-  cursor: pointer;
-  transition: 0.3s;
-}
+        .sd-table tbody tr {
+          cursor: pointer;
+        }
 
-.view-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(37,99,235,0.4);
-}
+        .sd-table tbody tr:hover td {
+          background: #F8FAFC;
+        }
 
-/* Pagination */
-.pagination {
-  margin-top: 24px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 20px;
-}
+        .sd-table tbody tr:last-child td {
+          border-bottom: none;
+        }
 
-.pagination button {
-  padding: 8px 18px;
-  border-radius: 10px;
-  border: none;
-  background: #1e3a8a;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.3s;
-}
+        /* ====== TABLE SUB-COMPONENTS ====== */
+        .sd-student-cell {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
 
-.pagination button:hover {
-  background: #2563eb;
-}
+        .sd-avatar-placeholder {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+          color: white;
+          font-weight: 700;
+          font-size: 0.82rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 2px 6px rgba(59,130,246,0.25);
+        }
 
-.pagination button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
+        .sd-name {
+          font-weight: 600;
+          color: #0F172A;
+        }
 
-/* Animations */
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+        .sd-mono {
+          font-family: 'SF Mono', 'Fira Code', monospace;
+          font-weight: 600;
+          color: #64748B;
+          font-size: 0.82rem;
+        }
 
-/* Loading Animation */
-.loading-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 50vh;
-  width: 100%;
-}
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  color: #64748b;
-  font-weight: 500;
-}
-.loading-bar {
-  width: 200px;
-  height: 6px;
-  background: #e2e8f0;
-  border-radius: 99px;
-  overflow: hidden;
-  position: relative;
-}
-.loading-progress {
-  width: 50%;
-  height: 100%;
-  background: linear-gradient(90deg, #2563eb, #3b82f6);
-  border-radius: 99px;
-  position: absolute;
-  animation: shimmer 1.5s infinite linear;
-}
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(200%); }
-}
+        .sd-year-tag {
+          display: inline-block;
+          margin-left: 6px;
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-size: 0.65rem;
+          background: #F1F5F9;
+          color: #475569;
+          font-weight: 700;
+        }
 
-/* Mobile */
-@media (max-width: 768px) {
-  .list-container {
-    padding: 16px;
-    margin-top: 5px; 
-  }
+        .sd-type-badge {
+          display: inline-flex;
+          padding: 4px 10px;
+          border-radius: 6px;
+          font-size: 0.72rem;
+          font-weight: 700;
+          background: #EFF6FF;
+          color: #3B82F6;
+          text-transform: uppercase;
+          letter-spacing: 0.02em;
+        }
 
-  .list-container h1 {
-    font-size: 18px; 
-    margin-bottom: 12px;
-  }
+        .sd-type-badge.emergency {
+          background: #FEF2F2;
+          color: #EF4444;
+        }
 
-  .header-row {
-      flex-direction: row; /* Keep row to have back on left, filter on right */
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-  }
-  
-  .desktop-only {
-      display: none !important;
-  }
+        .sd-date {
+          color: #475569;
+          font-weight: 500;
+        }
 
-  .mobile-only {
-      display: block !important;
-  }
-  
-  .filter-dropdown {
-      padding: 8px 12px;
-      border-radius: 8px;
-      border: 1px solid #cbd5e1;
-      background: white;
-      color: #1e3a8a;
-      font-weight: 600;
-      font-size: 14px;
-      outline: none;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-  }
-  
-  .filter-tabs {
-      width: 100%;
-      justify-content: space-between;
-      overflow-x: auto;
-  }
-  
-  .filter-btn {
-      flex: 1;
-      text-align: center;
-      padding: 10px;
-  }
+        /* ====== STATUS PILLS ====== */
+        .sd-status-stack {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
 
-  .outpass-card {
-    padding: 0;
-    background: transparent;
-    box-shadow: none;
-    border: none;
-  }
+        .sd-status-badge {
+          display: inline-flex;
+          align-items: center;
+          padding: 2px 8px;
+          border-radius: 4px;
+          font-size: 0.68rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.03em;
+          width: fit-content;
+          border: 1px solid transparent;
+        }
 
-  .mobile-cards-view {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
+        .sd-status-approved { background: #ECFDF5; color: #10B981; border-color: rgba(16, 185, 129, 0.15); }
+        .sd-status-pending  { background: #FFFBEB; color: #D97706; border-color: rgba(217, 119, 6, 0.15); }
+        .sd-status-rejected { background: #FEF2F2; color: #EF4444; border-color: rgba(239, 68, 68, 0.15); }
 
-  .mobile-card {
-    background: white;
-    border-radius: 16px;
-    padding: 20px;
-    position: relative;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-    border: 1px solid rgba(0,0,0,0.02);
-    margin-bottom: 16px;
-  }
+        /* Empty State */
+        .sd-empty-cell {
+          text-align: center;
+          padding: 64px 24px !important;
+        }
 
-  .card-badge {
-    background: linear-gradient(135deg, #2563eb, #1e40af);
-    color: white;
-    display: inline-block;
-    padding: 8px 0;
-    width: 100%;
-    text-align: center;
-    border-radius: 8px;
-    font-weight: 700;
-    font-size: 14px;
-    margin-bottom: 16px;
-    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
-  }
+        .sd-empty-state {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 12px;
+        }
 
-  .card-name {
-    font-size: 18px;
-    font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 4px;
-  }
+        .sd-empty-icon {
+          font-size: 3rem;
+          color: #CBD5E1;
+        }
 
-  .card-details {
-    font-size: 13px;
-    color: #64748b;
-    margin-bottom: 20px;
-  }
+        .sd-empty-title {
+          font-size: 1.1rem;
+          font-weight: 700;
+          color: #334155;
+          margin: 0;
+        }
 
-  .card-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-top: 1px solid #f1f5f9;
-    padding-top: 16px;
-  }
+        .sd-empty-desc {
+          font-size: 0.85rem;
+          color: #94A3B8;
+          margin: 0;
+          max-width: 280px;
+        }
 
-  .status-pill {
-    padding: 10px 20px;
-    border-radius: 20px;
-    font-size: 16px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    text-transform: capitalize;
-  }
+        /* ====== PAGINATION ====== */
+        .sd-pagination {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 16px;
+          margin-top: 24px;
+        }
 
-  .status-pill.status-approved {
-    background: #dcfce7;
-    color: #166534;
-    border: 1px solid #86efac;
-  }
+        .sd-page-btn {
+          padding: 8px 18px;
+          border-radius: 10px;
+          border: 1px solid rgba(59,130,246,0.15);
+          background: #EFF6FF;
+          color: #3B82F6;
+          font-weight: 700;
+          font-size: 0.82rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          font-family: inherit;
+        }
 
-  .card-view-link {
-    background: none;
-    border: none;
-    color: #1e3a8a;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
+        .sd-page-btn:hover:not(:disabled) {
+          background: #3B82F6;
+          color: white;
+          box-shadow: 0 4px 10px rgba(59,130,246,0.2);
+        }
 
-  .outpass-table {
-    display: none; 
-  }
+        .sd-page-btn:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
+          background: #F1F5F9;
+          color: #94A3B8;
+          border-color: #E2E8F0;
+        }
 
-  .mobile-cards-view {
-    display: block;
-  }
+        .sd-page-indicator {
+          font-size: 0.88rem;
+          color: #64748B;
+        }
 
-  .back-btn {
-      margin-bottom: 0;
-  }
-}
+        /* ====== RESPONSIVE ====== */
+        .mobile-only { display: none; }
+        .mobile-cards-view { display: none; }
 
-@media (min-width: 769px) {
-  .mobile-cards-view {
-    display: none;
-  }
-}
+        @media (max-width: 968px) {
+          .desktop-only { display: none !important; }
+          .mobile-only { display: block !important; }
 
-.mobile-only {
-    display: none;
-}
+          .sd-header-row {
+            align-items: stretch;
+            flex-direction: column;
+          }
 
-/* Status Styles */
-.status-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
+          .sd-controls {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+          }
 
-.status-badge {
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: capitalize;
-    border: 1px solid;
-    width: fit-content;
-}
+          .sd-search-wrapper {
+            min-width: 100%;
+          }
 
-.bg-green-100 { background-color: #dcfce7; }
-.text-green-800 { color: #166534; }
-.border-green-200 { border-color: #bbf7d0; }
+          .sd-dropdown-wrapper {
+            position: relative;
+          }
 
-.bg-red-100 { background-color: #fee2e2; }
-.text-red-800 { color: #991b1b; }
-.border-red-200 { border-color: #fecaca; }
+          .sd-dropdown-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.95rem;
+            pointer-events: none;
+          }
 
-.bg-yellow-100 { background-color: #fef9c3; }
-.text-yellow-800 { color: #854d0e; }
-.border-yellow-200 { border-color: #fde047; }
+          .sd-dropdown-arrow {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.7rem;
+            color: #64748B;
+            pointer-events: none;
+          }
 
-/* Mobile Card Updates */
-.card-details-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 16px;
-    font-size: 0.9rem;
-}
+          .sd-filter-dropdown {
+            width: 100%;
+            padding: 12px 32px 12px 36px;
+            background: white;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: 14px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #334155;
+            outline: none;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+            appearance: none;
+          }
 
-.detail-row {
-    display: flex;
-    justify-content: space-between;
-}
+          .sd-table {
+            display: none;
+          }
 
-.detail-row .label {
-    color: #64748b;
-}
+          .sd-table-card {
+            background: transparent;
+            box-shadow: none;
+            border: none;
+          }
 
-.detail-row .value {
-    color: #334155;
-    font-weight: 500;
-    text-align: right;
-}
+          .mobile-cards-view {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+          }
 
-.card-footer-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 6px;
-    border-top: 1px solid #f1f5f9;
-    padding-top: 16px;
-}
+          .sd-mobile-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(226, 232, 240, 0.7);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+          }
 
-.status-badge-mobile {
-    font-size: 0.7rem;
-    padding: 4px 8px;
-    border-radius: 6px;
-    text-align: center;
-    font-weight: 600;
-    border: 1px solid;
-    text-transform: capitalize;
-}
+          .sd-mobile-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59,130,246,0.05);
+          }
+
+          .sd-mobile-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+          }
+
+          .sd-mobile-avatar {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+            color: white;
+            font-weight: 700;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+          }
+
+          .sd-mobile-name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #0F172A;
+            margin: 0 0 2px;
+          }
+
+          .sd-mobile-reg {
+            display: block;
+            font-size: 0.78rem;
+          }
+
+          .sd-mobile-details {
+            border-top: 1px dashed #F1F5F9;
+            border-bottom: 1px dashed #F1F5F9;
+            padding: 12px 0;
+            margin-bottom: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+          }
+
+          .sd-mobile-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.82rem;
+          }
+
+          .sd-mobile-row .label {
+            color: #64748B;
+            font-weight: 500;
+          }
+
+          .sd-mobile-row .value {
+            color: #334155;
+            font-weight: 600;
+            text-align: right;
+          }
+
+          .sd-status-stack-horizontal {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+          }
+        }
       `}</style>
-      </div>
     </div>
   );
 };

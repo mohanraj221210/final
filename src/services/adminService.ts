@@ -10,7 +10,7 @@ import type {
     AdminProfile
 } from '../types/admin';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL;
 
 // Create axios instance with interceptor for token
 const api = axios.create({
@@ -88,6 +88,15 @@ export const adminService = {
         const response = await api.delete(`/admin/student/delete/${id}`);
         return response.data;
     },
+    getStudentStats: async (filters?: { department?: string, year?: string, semester?: string }) => {
+        const params = new URLSearchParams();
+        if (filters?.department) params.append('department', filters.department);
+        if (filters?.year) params.append('year', filters.year);
+        if (filters?.semester) params.append('semester', filters.semester);
+
+        const response = await api.get(`/admin/students/stats?${params.toString()}`);
+        return response.data.stats;
+    },
 
     // Staff
     addStaff: async (data: any) => {
@@ -123,6 +132,13 @@ export const adminService = {
     resetStaffPassword: async (id: string, newPassword: string) => {
         const response = await api.put(`/admin/staff/forgotpassword/${id}`, { newPassword });
         return response.data;
+    },
+    getStaffStats: async (filters?: { department?: string }) => {
+        const params = new URLSearchParams();
+        if (filters?.department) params.append('department', filters.department);
+
+        const response = await api.get(`/admin/staff/stats?${params.toString()}`);
+        return response.data.stats;
     },
 
     // Incharge
@@ -214,58 +230,86 @@ export const adminService = {
     },
     // Outpass
     // Outpass
-    getAllOutpasses: async () => {
-        const response = await api.get<{ message: string, outpasses: any[] }>('/admin/outpass/list');
+    getAllOutpasses: async (filters?: {
+        page?: number;
+        status?: string;
+        appliedDate?: string;
+        department?: string;
+        outpasstype?: string;
+        search?: string;
+        registerNumber?: string;
+    }) => {
+        const params = new URLSearchParams();
+        if (filters?.page) params.append('page', filters.page.toString());
+        if (filters?.status) params.append('status', filters.status);
+        if (filters?.appliedDate) params.append('appliedDate', filters.appliedDate);
+        if (filters?.department) params.append('department', filters.department);
+        if (filters?.outpasstype) params.append('outpasstype', filters.outpasstype);
+        if (filters?.search) params.append('search', filters.search);
+        if (filters?.registerNumber) params.append('registerNumber', filters.registerNumber);
+        const qs = params.toString();
+        const endpoint = qs ? `/admin/outpass/list?${qs}` : '/admin/outpass/list';
+        const response = await api.get<{ message: string, outpasses: any[], isLast?: boolean }>(endpoint);
         return response.data;
     },
-    getOutpassStats: async () => {
-        const response = await api.get<{ message: string, outpasses: any[], filterOutpass?: any[] }>('/admin/outpass/list');
-        const outpasses = response.data.outpasses || response.data.filterOutpass || [];
+    getOutpassStats: async (filters?: { status?: string, appliedDate?: string, department?: string, outpasstype?: string }) => {
+        const params = new URLSearchParams();
+        if (filters?.status) params.append('status', filters.status);
+        if (filters?.appliedDate) params.append('appliedDate', filters.appliedDate);
+        if (filters?.department) params.append('department', filters.department);
+        if (filters?.outpasstype) params.append('outpasstype', filters.outpasstype);
 
-        // Helper to get type safely
-        const getType = (o: any) => (o.outpassType || o.outpasstype || o.type || '').toLowerCase().trim();
-        // Helper to get status safely
-        const getStatus = (o: any) => (o.outpassStatus || o.status || '').toLowerCase().trim();
+        const response = await api.get(`/admin/outpass/stats?${params.toString()}`);
+        return response.data.stats;
+    },
+    exportOutpassReport: async (filters?: {
+        outpasstype?: string;
+        status?: string;
+        appliedDate?: string;
+        search?: string;
+    }) => {
+        const params = new URLSearchParams();
 
-        // Calculate Overview Stats
-        const stats = {
-            totalOutpasses: outpasses.length,
-            pendingApprovals: outpasses.filter(o => getStatus(o) === 'pending').length,
-            // Count ALL emergency requests for the stat card if the user implies that, 
-            // OR if it's meant to be an "Action item", then pending. 
-            // Usually "Emergency Requests" card implies attention needed, so pending is often right.
-            // BUT if the user says it's "Wrong", maybe they expect TOTAL emergency requests?
-            // The card says "⚠️ Action Required" which implies pending. 
-            // I will stick to pending but fix the property access which is the likely bug.
-            emergencyRequests: outpasses.filter(o =>
-                getType(o) === 'emergency' &&
-                getStatus(o) === 'pending'
-            ).length
-        };
+        // Map outpass type filter (as plain string, not array)
+        const type = filters?.outpasstype;
+        if (type && type !== 'All' && type.trim() !== '') {
+            let mappedType = type;
+            if (type.toLowerCase() === 'home pass') {
+                mappedType = 'Home';
+            }
+            params.append('outpasstype', mappedType);
+        }
 
-        // Calculate Chart Data (Counts by Type)
-        const typeCounts: { [key: string]: number } = {
-            'OD': 0,
-            'Home Pass': 0,
-            'Emergency': 0,
-            'Outing Pass': 0
-        };
+        // Map appliedDate timeline filter (as plain string, not array)
+        const dateRange = filters?.appliedDate;
+        if (dateRange && dateRange !== 'All' && dateRange.trim() !== '') {
+            let mappedDate = dateRange.toLowerCase();
+            if (mappedDate === 'this week' || mappedDate === 'weekly') {
+                mappedDate = 'weekly';
+            } else if (mappedDate === 'this month' || mappedDate === 'monthly') {
+                mappedDate = 'monthly';
+            } else if (mappedDate === 'today') {
+                mappedDate = 'today';
+            }
+            params.append('appliedDate', mappedDate);
+        }
 
-        outpasses.forEach(o => {
-            const type = getType(o);
-            if (type === 'od') typeCounts['OD']++;
-            else if (type.includes('home')) typeCounts['Home Pass']++;
-            else if (type === 'emergency') typeCounts['Emergency']++;
-            else if (type === 'medical' || type === 'outing') typeCounts['Outing Pass']++;
+        // Map status filter (as plain string, not array)
+        const statusVal = filters?.status;
+        if (statusVal && statusVal !== 'All' && statusVal.trim() !== '') {
+            params.append('status', statusVal.toLowerCase());
+        }
+
+        // Map search query filter (as plain string)
+        const searchVal = filters?.search;
+        if (searchVal && searchVal.trim() !== '') {
+            params.append('search', searchVal.trim());
+        }
+
+        const response = await api.get('/admin/outpass/export', {
+            params: params,
+            responseType: 'blob'
         });
-
-        const chartData = [
-            { label: 'OD', value: typeCounts['OD'], color: '#6366f1' },
-            { label: 'Home Pass', value: typeCounts['Home Pass'], color: '#ec4899' },
-            { label: 'Emergency', value: typeCounts['Emergency'], color: '#ef4444' },
-            { label: 'Outing Pass', value: typeCounts['Outing Pass'], color: '#f59e0b' },
-        ];
-
-        return { stats, chartData };
+        return response;
     }
 };

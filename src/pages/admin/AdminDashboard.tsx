@@ -1,816 +1,1055 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from './AdminLayout';
 import { adminService } from '../../services/adminService';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { 
+    Users, 
+    UserCheck, 
+    FileText, 
+    Clock, 
+    ArrowUpRight, 
+    ArrowDownRight,
+    Download,
+    Filter,
+    RefreshCw
+} from 'lucide-react';
+import { 
+    PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
+    BarChart, Bar, XAxis, YAxis, CartesianGrid
+} from 'recharts';
+
+const DEPARTMENTS = [
+    'Information Technology',
+    'Computer Science and Engineering',
+    'Artificial Intelligence and Data Science',
+    'Electronics and Communication Engineering',
+    'Mechanical Engineering',
+    'Master of Business Administration',
+    'Computer Science and Business System'
+];
+
+// Enterprise Colors
+const COLORS = ['#4F46E5', '#06B6D4', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#94A3B8'];
 
 const AdminDashboard: React.FC = () => {
-    // Stats Data
-    const [stats, setStats] = useState({
-        totalOutpasses: 0,
-        pendingApprovals: 0,
-        emergencyRequests: 0,
-        studentsOnLeave: 0
-    });
+    // Student Filters
+    const [studentDeptFilter, setStudentDeptFilter] = useState('');
 
-    const [chartData, setChartData] = useState([
-        { label: 'OD', value: 0, color: '#6366f1' },
-        { label: 'Home Pass', value: 0, color: '#ec4899' },
-        { label: 'Emergency', value: 0, color: '#ef4444' },
-        { label: 'Outing Pass', value: 0, color: '#f59e0b' },
-    ]);
+    // Outpass Filters
+    const [outpassDateFilter, setOutpassDateFilter] = useState('monthly');
+    const [outpassStatusFilter, setOutpassStatusFilter] = useState('');
+    const [outpassDeptFilter, setOutpassDeptFilter] = useState('');
+    const [outpassTypeFilter, setOutpassTypeFilter] = useState('');
 
-    // Admin Profile Data
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const outpassData = await adminService.getOutpassStats();
+    // Data States
+    const [studentStats, setStudentStats] = useState<any>(null);
+    const [staffStats, setStaffStats] = useState<any>(null);
+    const [outpassStats, setOutpassStats] = useState<any>(null);
+    const [recentPasses, setRecentPasses] = useState<any[]>([]);
 
-                if (outpassData) {
-                    setStats(prev => ({
-                        ...prev,
-                        ...outpassData.stats
-                    }));
-                    setChartData(outpassData.chartData);
-                }
-            } catch (error) {
-                console.error("Failed to fetch dashboard data", error);
+    const [loading, setLoading] = useState(true);
+
+    // Export Modal States
+    const [showExportModal, setShowExportModal] = useState(false);
+    const [exportFilterType, setExportFilterType] = useState('All');
+    const [exportFilterTime, setExportFilterTime] = useState('All');
+    const [exportFilterStatus, setExportFilterStatus] = useState('All');
+    const [exportSearchTerm, setExportSearchTerm] = useState('');
+    const [exportLoading, setExportLoading] = useState(false);
+
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const [students, staff, outpasses] = await Promise.all([
+                adminService.getStudentStats({ department: studentDeptFilter }),
+                adminService.getStaffStats({}),
+                adminService.getOutpassStats({ 
+                    appliedDate: outpassDateFilter,
+                    status: outpassStatusFilter,
+                    department: outpassDeptFilter,
+                    outpasstype: outpassTypeFilter
+                })
+            ]);
+
+            setStudentStats(students?.[0] || { total: 0, IT: 0, CSE: 0, AI: 0, ECE: 0, Mech: 0, MBA: 0, Nun: 0 });
+
+            let staffAggr = { total: 0, IT: 0, CSE: 0, AI: 0, ECE: 0, Mech: 0, MBA: 0 };
+            if (Array.isArray(staff)) {
+                staff.forEach(d => {
+                    staffAggr.total += d.total || 0;
+                    staffAggr.IT += d.IT || 0;
+                    staffAggr.CSE += d.CSE || 0;
+                    staffAggr.AI += d.AI || 0;
+                    staffAggr.ECE += d.ECE || 0;
+                    staffAggr.Mech += d.Mech || 0;
+                    staffAggr.MBA += d.MBA || 0;
+                });
+            } else if (staff?.[0]) {
+                staffAggr = staff[0];
             }
-        };
+            setStaffStats(staffAggr);
+
+            let opAggr = { count: 0, approved: 0, rejected: 0, pending: 0, OD: 0, Home: 0, Outing: 0, Emergency: 0 };
+            const opStatsArray = outpasses?.[0]?.stats || [];
+            if (Array.isArray(opStatsArray)) {
+                opStatsArray.forEach((d: any) => {
+                    opAggr.count += d.count || 0;
+                    opAggr.approved += d.approved || 0;
+                    opAggr.rejected += d.rejected || 0;
+                    opAggr.pending += d.pending || 0;
+                    opAggr.OD += d.OD || 0;
+                    opAggr.Home += d.Home || 0;
+                    opAggr.Outing += d.Outing || 0;
+                    opAggr.Emergency += d.Emergency || 0;
+                });
+            }
+            setOutpassStats(opAggr);
+            setRecentPasses(outpasses?.[0]?.recentpasses || []);
+
+        } catch (error) {
+            console.error("Failed to fetch dashboard data", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchData();
-    }, []);
+    }, [studentDeptFilter, outpassDateFilter, outpassStatusFilter, outpassDeptFilter, outpassTypeFilter]);
+
+    const getStatusStyle = (status: string) => {
+        switch (status?.toLowerCase()) {
+            case 'approved': return { bg: '#DEF7EC', text: '#03543F' };
+            case 'rejected': return { bg: '#FDE8E8', text: '#9B1C1C' };
+            case 'pending': return { bg: '#FEF3C7', text: '#92400E' };
+            default: return { bg: '#F1F5F9', text: '#475569' };
+        }
+    };
+
+    // Prepare Recharts Data
+    const studentChartData = [
+        { name: 'IT', value: studentStats?.IT || 0 },
+        { name: 'CSE', value: studentStats?.CSE || 0 },
+        { name: 'AI', value: studentStats?.AI || 0 },
+        { name: 'ECE', value: studentStats?.ECE || 0 },
+        { name: 'Mech', value: studentStats?.Mech || 0 },
+        { name: 'MBA', value: studentStats?.MBA || 0 },
+        { name: 'Unassigned', value: studentStats?.Nun || 0 },
+    ].filter(d => d.value > 0);
+
+    const staffChartData = [
+        { name: 'IT', value: staffStats?.IT || 0 },
+        { name: 'CSE', value: staffStats?.CSE || 0 },
+        { name: 'AI', value: staffStats?.AI || 0 },
+        { name: 'ECE', value: staffStats?.ECE || 0 },
+        { name: 'Mech', value: staffStats?.Mech || 0 },
+        { name: 'MBA', value: staffStats?.MBA || 0 },
+    ];
+
+    const outpassStatusData = [
+        { name: 'Approved', value: outpassStats?.approved || 0 },
+        { name: 'Pending', value: outpassStats?.pending || 0 },
+        { name: 'Rejected', value: outpassStats?.rejected || 0 },
+    ].filter(d => d.value > 0);
+
+    const outpassTypeData = [
+        { name: 'Emergency', value: outpassStats?.Emergency || 0 },
+        { name: 'Home', value: outpassStats?.Home || 0 },
+        { name: 'Outing', value: outpassStats?.Outing || 0 },
+        { name: 'OD', value: outpassStats?.OD || 0 },
+    ].filter(d => d.value > 0);
+
+    // Dummy Sparkline SVG
+    const Sparkline = ({ color }: { color: string }) => (
+        <svg width="64" height="24" viewBox="0 0 64 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 20 L12 14 L22 18 L32 8 L42 12 L52 4 L62 8" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M2 20 L12 14 L22 18 L32 8 L42 12 L52 4 L62 8 L62 24 L2 24 Z" fill={`url(#gradient-${color})`} opacity="0.2"/>
+            <defs>
+                <linearGradient id={`gradient-${color}`} x1="32" y1="4" x2="32" y2="24" gradientUnits="userSpaceOnUse">
+                    <stop stopColor={color} stopOpacity="1"/>
+                    <stop offset="1" stopColor={color} stopOpacity="0"/>
+                </linearGradient>
+            </defs>
+        </svg>
+    );
+
+    const triggerExport = async () => {
+        setExportLoading(true);
+        try {
+            toast.info('Requesting outpass report from server...');
+            const response = await adminService.exportOutpassReport({
+                outpasstype: exportFilterType,
+                status: exportFilterStatus,
+                appliedDate: exportFilterTime,
+                search: exportSearchTerm
+            });
+
+            const contentType = response.headers['content-type'] || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+            const blob = new Blob([response.data], { type: contentType });
+            const disposition = response.headers['content-disposition'];
+            
+            let filename = `outpass_report_${new Date().toISOString().split('T')[0]}`;
+            if (disposition && disposition.includes('filename=')) {
+                const parts = disposition.split('filename=');
+                if (parts[1]) filename = parts[1].replace(/['"]/g, '');
+            } else {
+                if (contentType.includes('csv')) {
+                    filename += '.csv';
+                } else if (contentType.includes('pdf')) {
+                    filename += '.pdf';
+                } else {
+                    filename += '.xlsx';
+                }
+            }
+
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            toast.success('Report exported successfully!');
+            setShowExportModal(false);
+        } catch (error) {
+            console.error('Export failed:', error);
+            toast.error('Failed to export outpass report');
+        } finally {
+            setExportLoading(false);
+        }
+    };
 
     return (
-        <AdminLayout title="Dashboard" activeMenu="dashboard">
-            <div className="admin-dashboard">
-                {/* Welcome Section */}
-                {/* <div className="welcome-section">
-                    <div className="welcome-content">
-                        <h1>Welcome back, {adminName}! 👋</h1>
-                        <p className="welcome-subtitle">{role} • JIT Admin Portal</p>
+        <AdminLayout title="Overview" activeMenu="dashboard">
+            <div className="saas-dashboard">
+                
+                {/* Header Actions */}
+                <div className="saas-header-actions">
+                    <div className="header-text">
+                        <h1 className="page-title">Analytics Overview</h1>
+                        <p className="page-desc">Monitor your institution's core metrics and outpass activity.</p>
                     </div>
-                    <div className="stats-mini">
-                        <div className="stat-mini">
-                            <span className="stat-mini-icon">👨‍🎓</span>
-                            <div>
-                                <div className="stat-mini-value">500+</div>
-                                <div className="stat-mini-label">Students</div>
-                            </div>
-                        </div>
-                        <div className="stat-mini">
-                            <span className="stat-mini-icon">👨‍🏫</span>
-                            <div>
-                                <div className="stat-mini-value">50+</div>
-                                <div className="stat-mini-label">Staff</div>
-                            </div>
-                        </div>
+                    <div className="header-buttons">
+                        <button className="saas-btn-outline" onClick={fetchData}>
+                            <RefreshCw size={14} className={loading ? 'spin' : ''} />
+                            Refresh
+                        </button>
+                        <button className="saas-btn-primary" onClick={() => setShowExportModal(true)}>
+                            <Download size={14} />
+                            Export Report
+                        </button>
                     </div>
-                </div> */}
-
-                {/* Quick Actions */}
-                {/* <section className="quick-actions-section">
-                    <h2 className="section-title">Quick Actions</h2>
-                    <div className="quick-actions-grid">
-                        <div className="action-card" onClick={() => navigate('/admin/manage-student')}>
-                            <div className="action-icon-wrapper">
-                                <span className="action-icon">➕</span>
-                            </div>
-                            <h3 className="action-title">Add Student</h3>
-                            <p className="action-description">Register a new student</p>
-                            <div className="action-arrow">→</div>
-                        </div>
-
-                        <div className="action-card" onClick={() => navigate('/admin/manage-staff')}>
-                            <div className="action-icon-wrapper">
-                                <span className="action-icon">👥</span>
-                            </div>
-                            <h3 className="action-title">Manage Staff</h3>
-                            <p className="action-description">View staff details</p>
-                            <div className="action-arrow">→</div>
-                        </div>
-
-                        <div className="action-card" onClick={() => navigate('/admin/manage-warden')}>
-                            <div className="action-icon-wrapper">
-                                <span className="action-icon">🏠</span>
-                            </div>
-                            <h3 className="action-title">Manage Warden</h3>
-                            <p className="action-description">Hostel management</p>
-                            <div className="action-arrow">→</div>
-                        </div>
-                    </div>
-                </section> */}
-
-                {/* Overview Stats (Existing functionality styled nicely) */}
-                <h2 className="section-title">Overview</h2>
-                <div className="stats-grid">
-                    <div className="stat-card">
-                        <div className="card-icon blue">📄</div>
-                        <div className="card-info">
-                            <span className="count">{stats.totalOutpasses}</span>
-                            <span className="label">Total Outpasses</span>
-                            <span className="change positive">↑ 12% vs last week</span>
-                        </div>
-                    </div>
-                    <div className="stat-card">
-                        <div className="card-icon orange">⏳</div>
-                        <div className="card-info">
-                            <span className="count">{stats.pendingApprovals}</span>
-                            <span className="label">Pending Approval</span>
-                            <span className="change neutral">-- same as yesterday</span>
-                        </div>
-                    </div>
-                    <div className="stat-card">
-                        <div className="card-icon red">🚨</div>
-                        <div className="card-info">
-                            <span className="count">{stats.emergencyRequests}</span>
-                            <span className="label">Emergency Requests</span>
-                            <span className="change negative">⚠️ Action Required</span>
-                        </div>
-                    </div>
-                    {/* <div className="stat-card">
-                        <div className="card-icon green">🏃</div>
-                        <div className="card-info">
-                            <span className="count">{stats.studentsOnLeave}</span>
-                            <span className="label">Students on Leave</span>
-                            <span className="change negative">↓ 5% vs last week</span>
-                        </div>
-                    </div> */}
                 </div>
 
-                {/* Charts Grid */}
-                <div className="charts-grid">
-                    {/* Bar Chart Section */}
-                    <div className="chart-card large">
-                        <div className="chart-header">
-                            <h3>Outpass Statistics</h3>
-                            {/* <div className="chart-actions">
-                                <button className="btn-filter">Weekly</button>
-                                <button className="btn-export">Export</button>
-                            </div> */}
-                        </div>
-                        <div className="bar-chart-container">
-                            <div className="y-axis">
-                                <span>Max</span>
-                                <span></span>
-                                <span></span>
-                                <span></span>
-                                <span>0</span>
+                {loading && !studentStats ? (
+                    <div className="saas-skeleton-container">
+                        <div className="skeleton card-skel"></div>
+                        <div className="skeleton card-skel"></div>
+                        <div className="skeleton card-skel"></div>
+                        <div className="skeleton card-skel"></div>
+                    </div>
+                ) : (
+                    <>
+                        {/* KPI Grid */}
+                        <div className="kpi-grid">
+                            <div className="kpi-card">
+                                <div className="kpi-top">
+                                    <div className="kpi-icon-box" style={{ background: 'var(--primary-subtle)', color: 'var(--primary)' }}>
+                                        <Users size={18} />
+                                    </div>
+                                    <div className="kpi-trend positive">
+                                        <ArrowUpRight size={14} />
+                                        <span>2.4%</span>
+                                    </div>
+                                </div>
+                                <div className="kpi-bottom">
+                                    <div>
+                                        <p className="kpi-label">Total Students</p>
+                                        <h2 className="kpi-value">{studentStats?.total || 0}</h2>
+                                    </div>
+                                    <div className="kpi-spark">
+                                        <Sparkline color="var(--primary)" />
+                                    </div>
+                                </div>
                             </div>
-                            <div className="bars">
-                                {(() => {
-                                    const maxVal = Math.max(...chartData.map(d => d.value), 10);
-                                    return chartData.map((item, index) => (
-                                        <div key={index} className="bar-group">
-                                            <div
-                                                className="bar"
-                                                style={{
-                                                    height: `${(item.value / maxVal) * 80}%`,
-                                                    backgroundColor: item.color
-                                                }}
-                                            >
-                                                <div className="tooltip">{item.value}</div>
+
+                            <div className="kpi-card">
+                                <div className="kpi-top">
+                                    <div className="kpi-icon-box" style={{ background: '#F0FDF4', color: '#16A34A' }}>
+                                        <UserCheck size={18} />
+                                    </div>
+                                    <div className="kpi-trend positive">
+                                        <ArrowUpRight size={14} />
+                                        <span>1.1%</span>
+                                    </div>
+                                </div>
+                                <div className="kpi-bottom">
+                                    <div>
+                                        <p className="kpi-label">Active Staff</p>
+                                        <h2 className="kpi-value">{staffStats?.total || 0}</h2>
+                                    </div>
+                                    <div className="kpi-spark">
+                                        <Sparkline color="#16A34A" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="kpi-card">
+                                <div className="kpi-top">
+                                    <div className="kpi-icon-box" style={{ background: '#FFF7ED', color: '#EA580C' }}>
+                                        <FileText size={18} />
+                                    </div>
+                                    <div className="kpi-trend negative">
+                                        <ArrowDownRight size={14} />
+                                        <span>4.3%</span>
+                                    </div>
+                                </div>
+                                <div className="kpi-bottom">
+                                    <div>
+                                        <p className="kpi-label">Outpass Requests</p>
+                                        <h2 className="kpi-value">{outpassStats?.count || 0}</h2>
+                                    </div>
+                                    <div className="kpi-spark">
+                                        <Sparkline color="#EA580C" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="kpi-card">
+                                <div className="kpi-top">
+                                    <div className="kpi-icon-box" style={{ background: '#FEF2F2', color: '#DC2626' }}>
+                                        <Clock size={18} />
+                                    </div>
+                                    <div className="kpi-trend neutral">
+                                        <span>0.0%</span>
+                                    </div>
+                                </div>
+                                <div className="kpi-bottom">
+                                    <div>
+                                        <p className="kpi-label">Pending Approvals</p>
+                                        <h2 className="kpi-value">{outpassStats?.pending || 0}</h2>
+                                    </div>
+                                    <div className="kpi-spark">
+                                        <Sparkline color="#DC2626" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Charts Section */}
+                        <div className="saas-grid-2">
+                            {/* Student Demographics */}
+                            <div className="saas-card">
+                                <div className="card-header">
+                                    <div className="card-title-group">
+                                        <h3>Student Demographics</h3>
+                                        <p>Distribution across departments</p>
+                                    </div>
+                                    <select 
+                                        className="saas-select-sm"
+                                        value={studentDeptFilter}
+                                        onChange={e => setStudentDeptFilter(e.target.value)}
+                                    >
+                                        <option value="">All Departments</option>
+                                        {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                                    </select>
+                                </div>
+                                <div className="card-content chart-container">
+                                    {studentChartData.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height={260}>
+                                            <PieChart>
+                                                <Pie
+                                                    data={studentChartData}
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius={70}
+                                                    outerRadius={100}
+                                                    paddingAngle={2}
+                                                    dataKey="value"
+                                                    stroke="none"
+                                                >
+                                                    {studentChartData.map((_, index) => (
+                                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip 
+                                                    formatter={(value) => [`${value} Students`, 'Count']}
+                                                    contentStyle={{ borderRadius: '8px', border: '1px solid #E2E8F0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}
+                                                />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    ) : (
+                                        <div className="empty-chart">No student data available</div>
+                                    )}
+                                    
+                                    {/* Custom Legend */}
+                                    <div className="custom-legend">
+                                        {studentChartData.map((entry, idx) => (
+                                            <div className="legend-item" key={entry.name}>
+                                                <div className="legend-dot" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
+                                                <span className="legend-label">{entry.name}</span>
+                                                <span className="legend-val">{entry.value}</span>
                                             </div>
-                                            <span className="bar-label">{item.label}</span>
-                                        </div>
-                                    ));
-                                })()}
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Staff Overview */}
+                            <div className="saas-card">
+                                <div className="card-header">
+                                    <div className="card-title-group">
+                                        <h3>Staff Overview</h3>
+                                        <p>Faculty members per department</p>
+                                    </div>
+                                </div>
+                                <div className="card-content chart-container pt-4">
+                                    <ResponsiveContainer width="100%" height={320}>
+                                        <BarChart data={staffChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                                            <XAxis 
+                                                dataKey="name" 
+                                                axisLine={false} 
+                                                tickLine={false} 
+                                                tick={{ fill: '#64748B', fontSize: 12 }} 
+                                                dy={10}
+                                            />
+                                            <YAxis 
+                                                axisLine={false} 
+                                                tickLine={false} 
+                                                tick={{ fill: '#64748B', fontSize: 12 }} 
+                                            />
+                                            <Tooltip
+                                                cursor={{ fill: 'var(--bg-app)' }}
+                                                contentStyle={{ borderRadius: '8px', border: '1px solid var(--border-light)', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', backgroundColor: 'var(--bg-surface)' }}
+                                            />
+                                            <Bar dataKey="value" fill="var(--primary)" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Outpass Intelligence */}
+                        <div className="saas-card mt-6">
+                            <div className="card-header border-bottom">
+                                <div className="card-title-group">
+                                    <h3>Outpass Intelligence</h3>
+                                    <p>Monitor request volumes and approval workflows</p>
+                                </div>
+                                <div className="filter-group">
+                                    <div className="segmented-control">
+                                        {['today', 'weekly', 'monthly', ''].map(val => (
+                                            <button 
+                                                key={val}
+                                                className={`segment-btn ${outpassDateFilter === val ? 'active' : ''}`}
+                                                onClick={() => setOutpassDateFilter(val)}
+                                            >
+                                                {val === '' ? 'All Time' : val.charAt(0).toUpperCase() + val.slice(1)}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <select className="saas-select-sm" value={outpassStatusFilter} onChange={e => setOutpassStatusFilter(e.target.value)}>
+                                        <option value="">All Statuses</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="approved">Approved</option>
+                                        <option value="rejected">Rejected</option>
+                                    </select>
+                                    <select className="saas-select-sm" value={outpassTypeFilter} onChange={e => setOutpassTypeFilter(e.target.value)}>
+                                        <option value="">All Types</option>
+                                        <option value="Emergency">Emergency</option>
+                                        <option value="Home">Home</option>
+                                        <option value="Outing">Outing</option>
+                                        <option value="OD">OD</option>
+                                    </select>
+                                    <select className="saas-select-sm" value={outpassDeptFilter} onChange={e => setOutpassDeptFilter(e.target.value)}>
+                                        <option value="">All Depts</option>
+                                        {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div className="card-content outpass-charts-grid">
+                                <div className="mini-chart-box">
+                                    <h4>Requests by Status</h4>
+                                    {outpassStatusData.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height={180}>
+                                            <PieChart>
+                                                <Pie
+                                                    data={outpassStatusData}
+                                                    cx="50%" cy="50%" innerRadius={40} outerRadius={70}
+                                                    paddingAngle={2} dataKey="value" stroke="none"
+                                                >
+                                                    {outpassStatusData.map((entry) => {
+                                                        const c = entry.name === 'Approved' ? '#10B981' : entry.name === 'Pending' ? '#F59E0B' : '#EF4444';
+                                                        return <Cell key={entry.name} fill={c} />;
+                                                    })}
+                                                </Pie>
+                                                <Tooltip />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    ) : <div className="empty-chart sm">No data</div>}
+                                </div>
+                                
+                                <div className="mini-chart-box">
+                                    <h4>Requests by Type</h4>
+                                    {outpassTypeData.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height={180}>
+                                            <PieChart>
+                                                <Pie
+                                                    data={outpassTypeData}
+                                                    cx="50%" cy="50%" innerRadius={40} outerRadius={70}
+                                                    paddingAngle={2} dataKey="value" stroke="none"
+                                                >
+                                                    {outpassTypeData.map((entry, idx) => (
+                                                        <Cell key={entry.name} fill={COLORS[idx % COLORS.length]} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    ) : <div className="empty-chart sm">No data</div>}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Premium Data Table */}
+                        <div className="saas-card mt-6">
+                            <div className="card-header border-bottom">
+                                <div className="card-title-group">
+                                    <h3>Recent Requests</h3>
+                                    <p>Latest outpass activity based on filters</p>
+                                </div>
+                                <button className="saas-btn-outline"><Filter size={14}/> Filters</button>
+                            </div>
+                            <div className="table-container">
+                                {recentPasses.length > 0 ? (
+                                    <table className="saas-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Student</th>
+                                                <th>Request Type</th>
+                                                <th>Status</th>
+                                                <th className="text-right">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {recentPasses.slice(0, 8).map((pass, idx) => {
+                                                const sStyle = getStatusStyle(pass.status);
+                                                return (
+                                                    <tr key={idx}>
+                                                        <td>
+                                                            <div className="table-user">
+                                                                <div className="table-avatar">{pass.name?.charAt(0).toUpperCase()}</div>
+                                                                <div>
+                                                                    <div className="table-name">{pass.name}</div>
+                                                                    <div className="table-email">{pass.email}</div>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <span className="type-badge">{pass.outpasstype}</span>
+                                                        </td>
+                                                        <td>
+                                                            <span className="status-badge" style={{ backgroundColor: sStyle.bg, color: sStyle.text }}>
+                                                                {pass.status}
+                                                            </span>
+                                                        </td>
+                                                        <td className="text-right">
+                                                            <button className="table-action-btn">View</button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                ) : (
+                                    <div className="table-empty">
+                                        <FileText size={32} />
+                                        <h4>No requests found</h4>
+                                        <p>Try adjusting your filters or date range.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </>
+                )}
+
+                {showExportModal && (
+                    <div className="custom-modal-overlay">
+                        <div className="custom-modal-content">
+                            <div className="custom-modal-header">
+                                <h3>Export Outpass Report</h3>
+                                <button className="close-btn" onClick={() => setShowExportModal(false)}>✕</button>
+                            </div>
+                            <div className="custom-modal-body">
+                                <p className="modal-desc">Configure the filters below before generating the report.</p>
+                                
+                                <div className="modal-field">
+                                    <label>Outpass Type</label>
+                                    <select 
+                                        value={exportFilterType} 
+                                        onChange={e => setExportFilterType(e.target.value)}
+                                    >
+                                        <option value="All">All Types</option>
+                                        <option value="OD">OD</option>
+                                        <option value="Home">Home Pass</option>
+                                        <option value="Outing">Outing</option>
+                                        <option value="Emergency">Emergency</option>
+                                    </select>
+                                </div>
+
+                                <div className="modal-field">
+                                    <label>Timeline / Applied Date</label>
+                                    <select 
+                                        value={exportFilterTime} 
+                                        onChange={e => setExportFilterTime(e.target.value)}
+                                    >
+                                        <option value="All">All Time</option>
+                                        <option value="Today">Today</option>
+                                        <option value="This Week">This Week</option>
+                                        <option value="This Month">This Month</option>
+                                    </select>
+                                </div>
+
+                                <div className="modal-field">
+                                    <label>Status</label>
+                                    <select 
+                                        value={exportFilterStatus} 
+                                        onChange={e => setExportFilterStatus(e.target.value)}
+                                    >
+                                        <option value="All">All Statuses</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="approved">Approved</option>
+                                        <option value="rejected">Rejected</option>
+                                    </select>
+                                </div>
+
+                                <div className="modal-field">
+                                    <label>Search (Name / Register Number)</label>
+                                    <input 
+                                        type="text" 
+                                        placeholder="Search by student name or register number..." 
+                                        value={exportSearchTerm}
+                                        onChange={e => setExportSearchTerm(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                            <div className="custom-modal-footer">
+                                <button className="cancel-btn" onClick={() => setShowExportModal(false)} disabled={exportLoading}>Cancel</button>
+                                <button className="confirm-btn" onClick={triggerExport} disabled={exportLoading}>
+                                    {exportLoading ? 'Generating...' : 'Generate Report'}
+                                </button>
                             </div>
                         </div>
                     </div>
-
-                    {/* Donut Chart / Summary Section */}
-                    <div className="chart-card small">
-                        <div className="chart-header">
-                            <h3>Distribution</h3>
-                        </div>
-                        <div className="donut-chart-container">
-                            {(() => {
-                                const total = stats.totalOutpasses || 1;
-                                let current = 0;
-                                const gradient = chartData.map(item => {
-                                    const percent = (item.value / total) * 100;
-                                    const start = current;
-                                    current += percent;
-                                    return `${item.color} ${start}% ${current}%`;
-                                }).join(', ');
-
-                                return (
-                                    <div className="donut-chart" style={{ background: `conic-gradient(${gradient})` }}>
-                                        <div className="center-text">
-                                            <strong>{stats.totalOutpasses}</strong>
-                                            <span>Total</span>
-                                        </div>
-                                    </div>
-                                );
-                            })()}
-                            <div className="legend">
-                                {chartData.map((item, index) => (
-                                    <div key={index} className="legend-item">
-                                        <span className="dot" style={{ background: item.color }}></span>
-                                        <span className="name">{item.label}</span>
-                                        <span className="value">{item.value}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                )}
 
                 <style>{`
-                /* Global Dashboard Styles */
-                .admin-dashboard {
-                    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-                    color: #1e293b;
-                    max-width: 1600px;
-                    margin: 0 auto;
+                /* Custom Modal Styles */
+                .custom-modal-overlay {
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(15, 23, 42, 0.6);
+                    backdrop-filter: blur(4px);
+                    z-index: 9999;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    animation: modalFadeIn 0.2s ease-out;
                 }
-
-                /* Welcome Section */
-                .welcome-section {
-                    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-                    border-radius: 24px;
-                    padding: 40px 48px;
-                    margin-bottom: 40px;
+                .custom-modal-content {
+                    background: white;
+                    border-radius: 16px;
+                    width: min(90vw, 480px);
+                    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+                    overflow: hidden;
+                    animation: modalScaleIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+                }
+                @keyframes modalFadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes modalScaleIn {
+                    from { transform: scale(0.95); opacity: 0; }
+                    to { transform: scale(1); opacity: 1; }
+                }
+                .custom-modal-header {
+                    padding: 16px 20px;
+                    background: var(--primary);
+                    color: white;
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    box-shadow: 0 20px 40px -10px rgba(37, 99, 235, 0.3);
-                    color: white;
-                    position: relative;
-                    overflow: hidden;
-                    border: 1px solid rgba(255, 255, 255, 0.1);
                 }
-                
-                .welcome-section::after {
-                    content: "";
-                    position: absolute;
-                    top: 0;
-                    right: 0;
-                    bottom: 0;
-                    left: 0;
-                    background-image: 
-                        radial-gradient(circle at 100% 0%, rgba(255,255,255,0.2) 0%, transparent 30%), 
-                        radial-gradient(circle at 0% 100%, rgba(255,255,255,0.1) 0%, transparent 30%);
-                    pointer-events: none;
-                }
-
-                .welcome-content {
-                    position: relative;
-                    z-index: 2;
-                }
-
-                .welcome-content h1 {
-                    font-size: 2.25rem;
-                    margin-bottom: 8px;
-                    font-weight: 800;
-                    color: white;
-                    letter-spacing: -0.025em;
-                    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                }
-
-                .welcome-subtitle {
+                .custom-modal-header h3 {
+                    margin: 0;
                     font-size: 1.1rem;
-                    opacity: 0.95;
-                    font-weight: 500;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
+                    font-weight: 650;
+                    color: white;
                 }
-
-                .stats-mini {
-                    display: flex;
-                    gap: 24px;
-                    position: relative;
-                    z-index: 2;
-                }
-
-                .stat-mini {
-                    display: flex;
-                    align-items: center;
-                    gap: 20px;
-                    background: rgba(255, 255, 255, 0.1);
-                    backdrop-filter: blur(16px);
-                    -webkit-backdrop-filter: blur(16px);
-                    padding: 20px 32px;
-                    border-radius: 18px;
-                    border: 1px solid rgba(255, 255, 255, 0.2);
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-                }
-                
-                .stat-mini:hover {
-                    background: rgba(255, 255, 255, 0.15);
-                    transform: translateY(-4px);
-                    box-shadow: 0 10px 15px rgba(0,0,0,0.1);
-                    border-color: rgba(255, 255, 255, 0.3);
-                }
-
-                .stat-mini-icon {
-                    font-size: 2rem;
-                    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
-                }
-
-                .stat-mini-value {
-                    font-size: 1.75rem;
-                    font-weight: 800;
-                    line-height: 1;
-                    letter-spacing: -0.02em;
-                }
-
-                .stat-mini-label {
-                    font-size: 0.9rem;
-                    opacity: 0.9;
-                    font-weight: 500;
-                    margin-top: 4px;
-                    text-transform: uppercase;
-                    letter-spacing: 0.05em;
-                }
-
-                /* Section Titles */
-                .section-title {
-                    font-size: 1.25rem;
-                    font-weight: 700;
-                    color: #1e293b;
-                    margin: 48px 0 24px;
-                    display: flex;
-                    align-items: center;
-                    letter-spacing: -0.01em;
-                }
-                
-                .section-title::before {
-                    content: "";
-                    display: inline-block;
-                    width: 6px;
-                    height: 24px;
-                    background: #2563eb;
-                    border-radius: 4px;
-                    margin-right: 12px;
-                }
-
-                .section-title:first-of-type {
-                    margin-top: 0;
-                }
-
-                /* Quick Actions */
-                .quick-actions-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-                    gap: 32px;
-                }
-
-                .action-card {
-                    background: white;
-                    border-radius: 20px;
-                    padding: 32px;
+                .custom-modal-header .close-btn {
+                    background: transparent;
+                    border: none;
+                    color: white;
+                    font-size: 1.1rem;
                     cursor: pointer;
-                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                    border: 1px solid #e2e8f0;
-                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-                    position: relative;
-                    overflow: hidden;
+                    opacity: 0.8;
+                    transition: opacity 0.2s;
+                }
+                .custom-modal-header .close-btn:hover {
+                    opacity: 1;
+                }
+                .custom-modal-body {
+                    padding: 20px;
                     display: flex;
                     flex-direction: column;
-                    height: 100%;
+                    gap: 16px;
                 }
-
-                .action-card:hover {
-                    transform: translateY(-8px);
-                    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-                    border-color: #bfdbfe;
+                .modal-desc {
+                    margin: 0 0 4px 0;
+                    color: var(--text-muted);
+                    font-size: 0.85rem;
                 }
-
-                .action-icon-wrapper {
-                    width: 64px;
-                    height: 64px;
-                    background: #f1f5f9;
-                    border-radius: 18px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    margin-bottom: 24px;
-                    transition: all 0.3s ease;
-                    border: 1px solid #e2e8f0;
-                }
-
-                .action-card:hover .action-icon-wrapper {
-                    background: #eff6ff;
-                    color: #2563eb;
-                    border-color: #2563eb;
-                    transform: scale(1.05);
-                }
-
-                .action-icon {
-                    font-size: 2rem;
-                    transition: transform 0.3s ease;
-                    color: #64748b;
-                }
-
-                .action-card:hover .action-icon {
-                    transform: rotate(10deg);
-                    color: #2563eb;
-                }
-
-                .action-title {
-                    font-size: 1.25rem;
-                    font-weight: 700;
-                    color: #1e293b;
-                    margin-bottom: 8px;
-                    letter-spacing: -0.01em;
-                }
-
-                .action-description {
-                    color: #64748b;
-                    font-size: 0.95rem;
-                    line-height: 1.6;
-                    margin-bottom: 24px;
-                    flex-grow: 1;
-                }
-
-                .action-arrow {
-                    color: #cbd5e1;
-                    font-size: 1.5rem;
-                    font-weight: 600;
-                    align-self: flex-end;
-                    transition: all 0.3s ease;
-                }
-
-                .action-card:hover .action-arrow {
-                    color: #2563eb;
-                    transform: translateX(6px);
-                }
-
-                /* Stats Grid */
-                .stats-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-                    gap: 32px;
-                    margin-bottom: 40px;
-                }
-
-                .stat-card {
-                    background: white;
-                    padding: 32px;
-                    border-radius: 20px;
-                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-                    display: flex;
-                    align-items: flex-start;
-                    gap: 24px;
-                    transition: all 0.3s ease;
-                    border: 1px solid #e2e8f0;
-                    position: relative;
-                }
-
-                .stat-card:hover {
-                    transform: translateY(-4px);
-                    box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.08);
-                    border-color: #cbd5e1;
-                }
-
-                .card-icon {
-                    width: 56px;
-                    height: 56px;
-                    border-radius: 16px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 1.75rem;
-                    flex-shrink: 0;
-                    transition: transform 0.3s ease;
-                }
-                
-                .stat-card:hover .card-icon {
-                    transform: scale(1.1);
-                }
-
-                .card-icon.blue { background: #eff6ff; color: #3b82f6; }
-                .card-icon.orange { background: #fff7ed; color: #f97316; }
-                .card-icon.green { background: #f0fdf4; color: #22c55e; }
-                .card-icon.red { background: #fef2f2; color: #ef4444; }
-
-                .card-info {
+                .modal-field {
                     display: flex;
                     flex-direction: column;
-                    width: 100%;
-                }
-
-                .count {
-                    font-size: 2rem;
-                    font-weight: 800;
-                    color: #1e293b;
-                    line-height: 1;
-                    margin-bottom: 6px;
-                    letter-spacing: -0.03em;
-                }
-
-                .label {
-                    color: #64748b;
-                    font-size: 0.9rem;
-                    font-weight: 600;
-                    margin-bottom: 12px;
-                    text-transform: uppercase;
-                    letter-spacing: 0.025em;
-                }
-
-                .change {
-                    font-size: 0.8rem;
-                    font-weight: 600;
-                    padding: 6px 12px;
-                    border-radius: 99px;
-                    width: fit-content;
-                    display: inline-flex;
-                    align-items: center;
                     gap: 6px;
                 }
-
-                .change.positive { background: #dcfce7; color: #166534; }
-                .change.negative { background: #fee2e2; color: #991b1b; }
-                .change.neutral { background: #f1f5f9; color: #475569; }
-
-                /* Charts */
-                 .charts-grid {
-                    display: grid;
-                    grid-template-columns: 2fr 1fr;
-                    gap: 32px;
-                }
-
-                .chart-card {
-                    background: white;
-                    padding: 36px;
-                    border-radius: 20px;
-                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-                    border: 1px solid #e2e8f0;
-                    display: flex;
-                    flex-direction: column;
-                }
-
-                .chart-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 40px;
-                }
-
-                .chart-header h3 {
-                    font-size: 1.25rem;
-                    font-weight: 700;
-                    color: #1e293b;
-                    letter-spacing: -0.01em;
-                }
-
-                .btn-filter, .btn-export {
-                    padding: 10px 18px;
-                    border-radius: 10px;
-                    border: 1px solid #e2e8f0;
-                    background: white;
-                    color: #64748b;
-                    font-size: 0.85rem;
-                    font-weight: 600;
-                    cursor: pointer;
-                    margin-left: 10px;
-                    transition: all 0.2s;
-                }
-
-                .btn-filter:hover, .btn-export:hover {
-                    background: #f8fafc;
-                    color: #1e293b;
-                    border-color: #cbd5e1;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-                }
-
-                /* Custom CSS Bar Chart */
-                .bar-chart-container {
-                    height: 360px;
-                    display: flex;
-                    gap: 32px;
-                    padding-left: 48px;
-                    position: relative;
-                }
-
-                .y-axis {
-                    position: absolute;
-                    left: 0;
-                    top: 0;
-                    bottom: 30px;
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: space-between;
-                    color: #94a3b8;
+                .modal-field label {
                     font-size: 0.8rem;
                     font-weight: 600;
+                    color: var(--text-main);
+                    text-align: left;
                 }
-
-                .bars {
-                    flex: 1;
-                    display: flex;
-                    justify-content: space-around;
-                    align-items: flex-end;
-                    border-bottom: 1px solid #e2e8f0;
-                    padding-bottom: 12px;
-                }
-
-                .bar-group {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 16px;
-                    height: 100%;
-                    justify-content: flex-end;
-                    width: 56px;
-                    position: relative;
-                }
-                
-                .bar-group::before {
-                    content: '';
-                    position: absolute;
-                    top: 0;
-                    bottom: 0;
-                    width: 1px;
-                    background: #f1f5f9;
-                    z-index: 0;
-                    border-left: 1px dashed #e2e8f0;
-                }
-
-                .bar {
-                    width: 100%;
-                    border-radius: 8px 8px 0 0;
-                    position: relative;
-                    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-                    min-height: 4px;
-                    z-index: 1;
-                    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-                }
-                
-                .bar:hover {
-                    filter: brightness(1.1);
-                    transform: scaleY(1.02);
-                }
-
-                .bar:hover .tooltip {
-                    opacity: 1;
-                    transform: translateX(-50%) translateY(-12px);
-                }
-
-                .tooltip {
-                    position: absolute;
-                    top: -44px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    background: #1e293b;
-                    color: white;
-                    padding: 8px 14px;
+                .modal-field select, .modal-field input {
+                    padding: 10px 12px;
+                    border: 1px solid var(--border-light);
                     border-radius: 8px;
+                    font-size: 0.9rem;
+                    background: var(--bg-app);
+                    color: var(--text-main);
+                    outline: none;
+                    box-sizing: border-box;
+                    width: 100%;
+                }
+                .modal-field select:focus, .modal-field input:focus {
+                    border-color: var(--primary);
+                    background: white;
+                }
+                .custom-modal-footer {
+                    padding: 16px 20px;
+                    border-top: 1px solid var(--border-light);
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 12px;
+                    background: var(--bg-app);
+                }
+                .custom-modal-footer button {
+                    padding: 8px 16px;
+                    border-radius: 6px;
                     font-size: 0.85rem;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .custom-modal-footer .cancel-btn {
+                    background: white;
+                    border: 1px solid var(--border-light);
+                    color: var(--text-main);
+                }
+                .custom-modal-footer .cancel-btn:hover {
+                    background: var(--bg-app);
+                }
+                .custom-modal-footer .confirm-btn {
+                    background: var(--primary);
+                    border: 1px solid var(--primary-hover);
+                    color: white;
+                }
+                .custom-modal-footer .confirm-btn:hover {
+                    background: var(--primary-hover);
+                }
+
+                /* Premium Enterprise SaaS Dashboard CSS */
+                .saas-dashboard {
+                    font-family: 'Inter', system-ui, sans-serif;
+                    color: var(--text-main);
+                    animation: fadeIn 0.4s ease-out;
+                }
+
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                @keyframes spin { 100% { transform: rotate(360deg); } }
+                .spin { animation: spin 1s linear infinite; }
+
+                .mt-6 { margin-top: 24px; }
+                .text-right { text-align: right; }
+
+                /* Header Actions */
+                .saas-header-actions {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-end;
+                    margin-bottom: 32px;
+                    flex-wrap: wrap;
+                    gap: 16px;
+                }
+                .page-title {
+                    font-size: 1.5rem;
                     font-weight: 700;
-                    opacity: 0;
-                    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                    pointer-events: none;
-                    white-space: nowrap;
-                    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
-                    z-index: 10;
+                    letter-spacing: -0.02em;
+                    margin: 0 0 4px 0;
                 }
-                
-                .tooltip::after {
-                    content: '';
-                    position: absolute;
-                    bottom: -5px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    border-width: 5px;
-                    border-style: solid;
-                    border-color: #1e293b transparent transparent transparent;
-                }
-
-                .bar-label {
-                    font-size: 0.85rem;
-                    color: #64748b;
-                    font-weight: 600;
-                    z-index: 1;
-                    background: white;
-                    padding: 0 4px;
-                }
-
-                /* Donut Chart */
-                .donut-chart-container {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 32px;
-                    justify-content: center;
-                    height: 100%;
-                }
-
-                .donut-chart {
-                    width: 240px;
-                    height: 240px;
-                    border-radius: 50%;
-                    background: conic-gradient(
-                        #6366f1 0% 41%, 
-                        #ec4899 41% 69%, 
-                        #ef4444 69% 77%, 
-                        #f59e0b 77% 100%
-                    );
-                    position: relative;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    box-shadow: 0 0 0 20px rgba(241, 245, 249, 0.5);
-                }
-
-                .donut-chart::before {
-                    content: '';
-                    position: absolute;
-                    width: 170px;
-                    height: 170px;
-                    background: white;
-                    border-radius: 50%;
-                    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
-                }
-
-                .center-text {
-                    position: relative;
-                    z-index: 1;
-                    text-align: center;
-                    display: flex;
-                    flex-direction: column;
-                }
-
-                .center-text strong {
-                    font-size: 2.75rem;
-                    font-weight: 800;
-                    color: #1e293b;
-                    line-height: 1;
-                    letter-spacing: -0.03em;
-                }
-
-                .center-text span {
+                .page-desc {
+                    color: var(--text-muted);
                     font-size: 0.95rem;
-                    color: #64748b;
+                    margin: 0;
+                }
+                .header-buttons {
+                    display: flex;
+                    gap: 12px;
+                }
+
+                /* Buttons */
+                .saas-btn-primary {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    background: var(--primary);
+                    color: white;
+                    border: 1px solid var(--primary-hover);
+                    padding: 8px 16px;
+                    border-radius: 6px;
+                    font-size: 0.85rem;
+                    font-weight: 500;
+                    cursor: pointer;
+                    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+                    transition: all 0.2s;
+                }
+                .saas-btn-primary:hover { background: var(--primary-hover); }
+                
+                .saas-btn-outline {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    background: var(--bg-surface);
+                    color: var(--text-main);
+                    border: 1px solid var(--border-light);
+                    padding: 8px 16px;
+                    border-radius: 6px;
+                    font-size: 0.85rem;
+                    font-weight: 500;
+                    cursor: pointer;
+                    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+                    transition: all 0.2s;
+                }
+                .saas-btn-outline:hover { background: var(--bg-app); border-color: var(--text-muted); }
+
+                /* KPI Grid */
+                .kpi-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+                    gap: 24px;
+                    margin-bottom: 24px;
+                }
+                .kpi-card {
+                    background: var(--bg-surface);
+                    border: 1px solid var(--border-light);
+                    border-radius: 12px;
+                    padding: 20px;
+                    box-shadow: var(--shadow-sm);
+                    transition: transform 0.2s, box-shadow 0.2s;
+                }
+                .kpi-card:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+                }
+                .kpi-top {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 16px;
+                }
+                .kpi-icon-box {
+                    width: 40px; height: 40px;
+                    border-radius: 8px;
+                    display: flex; align-items: center; justify-content: center;
+                }
+                .kpi-trend {
+                    display: flex; align-items: center; gap: 4px;
+                    font-size: 0.8rem; font-weight: 600;
+                    padding: 2px 8px; border-radius: 99px;
+                }
+                .kpi-trend.positive { background: #F0FDF4; color: #16A34A; }
+                .kpi-trend.negative { background: #FEF2F2; color: #DC2626; }
+                .kpi-trend.neutral { background: var(--bg-app); color: var(--text-muted); }
+
+                .kpi-bottom {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-end;
+                }
+                .kpi-label { color: var(--text-muted); font-size: 0.85rem; font-weight: 500; margin: 0 0 4px 0; }
+                .kpi-value { font-size: 1.8rem; font-weight: 700; color: var(--text-main); margin: 0; line-height: 1; letter-spacing: -0.02em; }
+                .kpi-spark { height: 24px; opacity: 0.8; }
+
+                /* SaaS Cards */
+                .saas-grid-2 {
+                    display: grid;
+                    grid-template-columns: 1fr 1.5fr;
+                    gap: 24px;
+                }
+                @media (max-width: 1024px) {
+                    .saas-grid-2 { grid-template-columns: 1fr; }
+                }
+
+                .saas-card {
+                    background: var(--bg-surface);
+                    border: 1px solid var(--border-light);
+                    border-radius: 12px;
+                    box-shadow: var(--shadow-sm);
+                    overflow: hidden;
+                }
+                .card-header {
+                    padding: 20px 24px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    flex-wrap: wrap;
+                    gap: 16px;
+                }
+                .card-header.border-bottom { border-bottom: 1px solid var(--border-light); }
+                .card-title-group h3 { font-size: 1.1rem; font-weight: 600; margin: 0 0 4px 0; }
+                .card-title-group p { font-size: 0.85rem; color: var(--text-muted); margin: 0; }
+
+                .card-content { padding: 0 24px 24px 24px; }
+                .card-content.pt-4 { padding-top: 16px; }
+
+                /* Selects & Filters */
+                .saas-select-sm {
+                    appearance: none;
+                    background: var(--bg-app);
+                    border: 1px solid var(--border-light);
+                    color: var(--text-main);
+                    padding: 6px 28px 6px 12px;
+                    border-radius: 6px;
+                    font-size: 0.85rem;
+                    font-weight: 500;
+                    cursor: pointer;
+                    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+                    background-repeat: no-repeat;
+                    background-position: right 8px center;
+                    background-size: 14px;
+                }
+                .saas-select-sm:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-subtle); }
+
+                .filter-group { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+                
+                .segmented-control {
+                    display: flex;
+                    background: var(--bg-app);
+                    padding: 3px;
+                    border-radius: 6px;
+                }
+                .segment-btn {
+                    border: none; background: transparent;
+                    padding: 4px 12px; border-radius: 4px;
+                    font-size: 0.8rem; font-weight: 500; color: var(--text-muted);
+                    cursor: pointer; transition: all 0.2s;
+                }
+                .segment-btn.active { background: var(--bg-surface); color: var(--text-main); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+
+                /* Charts */
+                .chart-container { position: relative; }
+                .empty-chart { display: flex; align-items: center; justify-content: center; height: 260px; color: var(--text-light); font-size: 0.9rem; }
+                .empty-chart.sm { height: 180px; }
+
+                .custom-legend {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 12px;
+                    justify-content: center;
+                    margin-top: 16px;
+                }
+                .legend-item { display: flex; align-items: center; font-size: 0.8rem; }
+                .legend-dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+                .legend-label { color: var(--text-muted); margin-right: 6px; }
+                .legend-val { color: var(--text-main); font-weight: 600; }
+
+                .outpass-charts-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 24px;
+                    padding-top: 24px;
+                }
+                @media (max-width: 768px) { .outpass-charts-grid { grid-template-columns: 1fr; } }
+                .mini-chart-box h4 { font-size: 0.9rem; font-weight: 600; color: var(--text-main); text-align: center; margin: 0 0 16px 0; }
+
+                /* Data Table */
+                .table-container { width: 100%; overflow-x: auto; }
+                .saas-table { width: 100%; border-collapse: collapse; text-align: left; }
+                .saas-table th {
+                    padding: 12px 24px;
+                    background: var(--bg-app);
+                    font-size: 0.75rem;
                     font-weight: 600;
-                    margin-top: 4px;
+                    color: var(--text-muted);
                     text-transform: uppercase;
                     letter-spacing: 0.05em;
+                    border-bottom: 1px solid var(--border-light);
+                }
+                .saas-table td {
+                    padding: 16px 24px;
+                    border-bottom: 1px solid var(--border-light);
+                    vertical-align: middle;
+                }
+                .saas-table tr:last-child td { border-bottom: none; }
+                .saas-table tr:hover td { background: var(--bg-app); }
+
+                .table-user { display: flex; align-items: center; gap: 12px; }
+                .table-avatar {
+                    width: 32px; height: 32px; border-radius: 50%;
+                    background: var(--bg-app); color: var(--text-main); font-weight: 600; font-size: 0.85rem;
+                    display: flex; align-items: center; justify-content: center;
+                }
+                .table-name { font-size: 0.9rem; font-weight: 500; color: var(--text-main); }
+                .table-email { font-size: 0.8rem; color: var(--text-muted); }
+
+                .type-badge { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; }
+                .status-badge {
+                    padding: 4px 10px; border-radius: 99px;
+                    font-size: 0.75rem; font-weight: 600; text-transform: capitalize;
                 }
 
-                .legend {
-                    width: 100%;
-                    display: grid;
-                    gap: 16px;
+                .table-action-btn {
+                    background: transparent; border: none; color: var(--primary);
+                    font-size: 0.85rem; font-weight: 500; cursor: pointer;
                 }
+                .table-action-btn:hover { text-decoration: underline; }
 
-                .legend-item {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    font-size: 0.9rem;
-                    padding: 12px 16px;
-                    border-radius: 12px;
-                    background: #f8fafc;
-                    transition: all 0.2s;
-                    border: 1px solid transparent;
+                .table-empty {
+                    display: flex; flex-direction: column; align-items: center; justify-content: center;
+                    padding: 60px 20px; color: var(--text-light);
                 }
-                
-                .legend-item:hover {
-                    background: #f1f5f9;
-                    border-color: #e2e8f0;
-                    transform: translateX(4px);
-                }
+                .table-empty h4 { color: var(--text-main); margin: 16px 0 4px 0; font-size: 1rem; }
+                .table-empty p { font-size: 0.9rem; margin: 0; }
 
-                .legend-item .dot {
-                    width: 12px;
-                    height: 12px;
-                    border-radius: 4px;
-                    margin-right: 12px;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                /* Skeleton Loaders */
+                .saas-skeleton-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 24px; }
+                .skeleton { background: var(--border-light); border-radius: 12px; animation: pulse 1.5s infinite; }
+                .card-skel { height: 140px; }
+                @keyframes pulse {
+                    0% { opacity: 0.6; }
+                    50% { opacity: 0.3; }
+                    100% { opacity: 0.6; }
                 }
-
-                .legend-item .name {
-                    flex: 1;
-                    color: #475569;
-                    font-weight: 600;
-                }
-
-                .legend-item .value {
-                    font-weight: 700;
-                    color: #1e293b;
-                }
-
-                @media (max-width: 1024px) {
-                    .charts-grid {
-                        grid-template-columns: 1fr;
-                    }
-                    .stats-mini {
-                        width: 100%;
-                        flex-direction: column;
-                    }
-                    .welcome-section {
-                        flex-direction: column;
-                        align-items: flex-start;
-                        padding: 32px;
-                    }
-                    .stat-mini {
-                        width: 100%;
-                    }
-                }
-            `}</style>
+                `}</style>
             </div>
+            <ToastContainer position="bottom-right" />
         </AdminLayout>
     );
 };
