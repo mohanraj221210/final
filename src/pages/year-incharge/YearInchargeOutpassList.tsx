@@ -403,7 +403,7 @@ const YearInchargeOutpassList: React.FC = () => {
                                         const studentObj = outpass.student || outpass.studentid;
                                         const stu = Array.isArray(studentObj) ? studentObj[0] : (typeof studentObj === 'object' ? studentObj : undefined);
                                         const yiStatus = outpass.yearincharge?.status || 'pending';
-                                        const staffStatus: string = outpass.staff ? 'approved' : 'pending';
+                                        const staffStatus = (outpass.staffapprovalstatus || outpass.staff?.status || 'pending').toLowerCase();
                                         const isHostel = stu?.residencetype?.toLowerCase() !== 'day scholar';
                                         const isEmergency = outpass.outpasstype?.toLowerCase() === 'emergency';
                                         const isExpanded = expandedRow === outpass._id;
@@ -558,7 +558,7 @@ const YearInchargeOutpassList: React.FC = () => {
                         const studentObj = outpass.student || outpass.studentid;
                         const stu = Array.isArray(studentObj) ? studentObj[0] : (typeof studentObj === 'object' ? studentObj : undefined);
                         const yiStatus = outpass.yearincharge?.status || 'pending';
-                        const staffStatus: string = outpass.staff ? 'approved' : 'pending';
+                        const staffStatus = (outpass.staffapprovalstatus || outpass.staff?.status || 'pending').toLowerCase();
                         const isHostel = stu?.residencetype?.toLowerCase() !== 'day scholar';
                         const isEmergency = outpass.outpasstype?.toLowerCase() === 'emergency';
                         const isExpanded = expandedRow === outpass._id;

@@ -28,8 +28,20 @@ const Outpass: React.FC = () => {
 
     const now = new Date();
     const currentHour = now.getHours();
-    const isPortalOpen = currentHour >= 6 && currentHour < 10;
+    // Portal open: 6:00 AM to 1:00 PM (13:00)
+    const isPortalOpen = currentHour >= 6 && currentHour < 13;
     const isEmergency = formData.outpasstype === 'Emergency';
+
+    const portalClosesIn = (): string => {
+        const close = new Date();
+        close.setHours(13, 0, 0, 0);
+        const diff = close.getTime() - now.getTime();
+        if (diff <= 0) return '';
+        const hrs = Math.floor(diff / 3600000);
+        const mins = Math.floor((diff % 3600000) / 60000);
+        if (hrs > 0) return `${hrs}h ${mins}m left`;
+        return `${mins}m left`;
+    };
 
     const getMinFromDateTime = () => {
         const minD = new Date();
@@ -156,7 +168,7 @@ const Outpass: React.FC = () => {
         setIsSubmitting(true);
 
         if (!isEmergency && !isPortalOpen) {
-            toast.error("Portal is open from 6:00 AM to 10:00 AM only.");
+            toast.error("Portal is open from 6:00 AM to 1:00 PM only.");
             setIsSubmitting(false);
             return;
         }
@@ -212,6 +224,25 @@ const Outpass: React.FC = () => {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
+
+        if (name === 'toDate' && value && formData.outpasstype !== 'Emergency') {
+            const end = new Date(value);
+            const endHour = end.getHours();
+            const endMinutes = end.getMinutes();
+            // Disallow return after 6:00 PM or before 6:00 AM
+            const isAfter6PM = endHour > 18 || (endHour === 18 && endMinutes > 0);
+            const isBefore6AM = endHour < 6;
+
+            if (isAfter6PM || isBefore6AM) {
+                toast.error("Return time must be before 6:00 PM and after 6:00 AM.");
+                setFormData(prev => ({
+                    ...prev,
+                    toDate: ''
+                }));
+                return;
+            }
+        }
+
         setFormData(prev => ({
             ...prev,
             [name]: value
@@ -229,6 +260,19 @@ const Outpass: React.FC = () => {
         if (start >= end) {
             toast.error("From date must be earlier than To date");
             return;
+        }
+
+        if (formData.outpasstype !== 'Emergency') {
+            const endHour = end.getHours();
+            const endMinutes = end.getMinutes();
+            // Allow return only between 6:00 AM and 6:00 PM.
+            const isAfter6PM = endHour > 18 || (endHour === 18 && endMinutes > 0);
+            const isBefore6AM = endHour < 6;
+
+            if (isAfter6PM || isBefore6AM) {
+                toast.error("Return time must be before 6:00 PM and after 6:00 AM");
+                return;
+            }
         }
 
         setActiveStep(2);
@@ -254,21 +298,36 @@ const Outpass: React.FC = () => {
                             </button>
                         </div>
 
-                        <div className="pb-page-header-simple">
-                            <h1 className="pb-page-title">Apply Outpass</h1>
-                            <p className="pb-page-subtitle">Request official campus exit approval from faculty and wardens</p>
+                        <div className="pb-page-header-enhanced">
+                            <div className="pb-page-header-left">
+                                <div className="pb-page-badge">📋 Outpass Application</div>
+                                <h1 className="pb-page-title">Apply for Outpass</h1>
+                                <p className="pb-page-subtitle">Request official campus exit approval from faculty and wardens</p>
+                            </div>
+                            <div className={`pb-portal-status-badge ${isPortalOpen ? 'open' : 'closed'}`}>
+                                <span className={`pb-portal-dot ${isPortalOpen ? 'open' : 'closed'}`} />
+                                {isPortalOpen ? (
+                                    <><strong>Portal Open</strong><span className="pb-portal-time">{portalClosesIn()}</span></>
+                                ) : (
+                                    <><strong>Portal Closed</strong><span className="pb-portal-time">Opens 6:00 AM</span></>
+                                )}
+                            </div>
                         </div>
 
                         {/* Step Indicator Header */}
                         <div className="pb-stepper-wrapper pb-animate-stagger-1">
-                            <div className={`pb-step-item ${activeStep >= 1 ? 'active' : ''}`}>
-                                <div className="pb-step-number">1</div>
-                                <div className="pb-step-label">Type & Timing</div>
+                            <div className={`pb-step-item ${activeStep >= 1 ? 'active' : ''} ${activeStep > 1 ? 'done' : ''}`}>
+                                <div className="pb-step-number">
+                                    {activeStep > 1 ? (
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
+                                    ) : '1'}
+                                </div>
+                                <div className="pb-step-label">Type &amp; Timing</div>
                             </div>
-                            <div className="pb-step-connector"></div>
+                            <div className={`pb-step-connector ${activeStep > 1 ? 'done' : ''}`}></div>
                             <div className={`pb-step-item ${activeStep >= 2 ? 'active' : ''}`}>
                                 <div className="pb-step-number">2</div>
-                                <div className="pb-step-label">Reason & Details</div>
+                                <div className="pb-step-label">Reason &amp; Details</div>
                             </div>
                         </div>
 
@@ -277,45 +336,58 @@ const Outpass: React.FC = () => {
                             {activeStep === 1 ? (
                                 /* STEP 1: TYPE & TIMING */
                                 <div className="pb-step-container">
-                                    <h3 className="pb-step-title">Step 1: Select Type & Schedule</h3>
+                                    <div className="pb-step-header">
+                                        <div className="pb-step-num-circle">1</div>
+                                        <div>
+                                            <h3 className="pb-step-title">Select Type &amp; Schedule</h3>
+                                            <p className="pb-step-desc">Choose your outpass category and departure window</p>
+                                        </div>
+                                    </div>
 
-                                    <div className="pb-form-group">
-                                        <label className="pb-label">Outpass Type</label>
-                                        <select
-                                            name="outpasstype"
-                                            value={formData.outpasstype}
-                                            onChange={handleChange}
-                                            className="pb-select"
-                                        >
-                                            {residenceType === 'day scholar' ? (
-                                                <>
-                                                    <option value="OD">On Duty (OD)</option>
-                                                    <option value="Emergency">Emergency</option>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <option value="Outing">Outing (Town Pass)</option>
-                                                    <option value="Home">Home Pass</option>
-                                                    <option value="OD">On Duty (OD)</option>
-                                                    <option value="Emergency">Emergency</option>
-                                                </>
-                                            )}
-                                        </select>
-                                        {residenceType === 'day scholar' && (
-                                            <span className="pb-form-hint">
-                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '4px', verticalAlign: 'middle' }}>
-                                                    <circle cx="12" cy="12" r="10" />
-                                                    <line x1="12" y1="16" x2="12" y2="12" />
-                                                    <line x1="12" y1="8" x2="12.01" y2="8" />
-                                                </svg>
-                                                Only OD and Emergency outpasses are permitted for Day Scholars.
-                                            </span>
+                                    {/* Type Cards */}
+                                    <div className="pb-type-cards-label">Outpass Type</div>
+                                    <div className={`pb-type-cards-grid ${residenceType === 'day scholar' ? 'pb-type-cards-grid-2' : ''}`}>
+                                        {residenceType !== 'day scholar' && (
+                                            <>
+                                                <button type="button" onClick={() => setFormData(p => ({...p, outpasstype: 'Outing'}))} className={`pb-type-card ${formData.outpasstype === 'Outing' ? 'selected' : ''}`}>
+                                                    <span className="pb-type-card-icon">🚶</span>
+                                                    <span className="pb-type-card-name">Outing</span>
+                                                    <span className="pb-type-card-desc">Town Pass</span>
+                                                </button>
+                                                <button type="button" onClick={() => setFormData(p => ({...p, outpasstype: 'Home'}))} className={`pb-type-card ${formData.outpasstype === 'Home' ? 'selected' : ''}`}>
+                                                    <span className="pb-type-card-icon">🏠</span>
+                                                    <span className="pb-type-card-name">Home</span>
+                                                    <span className="pb-type-card-desc">Home Pass</span>
+                                                </button>
+                                            </>
                                         )}
+                                        <button type="button" onClick={() => setFormData(p => ({...p, outpasstype: 'OD'}))} className={`pb-type-card ${formData.outpasstype === 'OD' ? 'selected' : ''}`}>
+                                            <span className="pb-type-card-icon">📋</span>
+                                            <span className="pb-type-card-name">OD</span>
+                                            <span className="pb-type-card-desc">On Duty</span>
+                                        </button>
+                                        <button type="button" onClick={() => setFormData(p => ({...p, outpasstype: 'Emergency'}))} className={`pb-type-card ${formData.outpasstype === 'Emergency' ? 'selected emergency' : ''}`}>
+                                            <span className="pb-type-card-icon">🚨</span>
+                                            <span className="pb-type-card-name">Emergency</span>
+                                            <span className="pb-type-card-desc">Urgent</span>
+                                        </button>
+                                    </div>
+                                    {residenceType === 'day scholar' && (
+                                        <div className="pb-ds-hint">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                            Day Scholars may only apply for OD or Emergency passes.
+                                        </div>
+                                    )}
+
+                                    {/* Portal hours info */}
+                                    <div className="pb-info-strip">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                        <span>Portal Hours: <strong>6:00 AM – 1:00 PM</strong> daily · Return must be by <strong>6 PM</strong></span>
                                     </div>
 
                                     <div className="pb-grid-2" style={{ marginTop: '20px' }}>
                                         <div className="pb-form-group">
-                                            <label className="pb-label">From Date & Time</label>
+                                            <label className="pb-label">From Date &amp; Time</label>
                                             <input
                                                 type="datetime-local"
                                                 name="fromDate"
@@ -327,7 +399,7 @@ const Outpass: React.FC = () => {
                                             />
                                         </div>
                                         <div className="pb-form-group">
-                                            <label className="pb-label">To Date & Time</label>
+                                            <label className="pb-label">To Date &amp; Time</label>
                                             <input
                                                 type="datetime-local"
                                                 name="toDate"
@@ -340,18 +412,6 @@ const Outpass: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {/* Notifications / Warn Panels */}
-                                    {/* {!isEmergency && !isPortalOpen && (
-                                        <div className="pb-notice-panel pb-panel-warning" style={{ marginTop: '24px' }}>
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '8px', flexShrink: 0 }}>
-                                                <circle cx="12" cy="12" r="10" />
-                                                <line x1="12" y1="8" x2="12" y2="12" />
-                                                <line x1="12" y1="16" x2="12.01" y2="16" />
-                                            </svg>
-                                            <span><strong>Portal Closed:</strong> Outpass submissions (except Emergency) are strictly open from 6:00 AM to 10:00 AM daily.</span>
-                                        </div>
-                                    )} */}
-
                                     {hasPendingOutpass && (
                                         <div className="pb-notice-panel pb-panel-danger" style={{ marginTop: '24px' }}>
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '8px', flexShrink: 0 }}>
@@ -359,7 +419,7 @@ const Outpass: React.FC = () => {
                                                 <line x1="12" y1="8" x2="12" y2="12" />
                                                 <line x1="12" y1="16" x2="12.01" y2="16" />
                                             </svg>
-                                            <span><strong>Duplicate Application:</strong> You already have a pending outpass request. You cannot submit another until the active one is processed.</span>
+                                            <span><strong>Duplicate Application:</strong> You already have a pending outpass request. You cannot submit another until it is processed.</span>
                                         </div>
                                     )}
 
@@ -381,7 +441,31 @@ const Outpass: React.FC = () => {
                             ) : (
                                 /* STEP 2: REASON & VERIFICATION */
                                 <form onSubmit={handleSubmit} className="pb-step-container">
-                                    <h3 className="pb-step-title">Step 2: Verification Details</h3>
+                                    <div className="pb-step-header">
+                                        <div className="pb-step-num-circle done">✓</div>
+                                        <div>
+                                            <h3 className="pb-step-title">Verification Details</h3>
+                                            <p className="pb-step-desc">Add reason, attendance and any supporting documents</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Summary Card */}
+                                    <div className="pb-summary-card">
+                                        <div className="pb-summary-row">
+                                            <span className="pb-summary-label">Type</span>
+                                            <span className="pb-summary-value pb-summary-type">{formData.outpasstype}</span>
+                                        </div>
+                                        <div className="pb-summary-divider" />
+                                        <div className="pb-summary-row">
+                                            <span className="pb-summary-label">From</span>
+                                            <span className="pb-summary-value">{formData.fromDate ? new Date(formData.fromDate).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '—'}</span>
+                                        </div>
+                                        <div className="pb-summary-divider" />
+                                        <div className="pb-summary-row">
+                                            <span className="pb-summary-label">To</span>
+                                            <span className="pb-summary-value">{formData.toDate ? new Date(formData.toDate).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '—'}</span>
+                                        </div>
+                                    </div>
 
                                     <div className="pb-form-group">
                                         <label className="pb-label">Detailed Reason for Leave</label>
@@ -542,12 +626,14 @@ const Outpass: React.FC = () => {
                     </div>
 
                     {/* Portal Status Banner */}
-                    {!isEmergency && !isPortalOpen && (
-                        <div className="pb-mob-alert-card pb-alert-warning pb-animate-stagger-2">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
-                            <span>Portal is open <strong>6:00 AM – 10:00 AM</strong> only (except Emergency)</span>
-                        </div>
-                    )}
+                    <div className={`pb-mob-portal-status ${isPortalOpen ? 'pb-portal-open' : 'pb-portal-closed'} pb-animate-stagger-2`}>
+                        <span className={`pb-mob-portal-dot ${isPortalOpen ? 'open' : 'closed'}`} />
+                        {isPortalOpen ? (
+                            <span>Portal <strong>Open</strong> · Closes 1:00 PM · <strong>{portalClosesIn()}</strong></span>
+                        ) : (
+                            <span>Portal <strong>Closed</strong> · Opens at 6:00 AM daily</span>
+                        )}
+                    </div>
 
                     {hasPendingOutpass && (
                         <div className="pb-mob-alert-card pb-alert-danger pb-animate-stagger-2">
@@ -560,33 +646,35 @@ const Outpass: React.FC = () => {
                         /* STEP 1 */
                         <div className="pb-mob-form-card pb-animate-stagger-3">
                             <h3 className="pb-mob-form-section-title">Outpass Type</h3>
-                            <select
-                                name="outpasstype"
-                                value={formData.outpasstype}
-                                onChange={handleChange}
-                                className="pb-mob-select"
-                            >
-                                {residenceType === 'day scholar' ? (
+                            <div className={`pb-mob-type-grid ${residenceType === 'day scholar' ? 'pb-mob-type-grid-2' : ''}`}>
+                                {residenceType !== 'day scholar' && (
                                     <>
-                                        <option value="OD">On Duty (OD)</option>
-                                        <option value="Emergency">Emergency</option>
-                                    </>
-                                ) : (
-                                    <>
-                                        <option value="Outing">Outing (Town Pass)</option>
-                                        <option value="Home">Home Pass</option>
-                                        <option value="OD">On Duty (OD)</option>
-                                        <option value="Emergency">Emergency</option>
+                                        <button type="button" onClick={() => setFormData(p => ({...p, outpasstype: 'Outing'}))} className={`pb-mob-type-card ${formData.outpasstype === 'Outing' ? 'selected' : ''}`}>
+                                            <span>🚶</span><span>Outing</span>
+                                        </button>
+                                        <button type="button" onClick={() => setFormData(p => ({...p, outpasstype: 'Home'}))} className={`pb-mob-type-card ${formData.outpasstype === 'Home' ? 'selected' : ''}`}>
+                                            <span>🏠</span><span>Home</span>
+                                        </button>
                                     </>
                                 )}
-                            </select>
+                                <button type="button" onClick={() => setFormData(p => ({...p, outpasstype: 'OD'}))} className={`pb-mob-type-card ${formData.outpasstype === 'OD' ? 'selected' : ''}`}>
+                                    <span>📋</span><span>OD</span>
+                                </button>
+                                <button type="button" onClick={() => setFormData(p => ({...p, outpasstype: 'Emergency'}))} className={`pb-mob-type-card ${formData.outpasstype === 'Emergency' ? 'selected emergency' : ''}`}>
+                                    <span>🚨</span><span>Emergency</span>
+                                </button>
+                            </div>
                             {residenceType === 'day scholar' && (
-                                <p className="pb-mob-form-hint">Only OD & Emergency allowed for Day Scholars</p>
+                                <p className="pb-mob-form-hint">⚠️ Only OD &amp; Emergency allowed for Day Scholars</p>
                             )}
 
-                            <h3 className="pb-mob-form-section-title" style={{ marginTop: 24 }}>Schedule</h3>
+                            <div className="pb-mob-info-strip">
+                                🕐 Portal: <strong>6:00 AM – 1:00 PM</strong> · Return by <strong>6:00 PM</strong>
+                            </div>
+
+                            <h3 className="pb-mob-form-section-title" style={{ marginTop: 20 }}>Schedule</h3>
                             <div className="pb-mob-form-group">
-                                <label className="pb-label">From Date & Time</label>
+                                <label className="pb-label">From Date &amp; Time</label>
                                 <input
                                     type="datetime-local"
                                     name="fromDate"
@@ -598,7 +686,7 @@ const Outpass: React.FC = () => {
                                 />
                             </div>
                             <div className="pb-mob-form-group" style={{ marginTop: '12px' }}>
-                                <label className="pb-label">To Date & Time</label>
+                                <label className="pb-label">To Date &amp; Time</label>
                                 <input
                                     type="datetime-local"
                                     name="toDate"
@@ -614,7 +702,7 @@ const Outpass: React.FC = () => {
                                 type="button"
                                 onClick={handleNextStep}
                                 className="pb-mob-cta-btn"
-                                style={{ marginTop: 24 }}
+                                style={{ marginTop: 20 }}
                             >
                                 Continue
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginLeft: '6px' }}><polyline points="9 18 15 12 9 6" /></svg>
@@ -700,22 +788,191 @@ const Outpass: React.FC = () => {
                     min-height: 100vh;
                     background: var(--pb-bg);
                 }
+
+                /* Enhanced Page Header */
+                .pb-page-header-enhanced {
+                    display: flex;
+                    align-items: flex-start;
+                    justify-content: space-between;
+                    gap: 16px;
+                    margin-bottom: 28px;
+                    flex-wrap: wrap;
+                }
+                .pb-page-header-left { display: flex; flex-direction: column; gap: 6px; }
+                .pb-page-badge {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    background: rgba(59,130,246,0.08);
+                    border: 1px solid rgba(59,130,246,0.16);
+                    color: var(--pb-primary);
+                    font-size: 11px;
+                    font-weight: 700;
+                    padding: 4px 12px;
+                    border-radius: 20px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.6px;
+                    width: fit-content;
+                }
                 .pb-page-title {
-                    font-size: 1.75rem;
-                    font-weight: 800;
-                    color: var(--pb-text);
+                    font-size: 1.85rem;
+                    font-weight: 900;
+                    background: linear-gradient(135deg, #0f172a 0%, #1e40af 60%, #3b82f6 100%);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
                     margin: 0;
-                    letter-spacing: -0.025em;
+                    letter-spacing: -0.04em;
+                    line-height: 1.1;
                 }
                 .pb-page-subtitle {
-                    font-size: 0.9rem;
+                    font-size: 0.88rem;
                     color: var(--pb-text-3);
-                    margin: 4px 0 0 0;
-                }
-                .pb-page-header-simple {
-                    margin-bottom: 28px;
+                    margin: 0;
+                    font-weight: 500;
                 }
 
+                /* Portal status badge */
+                .pb-portal-status-badge {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 10px 18px;
+                    border-radius: 14px;
+                    font-size: 0.82rem;
+                    font-weight: 600;
+                    flex-shrink: 0;
+                    backdrop-filter: blur(8px);
+                }
+                .pb-portal-status-badge.open {
+                    background: rgba(16,185,129,0.09);
+                    border: 1.5px solid rgba(16,185,129,0.25);
+                    color: #065f46;
+                }
+                .pb-portal-status-badge.closed {
+                    background: rgba(239,68,68,0.07);
+                    border: 1.5px solid rgba(239,68,68,0.2);
+                    color: #991B1B;
+                }
+                .pb-portal-dot {
+                    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+                }
+                .pb-portal-dot.open  { background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.2); animation: pbPulse 1.5s ease infinite; }
+                .pb-portal-dot.closed { background: #ef4444; }
+                @keyframes pbPulse { 0%,100%{box-shadow:0 0 0 3px rgba(16,185,129,0.2)} 50%{box-shadow:0 0 0 6px rgba(16,185,129,0.04)} }
+                .pb-portal-time { font-size: 0.75rem; opacity: 0.75; margin-left: 2px; }
+
+                /* Step header */
+                .pb-step-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 24px; }
+                .pb-step-num-circle {
+                    width: 36px; height: 36px; border-radius: 50%;
+                    background: linear-gradient(135deg, var(--pb-primary), var(--pb-primary-dark));
+                    color: #fff; display: flex; align-items: center; justify-content: center;
+                    font-size: 0.88rem; font-weight: 800; flex-shrink: 0;
+                    box-shadow: 0 4px 12px rgba(59,130,246,0.28);
+                }
+                .pb-step-num-circle.done { background: linear-gradient(135deg, #10B981, #059669); box-shadow: 0 4px 12px rgba(16,185,129,0.28); }
+                .pb-step-title {
+                    font-size: 1.05rem;
+                    font-weight: 800;
+                    color: var(--pb-text);
+                    margin: 0 0 3px;
+                    letter-spacing: -0.01em;
+                }
+                .pb-step-desc { font-size: 0.78rem; color: var(--pb-text-4); margin: 0; font-weight: 500; }
+
+                /* Type cards */
+                .pb-type-cards-label {
+                    font-size: 0.72rem;
+                    font-weight: 700;
+                    color: var(--pb-text-3);
+                    text-transform: uppercase;
+                    letter-spacing: 0.06em;
+                    margin-bottom: 10px;
+                }
+                .pb-type-cards-grid {
+                    display: grid;
+                    grid-template-columns: repeat(4, 1fr);
+                    gap: 10px;
+                    margin-bottom: 12px;
+                }
+                .pb-type-cards-grid-2 {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+                .pb-type-card {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 4px;
+                    padding: 16px 8px;
+                    border-radius: 14px;
+                    border: 1.5px solid rgba(59,130,246,0.12);
+                    background: #fff;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    font-family: inherit;
+                }
+                .pb-type-card:hover { border-color: var(--pb-primary); background: rgba(59,130,246,0.03); transform: translateY(-2px); }
+                .pb-type-card.selected {
+                    border-color: var(--pb-primary);
+                    background: linear-gradient(135deg, rgba(59,130,246,0.06), rgba(99,102,241,0.04));
+                    box-shadow: 0 4px 16px rgba(59,130,246,0.18);
+                    transform: translateY(-2px);
+                }
+                .pb-type-card.selected.emergency {
+                    border-color: #ef4444;
+                    background: rgba(239,68,68,0.05);
+                    box-shadow: 0 4px 16px rgba(239,68,68,0.16);
+                }
+                .pb-type-card-icon { font-size: 1.5rem; }
+                .pb-type-card-name { font-size: 0.8rem; font-weight: 800; color: var(--pb-text); }
+                .pb-type-card-desc { font-size: 0.68rem; color: var(--pb-text-4); font-weight: 500; }
+
+                .pb-ds-hint {
+                    display: flex; align-items: center; gap: 6px;
+                    font-size: 0.75rem; color: var(--pb-primary); font-weight: 600;
+                    margin-bottom: 12px;
+                }
+
+                /* Info strip */
+                .pb-info-strip {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 11px 16px;
+                    background: rgba(59,130,246,0.04);
+                    border: 1px solid rgba(59,130,246,0.1);
+                    border-radius: 10px;
+                    font-size: 0.78rem;
+                    color: var(--pb-text-2);
+                    margin-bottom: 4px;
+                }
+
+                /* Summary card */
+                .pb-summary-card {
+                    background: linear-gradient(135deg, rgba(59,130,246,0.04), rgba(99,102,241,0.03));
+                    border: 1.5px solid rgba(59,130,246,0.12);
+                    border-radius: 14px;
+                    padding: 16px 20px;
+                    margin-bottom: 24px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0;
+                }
+                .pb-summary-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; }
+                .pb-summary-label { font-size: 0.72rem; font-weight: 700; color: var(--pb-text-4); text-transform: uppercase; letter-spacing: 0.05em; }
+                .pb-summary-value { font-size: 0.82rem; font-weight: 700; color: var(--pb-text); }
+                .pb-summary-type {
+                    display: inline-flex;
+                    padding: 3px 12px;
+                    border-radius: 20px;
+                    background: rgba(59,130,246,0.1);
+                    color: var(--pb-primary);
+                    font-size: 0.78rem;
+                }
+                .pb-summary-divider { height: 1px; background: rgba(59,130,246,0.08); }
+
+                /* Stepper */
                 /* Stepper styling */
                 .pb-stepper-wrapper {
                     display: flex;
@@ -751,24 +1008,30 @@ const Outpass: React.FC = () => {
                     border: 1.5px solid rgba(59, 130, 246, 0.1);
                     transition: var(--pb-transition);
                 }
-                .pb-step-label {
-                    font-size: 0.88rem;
-                    font-weight: 750;
-                }
-                .pb-step-item.active {
-                    color: var(--pb-primary);
-                }
+                .pb-step-label { font-size: 0.88rem; font-weight: 700; }
+                .pb-step-item.active { color: var(--pb-primary); }
                 .pb-step-item.active .pb-step-number {
-                    background: var(--pb-primary);
+                    background: linear-gradient(135deg, var(--pb-primary), var(--pb-primary-dark));
                     color: #fff;
-                    border-color: var(--pb-primary);
-                    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+                    border-color: transparent;
+                    box-shadow: 0 3px 12px rgba(59,130,246,0.3);
+                }
+                .pb-step-item.done .pb-step-number {
+                    background: linear-gradient(135deg, #10B981, #059669);
+                    color: #fff;
+                    border-color: transparent;
+                    box-shadow: 0 3px 10px rgba(16,185,129,0.28);
                 }
                 .pb-step-connector {
                     flex: 1;
                     height: 2px;
-                    background: rgba(59, 130, 246, 0.08);
-                    margin: 0 24px;
+                    background: rgba(59,130,246,0.1);
+                    margin: 0 20px;
+                    border-radius: 2px;
+                    transition: background 0.3s ease;
+                }
+                .pb-step-connector.done {
+                    background: linear-gradient(90deg, #10B981, rgba(16,185,129,0.3));
                 }
 
                 /* Form Container Card */
@@ -782,15 +1045,6 @@ const Outpass: React.FC = () => {
                     backdrop-filter: blur(20px);
                     -webkit-backdrop-filter: blur(20px);
                     padding: 32px;
-                }
-                .pb-step-title {
-                    font-size: 1.05rem;
-                    font-weight: 800;
-                    color: var(--pb-text);
-                    margin-bottom: 24px;
-                    border-bottom: 1px solid rgba(59, 130, 246, 0.06);
-                    padding-bottom: 12px;
-                    letter-spacing: -0.01em;
                 }
 
                 .pb-form-group {
@@ -820,6 +1074,22 @@ const Outpass: React.FC = () => {
                     box-sizing: border-box;
                     outline: none;
                 }
+                input[type="datetime-local"] {
+                    padding-right: 36px !important;
+                }
+                input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+                    display: block !important;
+                    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E") no-repeat center;
+                    background-size: 16px;
+                    width: 16px;
+                    height: 16px;
+                    cursor: pointer;
+                    opacity: 1 !important;
+                }
+                input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+                    opacity: 0.8 !important;
+                }
+
                 .pb-textarea {
                     height: auto;
                     padding: 12px 14px;
@@ -1059,18 +1329,84 @@ const Outpass: React.FC = () => {
                 /* ==========================================
                    PREMIUM MOBILE STYLES (NEW OUTPASS)
                    ========================================== */
+
+                /* Mobile Portal Status */
+                .pb-mob-portal-status {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 11px 14px;
+                    border-radius: 12px;
+                    font-size: 0.78rem;
+                    font-weight: 500;
+                }
+                .pb-portal-open  { background: rgba(16,185,129,0.07); border: 1px solid rgba(16,185,129,0.2); color: #065f46; }
+                .pb-portal-closed { background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.2); color: #92400E; }
+                .pb-mob-portal-dot {
+                    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+                }
+                .pb-mob-portal-dot.open  { background: #10B981; }
+                .pb-mob-portal-dot.closed { background: #f59e0b; }
+
+                /* Mobile Type Cards */
+                .pb-mob-type-grid {
+                    display: grid;
+                    grid-template-columns: repeat(4, 1fr);
+                    gap: 8px;
+                    margin-bottom: 12px;
+                }
+                .pb-mob-type-grid-2 { grid-template-columns: repeat(2, 1fr); }
+                .pb-mob-type-card {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 3px;
+                    padding: 12px 6px;
+                    border-radius: 12px;
+                    border: 1.5px solid rgba(59,130,246,0.12);
+                    background: #fff;
+                    font-size: 0.72rem;
+                    font-weight: 700;
+                    color: var(--pb-text-2);
+                    cursor: pointer;
+                    transition: all 0.18s ease;
+                    font-family: inherit;
+                }
+                .pb-mob-type-card span:first-child { font-size: 1.3rem; }
+                .pb-mob-type-card.selected {
+                    border-color: var(--pb-primary);
+                    background: rgba(59,130,246,0.06);
+                    color: var(--pb-primary);
+                    box-shadow: 0 3px 10px rgba(59,130,246,0.15);
+                }
+                .pb-mob-type-card.selected.emergency {
+                    border-color: #ef4444;
+                    background: rgba(239,68,68,0.05);
+                    color: #dc2626;
+                }
+                .pb-mob-info-strip {
+                    padding: 10px 14px;
+                    background: rgba(59,130,246,0.04);
+                    border: 1px solid rgba(59,130,246,0.1);
+                    border-radius: 10px;
+                    font-size: 0.73rem;
+                    color: var(--pb-text-2);
+                    margin-bottom: 4px;
+                }
+
                 .pb-mob-page-header {
                     display: flex;
                     align-items: center;
                     gap: 12px;
-                    padding: 16px;
-                    background: rgba(255, 255, 255, 0.85);
+                    padding: 14px 16px;
+                    background: rgba(255, 255, 255, 0.9);
                     backdrop-filter: blur(20px);
                     -webkit-backdrop-filter: blur(20px);
                     position: sticky;
                     top: 0;
                     z-index: 50;
                     border-bottom: 1px solid rgba(59, 130, 246, 0.08);
+                    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
                 }
                 .pb-mob-back-btn {
                     width: 36px;

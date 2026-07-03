@@ -1,0 +1,52 @@
+# JIT Permigo - robots.txt
+# https://jit.college
+
+User-agent: *
+
+# Public pages - allow indexing
+Allow: /$
+
+# Disallow ALL login pages - they provide no SEO value
+Disallow: /login
+Disallow: /student-login
+Disallow: /staff-login
+Disallow: /admin-login
+Disallow: /wardenlogin
+Disallow: /warden-login
+Disallow: /watchmanlogin
+Disallow: /year-incharge-login
+
+# Disallow all authenticated portal pages
+Disallow: /dashboard
+Disallow: /staff-dashboard
+Disallow: /warden-dashboard
+Disallow: /watchman-dashboard
+Disallow: /year-incharge-dashboard
+
+# Disallow all profile pages
+Disallow: /profile
+Disallow: /staff-profile
+Disallow: /warden-profile
+Disallow: /watchman-profile
+Disallow: /year-incharge-profile
+
+# Disallow all feature pages (require authentication)
+Disallow: /subjects
+Disallow: /staffs
+Disallow: /outpass
+Disallow: /new-outpass
+Disallow: /bus-routes
+Disallow: /pending-passes
+Disallow: /all-passes
+Disallow: /staff-registration
+
+# Disallow all admin routes
+Disallow: /admin/
+
+# Disallow all role-scoped sub-routes
+Disallow: /warden/
+Disallow: /watchman/
+Disallow: /year-incharge/
+Disallow: /staff/
+
+Sitemap: https://jit.college/sitemap.xml

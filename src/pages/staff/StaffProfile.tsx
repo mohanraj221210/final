@@ -109,13 +109,23 @@ const StaffProfile: React.FC = () => {
                 }
             });
             if (response.status === 200) {
-                setStaff(response.data.staff);
-                setFormData({
-                    ...response.data.staff,
-                    subjects: response.data.staff.subjects || [],
-                    skills: response.data.staff.skills || [],
-                    achievements: response.data.staff.achievements || []
-                });
+                const staffData = response.data.staff;
+                const cleanArray = (arr: any) => {
+                    if (!arr) return [];
+                    if (Array.isArray(arr)) return arr.filter((s: string) => s && s.trim() !== '');
+                    if (typeof arr === 'string') return arr.split(',').map((s: string) => s.trim()).filter((s: string) => s !== '');
+                    return [];
+                };
+
+                const cleanStaff = {
+                    ...staffData,
+                    subjects: cleanArray(staffData.subjects),
+                    skills: cleanArray(staffData.skills),
+                    achievements: cleanArray(staffData.achievements)
+                };
+
+                setStaff(cleanStaff);
+                setFormData(cleanStaff);
             }
         } catch (error) {
             console.error("Error fetching staff profile:", error);
@@ -158,26 +168,54 @@ const StaffProfile: React.FC = () => {
         const loadingToast = toast.loading("Updating profile...");
 
         try {
-            const submitData = new FormData();
-
-            Object.keys(formData).forEach(key => {
-                if (key === 'subjects' || key === 'skills' || key === 'achievements' || key === 'photo') return;
-                submitData.append(key, formData[key]);
-            });
-
-            if (formData.subjects) formData.subjects.forEach((item: string) => submitData.append('subjects', item));
-            if (formData.skills) formData.skills.forEach((item: string) => submitData.append('skills', item));
-            if (formData.achievements) formData.achievements.forEach((item: string) => submitData.append('achievements', item));
+            let response;
 
             if (selectedFile) {
-                submitData.append('file', selectedFile);
-            }
+                // If photo is changed, we must use FormData
+                const submitData = new FormData();
 
-            const response = await axios.put(`${import.meta.env.VITE_API_URL}/staff/profile/update`, submitData, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                }
-            });
+                Object.keys(formData).forEach(key => {
+                    if (key === 'subjects' || key === 'skills' || key === 'achievements' || key === 'photo') return;
+                    submitData.append(key, formData[key]);
+                });
+
+                const appendArray = (key: string, arr: string[]) => {
+                    if (!arr || arr.length === 0) return;
+                    if (arr.length === 1) {
+                        submitData.append(key, arr[0]);
+                        submitData.append(key, ''); // Force array parsing on backend
+                    } else {
+                        arr.forEach((item: string) => submitData.append(key, item));
+                    }
+                };
+
+                appendArray('subjects', formData.subjects || []);
+                appendArray('skills', formData.skills || []);
+                appendArray('achievements', formData.achievements || []);
+
+                submitData.append('file', selectedFile);
+
+                response = await axios.put(`${import.meta.env.VITE_API_URL}/staff/profile/update`, submitData, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    }
+                });
+            } else {
+                // If photo is not changed, send a standard JSON payload
+                const payload = {
+                    ...formData,
+                    subjects: formData.subjects || [],
+                    skills: formData.skills || [],
+                    achievements: formData.achievements || []
+                };
+
+                response = await axios.put(`${import.meta.env.VITE_API_URL}/staff/profile/update`, payload, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+            }
 
             if (response.status === 200) {
                 toast.update(loadingToast, { render: "Profile updated successfully!", type: "success", isLoading: false, autoClose: 3000 });
@@ -524,7 +562,12 @@ const StaffProfile: React.FC = () => {
                                         <span className="info-label">Achievements</span>
                                         <div className="info-value">
                                             <ul className="lux-list">
-                                                {(isEditing ? formData.achievements : staff.achievements)?.map((ach: string, idx: number) => (
+                                                {(Array.isArray(isEditing ? formData.achievements : staff.achievements)
+                                                    ? (isEditing ? formData.achievements : staff.achievements)
+                                                    : typeof (isEditing ? formData.achievements : staff.achievements) === 'string'
+                                                        ? (isEditing ? formData.achievements : staff.achievements).split(',').map((s: string) => s.trim()).filter(Boolean)
+                                                        : []
+                                                ).map((ach: string, idx: number) => (
                                                     <li key={idx}>
                                                         <span className="bullet">🏆</span>
                                                         <span className="text">{ach}</span>
@@ -993,6 +1036,7 @@ const StaffProfile: React.FC = () => {
                     transition: all 0.2s;
                     background: #F8FAFC;
                     font-weight: 500;
+                    color: #0F172A;
                 }
                 .edit-input:focus {
                     outline: none;

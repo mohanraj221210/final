@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import SEO from '../components/SEO';
 
 /* ─── Intersection Observer Scroll Reveal ─── */
 function useScrollReveal() {
@@ -267,6 +268,12 @@ const Welcome: React.FC = () => {
 
   return (
     <div className="jit-root" ref={pageRef}>
+      <SEO
+        title="JIT Permigo — Smart Campus Management Portal"
+        description="JIT Permigo is the official digital campus management system of Jeppiaar Institute of Technology, Chennai. Manage outpass requests, track subjects, coordinate staff, and access all campus services in one place."
+        keywords="JIT Permigo, Jeppiaar Institute of Technology, JIT college portal, student outpass management, campus management system, JIT student portal, JIT staff portal, digital outpass, JIT Chennai, JIT campus"
+        canonical="/"
+      />
       <div className={`jit-page${mounted ? ' jit-page-in' : ''}`}>
 
         {/* ══════════ NAV ══════════ */}
@@ -276,21 +283,11 @@ const Welcome: React.FC = () => {
             {/* Logo */}
             <div className="jit-logo">
               <div className="jit-logo-box">
-                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                  <rect width="32" height="32" rx="9" fill="url(#logoG)"/>
-                  <path d="M8 24L16 9L24 24H8Z" fill="white" fillOpacity="0.95"/>
-                  <rect x="13" y="18" width="6" height="5" rx="1.5" fill="url(#logoG)"/>
-                  <defs>
-                    <linearGradient id="logoG" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-                      <stop stopColor="#3B82F6"/>
-                      <stop offset="1" stopColor="#1D4ED8"/>
-                    </linearGradient>
-                  </defs>
-                </svg>
+                <img src="/jit permigo.png" alt="Logo" />
               </div>
               <div className="jit-logo-text">
                 <span className="jit-logo-title">JIT PERMIGO</span>
-            
+                <span className="jit-logo-sub">Gate Pass & Outpass Portal</span>
               </div>
             </div>
 
@@ -660,7 +657,19 @@ const Welcome: React.FC = () => {
         }
         /* Logo */
         .jit-logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-        .jit-logo-box { filter: drop-shadow(0 2px 8px rgba(59,130,246,0.2)); }
+        .jit-logo-box {
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          filter: drop-shadow(0 2px 8px rgba(59,130,246,0.2));
+        }
+        .jit-logo-box img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+        }
         .jit-logo-text { display: flex; flex-direction: column; line-height: 1.1; }
         .jit-logo-title { font-size: 18px; font-weight: 900; color: #0F172A; letter-spacing: -0.5px; }
         .jit-logo-sub { font-size: 9px; font-weight: 600; color: #64748B; letter-spacing: 0.2px; text-transform: uppercase; }

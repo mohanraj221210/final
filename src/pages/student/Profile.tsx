@@ -101,7 +101,10 @@ const Profile: React.FC = () => {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setUser(prev => ({ ...prev, [name]: value }));
+        setUser(prev => ({
+            ...prev,
+            [name]: name === 'semester' ? (value ? parseInt(value, 10) : 0) : value
+        }));
     };
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,10 +162,35 @@ const Profile: React.FC = () => {
     };
 
     const handleSave = async () => {
-        if (!user.gender) {
-            toast.error("Please select your gender");
+        const missingFields: string[] = [];
+
+        if (!user.name) missingFields.push("Full Name");
+        if (!user.email) missingFields.push("Email Address");
+        if (!user.phone) missingFields.push("Phone Number");
+        if (!user.parentnumber) missingFields.push("Parent's Phone Number");
+        if (!user.registerNumber) missingFields.push("Register Number");
+        if (!user.department) missingFields.push("Department");
+        if (!user.year) missingFields.push("Year of Study");
+        if (!user.semester) missingFields.push("Semester");
+        if (!user.batch) missingFields.push("Batch");
+        if (!user.gender) missingFields.push("Gender");
+        if (!user.photo) missingFields.push("Profile Photo");
+        
+        if (!user.residencetype) {
+            missingFields.push("Residence Type");
+        } else if (user.residencetype === 'hostel') {
+            if (!user.hostelname) missingFields.push("Hostel Name");
+            if (!user.hostelroomno) missingFields.push("Room Number");
+        } else if (user.residencetype === 'day scholar') {
+            if (!user.busno) missingFields.push("Bus Number");
+            if (!user.boardingpoint) missingFields.push("Boarding Point");
+        }
+
+        if (missingFields.length > 0) {
+            toast.error(`Please fill in the missing fields: ${missingFields.join(', ')}`);
             return;
         }
+
         try {
             let response;
             if (selectedFile) {
@@ -199,8 +227,9 @@ const Profile: React.FC = () => {
                     navigate('/dashboard');
                 }, 1000);
             }
-        } catch (error) {
-            toast.error("Failed to update profile");
+        } catch (error: any) {
+            const serverMsg = error.response?.data?.message || error.response?.data?.error;
+            toast.error(serverMsg || "Failed to update profile");
             console.error(error);
         }
         localStorage.setItem('userProfile', JSON.stringify(user));
@@ -396,7 +425,8 @@ const Profile: React.FC = () => {
                                                     max="10"
                                                     name="cgpa"
                                                     value={user.cgpa || '8.25'}
-                                                    disabled
+                                                    onChange={handleChange}
+                                                    disabled={!isEditing}
                                                     className="pb-input"
                                                 />
                                             </div>
@@ -500,16 +530,23 @@ const Profile: React.FC = () => {
                                             </div>
                                             <div className="pb-form-group">
                                                 <label className="pb-label">Semester</label>
-                                                <input
-                                                    type="number"
+                                                <select
                                                     name="semester"
-                                                    value={user.semester}
+                                                    value={user.semester || ''}
                                                     onChange={handleChange}
                                                     disabled={!isEditing}
-                                                    className="pb-input"
-                                                    min="1"
-                                                    max="8"
-                                                />
+                                                    className="pb-select"
+                                                >
+                                                    <option value="">Select Semester</option>
+                                                    <option value="1">1</option>
+                                                    <option value="2">2</option>
+                                                    <option value="3">3</option>
+                                                    <option value="4">4</option>
+                                                    <option value="5">5</option>
+                                                    <option value="6">6</option>
+                                                    <option value="7">7</option>
+                                                    <option value="8">8</option>
+                                                </select>
                                             </div>
                                             <div className="pb-form-group">
                                                 <label className="pb-label">Batch</label>

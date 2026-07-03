@@ -78,6 +78,14 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
     };
 
     const handleNavigation = (path: string) => {
+        if (path === '/subjects') {
+            toast.info("enabled in future updates", {
+                position: "top-center",
+                autoClose: 3000,
+            });
+            setIsMobileMenuOpen(false);
+            return;
+        }
         if (path === '/dashboard' || path === '/profile') {
             navigate(path);
         } else {
@@ -138,6 +146,7 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
                                 key={item.path}
                                 className={`lux-nav-link ${isActive(item.path) ? 'lux-active' : ''}`}
                                 onClick={() => handleNavigation(item.path)}
+                                style={item.path === '/subjects' ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
                             >
                                 {item.label}
                                 {isActive(item.path) && <div className="lux-nav-indicator" />}
@@ -228,6 +237,7 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
                                     key={item.path}
                                     className={`lux-mobile-link ${isActive(item.path) ? 'active' : ''}`}
                                     onClick={() => handleNavigation(item.path)}
+                                    style={item.path === '/subjects' ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
                                 >
                                     <span className="lux-mobile-icon">{item.icon}</span>
                                     {item.label}

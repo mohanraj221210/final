@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from './AdminLayout';
 import { adminService } from '../../services/adminService';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { 
     Users, 
     UserCheck, 
@@ -47,6 +49,14 @@ const AdminDashboard: React.FC = () => {
     const [recentPasses, setRecentPasses] = useState<any[]>([]);
 
     const [loading, setLoading] = useState(true);
+
+    // Export Modal States
+    const [showExportModal, setShowExportModal] = useState(false);
+    const [exportFilterType, setExportFilterType] = useState('All');
+    const [exportFilterTime, setExportFilterTime] = useState('All');
+    const [exportFilterStatus, setExportFilterStatus] = useState('All');
+    const [exportSearchTerm, setExportSearchTerm] = useState('');
+    const [exportLoading, setExportLoading] = useState(false);
 
     const fetchData = async () => {
         setLoading(true);
@@ -164,6 +174,53 @@ const AdminDashboard: React.FC = () => {
         </svg>
     );
 
+    const triggerExport = async () => {
+        setExportLoading(true);
+        try {
+            toast.info('Requesting outpass report from server...');
+            const response = await adminService.exportOutpassReport({
+                outpasstype: exportFilterType,
+                status: exportFilterStatus,
+                appliedDate: exportFilterTime,
+                search: exportSearchTerm
+            });
+
+            const contentType = response.headers['content-type'] || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+            const blob = new Blob([response.data], { type: contentType });
+            const disposition = response.headers['content-disposition'];
+            
+            let filename = `outpass_report_${new Date().toISOString().split('T')[0]}`;
+            if (disposition && disposition.includes('filename=')) {
+                const parts = disposition.split('filename=');
+                if (parts[1]) filename = parts[1].replace(/['"]/g, '');
+            } else {
+                if (contentType.includes('csv')) {
+                    filename += '.csv';
+                } else if (contentType.includes('pdf')) {
+                    filename += '.pdf';
+                } else {
+                    filename += '.xlsx';
+                }
+            }
+
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            toast.success('Report exported successfully!');
+            setShowExportModal(false);
+        } catch (error) {
+            console.error('Export failed:', error);
+            toast.error('Failed to export outpass report');
+        } finally {
+            setExportLoading(false);
+        }
+    };
+
     return (
         <AdminLayout title="Overview" activeMenu="dashboard">
             <div className="saas-dashboard">
@@ -179,7 +236,7 @@ const AdminDashboard: React.FC = () => {
                             <RefreshCw size={14} className={loading ? 'spin' : ''} />
                             Refresh
                         </button>
-                        <button className="saas-btn-primary">
+                        <button className="saas-btn-primary" onClick={() => setShowExportModal(true)}>
                             <Download size={14} />
                             Export Report
                         </button>
@@ -520,7 +577,201 @@ const AdminDashboard: React.FC = () => {
                     </>
                 )}
 
+                {showExportModal && (
+                    <div className="custom-modal-overlay">
+                        <div className="custom-modal-content">
+                            <div className="custom-modal-header">
+                                <h3>Export Outpass Report</h3>
+                                <button className="close-btn" onClick={() => setShowExportModal(false)}>✕</button>
+                            </div>
+                            <div className="custom-modal-body">
+                                <p className="modal-desc">Configure the filters below before generating the report.</p>
+                                
+                                <div className="modal-field">
+                                    <label>Outpass Type</label>
+                                    <select 
+                                        value={exportFilterType} 
+                                        onChange={e => setExportFilterType(e.target.value)}
+                                    >
+                                        <option value="All">All Types</option>
+                                        <option value="OD">OD</option>
+                                        <option value="Home">Home Pass</option>
+                                        <option value="Outing">Outing</option>
+                                        <option value="Emergency">Emergency</option>
+                                    </select>
+                                </div>
+
+                                <div className="modal-field">
+                                    <label>Timeline / Applied Date</label>
+                                    <select 
+                                        value={exportFilterTime} 
+                                        onChange={e => setExportFilterTime(e.target.value)}
+                                    >
+                                        <option value="All">All Time</option>
+                                        <option value="Today">Today</option>
+                                        <option value="This Week">This Week</option>
+                                        <option value="This Month">This Month</option>
+                                    </select>
+                                </div>
+
+                                <div className="modal-field">
+                                    <label>Status</label>
+                                    <select 
+                                        value={exportFilterStatus} 
+                                        onChange={e => setExportFilterStatus(e.target.value)}
+                                    >
+                                        <option value="All">All Statuses</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="approved">Approved</option>
+                                        <option value="rejected">Rejected</option>
+                                    </select>
+                                </div>
+
+                                <div className="modal-field">
+                                    <label>Search (Name / Register Number)</label>
+                                    <input 
+                                        type="text" 
+                                        placeholder="Search by student name or register number..." 
+                                        value={exportSearchTerm}
+                                        onChange={e => setExportSearchTerm(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                            <div className="custom-modal-footer">
+                                <button className="cancel-btn" onClick={() => setShowExportModal(false)} disabled={exportLoading}>Cancel</button>
+                                <button className="confirm-btn" onClick={triggerExport} disabled={exportLoading}>
+                                    {exportLoading ? 'Generating...' : 'Generate Report'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 <style>{`
+                /* Custom Modal Styles */
+                .custom-modal-overlay {
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(15, 23, 42, 0.6);
+                    backdrop-filter: blur(4px);
+                    z-index: 9999;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    animation: modalFadeIn 0.2s ease-out;
+                }
+                .custom-modal-content {
+                    background: white;
+                    border-radius: 16px;
+                    width: min(90vw, 480px);
+                    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+                    overflow: hidden;
+                    animation: modalScaleIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+                }
+                @keyframes modalFadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes modalScaleIn {
+                    from { transform: scale(0.95); opacity: 0; }
+                    to { transform: scale(1); opacity: 1; }
+                }
+                .custom-modal-header {
+                    padding: 16px 20px;
+                    background: var(--primary);
+                    color: white;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                .custom-modal-header h3 {
+                    margin: 0;
+                    font-size: 1.1rem;
+                    font-weight: 650;
+                    color: white;
+                }
+                .custom-modal-header .close-btn {
+                    background: transparent;
+                    border: none;
+                    color: white;
+                    font-size: 1.1rem;
+                    cursor: pointer;
+                    opacity: 0.8;
+                    transition: opacity 0.2s;
+                }
+                .custom-modal-header .close-btn:hover {
+                    opacity: 1;
+                }
+                .custom-modal-body {
+                    padding: 20px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                }
+                .modal-desc {
+                    margin: 0 0 4px 0;
+                    color: var(--text-muted);
+                    font-size: 0.85rem;
+                }
+                .modal-field {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 6px;
+                }
+                .modal-field label {
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                    color: var(--text-main);
+                    text-align: left;
+                }
+                .modal-field select, .modal-field input {
+                    padding: 10px 12px;
+                    border: 1px solid var(--border-light);
+                    border-radius: 8px;
+                    font-size: 0.9rem;
+                    background: var(--bg-app);
+                    color: var(--text-main);
+                    outline: none;
+                    box-sizing: border-box;
+                    width: 100%;
+                }
+                .modal-field select:focus, .modal-field input:focus {
+                    border-color: var(--primary);
+                    background: white;
+                }
+                .custom-modal-footer {
+                    padding: 16px 20px;
+                    border-top: 1px solid var(--border-light);
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 12px;
+                    background: var(--bg-app);
+                }
+                .custom-modal-footer button {
+                    padding: 8px 16px;
+                    border-radius: 6px;
+                    font-size: 0.85rem;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .custom-modal-footer .cancel-btn {
+                    background: white;
+                    border: 1px solid var(--border-light);
+                    color: var(--text-main);
+                }
+                .custom-modal-footer .cancel-btn:hover {
+                    background: var(--bg-app);
+                }
+                .custom-modal-footer .confirm-btn {
+                    background: var(--primary);
+                    border: 1px solid var(--primary-hover);
+                    color: white;
+                }
+                .custom-modal-footer .confirm-btn:hover {
+                    background: var(--primary-hover);
+                }
+
                 /* Premium Enterprise SaaS Dashboard CSS */
                 .saas-dashboard {
                     font-family: 'Inter', system-ui, sans-serif;
@@ -798,6 +1049,7 @@ const AdminDashboard: React.FC = () => {
                 }
                 `}</style>
             </div>
+            <ToastContainer position="bottom-right" />
         </AdminLayout>
     );
 };

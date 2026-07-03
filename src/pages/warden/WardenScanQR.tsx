@@ -251,7 +251,7 @@ const WardenScanQR: React.FC = () => {
                     background: linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 45%, #DBEAFE 100%);
                     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
                     padding-top: var(--nav-height, 64px);
-                    padding-bottom: 80px;
+                    padding-bottom: calc(100px + env(safe-area-inset-bottom));
                 }
 
                 .sd-main {
@@ -720,6 +720,24 @@ const WardenScanQR: React.FC = () => {
 
                 @keyframes spin {
                     to { transform: rotate(360deg); }
+                }
+
+                /* ====== RESPONSIVE ====== */
+                @media (max-width: 768px) {
+                    .sd-main { padding: 16px 16px 0; }
+                    .sd-header-row { flex-direction: column; align-items: stretch; gap: 16px; margin-bottom: 8px; }
+                    .sd-scanner-card { padding: 24px 20px; border-radius: 20px; }
+                    .sd-title { font-size: 1.5rem; }
+                    
+                    .sd-details-grid { grid-template-columns: 1fr; gap: 12px; }
+                    .sd-detail-item.full-width { grid-column: span 1; }
+                    .sd-result-actions { flex-direction: column; gap: 12px; }
+                    
+                    .sd-student-profile-strip { flex-direction: column; text-align: center; gap: 12px; padding-bottom: 16px; }
+                    .sd-student-identity { align-items: center; }
+                    
+                    .sd-error-header { font-size: 1.2rem; }
+                    .sd-success-title { font-size: 0.95rem; }
                 }
             `}</style>
         </div>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Toast from '../../components/Toast';
 import axios from 'axios';
 import { toast, ToastContainer } from "react-toastify";
+import SEO from '../../components/SEO';
 
 /* ─────────────────────────────────────────────────────────────────────────────
    BACKGROUND CANVAS  — flowing light waves + floating dots
@@ -213,6 +214,12 @@ const YearInchargeLogin: React.FC = () => {
 
   return (
     <div className={`yi-root ${mounted ? 'yi-mounted' : ''} ${successAnim ? 'yi-success-zoom' : ''}`}>
+      <SEO
+        title="Year Incharge Login"
+        description="Year Incharge portal login for JIT Permigo academic management system."
+        canonical="/year-incharge-login"
+        noIndex
+      />
       <ToastContainer />
       {showToast && (
         <Toast message="Login successful! Redirecting..." type="success" onClose={() => setShowToast(false)} />
