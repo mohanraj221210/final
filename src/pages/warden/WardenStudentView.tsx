@@ -431,21 +431,21 @@ const WardenStudentView: React.FC = () => {
                   </span>
                 </div>
                 <div className="workflow-card-body">
-                  {student.wardenapprovedAt && (
+                  {(student.wardenapprovedAt || student.wardenrejectedAt || student.warden?.actionAt || (wardenStatus !== 'pending' && student.updatedAt)) && (
                     <div className="workflow-field">
                       <label>Action Date &amp; Time</label>
                       <div className="workflow-value">
-                        {new Date(student.wardenapprovedAt).toLocaleString('en-IN', {
+                        {new Date(student.wardenapprovedAt || student.wardenrejectedAt || student.warden?.actionAt || student.updatedAt).toLocaleString('en-IN', {
                           day: '2-digit', month: 'short', year: 'numeric',
                           hour: '2-digit', minute: '2-digit', hour12: true
                         })}
                       </div>
                     </div>
                   )}
-                  {student.wardenremarks && (
+                  {(student.wardenremarks || student.remarks || student.warden?.remarks) && (
                     <div className="workflow-field mt-2">
                       <label>Remarks</label>
-                      <div className="workflow-value remarks-value">"{student.wardenremarks}"</div>
+                      <div className="workflow-value remarks-value">"{student.wardenremarks || student.remarks || student.warden?.remarks}"</div>
                     </div>
                   )}
                 </div>

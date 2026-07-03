@@ -524,18 +524,96 @@ const Dashboard: React.FC = () => {
 
     const maxTypeCount = Math.max(stats.Home, stats.Outing, stats.OD, stats.Emergency, 1);
 
-    // Chart data
-    const chartData = {
-        today: [2, 5, 3, 7, 4, 8, 6],
-        weekly: [12, 18, 14, 22, 16, 25, 20],
-        monthly: [45, 62, 55, 78, 60, 82, 71],
-        total: [120, 180, 145, 210, 165, 240, 195],
-    };
-    const chartLabels = {
-        today: ['09','10','11','12','13','14','15'],
-        weekly: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
-        monthly: ['W1','W2','W3','W4','W5','W6','W7'],
-        total: ['Jan','Feb','Mar','Apr','May','Jun','Jul'],
+    // Dynamic chart data builder based on stats response
+    const getDynamicChartData = (): { data: number[]; labels: string[] } => {
+        const now = new Date();
+        
+        if (statsFilter === 'today') {
+            const labels = ['06AM', '08AM', '10AM', '12PM', '02PM', '04PM', '06PM'];
+            const data = [0, 0, 0, 0, 0, 0, 0];
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            todayStart.setHours(0, 0, 0, 0);
+            
+            recentPasses.forEach(pass => {
+                const d = new Date(pass.createdAt);
+                if (d >= todayStart) {
+                    const h = d.getHours();
+                    if (h >= 6 && h < 8) data[0]++;
+                    else if (h >= 8 && h < 10) data[1]++;
+                    else if (h >= 10 && h < 12) data[2]++;
+                    else if (h >= 12 && h < 14) data[3]++;
+                    else if (h >= 14 && h < 16) data[4]++;
+                    else if (h >= 16 && h < 18) data[5]++;
+                    else if (h >= 18 || h < 6) data[6]++;
+                }
+            });
+            return { data, labels };
+        }
+        
+        if (statsFilter === 'weekly') {
+            const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const data = [0, 0, 0, 0, 0, 0, 0];
+            
+            // Get start of the current week (Monday)
+            const currentDay = now.getDay();
+            const distanceToMonday = currentDay === 0 ? 6 : currentDay - 1;
+            const mondayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - distanceToMonday);
+            mondayStart.setHours(0, 0, 0, 0);
+            
+            recentPasses.forEach(pass => {
+                const d = new Date(pass.createdAt);
+                if (d >= mondayStart) {
+                    const dayIdx = d.getDay();
+                    const mapIdx = dayIdx === 0 ? 6 : dayIdx - 1;
+                    if (mapIdx >= 0 && mapIdx < 7) {
+                        data[mapIdx]++;
+                    }
+                }
+            });
+            return { data, labels };
+        }
+        
+        if (statsFilter === 'monthly') {
+            const labels = ['W1', 'W2', 'W3', 'W4', 'W5'];
+            const data = [0, 0, 0, 0, 0];
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+            
+            recentPasses.forEach(pass => {
+                const d = new Date(pass.createdAt);
+                if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+                    const dateNum = d.getDate();
+                    const weekIdx = Math.min(Math.floor((dateNum - 1) / 7), 4);
+                    data[weekIdx]++;
+                }
+            });
+            return { data, labels };
+        }
+        
+        // total (all time, bucketed by month of the current year)
+        if (statsFilter === 'total') {
+            const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const data = new Array(12).fill(0);
+            const currentYear = now.getFullYear();
+            
+            recentPasses.forEach(pass => {
+                const d = new Date(pass.createdAt);
+                if (d.getFullYear() === currentYear) {
+                    const monthIdx = d.getMonth();
+                    if (monthIdx >= 0 && monthIdx < 12) {
+                        data[monthIdx]++;
+                    }
+                }
+            });
+            
+            const currentMonthIdx = now.getMonth();
+            return {
+                data: data.slice(0, currentMonthIdx + 1),
+                labels: labels.slice(0, currentMonthIdx + 1)
+            };
+        }
+        
+        return { data: [], labels: [] };
     };
 
     const donutSegments = [
@@ -754,15 +832,22 @@ const Dashboard: React.FC = () => {
                                         </div>
                                     </div>
                                     <div className="wdp-line-chart-wrap">
-                                        <LineChart
-                                            data={chartData[statsFilter]}
-                                            color="#3B82F6"
-                                        />
-                                        <div className="wdp-chart-labels">
-                                            {chartLabels[statsFilter].map((l, i) => (
-                                                <span key={i}>{l}</span>
-                                            ))}
-                                        </div>
+                                        {(() => {
+                                            const { data, labels } = getDynamicChartData();
+                                            return (
+                                                <>
+                                                    <LineChart
+                                                        data={data}
+                                                        color="#3B82F6"
+                                                    />
+                                                    <div className="wdp-chart-labels">
+                                                        {labels.map((l, i) => (
+                                                            <span key={i}>{l}</span>
+                                                        ))}
+                                                    </div>
+                                                </>
+                                            );
+                                        })()}
                                     </div>
                                 </div>
 
@@ -985,7 +1070,6 @@ const Dashboard: React.FC = () => {
                                         <div className="wdp-profile-divider" />
                                         <div className="wdp-profile-details">
                                             {[
-                                                { label: 'Staff ID',   value: user.staffid?.id || 'N/A' },
                                                 { label: 'Department', value: user.department || 'Hostel Block' },
                                                 { label: 'Email',      value: user.email || 'N/A' },
                                                 { label: 'Mobile',     value: user.phone || 'N/A' },
