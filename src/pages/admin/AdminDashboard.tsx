@@ -287,7 +287,7 @@ const AdminDashboard: React.FC = () => {
                                 </div>
                                 <div className="kpi-bottom">
                                     <div>
-                                        <p className="kpi-label">Active Staff</p>
+                                        <p className="kpi-label">Active Faculty</p>
                                         <h2 className="kpi-value">{staffStats?.total || 0}</h2>
                                     </div>
                                     <div className="kpi-spark">
@@ -401,7 +401,7 @@ const AdminDashboard: React.FC = () => {
                             <div className="saas-card">
                                 <div className="card-header">
                                     <div className="card-title-group">
-                                        <h3>Staff Overview</h3>
+                                        <h3>Faculty Overview</h3>
                                         <p>Faculty members per department</p>
                                     </div>
                                 </div>

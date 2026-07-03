@@ -72,7 +72,7 @@ const AdminLayout: React.FC<LayoutProps> = ({ children, title }) => {
 
     const menuItems = [
         { label: 'Overview', path: '/admin/dashboard', icon: <LayoutDashboard size={20} /> },
-        { label: 'Staff Directory', path: '/admin/manage-staff', icon: <Users size={20} /> },
+        { label: 'Faculty Directory', path: '/admin/manage-staff', icon: <Users size={20} /> },
         { label: 'Year Incharges', path: '/admin/manage-year-incharge', icon: <UserCheck size={20} /> },
         { label: 'Wardens', path: '/admin/manage-warden', icon: <Building2 size={20} /> },
         { label: 'Security Team', path: '/admin/manage-security', icon: <Shield size={20} /> },
