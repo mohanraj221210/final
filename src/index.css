@@ -1162,12 +1162,9 @@ select.input, select.form-input {
 .student-page {
   min-height: 100vh;
   position: relative;
-  /* Gold-glowing ambient background for desktop */
-  background: radial-gradient(circle at 10% 15%, rgba(212, 160, 23, 0.15) 0%, transparent 50%),
-              radial-gradient(circle at 90% 85%, rgba(212, 160, 23, 0.09) 0%, transparent 50%),
-              radial-gradient(circle at 50% 50%, rgba(212, 160, 23, 0.06) 0%, transparent 60%),
-              linear-gradient(135deg, #f6edd2 0%, #809fc7 50%, #e1e4ef 100%) !important;
-  padding-top: var(--nav-height);
+  /* New clean light background for desktop */
+  background: #F1F5F9 !important;
+  padding-top: 70px; /* matches new sp-header height */
   padding-bottom: calc(var(--mobile-nav-height) + var(--space-8) + env(safe-area-inset-bottom, 16px));
   display: flex;
   flex-direction: column;
@@ -1176,54 +1173,12 @@ select.input, select.form-input {
   z-index: 1;
 }
 
-/* Premium glossy sweep overlay that makes the page background feel reflective */
-.student-page::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: linear-gradient(
-    115deg,
-    transparent 0%,
-    transparent 35%,
-    rgba(212, 160, 23, 0.04) 40%,
-    rgba(255, 255, 255, 0.15) 45%,
-    rgba(212, 160, 23, 0.04) 50%,
-    transparent 55%,
-    transparent 100%
-  );
-  background-size: 200% 100%;
-  animation: bgGlossySweep 12s infinite linear;
-  pointer-events: none;
-  z-index: -1;
-}
-
-@keyframes bgGlossySweep {
-  0% { background-position: 150% 0; }
-  100% { background-position: -50% 0; }
-}
 
 @media (max-width: 768px) {
   .student-page {
     padding-top: 0 !important;
-    /* Rich gold-glowing dark slate theme for mobile student pages (slightly lighter) */
-    background: radial-gradient(circle at 0% 0%, rgba(212, 160, 23, 0.22) 0%, transparent 60%),
-                radial-gradient(circle at 100% 100%, rgba(212, 160, 23, 0.14) 0%, transparent 60%),
-                radial-gradient(circle at 50% 30%, rgba(212, 160, 23, 0.1) 0%, transparent 65%),
-                linear-gradient(135deg, #0e131f 0%, #171d2e 40%, #20263a 75%, #1c190f 100%) !important;
-  }
-  .student-page::before {
-    background: linear-gradient(
-      115deg,
-      transparent 0%,
-      transparent 35%,
-      rgba(212, 160, 23, 0.08) 40%,
-      rgba(255, 255, 255, 0.08) 45%,
-      rgba(212, 160, 23, 0.08) 50%,
-      transparent 55%,
-      transparent 100%
-    );
-    background-size: 200% 100%;
-    animation: bgGlossySweep 10s infinite linear;
+    /* Clean light mobile background */
+    background: #F1F5F9 !important;
   }
   .student-page:not(.dashboard-page-view) {
     padding-bottom: 0 !important;
