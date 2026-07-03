@@ -87,9 +87,7 @@ const WardenStudentView: React.FC = () => {
       await axios.put(
         `${import.meta.env.VITE_API_URL}/warden/outpass/reject/${id}`,
         {
-          outpassId: id,
-          wardenapprovalstatus: modalType,
-          wardenremarks: remarks,
+          remarks: remarks,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );

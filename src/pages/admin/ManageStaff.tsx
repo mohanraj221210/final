@@ -78,14 +78,14 @@ const ManageStaff: React.FC = () => {
     };
 
     return (
-        <AdminLayout title="Manage Staff" activeMenu="staff">
+        <AdminLayout title="Manage Faculty" activeMenu="staff">
             <ToastContainer position="bottom-right" theme="colored" />
 
             <div className="admin-page-content">
                 <div className="page-header">
                     <div>
-                        <h1 className="page-title">Staff Management</h1>
-                        <p className="page-subtitle">View, search, and manage staff members</p>
+                        <h1 className="page-title">Faculty Management</h1>
+                        <p className="page-subtitle">View, search, and manage faculty members</p>
                     </div>
                     <div className="header-actions">
                         <div className="search-bar">
@@ -98,7 +98,7 @@ const ManageStaff: React.FC = () => {
                             />
                         </div>
                         <button className="btn-primary" onClick={handleAddNew}>
-                            <span className="icon">+</span> Add New Staff
+                            <span className="icon">+</span> Add New Faculty
                         </button>
                     </div>
                 </div>
@@ -107,14 +107,14 @@ const ManageStaff: React.FC = () => {
                     {loading ? (
                         <div className="loading-state">
                             <div className="spinner"></div>
-                            <span>Loading staff data...</span>
+                            <span>Loading faculty data...</span>
                         </div>
                     ) : (
                         <div className="table-responsive">
                             <table className="modern-table">
                                 <thead>
                                     <tr>
-                                        <th>Staff Member</th>
+                                        <th>Faculty Member</th>
                                         <th>Email</th>
                                         <th>Department</th>
                                         <th>Designation</th>
@@ -162,7 +162,7 @@ const ManageStaff: React.FC = () => {
                                     {staffList.length === 0 && (
                                         <tr>
                                             <td colSpan={5} className="empty-state">
-                                                {searchTerm ? "No staff found matching your search." : "No staff members found. Click \"Add New Staff\" to get started."}
+                                                {searchTerm ? "No faculty found matching your search." : "No faculty members found. Click \"Add New Faculty\" to get started."}
                                             </td>
                                         </tr>
                                     )}
@@ -178,7 +178,7 @@ const ManageStaff: React.FC = () => {
                 <div className="modal-overlay">
                     <div className="modal-content">
                         <div className="modal-header">
-                            <h3>Add New Staff</h3>
+                            <h3>Add New Faculty</h3>
                             <button className="close-btn" onClick={() => setIsModalOpen(false)}>×</button>
                         </div>
                         <form onSubmit={handleSave}>

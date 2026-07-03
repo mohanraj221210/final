@@ -7,6 +7,7 @@ import StudentHeader from '../../components/StudentHeader';
 import StudentBottomNav from '../../components/StudentBottomNav';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { isProfileComplete } from '../../utils/profileHelper';
+import '../../student-portal.css';
 
 const getGreeting = () => {
     const hour = new Date().getHours();
@@ -52,7 +53,7 @@ const getStatusColor = (status: string) => {
 };
 
 const Dashboard: React.FC = () => {
-    const [Loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<User>({
         name: "",
         registerNumber: "",
@@ -82,7 +83,6 @@ const Dashboard: React.FC = () => {
         const fetchDashboardData = async () => {
             const token = localStorage.getItem('token');
             if (!token) return;
-
             try {
                 const [profileRes, statsRes] = await Promise.all([
                     axios.get(`${import.meta.env.VITE_API_URL}/api/profile`, {
@@ -132,7 +132,6 @@ const Dashboard: React.FC = () => {
                 setLoading(false);
             }
         };
-
         fetchDashboardData();
     }, []);
 
@@ -146,10 +145,7 @@ const Dashboard: React.FC = () => {
         }
         const restrictedPaths = ['/staffs', '/student-notice', '/subjects', '/outpass', '/new-outpass'];
         if (restrictedPaths.includes(path) && !isProfileComplete(user)) {
-            toast.warn("Complete your profile to enable " + path.replace('/', ''), {
-                position: "top-center",
-                autoClose: 3000,
-            });
+            toast.warn("Complete your profile to access this feature", { position: "top-center", autoClose: 3000 });
             return;
         }
         setNavigatingPath(path);
@@ -188,7 +184,7 @@ const Dashboard: React.FC = () => {
         return Math.round((filled / total) * 100) || 0;
     }, [user]);
 
-    if (Loading) return <LoadingSpinner />;
+    if (loading) return <LoadingSpinner />;
 
     const totalOutpasses = outpassStats.pending + outpassStats.approved + outpassStats.rejected;
 
@@ -235,6 +231,8 @@ const Dashboard: React.FC = () => {
         { label: 'Checked Out', value: outpassStats.checkedOut, colorClass: 'blue', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg> },
         { label: 'Checked In', value: outpassStats.checkedIn, colorClass: 'sky', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><polyline points="10 17 15 12 10 7" /><line x1="15" y1="12" x2="3" y2="12" /></svg> },
     ];
+
+
 
     return (
         <div className="db-page">
@@ -325,6 +323,31 @@ const Dashboard: React.FC = () => {
                                 </button>
                             </div>
                         )}
+                        {recentPasses.length > 0 && (
+                            <button
+                                onClick={() => handleNavigation('/outpass')}
+                                style={{ width: '100%', marginTop: 14, padding: '13px', background: '#EEF2FF', color: '#4F46E5', border: 'none', borderRadius: 12, fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+                            >
+                                View All Outpasses →
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Student Details */}
+                    <div className="sp-mob-section-title sp-animate-enter sp-stagger-4">Student Details</div>
+                    <div className="sp-mob-card sp-animate-enter sp-stagger-4">
+                        {[
+                            { label: 'Register No.', value: user.registerNumber || '—' },
+                            { label: 'Department', value: user.department || '—' },
+                            { label: 'Year / Semester', value: `${user.year || '—'} Year, Sem ${user.semester || '—'}` },
+                            { label: 'Residence', value: user.residencetype || '—' },
+                            { label: 'Class Tutor', value: user.staffid?.name || '—' },
+                        ].map((row, i, arr) => (
+                            <div key={row.label} className="sp-mob-field-row" style={{ borderBottom: i < arr.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
+                                <span className="sp-mob-field-lbl">{row.label}</span>
+                                <span className="sp-mob-field-val" style={{ textTransform: 'capitalize' }}>{row.value}</span>
+                            </div>
+                        ))}
                     </div>
 
                     {/* ── QUICK ACTIONS ── */}

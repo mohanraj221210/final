@@ -76,7 +76,7 @@ const SecurityDetailsAdmin: React.FC = () => {
     const handlePasswordUpdate = async (password: string) => {
         if (!watchman) return;
         try {
-            await adminService.updateWatchman(watchman._id, { ...watchman, password });
+            await adminService.resetSecurityPassword(security._id, password);
             toast.success("Password updated successfully");
         } catch (error) {
             toast.error("Failed to update password");
@@ -208,11 +208,11 @@ const SecurityDetailsAdmin: React.FC = () => {
                     background: white;
                     border: 1px solid #e2e8f0;
                     color: #64748b;
-                    font-size: 0.95rem;
+                    font-size: 0.85rem;
                     font-weight: 600;
                     cursor: pointer;
                     margin-bottom: 24px;
-                    padding: 10px 20px;
+                    padding: 6px 12px;
                     border-radius: 10px;
                     transition: all 0.2s;
                     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
@@ -355,7 +355,7 @@ const SecurityDetailsAdmin: React.FC = () => {
                 .field-group { display: flex; flex-direction: column; gap: 6px; }
                 .field-label { font-size: 0.85rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.025em; }
                 .field-value { font-size: 1rem; color: #111827; font-weight: 500; }
-                .field-input {
+                .field-input { background-color: white; color: #111827;
                     padding: 10px 12px;
                     border: 1px solid #d1d5db;
                     border-radius: 8px;

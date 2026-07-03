@@ -19,9 +19,8 @@ export const DESIGNATIONS = [
 ];
 
 export const GENDERS = [
-    "Male",
-    "Female",
-    "Other"
+    "male",
+    "female",
 ];
 
 export const YEARS = [
