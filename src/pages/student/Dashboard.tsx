@@ -323,32 +323,9 @@ const Dashboard: React.FC = () => {
                                 </button>
                             </div>
                         )}
-                        {recentPasses.length > 0 && (
-                            <button
-                                onClick={() => handleNavigation('/outpass')}
-                                style={{ width: '100%', marginTop: 14, padding: '13px', background: '#EEF2FF', color: '#4F46E5', border: 'none', borderRadius: 12, fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
-                            >
-                                View All Outpasses →
-                            </button>
-                        )}
                     </div>
 
-                    {/* Student Details */}
-                    <div className="sp-mob-section-title sp-animate-enter sp-stagger-4">Student Details</div>
-                    <div className="sp-mob-card sp-animate-enter sp-stagger-4">
-                        {[
-                            { label: 'Register No.', value: user.registerNumber || '—' },
-                            { label: 'Department', value: user.department || '—' },
-                            { label: 'Year / Semester', value: `${user.year || '—'} Year, Sem ${user.semester || '—'}` },
-                            { label: 'Residence', value: user.residencetype || '—' },
-                            { label: 'Class Tutor', value: user.staffid?.name || '—' },
-                        ].map((row, i, arr) => (
-                            <div key={row.label} className="sp-mob-field-row" style={{ borderBottom: i < arr.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
-                                <span className="sp-mob-field-lbl">{row.label}</span>
-                                <span className="sp-mob-field-val" style={{ textTransform: 'capitalize' }}>{row.value}</span>
-                            </div>
-                        ))}
-                    </div>
+
 
                     {/* ── QUICK ACTIONS ── */}
                     <section className="pb-stagger-2">
@@ -452,6 +429,70 @@ const Dashboard: React.FC = () => {
                         </div>
                     </section>
 
+                    {/* ── ENHANCED STUDENT DETAILS ── */}
+                    <section className="pb-stagger-4-5 db-student-details-section">
+                        <div className="pb-section-header">
+                            <h2 className="pb-section-title">
+                                <span className="pb-section-title-icon">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                                </span>
+                                Student Details
+                            </h2>
+                        </div>
+                        <div className="db-student-details-card">
+                            <div className="db-details-grid">
+                                {[
+                                    { 
+                                        label: 'Register No.', 
+                                        value: user.registerNumber || '—',
+                                        icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>,
+                                        color: '#3B82F6'
+                                    },
+                                    { 
+                                        label: 'Department', 
+                                        value: user.department || '—',
+                                        icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z" /><path d="M6 12v5c3 3 9 3 12 0v-5" /></svg>,
+                                        color: '#10B981'
+                                    },
+                                    { 
+                                        label: 'Year & Sem', 
+                                        value: user.year && user.semester ? `Year ${user.year} · Sem ${user.semester}` : '—',
+                                        icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>,
+                                        color: '#F59E0B'
+                                    },
+                                    { 
+                                        label: 'Residence', 
+                                        value: user.residencetype ? (user.residencetype.charAt(0).toUpperCase() + user.residencetype.slice(1)) : '—',
+                                        icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>,
+                                        color: '#8B5CF6'
+                                    },
+                                    { 
+                                        label: 'Class Tutor', 
+                                        value: user.staffid?.name || '—',
+                                        icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>,
+                                        color: '#EC4899'
+                                    },
+                                    { 
+                                        label: 'Contact', 
+                                        value: user.phone || '—',
+                                        icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>,
+                                        color: '#06B6D4'
+                                    }
+                                ].map((item, idx) => (
+                                    <div key={idx} className="db-detail-item">
+                                        <div className="db-detail-icon-bg" style={{ color: item.color, backgroundColor: `${item.color}0D` }}>
+                                            {item.icon}
+                                        </div>
+                                        <div className="db-detail-text">
+                                            <div className="db-detail-label">{item.label}</div>
+                                            <div className="db-detail-val">{item.value}</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+
                     {/* ── ACADEMIC OVERVIEW ── */}
                     <section className="pb-stagger-5">
                         <div className="pb-section-header">
@@ -513,6 +554,73 @@ const Dashboard: React.FC = () => {
                     display: flex;
                     flex-direction: column;
                     gap: 20px;
+                }
+
+                .db-student-details-card {
+                    background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.96) 100%);
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
+                    border: 1px solid rgba(59,130,246,0.12);
+                    border-radius: 20px;
+                    padding: 24px;
+                    box-shadow: 0 4px 20px rgba(59,130,246,0.04);
+                }
+
+                .db-details-grid {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 20px;
+                }
+
+                .db-detail-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 14px;
+                    padding: 12px 16px;
+                    background: rgba(255, 255, 255, 0.7);
+                    border: 1px solid rgba(226, 232, 240, 0.6);
+                    border-radius: 14px;
+                    transition: all 0.2s ease;
+                }
+
+                .db-detail-item:hover {
+                    background: #fff;
+                    border-color: rgba(59, 130, 246, 0.25);
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.05);
+                }
+
+                .db-detail-icon-bg {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                }
+
+                .db-detail-text {
+                    min-width: 0;
+                    flex: 1;
+                }
+
+                .db-detail-label {
+                    font-size: 0.72rem;
+                    font-weight: 600;
+                    color: #64748B;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                    margin-bottom: 2px;
+                }
+
+                .db-detail-val {
+                    font-size: 0.88rem;
+                    font-weight: 750;
+                    color: #0F172A;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
                 }
 
                 /* HERO CARD */
@@ -853,11 +961,31 @@ const Dashboard: React.FC = () => {
 
                     .db-academic-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
                     .db-academic-item { padding: 12px 10px; }
+
+                    .db-details-grid {
+                        grid-template-columns: repeat(2, 1fr);
+                        gap: 12px;
+                    }
+                    .db-detail-item {
+                        padding: 10px 12px;
+                        gap: 10px;
+                    }
+                    .db-detail-icon-bg {
+                        width: 34px;
+                        height: 34px;
+                    }
+                    .db-detail-val {
+                        font-size: 0.8rem;
+                    }
                 }
 
                 @media (max-width: 480px) {
                     .db-stats-grid { grid-template-columns: repeat(3, 1fr); }
                     .db-academic-grid { grid-template-columns: repeat(2, 1fr); }
+                    .db-details-grid {
+                        grid-template-columns: 1fr;
+                        gap: 10px;
+                    }
                 }
 
                 @media (max-width: 380px) {
