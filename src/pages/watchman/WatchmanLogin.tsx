@@ -689,6 +689,15 @@ const WatchmanLogin: React.FC = () => {
           transition: border-color 0.28s ease, box-shadow 0.28s ease, background 0.28s ease;
           -webkit-appearance: none;
         }
+        .wm-input:-webkit-autofill,
+        .wm-input:-webkit-autofill:hover, 
+        .wm-input:-webkit-autofill:focus, 
+        .wm-input:-webkit-autofill:active {
+          -webkit-box-shadow: 0 0 0 1000px #f0fdf4 inset !important;
+          -webkit-text-fill-color: #064E3B !important;
+          caret-color: #064E3B;
+          transition: background-color 5000s ease-in-out 0s;
+        }
         .wm-input::placeholder { color: #9CA3AF; font-weight: 400; }
         .wm-input:hover { border-color: rgba(5,150,105,0.35); background: rgba(255,255,255,0.95); }
         .wm-input:focus {

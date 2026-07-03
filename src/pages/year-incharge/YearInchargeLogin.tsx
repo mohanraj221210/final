@@ -689,6 +689,15 @@ const YearInchargeLogin: React.FC = () => {
           transition: border-color 0.28s ease, box-shadow 0.28s ease, background 0.28s ease;
           -webkit-appearance: none;
         }
+        .yi-input:-webkit-autofill,
+        .yi-input:-webkit-autofill:hover, 
+        .yi-input:-webkit-autofill:focus, 
+        .yi-input:-webkit-autofill:active {
+          -webkit-box-shadow: 0 0 0 1000px #fffbf5 inset !important;
+          -webkit-text-fill-color: #1C1917 !important;
+          caret-color: #1C1917;
+          transition: background-color 5000s ease-in-out 0s;
+        }
         .yi-input::placeholder { color: #A8A29E; font-weight: 400; }
         .yi-input:hover { border-color: rgba(217,119,6,0.35); background: rgba(255,255,255,0.95); }
         .yi-input:focus {

@@ -217,7 +217,7 @@ const StudentDetails: React.FC = () => {
                                         value={formData.registerNumber || ''}
                                         onChange={handleInputChange}
                                         style={{
-                                            background: 'rgba(255,255,255,0.15)',
+                                            background: 'rgba(255, 255, 255, 0.15)',
                                             padding: '4px 12px',
                                             borderRadius: '20px',
                                             fontSize: '0.9rem',
@@ -560,7 +560,7 @@ const StudentDetails: React.FC = () => {
                 }
 
                 .badge-reg {
-                    background: rgba(255,255,255,0.15);
+                    background: rgba(255, 255, 255, 0.14);
                     padding: 4px 12px;
                     border-radius: 20px;
                     font-size: 0.9rem;
@@ -640,7 +640,7 @@ const StudentDetails: React.FC = () => {
 
                 .info-row-modern p {
                     font-size: 1rem;
-                    color: #1e293b;
+                    color: #1f2e3dff;
                     font-weight: 600;
                     margin: 0;
                 }
@@ -733,6 +733,8 @@ const StudentDetails: React.FC = () => {
                     border-radius: 6px;
                     font-size: 0.95rem;
                     width: 100%;
+                    background: #ffffff;
+                    color: #0f172a;
                 }
                 .field-input:focus {
                     outline: none;

@@ -810,6 +810,15 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
           transition: border-color 0.28s ease, box-shadow 0.28s ease, background 0.28s ease;
           -webkit-appearance: none;
         }
+        .lp-input:-webkit-autofill,
+        .lp-input:-webkit-autofill:hover, 
+        .lp-input:-webkit-autofill:focus, 
+        .lp-input:-webkit-autofill:active {
+          -webkit-box-shadow: 0 0 0 1000px #f8fbff inset !important;
+          -webkit-text-fill-color: #0F172A !important;
+          caret-color: #0F172A;
+          transition: background-color 5000s ease-in-out 0s;
+        }
         .lp-input::placeholder { color: #94A3B8; font-weight: 400; }
         .lp-input:hover {
           border-color: rgba(59,130,246,0.35);

@@ -257,6 +257,8 @@ const EmergencyOutpassApply: React.FC = () => {
                     font-size: 1.1rem;
                     outline: none;
                     transition: all 0.3s;
+                    background: white;
+                    color: black;
                 }
 
                 .room-input:focus {
@@ -395,6 +397,8 @@ const EmergencyOutpassApply: React.FC = () => {
                     font-family: inherit;
                     resize: vertical;
                     transition: all 0.3s;
+                    background: white;
+                    color: black;
                 }
 
                 .form-group textarea:focus {

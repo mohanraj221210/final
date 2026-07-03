@@ -605,6 +605,17 @@ const WardenProfile: React.FC = () => {
           text-align: center;
         }
 
+        .profile-header {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          width: 100%;
+        }
+
+        .hidden-input {
+          display: none;
+        }
+
         .avatar-container {
           position: relative;
           width: 128px;
