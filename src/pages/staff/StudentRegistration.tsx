@@ -926,6 +926,7 @@ const StudentRegistration: React.FC = () => {
                     font-size: 0.875rem;
                     background: #ffffff;
                     transition: all 0.2s;
+                    color: black;
                 }
 
                 .search-bar input:focus {
