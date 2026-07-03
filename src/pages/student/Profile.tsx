@@ -27,7 +27,7 @@ const Profile: React.FC = () => {
         batch: '',
         cgpa: 0,
         arrears: 0,
-        gender: 'male',
+        gender: '',
         parentnumber: '',
         residencetype: '',
         hostelname: '',
@@ -85,7 +85,7 @@ const Profile: React.FC = () => {
                     setUser(prev => ({
                         ...prev,
                         ...response.data.user,
-                        gender: response.data.user.gender || prev.gender || 'male'
+                        gender: response.data.user.gender || prev.gender || ''
                     }));
                     setImageError(false);
                     toast.success("User profile fetched successfully");
@@ -159,6 +159,10 @@ const Profile: React.FC = () => {
     };
 
     const handleSave = async () => {
+        if (!user.gender) {
+            toast.error("Please select your gender");
+            return;
+        }
         try {
             let response;
             if (selectedFile) {
@@ -190,6 +194,10 @@ const Profile: React.FC = () => {
                 setShowToast(true);
                 setSelectedFile(null);
                 setIsEditing(false);
+                localStorage.setItem('userProfile', JSON.stringify(user));
+                setTimeout(() => {
+                    navigate('/dashboard');
+                }, 1000);
             }
         } catch (error) {
             toast.error("Failed to update profile");
@@ -388,8 +396,7 @@ const Profile: React.FC = () => {
                                                     max="10"
                                                     name="cgpa"
                                                     value={user.cgpa || '8.25'}
-                                                    onChange={handleChange}
-                                                    disabled={!isEditing}
+                                                    disabled
                                                     className="pb-input"
                                                 />
                                             </div>
@@ -400,8 +407,7 @@ const Profile: React.FC = () => {
                                                     min="0"
                                                     name="arrears"
                                                     value={user.arrears || '0'}
-                                                    onChange={handleChange}
-                                                    disabled={!isEditing}
+                                                     disabled
                                                     className="pb-input"
                                                 />
                                             </div>
@@ -438,6 +444,7 @@ const Profile: React.FC = () => {
                                                     disabled={!isEditing}
                                                     className="pb-select"
                                                 >
+                                                    <option value="">Gender not selected</option>
                                                     <option value="male">Male</option>
                                                     <option value="female">Female</option>
                                                 </select>

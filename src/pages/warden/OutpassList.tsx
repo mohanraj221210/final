@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from "react";
-
 import axios from "axios";
-
 import { useNavigate } from "react-router-dom";
-
 import WardenNav from "../../components/WardenNav";
 import LoadingSpinner from "../../components/LoadingSpinner";
+import { toast, ToastContainer } from "react-toastify";
 
 const OutpassList: React.FC = () => {
   const navigate = useNavigate();
@@ -20,6 +18,7 @@ const OutpassList: React.FC = () => {
   const [documentType, setDocumentType] = useState<'image' | 'pdf'>('image');
   const [searchTerm, setSearchTerm] = useState("");
   const [isLast, setIsLast] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
 
   const itemsPerPage = 8;
@@ -28,12 +27,47 @@ const OutpassList: React.FC = () => {
     const handler = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
       setCurrentPage(1);
-    }, 300);
+    }, 450);
 
     return () => {
       clearTimeout(handler);
     };
   }, [searchTerm]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterStatus, dateFilter, typeFilter]);
+
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    const windowSize = 1;
+
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      pages.push(1);
+
+      let start = Math.max(2, currentPage - windowSize);
+      let end = Math.min(totalPages - 1, currentPage + windowSize);
+
+      if (start > 2) {
+        pages.push('...');
+      }
+
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+
+      if (end < totalPages - 1) {
+        pages.push('...');
+      }
+
+      pages.push(totalPages);
+    }
+    return pages;
+  };
 
   useEffect(() => {
     fetchOutpasses();
@@ -59,8 +93,8 @@ const OutpassList: React.FC = () => {
       const list = Array.isArray(outpassData) ? outpassData : [];
       const sortedList = list.sort((a: any, b: any) => {
         // Priority 1: Emergency first
-        const isAEmergency = a.outpasstype?.toLowerCase() === 'emergency';
-        const isBEmergency = b.outpasstype?.toLowerCase() === 'emergency';
+        const isAEmergency = (a.outpasstype || '').toLowerCase() === 'emergency';
+        const isBEmergency = (b.outpasstype || '').toLowerCase() === 'emergency';
         if (isAEmergency && !isBEmergency) return -1;
         if (!isAEmergency && isBEmergency) return 1;
 
@@ -69,8 +103,12 @@ const OutpassList: React.FC = () => {
       });
       setOutpasses(sortedList);
       setIsLast(res.data.isLast ?? true);
+      if (res.data.pages !== undefined) {
+        setTotalPages(res.data.pages);
+      }
     } catch (err: any) {
       console.error("Failed to fetch outpasses", err);
+      toast.error("Failed to fetch outpass records");
     } finally {
       setLoading(false);
     }
@@ -97,728 +135,1111 @@ const OutpassList: React.FC = () => {
     return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
   };
 
+  const getStatusBadgeClass = (status: string) => {
+    switch ((status || 'pending').toLowerCase()) {
+      case 'approved': return 'wd-status-approved';
+      case 'rejected': return 'wd-status-rejected';
+      default: return 'wd-status-pending';
+    }
+  };
+
   return (
-    <div className="page-container">
+    <div className="wd-root">
       <WardenNav />
-      <div className="list-container">
-        <div className="header-row">
-          <button className="back-btn" onClick={() => navigate("/warden-dashboard")}>
-            ← Back
-          </button>
+      <ToastContainer position="bottom-right" />
 
-          <div className="filter-tabs" style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <div style={{ position: 'relative', flex: 1, minWidth: '200px', maxWidth: '300px' }}>
-              <span className="search-icon" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }}>🔍</span>
-              <input
-                type="text"
-                placeholder="Search by name, reg no, date..."
-                value={searchTerm}
-                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                style={{
-                  width: '100%',
-                  padding: '10px 16px 10px 40px',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '12px',
-                  fontSize: '14px',
-                  outline: 'none',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
-                  boxSizing: 'border-box'
-                }}
-              />
+      <main className="wd-main">
+        <div className="wd-container">
+          
+          {/* Header row */}
+          <div className="wd-header-row">
+            <div>
+              <button className="wd-back-btn" onClick={() => navigate("/warden-dashboard")}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 12H5M12 5l-7 7 7 7"/>
+                </svg>
+                Back to Dashboard
+              </button>
+              <h1 className="wd-title">Outpass Archive</h1>
+              <p className="wd-subtitle">History of all processed student outpass clearances</p>
             </div>
-            <div style={{ position: 'relative', display: 'inline-block' }}>
-              <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '14px', pointerEvents: 'none' }}>
-                📅
-              </span>
-              <select
-                className="date-filter-select"
-                value={dateFilter}
-                onChange={(e) => { setDateFilter(e.target.value as any); setCurrentPage(1); }}
-                style={{
-                  padding: '10px 32px 10px 36px',
-                  borderRadius: '12px',
-                  border: '1px solid #cbd5e1',
-                  background: 'white',
-                  color: '#1e293b',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  outline: 'none',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
-                  appearance: 'none',
-                  minWidth: '150px'
-                }}
-              >
-                <option value="total">All Time</option>
-                <option value="today">Today</option>
-                <option value="weekly">This Week</option>
-                <option value="monthly">This Month</option>
-              </select>
-              <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '10px', pointerEvents: 'none' }}>
-                ▼
-              </span>
+
+            {/* Filter controls panel */}
+            <div className="wd-controls">
+              <div className="wd-search-wrapper">
+                <span className="wd-search-icon">🔍</span>
+                <input
+                  type="text"
+                  placeholder="Search name, register no..."
+                  value={searchTerm}
+                  onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                  className="wd-search-input"
+                />
+              </div>
+
+              <div className="wd-dropdown-wrapper">
+                <span className="wd-dropdown-icon">📅</span>
+                <select
+                  className="wd-filter-dropdown"
+                  value={dateFilter}
+                  onChange={(e) => { setDateFilter(e.target.value as any); setCurrentPage(1); }}
+                >
+                  <option value="total">All Time</option>
+                  <option value="today">Today</option>
+                  <option value="weekly">This Week</option>
+                  <option value="monthly">This Month</option>
+                </select>
+                <span className="wd-dropdown-arrow">▼</span>
+              </div>
+
+              <div className="wd-dropdown-wrapper">
+                <span className="wd-dropdown-icon">🏷️</span>
+                <select
+                  className="wd-filter-dropdown"
+                  value={typeFilter}
+                  onChange={(e) => { setTypeFilter(e.target.value as any); setCurrentPage(1); }}
+                >
+                  <option value="All">All Types</option>
+                  <option value="Home">Home</option>
+                  <option value="Outing">Outing</option>
+                  <option value="OD">OD</option>
+                  <option value="Emergency">Emergency</option>
+                </select>
+                <span className="wd-dropdown-arrow">▼</span>
+              </div>
+
+              {/* Status Tab Filter Pills */}
+              <div className="wd-tab-pills">
+                {(['All', 'Approved', 'Rejected'] as const).map((status) => (
+                  <button
+                    key={status}
+                    className={`wd-tab-pill ${filterStatus === status ? 'active' : ''}`}
+                    onClick={() => { setFilterStatus(status); setCurrentPage(1); }}
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div style={{ position: 'relative', display: 'inline-block' }}>
-              <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '14px', pointerEvents: 'none' }}>
-                🏷️
-              </span>
-              <select
-                className="type-filter-select"
-                value={typeFilter}
-                onChange={(e) => { setTypeFilter(e.target.value as any); setCurrentPage(1); }}
-                style={{
-                  padding: '10px 32px 10px 36px',
-                  borderRadius: '12px',
-                  border: '1px solid #cbd5e1',
-                  background: 'white',
-                  color: '#1e293b',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  outline: 'none',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
-                  appearance: 'none',
-                  minWidth: '150px'
-                }}
-              >
-                <option value="All">All Types</option>
-                <option value="Home">Home</option>
-                <option value="Outing">Outing</option>
-                <option value="OD">OD</option>
-                <option value="Emergency">Emergency</option>
-              </select>
-              <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '10px', pointerEvents: 'none' }}>
-                ▼
-              </span>
-            </div>
-            <button
-              className={`filter-btn ${filterStatus === 'All' ? 'active' : ''}`}
-              onClick={() => { setFilterStatus('All'); setCurrentPage(1); }}
-            >
-              All
-            </button>
-            <button
-              className={`filter-btn ${filterStatus === 'Approved' ? 'active' : ''}`}
-              onClick={() => { setFilterStatus('Approved'); setCurrentPage(1); }}
-            >
-              Approved
-            </button>
-            <button
-              className={`filter-btn ${filterStatus === 'Rejected' ? 'active' : ''}`}
-              onClick={() => { setFilterStatus('Rejected'); setCurrentPage(1); }}
-            >
-              Rejected
-            </button>
           </div>
-        </div>
 
-        <h1>Outpass List</h1>
+          {/* Table Container Card */}
+          <div className="wd-table-card">
+            {loading ? (
+              <div className="wd-table-loading">
+                <LoadingSpinner />
+              </div>
+            ) : (
+              <div className="wd-table-scroll">
+                <table className="wd-table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: '50px' }}>#</th>
+                      <th>Student</th>
+                      <th>Register No</th>
+                      <th>Applied Date</th>
+                      <th>Reason / Type</th>
+                      <th>Status</th>
+                      <th style={{ width: '200px' }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentData.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="wd-empty-cell">
+                          <div className="wd-table-empty">
+                            <span className="wd-empty-icon">📋</span>
+                            <h3 className="wd-empty-title">No Outpasses Found</h3>
+                            <p className="wd-empty-desc">No outpass logs matched your active search criteria.</p>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      currentData.map((item, index) => {
+                        const isEmergency = (item.outpasstype || '').toLowerCase().includes('emergency');
+                        return (
+                          <tr key={item._id || index} onClick={() => navigate(`/warden/outpass/${item._id}`)}>
+                            <td><span className="sd-mono">{startIndex + index + 1}</span></td>
+                            <td>
+                              <div className="wd-student-cell">
+                                <div className="wd-table-avatar">
+                                  {item.student?.name ? item.student.name.charAt(0).toUpperCase() : "?"}
+                                </div>
+                                <span className="wd-name-cell">{item.student?.name || item.studentName || 'Unknown'}</span>
+                              </div>
+                            </td>
+                            <td><span className="sd-mono">{item.student?.registerNumber || item.registerNumber || 'N/A'}</span></td>
+                            <td>
+                              <span className="wd-date-cell">
+                                {new Date(item.createdAt).toLocaleDateString(undefined, {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric'
+                                })}
+                              </span>
+                            </td>
+                            <td>
+                              <div className="wd-reason-cell">
+                                <span className={`wd-type-pill ${isEmergency ? 'emergency' : ''}`}>
+                                  {item.outpasstype || 'General'}
+                                </span>
+                                <span className="wd-reason-text-cell">{item.reason}</span>
+                              </div>
+                            </td>
+                            <td>
+                              <span className={`wd-status-badge ${getStatusBadgeClass(item.status)}`}>
+                                {capitalize(item.status)}
+                              </span>
+                            </td>
+                            <td>
+                              <div className="wd-action-cell" onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  className="wd-btn-view-rect"
+                                  onClick={() => {
+                                    navigate(`/warden/outpass/${item._id}`);
+                                  }}
+                                >
+                                  View
+                                </button>
+                                {(item.proof || item.document || item.file) && (
+                                  <button
+                                    className="wd-btn-doc-rect"
+                                    onClick={() => {
+                                      const url = (item.proof || item.document || item.file)!;
+                                      handleViewDocument(url);
+                                    }}
+                                  >
+                                    Doc
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
-        <div className="outpass-card">
-          {loading ? (
-            <LoadingSpinner />
-          ) : (
-            <table className="outpass-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Name</th>
-                  <th>Register No</th>
-                  <th>Date</th>
-                  <th>Reason</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentData.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="no-data-cell" style={{ textAlign: "center", padding: "20px" }}>
-                      No outpasses found
-                    </td>
-                  </tr>
-                ) : (
-                  currentData.map((item, index) => (
-                    <tr key={item._id || index}>
-                      <td data-label="#">{startIndex + index + 1}</td>
-                      <td data-label="Name">{item.student?.name || item.studentName || 'Unknown'}</td>
-                      <td data-label="Register No">{item.student?.registerNumber || item.registerNumber || 'N/A'}</td>
-                      <td data-label="Date">
-                        {new Date(item.createdAt).toLocaleDateString()}
-                      </td>
-                      <td data-label="Reason">
-                        {item.reason}
-                        {item.outpasstype?.toLowerCase() === 'emergency' && (
-                          <span className="emergency-badge">🚨 EMERGENCY</span>
-                        )}
-                      </td>
-                      <td data-label="Status">
-                        <span className={`status ${item.status?.toLowerCase() === 'rejected' ? 'rejected' : 'approved'}`}>
+            {/* Mobile Cards List View */}
+            {!loading && currentData.length > 0 && (
+              <div className="wd-mobile-cards-view">
+                {currentData.map((item, index) => {
+                  const isEmergency = (item.outpasstype || '').toLowerCase().includes('emergency');
+                  return (
+                    <div
+                      className="wd-mobile-card"
+                      key={item._id || index}
+                      onClick={() => navigate(`/warden/outpass/${item._id}`)}
+                    >
+                      <div className="wd-mobile-card-header">
+                        <div className="wd-mobile-avatar">
+                          {item.student?.name ? item.student.name.charAt(0).toUpperCase() : "?"}
+                        </div>
+                        <div>
+                          <h3 className="wd-mobile-name">{item.student?.name || item.studentName || 'Unknown'}</h3>
+                          <span className="wd-mobile-reg sd-mono">{item.student?.registerNumber || item.registerNumber || 'N/A'}</span>
+                        </div>
+                        <span className={`wd-type-pill ${isEmergency ? 'emergency' : ''}`}>
+                          {item.outpasstype || 'General'}
+                        </span>
+                      </div>
+
+                      <div className="wd-mobile-details">
+                        <div className="wd-mobile-row">
+                          <span className="label">Applied Date</span>
+                          <span className="value">{new Date(item.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <div className="wd-mobile-row">
+                          <span className="label">Reason</span>
+                          <span className="value reason-truncate">{item.reason}</span>
+                        </div>
+                      </div>
+
+                      <div className="wd-mobile-footer" onClick={(e) => e.stopPropagation()}>
+                        <span className={`wd-status-badge ${getStatusBadgeClass(item.status)}`}>
                           {capitalize(item.status)}
                         </span>
-                      </td>
-                      <td data-label="Action" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <button
-                          className="view-btn"
-                          onClick={() => {
-                            navigate(`/warden/outpass/${item._id}`);
-                          }}
-                        >
-                          View
-                        </button>
-                        {(item.proof || item.document || item.file) && (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          {(item.proof || item.document || item.file) && (
+                            <button
+                              onClick={() => {
+                                const url = (item.proof || item.document || item.file)!;
+                                handleViewDocument(url);
+                              }}
+                              className="wd-btn-doc-rect"
+                              style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                            >
+                              📄 Doc
+                            </button>
+                          )}
                           <button
-                            className="view-doc-btn-list"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const url = (item.proof || item.document || item.file)!;
-                              handleViewDocument(url);
-                            }}
-                            style={{
-                              padding: '6px 14px',
-                              background: '#eff6ff',
-                              border: '1px solid #3b82f6',
-                              borderRadius: '10px',
-                              color: '#3b82f6',
-                              fontSize: '14px',
-                              fontWeight: '500',
-                              cursor: 'pointer',
-                              transition: '0.3s'
+                            className="wd-btn-view-rect"
+                            style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                            onClick={() => {
+                              navigate(`/warden/outpass/${item._id}`);
                             }}
                           >
-                            Doc
+                            View →
                           </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          )}
-
-          {!loading && currentData.length > 0 && (
-            <div className="mobile-cards-view">
-              {currentData.map((item, index) => (
-                <div className="mobile-card" key={item._id || index}>
-                  <div className="card-badge">
-                    {item.student?.registerNumber || item.registerNumber || 'N/A'}
-                  </div>
-                  <h3 className="card-name">{item.student?.name || item.studentName || 'Unknown'}</h3>
-                  <p className="card-details">
-                    {item.student?.year ? `${item.student.year} • ` : ''}
-                    Applied on {new Date(item.createdAt).toLocaleDateString()}
-                    {item.outpasstype?.toLowerCase() === 'emergency' && (
-                      <div className="emergency-badge mobile">🚨 EMERGENCY</div>
-                    )}
-                  </p>
-
-                  <div className="card-footer" style={{ flexWrap: 'wrap', gap: '8px' }}>
-                    <span className={`status-pill ${item.status?.toLowerCase() === 'rejected' ? 'status-rejected' : 'status-approved'}`}>
-                      • {capitalize(item.status)}
-                    </span>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                      {(item.proof || item.document || item.file) && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const url = (item.proof || item.document || item.file)!;
-                            handleViewDocument(url);
-                          }}
-                          style={{
-                            background: '#eff6ff',
-                            border: '1px solid #3b82f6',
-                            borderRadius: '6px',
-                            color: '#3b82f6',
-                            padding: '4px 8px',
-                            fontSize: '12px',
-                            fontWeight: '600',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          📄 Doc
-                        </button>
-                      )}
-                      <button
-                        className="card-view-link"
-                        onClick={() => {
-                          navigate(`/warden/outpass/${item._id}`);
-                        }}
-                      >
-                        View →
-                      </button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              ))}
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Pagination */}
+          {!loading && (outpasses.length > 0 || currentPage > 1) && (
+            <div className="wd-pagination">
+              {/* First */}
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(1)}
+                className="wd-page-btn"
+              >
+                « First
+              </button>
+
+              {/* Prev */}
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => p - 1)}
+                className="wd-page-btn"
+              >
+                ← Prev
+              </button>
+
+              {/* Page Numbers */}
+              <div className="wd-page-numbers">
+                {getPageNumbers().map((pNum, idx) => {
+                  if (pNum === '...') {
+                    return <span key={`dots-${idx}`} className="wd-pnum-dots">...</span>;
+                  }
+                  return (
+                    <button
+                      key={`p-${pNum}`}
+                      className={`wd-pnum-btn ${currentPage === pNum ? 'active' : ''}`}
+                      onClick={() => setCurrentPage(pNum as number)}
+                    >
+                      {pNum}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Next */}
+              <button
+                disabled={isLast}
+                onClick={() => setCurrentPage((p) => p + 1)}
+                className="wd-page-btn"
+              >
+                Next →
+              </button>
+
+              {/* Last */}
+              <button
+                disabled={isLast}
+                onClick={() => setCurrentPage(totalPages)}
+                className="wd-page-btn"
+              >
+                Last »
+              </button>
             </div>
           )}
+
         </div>
+      </main>
 
-        {/* Pagination logic ... */}
-        {!loading && (outpasses.length > 0 || currentPage > 1) && (
-          <div className="pagination">
-            <button
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => p - 1)}
-            >
-              Prev
-            </button>
-
-            <span>
-              Page {currentPage}
-            </span>
-
-            <button
-              disabled={isLast}
-              onClick={() => setCurrentPage((p) => p + 1)}
-            >
-              Next
-            </button>
-          </div>
-        )}
-
-        {/* Document Modal */}
-        {showDocumentModal && documentUrl && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setShowDocumentModal(false)}>
-            <div className="bg-white rounded-lg p-4 w-full max-w-4xl h-[90vh] flex flex-col" style={{ background: 'white', padding: '20px', borderRadius: '12px', width: '90%', maxWidth: '1000px', height: '90vh', display: 'flex', flexDirection: 'column', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
-              <div className="flex justify-between items-center mb-4" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>Supporting Document</h3>
-                <button
-                  onClick={() => setShowDocumentModal(false)}
-                  style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#64748b' }}
-                >
-                  ✕
-                </button>
-              </div>
-              <div style={{ flex: 1, overflow: 'hidden', background: '#f1f5f9', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {documentType === 'pdf' ? (
-                  <iframe
-                    src={documentUrl}
-                    style={{ width: '100%', height: '100%', border: 'none' }}
-                    title="Document Viewer"
-                  />
-                ) : (
-                  <img
-                    src={documentUrl}
-                    alt="Proof"
-                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
-                  />
-                )}
-              </div>
-              <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
-                <a
-                  href={documentUrl}
-                  download={`proof_document.${documentType === 'pdf' ? 'pdf' : 'jpg'}`}
-                  style={{
-                    padding: '8px 16px',
-                    background: '#3b82f6',
-                    color: 'white',
-                    borderRadius: '6px',
-                    textDecoration: 'none',
-                    fontSize: '0.9rem',
-                    fontWeight: 500
-                  }}
-                >
-                  Download File
-                </a>
-              </div>
+      {/* Document modal */}
+      {showDocumentModal && documentUrl && (
+        <div className="wd-modal-backdrop" onClick={() => setShowDocumentModal(false)}>
+          <div className="wd-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="wd-modal-header">
+              <h3>Supporting Document</h3>
+              <button onClick={() => setShowDocumentModal(false)} className="wd-modal-close">✕</button>
+            </div>
+            <div className="wd-modal-body">
+              {documentType === 'pdf' ? (
+                <iframe
+                  src={documentUrl}
+                  className="wd-modal-iframe"
+                  title="Document Viewer"
+                />
+              ) : (
+                <img
+                  src={documentUrl}
+                  alt="Proof"
+                  className="wd-modal-img"
+                />
+              )}
+            </div>
+            <div className="wd-modal-footer">
+              <a
+                href={documentUrl}
+                download={`proof_document.${documentType === 'pdf' ? 'pdf' : 'jpg'}`}
+                className="wd-btn-download"
+              >
+                Download File
+              </a>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        <style>{`
-/* Page Container */
-.list-container {
-  padding: 24px 40px;
-  animation: fadeInUp 0.6s ease;
-  margin-top: 10px; /* Reduced to move content upward */
-}
+      <style>{`
+        /* ====== LAYOUT & BASE ====== */
+        .wd-root {
+          min-height: 100vh;
+          background: linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 45%, #DBEAFE 100%);
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+          padding-top: var(--nav-height, 64px);
+          padding-bottom: 80px;
+        }
 
+        .wd-main {
+          padding: 24px 32px;
+          max-width: var(--content-max, 1280px);
+          margin: 0 auto;
+        }
 
-.header-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-    gap: 16px;
-}
+        .wd-container {
+          display: flex;
+          flex-direction: column;
+          gap: 28px;
+        }
 
-.filter-tabs {
-    display: flex;
-    background: #f1f5f9;
-    padding: 4px;
-    border-radius: 12px;
-    gap: 4px;
-}
+        /* ====== HEADER ROW ====== */
+        .wd-header-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          flex-wrap: wrap;
+          gap: 20px;
+        }
 
-.filter-btn {
-    padding: 8px 16px;
-    border: none;
-    background: transparent;
-    color: #64748b;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-}
+        .wd-back-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background: white;
+          border: 1px solid #E2E8F0;
+          color: #0047AB;
+          font-size: 0.85rem;
+          font-weight: 700;
+          padding: 10px 18px;
+          border-radius: 100px;
+          cursor: pointer;
+          box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+          transition: all 0.2s ease;
+          font-family: inherit;
+        }
 
-.filter-btn:hover {
-    color: #1e293b;
-    background: rgba(255,255,255,0.5);
-}
+        .wd-back-btn:hover {
+          background: #EFF6FF;
+          transform: translateX(-4px);
+          box-shadow: 0 6px 12px rgba(0, 71, 171, 0.08);
+        }
 
-.filter-btn.active {
-    background: white;
-    color: #1e3a8a;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
+        .wd-title {
+          font-size: 1.8rem;
+          font-weight: 800;
+          color: #0F172A;
+          margin: 12px 0 4px;
+          letter-spacing: -0.02em;
+        }
 
-.back-btn {
-  background: white;
-  border: 1px solid #cbd5e1;
-  font-size: 16px;
-  color: #1e3a8a;
-  cursor: pointer;
-  /* margin-bottom: 20px; Removed margin since it's in header-row now */
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-  padding: 10px 24px;
-  border-radius: 50px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  font-weight: 600;
-}
+        .wd-subtitle {
+          font-size: 0.9rem;
+          color: #64748B;
+          margin: 0;
+          font-weight: 500;
+        }
 
-.back-btn:hover {
-  background: #f1f5f9;
-  transform: translateX(-5px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-}
+        /* ====== CONTROLS ====== */
+        .wd-controls {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          flex-wrap: wrap;
+        }
 
-.list-container h1 {
-  font-size: 22px; /* Reduced from 28px */
-  margin-bottom: 16px; /* Reduced from 24px */
-  color: #1e3a8a;
-  font-weight: 700;
-}
+        .wd-search-wrapper {
+          position: relative;
+          min-width: 260px;
+        }
 
-/* Table Card */
-.outpass-card {
-  background: white;
-  border-radius: 24px;
-  padding: 24px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
-  border: 1px solid rgba(0,0,0,0.05);
-  overflow: hidden;
-}
+        .wd-search-icon {
+          position: absolute;
+          left: 14px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #94A3B8;
+          font-size: 0.95rem;
+        }
 
-/* Table */
-.outpass-table {
-  width: 100%;
-  border-collapse: collapse;
-}
+        .wd-search-input {
+          width: 100%;
+          padding: 12px 16px 12px 42px;
+          background: white;
+          border: 1px solid rgba(226, 232, 240, 0.8);
+          border-radius: 14px;
+          font-size: 0.88rem;
+          font-weight: 500;
+          color: #0F172A;
+          outline: none;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+          transition: all 0.2s ease;
+          box-sizing: border-box;
+        }
 
-.outpass-table thead {
-  background: linear-gradient(135deg, #1e3a8a, #0f172a);
-  color: white;
-}
+        .wd-search-input:focus {
+          border-color: #0047AB;
+          box-shadow: 0 0 0 4px rgba(0, 71, 171, 0.10);
+        }
 
-.outpass-table th {
-  padding: 14px;
-  text-align: left;
-  font-weight: 600;
-}
+        .wd-dropdown-wrapper {
+          position: relative;
+        }
 
-.outpass-table td {
-  padding: 14px;
-  border-bottom: 1px solid #f1f5f9;
-  color: #334155;
-}
+        .wd-dropdown-icon {
+          position: absolute;
+          left: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+          font-size: 0.95rem;
+          pointer-events: none;
+        }
 
-.outpass-table tbody tr {
-  transition: all 0.3s ease;
-}
+        .wd-dropdown-arrow {
+          position: absolute;
+          right: 14px;
+          top: 50%;
+          transform: translateY(-50%);
+          font-size: 0.7rem;
+          color: #64748B;
+          pointer-events: none;
+        }
 
-.outpass-table tbody tr:hover {
-  background: #eff6ff;
-  transform: translateX(4px);
-}
+        .wd-filter-dropdown {
+          padding: 12px 32px 12px 36px;
+          background: white;
+          border: 1px solid rgba(226, 232, 240, 0.8);
+          border-radius: 14px;
+          font-size: 0.88rem;
+          font-weight: 600;
+          color: #334155;
+          outline: none;
+          cursor: pointer;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+          appearance: none;
+          min-width: 140px;
+        }
 
-/* Status */
-.status {
-  padding: 8px 18px;
-  border-radius: 999px;
-  font-size: 16px;
-  font-weight: 700;
-}
+        .wd-filter-dropdown:focus {
+          border-color: #0047AB;
+        }
 
-.status.approved {
-  background: #dcfce7;
-  color: #166534;
-}
+        /* Status Tab Pills */
+        .wd-tab-pills {
+          display: flex;
+          background: #E2E8F0;
+          padding: 4px;
+          border-radius: 12px;
+          gap: 2px;
+          border: 1px solid rgba(226,232,240,0.5);
+        }
 
-.status.rejected {
-  background: #fee2e2;
-  color: #991b1b;
-}
+        .wd-tab-pill {
+          padding: 8px 16px;
+          border: none;
+          background: transparent;
+          color: #64748B;
+          font-weight: 600;
+          font-size: 0.82rem;
+          cursor: pointer;
+          border-radius: 8px;
+          transition: all 0.2s ease;
+          font-family: inherit;
+        }
 
-/* View Button */
-.view-btn {
-  padding: 6px 14px;
-  border-radius: 10px;
-  border: none;
-  background: linear-gradient(135deg, #2563eb, #1e3a8a);
-  color: white;
-  font-weight: 500;
-  cursor: pointer;
-  transition: 0.3s;
-}
+        .wd-tab-pill:hover {
+          color: #0f172a;
+        }
 
-.view-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(37,99,235,0.4);
-}
+        .wd-tab-pill.active {
+          background: white;
+          color: #0047AB;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
 
-/* Pagination */
-.pagination {
-  margin-top: 24px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 20px;
-}
+        /* ====== TABLE CARD ====== */
+        .wd-table-card {
+          background: rgba(255, 255, 255, 0.9);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid rgba(255, 255, 255, 0.7);
+          border-radius: 20px;
+          overflow: hidden;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.03), 0 0 0 1px rgba(226,232,240,0.5);
+        }
 
-.pagination button {
-  padding: 8px 18px;
-  border-radius: 10px;
-  border: none;
-  background: #1e3a8a;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.3s;
-}
+        .wd-table-scroll {
+          overflow-x: auto;
+        }
 
-.pagination button:hover {
-  background: #2563eb;
-}
+        .wd-table {
+          width: 100%;
+          border-collapse: collapse;
+          text-align: left;
+        }
 
-.pagination button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
+        .wd-table th {
+          background: #F8FAFC;
+          padding: 16px 24px;
+          font-size: 0.72rem;
+          font-weight: 700;
+          color: #64748B;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          border-bottom: 1px solid #E2E8F0;
+        }
 
-/* Animations */
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+        .wd-table td {
+          padding: 16px 24px;
+          font-size: 0.88rem;
+          color: #334155;
+          border-bottom: 1px solid #F1F5F9;
+          transition: background 0.15s ease;
+        }
 
-/* Loading Animation */
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-  gap: 16px;
-  color: #64748b;
-  font-weight: 500;
-}
+        .wd-table tbody tr {
+          cursor: pointer;
+        }
 
-.loading-bar {
-  width: 200px;
-  height: 6px;
-  background: #e2e8f0;
-  border-radius: 99px;
-  overflow: hidden;
-  position: relative;
-}
+        .wd-table tbody tr:hover td {
+          background: #F8FAFC;
+        }
 
-.loading-progress {
-  width: 50%;
-  height: 100%;
-  background: linear-gradient(90deg, #2563eb, #3b82f6);
-  border-radius: 99px;
-  position: absolute;
-  animation: shimmer 1.5s infinite linear;
-}
+        .wd-table tbody tr:last-child td {
+          border-bottom: none;
+        }
 
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(200%); }
-}
+        /* Student Cells */
+        .wd-student-cell {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
 
-/* Page Container */
-.list-container {
-  padding: 24px 40px; /* Adjusted padding */
-}
+        .wd-table-avatar {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #0047AB 0%, #2563EB 100%);
+          color: white;
+          font-weight: 700;
+          font-size: 0.82rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 2px 6px rgba(0, 71, 171, 0.2);
+        }
 
-/* ... existing styles ... */
+        .wd-name-cell {
+          font-weight: 600;
+          color: #0F172A;
+        }
 
-/* Mobile */
-@media (max-width: 768px) {
-  .list-container {
-    padding: 16px;
-    margin-top: 5px; /* Significantly reduced for upward movement */
-  }
+        .wd-date-cell {
+          color: #475569;
+          font-weight: 500;
+        }
 
-  .list-container h1 {
-    font-size: 18px; /* Further reduced for mobile */
-    margin-bottom: 12px;
-  }
+        /* Reason & Type Badging */
+        .wd-reason-cell {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          max-width: 250px;
+        }
 
-  .header-row {
-      flex-direction: column; /* Back button on top, filters below */
-      align-items: flex-start;
-      gap: 16px;
-  }
-  
-  .filter-tabs {
-      width: 100%;
-      justify-content: space-between;
-  }
-  
-  .filter-btn {
-      flex: 1;
-      text-align: center;
-      padding: 10px;
-  }
+        .wd-type-pill {
+          display: inline-flex;
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-size: 0.68rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          background: #EFF6FF;
+          color: #0047AB;
+          width: fit-content;
+          letter-spacing: 0.02em;
+        }
 
-  .outpass-card {
-    padding: 0;
-    background: transparent;
-    box-shadow: none;
-    border: none;
-  }
+        .wd-type-pill.emergency {
+          background: #FEF2F2;
+          color: #EF4444;
+        }
 
-  /* Mobile specific card view */
-  .mobile-cards-view {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
+        .wd-reason-text-cell {
+          font-size: 0.8rem;
+          color: #64748B;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
 
-  .mobile-card {
-    background: white;
-    border-radius: 16px;
-    padding: 20px;
-    position: relative;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-    border: 1px solid rgba(0,0,0,0.02);
-    margin-bottom: 16px;
-  }
+        /* Status badges */
+        .wd-status-badge {
+          display: inline-flex;
+          align-items: center;
+          padding: 4px 10px;
+          border-radius: 6px;
+          font-size: 0.72rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.03em;
+          border: 1px solid transparent;
+        }
 
-  .card-badge {
-    background: linear-gradient(135deg, #2563eb, #1e40af);
-    color: white;
-    display: inline-block;
-    padding: 8px 0;
-    width: 100%;
-    text-align: center;
-    border-radius: 8px;
-    font-weight: 700;
-    font-size: 14px;
-    margin-bottom: 16px;
-    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
-  }
+        .wd-status-approved { background: #ECFDF5; color: #10B981; border-color: rgba(16, 185, 129, 0.15); }
+        .wd-status-pending  { background: #FFFBEB; color: #D97706; border-color: rgba(217, 119, 6, 0.15); }
+        .wd-status-rejected { background: #FEF2F2; color: #EF4444; border-color: rgba(239, 68, 68, 0.15); }
 
-  .card-name {
-    font-size: 18px;
-    font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 4px;
-  }
+        /* Actions */
+        .wd-action-cell {
+          display: flex;
+          gap: 8px;
+        }
 
-  .card-details {
-    font-size: 13px;
-    color: #64748b;
-    margin-bottom: 20px;
-  }
+        .wd-btn-view-rect {
+          padding: 6px 12px;
+          background: #0047AB;
+          color: white;
+          font-size: 0.75rem;
+          font-weight: 700;
+          border-radius: 8px;
+          border: none;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
 
-  .card-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-top: 1px solid #f1f5f9;
-    padding-top: 16px;
-  }
+        .wd-btn-view-rect:hover {
+          background: #003682;
+        }
 
-  .status-pill {
-    padding: 10px 20px;
-    border-radius: 20px;
-    font-size: 16px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    text-transform: capitalize;
-  }
+        .wd-btn-doc-rect {
+          padding: 6px 12px;
+          background: #EFF6FF;
+          border: 1px solid rgba(0, 71, 171, 0.15);
+          color: #0047AB;
+          font-size: 0.75rem;
+          font-weight: 700;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
 
-  .status-pill.status-approved {
-    background: #dcfce7;
-    color: #166534;
-    border: 1px solid #86efac;
-  }
+        .wd-btn-doc-rect:hover {
+          background: #DBEAFE;
+          border-color: #0047AB;
+        }
 
-  .status-pill.status-rejected {
-    background: #fee2e2;
-    color: #991b1b;
-    border: 1px solid #f87171;
-  }
+        /* Empty Cell */
+        .wd-empty-cell {
+          text-align: center;
+          padding: 64px 24px !important;
+        }
 
-  .card-view-link {
-    background: none;
-    border: none;
-    color: #1e3a8a;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
+        .wd-table-empty {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 12px;
+        }
 
-  .outpass-table {
-    display: none; /* Hide standard table on mobile */
-  }
+        .wd-empty-icon {
+          font-size: 3rem;
+          color: #CBD5E1;
+        }
 
-  .mobile-cards-view {
-    display: block;
-  }
-}
+        .wd-empty-title {
+          font-size: 1.1rem;
+          font-weight: 700;
+          color: #334155;
+          margin: 0;
+        }
 
-/* Desktop: Hide mobile view */
-@media (min-width: 769px) {
-  .mobile-cards-view {
-    display: none;
-  }
-}
+        .wd-empty-desc {
+          font-size: 0.85rem;
+          color: #94A3B8;
+          margin: 0;
+        }
 
-.emergency-badge {
-    display: inline-block;
-    background-color: #fee2e2;
-    color: #ef4444;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    margin-left: 8px;
-    border: 1px solid #ef4444;
-    vertical-align: middle;
-}
+        /* ====== TABLE LOADING ====== */
+        .wd-table-loading {
+          padding: 64px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
 
-.emergency-badge.mobile {
-    margin-left: 0;
-    margin-top: 4px;
-    display: table;
-}
+        /* ====== PAGINATION ====== */
+        .wd-pagination {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 10px;
+          margin-top: 24px;
+          flex-wrap: wrap;
+        }
+
+        .wd-page-numbers {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .wd-pnum-btn {
+          width: 36px;
+          height: 36px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 10px;
+          border: 1px solid rgba(0, 71, 171, 0.15);
+          background: #EFF6FF;
+          color: #0047AB;
+          font-weight: 700;
+          font-size: 0.82rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          font-family: inherit;
+        }
+
+        .wd-pnum-btn:hover {
+          background: #0047AB;
+          color: white;
+          box-shadow: 0 4px 10px rgba(0, 71, 171, 0.15);
+        }
+
+        .wd-pnum-btn.active {
+          background: #0047AB;
+          color: white;
+          border-color: #0047AB;
+          box-shadow: 0 4px 10px rgba(0, 71, 171, 0.15);
+        }
+
+        .wd-pnum-dots {
+          color: #94A3B8;
+          font-weight: 700;
+          padding: 0 4px;
+          font-size: 0.9rem;
+        }
+
+        .wd-page-btn {
+          padding: 8px 18px;
+          border-radius: 10px;
+          border: 1px solid rgba(0, 71, 171, 0.15);
+          background: #EFF6FF;
+          color: #0047AB;
+          font-weight: 700;
+          font-size: 0.82rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          font-family: inherit;
+        }
+
+        .wd-page-btn:hover:not(:disabled) {
+          background: #0047AB;
+          color: white;
+          box-shadow: 0 4px 10px rgba(0, 71, 171, 0.15);
+        }
+
+        .wd-page-btn:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
+          background: #F1F5F9;
+          color: #94A3B8;
+          border-color: #E2E8F0;
+        }
+
+        .wd-page-indicator {
+          font-size: 0.88rem;
+          color: #64748B;
+        }
+
+        /* ====== MODAL BAR ====== */
+        .wd-modal-backdrop {
+          position: fixed;
+          inset: 0;
+          background: rgba(15, 23, 42, 0.75);
+          backdrop-filter: blur(8px);
+          z-index: 1000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 24px;
+        }
+
+        .wd-modal-card {
+          background: white;
+          border-radius: 20px;
+          width: 100%;
+          max-width: 900px;
+          height: 80vh;
+          display: flex;
+          flex-direction: column;
+          box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+          overflow: hidden;
+        }
+
+        .wd-modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 18px 24px;
+          border-bottom: 1px solid #F1F5F9;
+        }
+
+        .wd-modal-header h3 {
+          margin: 0;
+          font-size: 1.15rem;
+          font-weight: 700;
+          color: #0F172A;
+        }
+
+        .wd-modal-close {
+          background: #F1F5F9;
+          border: none;
+          color: #64748B;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.95rem;
+          font-weight: bold;
+          transition: all 0.2s ease;
+        }
+
+        .wd-modal-close:hover {
+          background: #FEF2F2;
+          color: #EF4444;
+        }
+
+        .wd-modal-body {
+          flex-grow: 1;
+          background: #F8FAFC;
+          overflow: auto;
+          padding: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .wd-modal-iframe {
+          width: 100%;
+          height: 100%;
+          border: none;
+          border-radius: 12px;
+          background: white;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+
+        .wd-modal-img {
+          max-width: 100%;
+          max-height: 100%;
+          object-fit: contain;
+          border-radius: 12px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+
+        .wd-modal-footer {
+          padding: 16px 24px;
+          border-top: 1px solid #F1F5F9;
+          display: flex;
+          justify-content: flex-end;
+        }
+
+        .wd-btn-download {
+          padding: 10px 20px;
+          background: #0047AB;
+          color: white;
+          border-radius: 10px;
+          text-decoration: none;
+          font-size: 0.88rem;
+          font-weight: 700;
+          transition: all 0.2s ease;
+        }
+
+        .wd-btn-download:hover {
+          background: #003682;
+          box-shadow: 0 4px 12px rgba(0,71,171,0.25);
+        }
+
+        .sd-mono {
+          font-family: 'SF Mono', 'Fira Code', monospace;
+          font-weight: 600;
+        }
+
+        /* ====== RESPONSIVE ====== */
+        .wd-mobile-cards-view { display: none; }
+
+        @media (max-width: 968px) {
+          .wd-main {
+            padding: 16px;
+          }
+
+          .wd-header-row {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 16px;
+          }
+
+          .wd-controls {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+          }
+
+          .wd-search-wrapper {
+            min-width: 100%;
+          }
+
+          .wd-filter-dropdown {
+            width: 100%;
+          }
+
+          .wd-tab-pills {
+            justify-content: space-between;
+          }
+
+          .wd-tab-pill {
+            flex: 1;
+            text-align: center;
+          }
+
+          .wd-table {
+            display: none;
+          }
+
+          .wd-table-card {
+            background: transparent;
+            box-shadow: none;
+            border: none;
+          }
+
+          /* Mobile Card */
+          .wd-mobile-cards-view {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+          }
+
+          .wd-mobile-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(226, 232, 240, 0.7);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            cursor: pointer;
+            transition: all 0.2s ease;
+          }
+
+          .wd-mobile-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 71, 171, 0.05);
+          }
+
+          .wd-mobile-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+            position: relative;
+          }
+
+          .wd-mobile-avatar {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #0047AB 0%, #2563EB 100%);
+            color: white;
+            font-weight: 700;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+          }
+
+          .wd-mobile-name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #0F172A;
+            margin: 0 0 2px;
+          }
+
+          .wd-mobile-reg {
+            display: block;
+            font-size: 0.78rem;
+            color: #64748B;
+          }
+
+          .wd-mobile-card-header .wd-type-pill {
+            position: absolute;
+            right: 0;
+            top: 0;
+          }
+
+          .wd-mobile-details {
+            border-top: 1px dashed #F1F5F9;
+            border-bottom: 1px dashed #F1F5F9;
+            padding: 12px 0;
+            margin-bottom: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+          }
+
+          .wd-mobile-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.82rem;
+          }
+
+          .wd-mobile-row .label {
+            color: #64748B;
+            font-weight: 500;
+          }
+
+          .wd-mobile-row .value {
+            color: #334155;
+            font-weight: 600;
+            text-align: right;
+          }
+
+          .wd-mobile-row .reason-truncate {
+            max-width: 180px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          .wd-mobile-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          }
+        }
       `}</style>
-      </div>
     </div>
   );
 };

@@ -155,23 +155,23 @@ const Outpass: React.FC = () => {
         e.preventDefault();
         setIsSubmitting(true);
 
-        // if (!isEmergency && !isPortalOpen) {
-        //     toast.error("Portal is open from 6:00 AM to 10:00 AM only.");
-        //     setIsSubmitting(false);
-        //     return;
-        // }
+        if (!isEmergency && !isPortalOpen) {
+            toast.error("Portal is open from 6:00 AM to 10:00 AM only.");
+            setIsSubmitting(false);
+            return;
+        }
 
-        // if (!isEmergency && formData.fromDate) {
-        //     const selectedDate = new Date(formData.fromDate);
-        //     const tomorrow = new Date();
-        //     tomorrow.setDate(tomorrow.getDate() + 1);
-        //     tomorrow.setHours(0, 0, 0, 0);
-        //     if (selectedDate < tomorrow) {
-        //         toast.error("Non-emergency outpass must be applied at least one day in advance.");
-        //         setIsSubmitting(false);
-        //         return;
-        //     }
-        // }
+        if (!isEmergency && formData.fromDate) {
+            const selectedDate = new Date(formData.fromDate);
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(0, 0, 0, 0);
+            if (selectedDate < tomorrow) {
+                toast.error("Non-emergency outpass must be applied at least one day in advance.");
+                setIsSubmitting(false);
+                return;
+            }
+        }
 
         try {
             const token = localStorage.getItem('token');

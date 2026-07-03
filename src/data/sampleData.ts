@@ -14,7 +14,7 @@ export interface User {
     batch: string;
     cgpa?: number;
     arrears?: number;
-    gender: 'male' | 'female';
+    gender: 'male' | 'female' | '';
     parentnumber: string;
     residencetype: string;
     hostelname: string;

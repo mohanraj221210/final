@@ -10,7 +10,7 @@ export interface Student {
     year: '1st Year'|'2nd Year'|'3rd Year'|'4th Year';
     phone: string;
     batch: '2022-2026'|'2023-2027'|'2024-2028'|'2025-2029'|'2026-2030';
-    gender: 'male' | 'female';
+    gender: 'male' | 'female' | '';
     parentnumber: string;
     residencetype: 'day scholar'|'hostel';
     hostelname?: 'M.G.R'|'Janaki ammal';

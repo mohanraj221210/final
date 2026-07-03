@@ -52,7 +52,7 @@ const StudentDetails: React.FC = () => {
     const fetchStudentDetails = async () => {
         try {
             const token = localStorage.getItem('token');
-            // Changed from POST to GET to fix 'Student not found' issue, typically REST APIs use GET for fetching details by ID
+            // Using POST with body { id } as per requirements
             const response = await axios.get(`${API_URL}/staff/student/${id}`,
                 { headers: { 'Authorization': `Bearer ${token}` } }
             );
@@ -118,7 +118,7 @@ const StudentDetails: React.FC = () => {
         try {
             const token = localStorage.getItem('token');
             // DELETE /staff/student/delete with body { id }
-            await axios.delete(`${API_URL}/staff/student/delete`, {
+            await axios.delete(`${API_URL}/staff/student/delete/${id}`, {
                 headers: { 'Authorization': `Bearer ${token}` },
                 data: { id } // Axios way to send body with DELETE
             });

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import PremiumStaffLoader from '../../components/PremiumStaffLoader';
 import { toast, ToastContainer } from 'react-toastify';
 import axios from 'axios';
-import { useLocation } from 'react-router-dom';
 import StaffHeader from '../../components/StaffHeader';
 
 type ApprovalStatus = 'pending' | 'approved' | 'rejected';
@@ -53,38 +52,39 @@ interface StudentOutpass {
     residencetype?: string;
     skillrack?: string;
     attendance?: string;
-    document?: string;
+    document?: string | null;
+    remarks?: string;
 }
 
-const PassApproval: React.FC = () => {
-    const location = useLocation();
+const PendingPasses: React.FC = () => {
     const [selectedStudent, setSelectedStudent] = useState<StudentOutpass | null>(null);
     const [appReady, setAppReady] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [filterStatus, setFilterStatus] = useState<'all' | ApprovalStatus>(
-        (location.state as any)?.filter || 'all'
-    );
+    const [filterStatus,] = useState<'all' | ApprovalStatus>('pending');
     const [currentPage, setCurrentPage] = useState(1);
+    const [isLastPage, setIsLastPage] = useState(true);
     const [totalPages, setTotalPages] = useState(1);
     const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'yesterday' | 'this_week' | 'this_month'>('all');
+    const [typeFilter, setTypeFilter] = useState<'all' | 'Home' | 'Outing' | 'Emergency' | 'OD'>('all');
     const [showActionModal, setShowActionModal] = useState(false);
     const [actionType, setActionType] = useState<'approve' | 'reject'>('approve');
     const [actionRemarks, setActionRemarks] = useState('');
     const [students, setStudents] = useState<StudentOutpass[]>([]);
     const [roommates, setRoommates] = useState<any[]>([]);
     const [loadingRoommates, setLoadingRoommates] = useState(false);
-    const [currentStaffName, setCurrentStaffName] = useState('');
+    const [, setCurrentStaffName] = useState('');
     const [showDocumentModal, setShowDocumentModal] = useState(false);
     const [documentUrl, setDocumentUrl] = useState<string | null>(null);
     const [documentType, setDocumentType] = useState<'image' | 'pdf'>('image');
 
+    const [outpassStats, setOutpassStats] = useState<any>(null);
+
     useEffect(() => {
-        const fetchStaffProfile = async () => {
+        const fetchStaffProfileAndStats = async () => {
+            const token = localStorage.getItem('token');
             try {
                 const response = await axios.get(`${import.meta.env.VITE_API_URL}/staff/profile`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (response.status === 200) {
                     setCurrentStaffName(response.data.staff.name);
@@ -92,8 +92,23 @@ const PassApproval: React.FC = () => {
             } catch (error) {
                 console.error("Failed to fetch staff profile", error);
             }
+
+            try {
+                const statsResponse = await axios.get(`${import.meta.env.VITE_API_URL}/staff/outpass/stats`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (statsResponse.status === 200) {
+                    const statsArray = statsResponse.data.stats || [];
+                    const parsedStats = statsArray.length > 0 && statsArray[0].stats && statsArray[0].stats.length > 0
+                        ? statsArray[0].stats[0]
+                        : statsResponse.data;
+                    setOutpassStats(parsedStats);
+                }
+            } catch (error) {
+                console.error("Failed to fetch stats", error);
+            }
         };
-        fetchStaffProfile();
+        fetchStaffProfileAndStats();
     }, []);
 
     const fetchOutpassDetails = async (outpassId: string) => {
@@ -107,7 +122,8 @@ const PassApproval: React.FC = () => {
             if (response.status === 200) {
                 const data = response.data.outpass || (response.data.filterOutpass && response.data.filterOutpass[0]) || {};
                 const roomMatesData = response.data.roomMates || [];
-                const studentDetails = data.studentid || {};
+                const studentObj = data.student || data.studentid;
+                const studentDetails = Array.isArray(studentObj) ? studentObj[0] : (typeof studentObj === 'object' ? studentObj : {});
 
                 const mappedStudent: StudentOutpass = {
                     id: data._id,
@@ -141,7 +157,8 @@ const PassApproval: React.FC = () => {
                     residencetype: studentDetails.residencetype || 'day scholar',
                     skillrack: data.skillrack || 'N/A',
                     attendance: data.attendance || 'N/A',
-                    document: data.proof || data.document || data.file || null
+                    document: data.proof || data.document || data.file || null,
+                    remarks: data.remarks || ''
                 };
 
                 setSelectedStudent(mappedStudent);
@@ -156,74 +173,131 @@ const PassApproval: React.FC = () => {
     };
 
     useEffect(() => {
-        const fetchRequests = async () => {
-            try {
-                const endpoint = filterStatus === 'pending'
-                    ? `/staff/pending/outpass/list?page=${currentPage}`
-                    : `/staff/outpass/list?page=${currentPage}`;
+        const handler = setTimeout(() => {
+            const fetchRequests = async () => {
+                try {
+                    const baseEndpoint = filterStatus === 'pending'
+                        ? `/staff/pending/outpass/list?page=${currentPage}`
+                        : `/staff/outpass/list?page=${currentPage}`;
 
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}${endpoint}`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
+                    let appliedDate = '';
+                    if (dateFilter === 'today') appliedDate = 'today';
+                    else if (dateFilter === 'this_week') appliedDate = 'weekly';
+                    else if (dateFilter === 'this_month') appliedDate = 'monthly';
 
-                if (response.status === 200) {
-                    const data = response.data;
-                    const outpassList = data.outpasses || data.filterOutpass || data.data || [];
+                    const params = new URLSearchParams();
+                    if (appliedDate) params.append('appliedDate', appliedDate);
+                    if (searchQuery) params.append('search', searchQuery);
+                    if (typeFilter && typeFilter !== 'all') params.append('filter', typeFilter);
 
-                    if (data.totalPages) {
-                        setTotalPages(data.totalPages);
-                    } else {
-                        setTotalPages(1);
-                    }
+                    const qs = params.toString();
+                    const endpoint = qs ? `${baseEndpoint}&${qs}` : baseEndpoint;
 
-                    const mappedStudents = outpassList
-                        .map((item: any) => {
-                            const studentDetails = item.studentid || {};
-                            return {
-                                id: item._id,
-                                studentId: studentDetails.registerNumber || 'N/A',
-                                registerNumber: studentDetails.registerNumber || 'N/A',
-                                studentname: studentDetails.name || 'Student',
-                                year: studentDetails.year || 'N/A',
-                                section: 'N/A',
-                                department: studentDetails.department || 'N/A',
-                                mobile: studentDetails.phone || 'N/A',
-                                appliedDate: item.createdAt,
-                                photo: studentDetails.photo || 'Student',
-                                parentContact: studentDetails.parentnumber || 'N/A',
-                                hostelName: 'N/A',
-                                roomNumber: 'N/A',
-                                reason: item.reason,
-                                fromDate: item.fromDate,
-                                toDate: item.toDate,
-                                staffApproval: item.staff?.status || item.staffapprovalstatus || 'pending',
-                                yearInchargeApproval: item.yearincharge?.status || item.yearinchargeapprovalstatus || 'pending',
-                                wardenApproval: item.warden?.status || item.wardenapprovalstatus || 'pending',
-                                outpasstype: item.outpasstype,
-                                residencetype: studentDetails.residencetype || 'dayScholar',
-                                document: item.proof || item.document || item.file || null
-                            };
-                        });
-
-                    // Sort: Emergency first
-                    mappedStudents.sort((a: any, b: any) => {
-                        if (a.outpasstype === 'Emergency' && b.outpasstype !== 'Emergency') return -1;
-                        if (a.outpasstype !== 'Emergency' && b.outpasstype === 'Emergency') return 1;
-                        return 0;
+                    const response = await axios.get(`${import.meta.env.VITE_API_URL}${endpoint}`, {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        }
                     });
 
-                    setStudents(mappedStudents);
-                }
-            } catch (error) {
-                console.error("Error fetching pass requests:", error);
-                toast.error("Failed to load outpass requests");
-            }
-        };
+                    if (response.status === 200) {
+                        const data = response.data;
+                        const outpassList = data.outpasses || data.filterOutpass || data.data || [];
 
-        fetchRequests();
-    }, [currentPage, filterStatus]);
+                        if (data.isLast !== undefined) {
+                            setIsLastPage(data.isLast);
+                        } else {
+                            setIsLastPage(true);
+                        }
+
+                        if (data.pages !== undefined) {
+                            setTotalPages(data.pages);
+                        }
+
+                        const mappedStudents = outpassList
+                            .map((item: any) => {
+                                const studentObj = item.student || item.studentid;
+                                const studentDetails = Array.isArray(studentObj) ? studentObj[0] : (typeof studentObj === 'object' ? studentObj : {});
+                                return {
+                                    id: item._id,
+                                    studentId: studentDetails.registerNumber || 'N/A',
+                                    registerNumber: studentDetails.registerNumber || 'N/A',
+                                    studentname: studentDetails.name || 'Student',
+                                    year: studentDetails.year || 'N/A',
+                                    section: 'N/A',
+                                    department: studentDetails.department || 'N/A',
+                                    mobile: studentDetails.phone || 'N/A',
+                                    appliedDate: item.createdAt,
+                                    photo: studentDetails.photo || 'Student',
+                                    parentContact: studentDetails.parentnumber || 'N/A',
+                                    hostelName: 'N/A',
+                                    roomNumber: 'N/A',
+                                    reason: item.reason,
+                                    fromDate: item.fromDate,
+                                    toDate: item.toDate,
+                                    staffApproval: item.staff?.status || item.staffapprovalstatus || 'pending',
+                                    yearInchargeApproval: item.yearincharge?.status || item.yearinchargeapprovalstatus || 'pending',
+                                    wardenApproval: item.warden?.status || item.wardenapprovalstatus || 'pending',
+                                    outpasstype: item.outpasstype,
+                                    residencetype: studentDetails.residencetype || 'dayScholar',
+                                    document: item.proof || item.document || item.file || null
+                                };
+                            });
+
+                        // Sort: Emergency first
+                        mappedStudents.sort((a: any, b: any) => {
+                            if (a.outpasstype === 'Emergency' && b.outpasstype !== 'Emergency') return -1;
+                            if (a.outpasstype !== 'Emergency' && b.outpasstype === 'Emergency') return 1;
+                            return 0;
+                        });
+
+                        setStudents(mappedStudents);
+                    }
+                } catch (error) {
+                    console.error("Error fetching pass requests:", error);
+                    toast.error("Failed to load outpass requests");
+                }
+            };
+
+            fetchRequests();
+        }, 500);
+
+        return () => clearTimeout(handler);
+    }, [currentPage, filterStatus, dateFilter, searchQuery, typeFilter]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filterStatus, dateFilter, searchQuery, typeFilter]);
+
+    const getPageNumbers = () => {
+        const pages: (number | string)[] = [];
+        const windowSize = 1;
+
+        if (totalPages <= 5) {
+            for (let i = 1; i <= totalPages; i++) {
+                pages.push(i);
+            }
+        } else {
+            pages.push(1);
+
+            let start = Math.max(2, currentPage - windowSize);
+            let end = Math.min(totalPages - 1, currentPage + windowSize);
+
+            if (start > 2) {
+                pages.push('...');
+            }
+
+            for (let i = start; i <= end; i++) {
+                pages.push(i);
+            }
+
+            if (end < totalPages - 1) {
+                pages.push('...');
+            }
+
+            pages.push(totalPages);
+        }
+        return pages;
+    };
 
     if (!appReady) return <PremiumStaffLoader isDataReady={true} onComplete={() => setAppReady(true)} />;
 
@@ -327,7 +401,7 @@ const PassApproval: React.FC = () => {
     };
 
     const confirmAction = async () => {
-        if (!selectedStudent || !actionRemarks.trim()) return;
+        if (!selectedStudent || (actionType === 'reject' && !actionRemarks.trim())) return;
 
         try {
             const token = localStorage.getItem('token');
@@ -357,11 +431,7 @@ const PassApproval: React.FC = () => {
                         : student
                 ));
 
-                setSelectedStudent(prev => prev ? ({
-                    ...prev,
-                    staffApproval: newStatus,
-                    staffApprovedBy: actionType === 'approve' ? currentStaffName : undefined
-                }) : null);
+                setSelectedStudent(null);
 
                 setShowActionModal(false);
                 setActionRemarks('');
@@ -387,18 +457,18 @@ const PassApproval: React.FC = () => {
         setShowDocumentModal(true);
     };
 
-    const canApprove = selectedStudent && selectedStudent.staffApproval === 'pending';
+    const canApprove = selectedStudent && selectedStudent.staffApproval === 'pending' && selectedStudent.outpasstype !== 'HostelEmergency';
 
     const counts = {
-        total: students.length,
-        pending: students.filter(s => s.staffApproval === 'pending').length,
-        approved: students.filter(s => s.staffApproval === 'approved').length,
-        rejected: students.filter(s => s.staffApproval === 'rejected').length,
+        total: outpassStats?.total || outpassStats?.Total || students.length,
+        pending: outpassStats?.pending || outpassStats?.Pending || 0,
+        approved: outpassStats?.approved || outpassStats?.Approved || 0,
+        rejected: outpassStats?.rejected || outpassStats?.Rejected || 0,
     };
 
     return (
         <div className="pa-page mobile-page-content">
-            <StaffHeader activeMenu="dashboard" />
+            <StaffHeader activeMenu="pendingpasses" />
             <ToastContainer position="bottom-right" />
 
             <div className="pa-content">
@@ -449,7 +519,7 @@ const PassApproval: React.FC = () => {
                                     type="text"
                                     placeholder="Search by name, ID, or date..."
                                     value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                                 />
                             </div>
 
@@ -470,16 +540,23 @@ const PassApproval: React.FC = () => {
                                         <option value="this_month">This Month</option>
                                     </select>
                                 </div>
-
-                                {(['all', 'pending', 'approved', 'rejected'] as const).map(f => (
-                                    <button
-                                        key={f}
-                                        className={`pa-filter-btn pa-filter-${f} ${filterStatus === f ? 'active' : ''}`}
-                                        onClick={() => { setFilterStatus(f); setCurrentPage(1); }}
+                                <div className="pa-date-select-wrap" style={{ marginLeft: '10px' }}>
+                                    <select
+                                        className="pa-date-select"
+                                        value={typeFilter}
+                                        onChange={(e) => { setTypeFilter(e.target.value as any); setCurrentPage(1); }}
                                     >
-                                        {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
-                                    </button>
-                                ))}
+                                        <option value="all">All Types</option>
+                                        <option value="Home">Home</option>
+                                        <option value="Outing">Outing</option>
+                                        <option value="Emergency">Emergency</option>
+                                        <option value="OD">OD</option>
+                                    </select>
+                                </div>
+
+                                <button className="pa-filter-btn pa-filter-pending active">
+                                    Pending
+                                </button>
                             </div>
                         </div>
 
@@ -522,7 +599,7 @@ const PassApproval: React.FC = () => {
                                                     <div className="pa-avatar">
                                                         {student.photo && student.photo !== 'Student' ? (
                                                             <img
-                                                                src={`${import.meta.env.VITE_CDN_URL}${student.photo}`}
+                                                                src={student.photo.startsWith('http') ? student.photo : `${import.meta.env.VITE_CDN_URL}${student.photo}`}
                                                                 alt={student.studentname}
                                                                 onError={(e) => {
                                                                     e.currentTarget.style.display = 'none';
@@ -607,32 +684,66 @@ const PassApproval: React.FC = () => {
                         </div>
 
                         {/* Pagination */}
-                        {students.length > 0 && totalPages > 1 && (
+                        {students.length > 0 && (
                             <div className="pa-pagination">
+                                {/* First */}
+                                <button
+                                    className="pa-page-btn"
+                                    onClick={() => setCurrentPage(1)}
+                                    disabled={currentPage === 1}
+                                >
+                                    « First
+                                </button>
+
+                                {/* Previous */}
                                 <button
                                     className="pa-page-btn"
                                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                     disabled={currentPage === 1}
                                 >
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                         <polyline points="15 18 9 12 15 6" />
                                     </svg>
-                                    Previous
+                                    Prev
                                 </button>
-                                <div className="pa-page-info">
-                                    <span className="pa-page-current">{currentPage}</span>
-                                    <span className="pa-page-sep">of</span>
-                                    <span className="pa-page-total">{totalPages}</span>
+
+                                {/* Page Numbers */}
+                                <div className="pa-page-numbers">
+                                    {getPageNumbers().map((pNum, idx) => {
+                                        if (pNum === '...') {
+                                            return <span key={`dots-${idx}`} className="pa-pnum-dots">...</span>;
+                                        }
+                                        return (
+                                            <button
+                                                key={`p-${pNum}`}
+                                                className={`pa-pnum-btn ${currentPage === pNum ? 'active' : ''}`}
+                                                onClick={() => setCurrentPage(pNum as number)}
+                                            >
+                                                {pNum}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
+
+                                {/* Next */}
                                 <button
                                     className="pa-page-btn"
-                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                    disabled={currentPage === totalPages}
+                                    onClick={() => setCurrentPage(prev => isLastPage ? prev : prev + 1)}
+                                    disabled={isLastPage}
                                 >
                                     Next
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                         <polyline points="9 18 15 12 9 6" />
                                     </svg>
+                                </button>
+
+                                {/* Last */}
+                                <button
+                                    className="pa-page-btn"
+                                    onClick={() => setCurrentPage(totalPages)}
+                                    disabled={isLastPage}
+                                >
+                                    Last »
                                 </button>
                             </div>
                         )}
@@ -670,7 +781,7 @@ const PassApproval: React.FC = () => {
                                 <div className="pa-hero-content">
                                     <div className="pa-hero-avatar-wrap">
                                         <img
-                                            src={`${import.meta.env.VITE_CDN_URL}${selectedStudent.photo}`}
+                                            src={selectedStudent.photo.startsWith('http') ? selectedStudent.photo : `${import.meta.env.VITE_CDN_URL}${selectedStudent.photo}`}
                                             alt={selectedStudent.studentname}
                                             className="pa-hero-avatar"
                                             onError={(e) => {
@@ -709,6 +820,14 @@ const PassApproval: React.FC = () => {
                                         <label className="pa-field-label">Reason</label>
                                         <div className="pa-field-value pa-reason-text">{selectedStudent.reason}</div>
                                     </div>
+                                    {selectedStudent.staffApproval === 'rejected' && selectedStudent.remarks && (
+                                        <div className="pa-field-group pa-field-full">
+                                            <label className="pa-field-label" style={{ color: '#ef4444' }}>Rejection Remarks</label>
+                                            <div className="pa-field-value pa-reason-text" style={{ color: '#ef4444', backgroundColor: '#fef2f2', padding: '12px', borderRadius: '8px' }}>
+                                                {selectedStudent.remarks}
+                                            </div>
+                                        </div>
+                                    )}
                                     <div className="pa-fields-row">
                                         <div className="pa-field-group">
                                             <label className="pa-field-label">From Date</label>
@@ -826,7 +945,7 @@ const PassApproval: React.FC = () => {
                                                         <div key={roommate._id} className="pa-roommate-card">
                                                             <div className="pa-roommate-avatar">
                                                                 <img
-                                                                    src={`${import.meta.env.VITE_CDN_URL}${roommate.photo}`}
+                                                                    src={roommate.photo ? (roommate.photo.startsWith('http') ? roommate.photo : `${import.meta.env.VITE_CDN_URL}${roommate.photo}`) : `https://ui-avatars.com/api/?name=${roommate.name}&background=random`}
                                                                     alt={roommate.name}
                                                                     onError={(e) => {
                                                                         e.currentTarget.src = `https://ui-avatars.com/api/?name=${roommate.name}&background=random`;
@@ -1050,7 +1169,7 @@ const PassApproval: React.FC = () => {
                                         {actionType === 'approve' ? 'Approve Outpass' : 'Reject Outpass'}
                                     </h3>
                                     <p className="pa-modal-sub">
-                                        {actionType === 'approve' ? 'Provide remarks to confirm approval' : 'Provide reason for rejection'}
+                                        {actionType === 'approve' ? 'Confirm outpass approval' : 'Provide reason for rejection'}
                                     </p>
                                 </div>
                             </div>
@@ -1060,27 +1179,26 @@ const PassApproval: React.FC = () => {
                                 </svg>
                             </button>
                         </div>
-                        <div className="pa-modal-body">
-                            <label className="pa-modal-label">Remarks <span className="pa-required">*</span></label>
-                            <textarea
-                                className="pa-modal-textarea"
-                                value={actionRemarks}
-                                onChange={(e) => setActionRemarks(e.target.value)}
-                                placeholder={actionType === 'approve'
-                                    ? 'Enter approval remarks...'
-                                    : 'Enter reason for rejection...'
-                                }
-                                rows={4}
-                            />
-                        </div>
-                        <div className="pa-modal-footer">
+                        {actionType === 'reject' && (
+                            <div className="pa-modal-body">
+                                <label className="pa-modal-label">Remarks <span className="pa-required">*</span></label>
+                                <textarea
+                                    className="pa-modal-textarea"
+                                    value={actionRemarks}
+                                    onChange={(e) => setActionRemarks(e.target.value)}
+                                    placeholder="Enter reason for rejection..."
+                                    rows={4}
+                                />
+                            </div>
+                        )}
+                        <div className="pa-modal-footer" style={{ marginTop: actionType === 'approve' ? '24px' : '0' }}>
                             <button className="pa-modal-cancel" onClick={() => setShowActionModal(false)}>
                                 Cancel
                             </button>
                             <button
                                 className={`pa-modal-confirm ${actionType === 'approve' ? 'pa-confirm-approve' : 'pa-confirm-reject'}`}
                                 onClick={confirmAction}
-                                disabled={!actionRemarks.trim()}
+                                disabled={actionType === 'reject' && !actionRemarks.trim()}
                             >
                                 {actionType === 'approve' ? 'Confirm Approval' : 'Confirm Rejection'}
                             </button>
@@ -1653,8 +1771,51 @@ const PassApproval: React.FC = () => {
                     display: flex;
                     justify-content: center;
                     align-items: center;
-                    gap: 16px;
+                    gap: 10px;
                     margin-top: 28px;
+                    flex-wrap: wrap;
+                }
+
+                .pa-page-numbers {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+
+                .pa-pnum-btn {
+                    width: 38px;
+                    height: 38px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 10px;
+                    border: 1.5px solid #E2E8F0;
+                    background: rgba(255,255,255,0.92);
+                    color: #64748B;
+                    font-weight: 700;
+                    font-size: 0.85rem;
+                    cursor: pointer;
+                    transition: all 0.15s ease;
+                }
+
+                .pa-pnum-btn:hover {
+                    border-color: #93C5FD;
+                    color: #3B82F6;
+                    background: white;
+                }
+
+                .pa-pnum-btn.active {
+                    background: #3B82F6;
+                    color: white;
+                    border-color: #3B82F6;
+                    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.25);
+                }
+
+                .pa-pnum-dots {
+                    color: #94A3B8;
+                    font-weight: 700;
+                    padding: 0 4px;
+                    font-size: 0.9rem;
                 }
 
                 .pa-page-btn {
@@ -2696,4 +2857,4 @@ const PassApproval: React.FC = () => {
     );
 };
 
-export default PassApproval;
+export default PendingPasses;

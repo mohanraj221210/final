@@ -46,6 +46,7 @@ const StudentRegistration: React.FC = () => {
     const nameInputRef = useRef<HTMLInputElement>(null);
 
     const [studentsList, setStudentsList] = useState<Student[]>([]);
+    const [totalStudentsCount, setTotalStudentsCount] = useState<number>(0);
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [isLastPage, setIsLastPage] = useState(true);
@@ -93,18 +94,35 @@ const StudentRegistration: React.FC = () => {
     // Fetch Students List
     useEffect(() => {
         if (activeTab === 'added-students') {
-            fetchStudents();
+            const handler = setTimeout(() => {
+                fetchStudents();
+            }, 500);
+            return () => clearTimeout(handler);
         }
-    }, [activeTab, currentStaffID, currentPage]);
+    }, [activeTab, currentStaffID, currentPage, searchQuery]);
 
     const fetchStudents = async () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
+            const searchParam = searchQuery ? `&search=${searchQuery}` : '';
             // Assuming API filters by staff ID from token
-            const response = await axios.get(`${API_URL}/staff/students/list?page=${currentPage}&limit=20`, {
+
+            const statsPromise = axios.get(`${API_URL}/staff/student/stats`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null);
+            const response = await axios.get(`${API_URL}/staff/students/list?page=${currentPage}&limit=20${searchParam}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+
+            const statsRes = await statsPromise;
+            if (statsRes && statsRes.status === 200) {
+                let statsData = statsRes.data;
+                if (statsData.stats && statsData.stats.length > 0) {
+                    statsData = statsData.stats[0];
+                }
+                const total = statsData?.total || statsData?.totalStudents || statsData?.students || 0;
+                setTotalStudentsCount(total);
+            }
+
             if (response.status === 200) {
                 // Handle the nested { students: [] } structure
                 const allStudents = response.data.students || response.data.data || [];
@@ -327,7 +345,7 @@ const StudentRegistration: React.FC = () => {
     };
 
 
-if (!appReady) return <PremiumStaffLoader isDataReady={true} onComplete={() => setAppReady(true)} />;
+    if (!appReady) return <PremiumStaffLoader isDataReady={true} onComplete={() => setAppReady(true)} />;
 
     return (
         <div className="registration-page mobile-page-content">
@@ -468,7 +486,7 @@ if (!appReady) return <PremiumStaffLoader isDataReady={true} onComplete={() => s
                                     <div className="count-info">
                                         <h3>All Registered Students</h3>
                                         <span className="count-badge">
-                                            {filteredStudents.length} of {studentsList.length} shown
+                                            {filteredStudents.length} shown {totalStudentsCount > 0 && `of ${totalStudentsCount} total`}
                                         </span>
                                     </div>
                                     <div className="search-bar">
@@ -477,7 +495,10 @@ if (!appReady) return <PremiumStaffLoader isDataReady={true} onComplete={() => s
                                             type="text"
                                             placeholder="Search by name, email, or register number..."
                                             value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            onChange={(e) => {
+                                                setSearchQuery(e.target.value);
+                                                setCurrentPage(1);
+                                            }}
                                         />
                                     </div>
                                 </div>

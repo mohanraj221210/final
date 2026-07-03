@@ -14,7 +14,7 @@ export const API_ENDPOINTS = {
     }
 };
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://api.jit.college';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // Create Axios client with authentication interceptor
 const api = axios.create({
@@ -111,6 +111,7 @@ export interface MappedStats {
     pending: number;
     approved: number;
     rejected: number;
+    recentpasses?: MappedOutpass[];
 }
 
 export interface MappedYearIncharge {
@@ -133,6 +134,7 @@ export interface PaginatedResult<T> {
     totalPages: number;
     currentPage: number;
     totalResults: number;
+    isLast?: boolean;
 }
 
 export function mapStatsResponse(data: any): MappedStats {
@@ -249,9 +251,10 @@ export function mapPaginatedResponse<T>(data: any, mapper: (item: any) => T): Pa
     const list = data.outpasses || data.outpasslist || data.filterOutpass || data.data || (Array.isArray(data) ? data : []);
     return {
         data: list.map(mapper),
-        totalPages: data.totalPages || 1,
-        currentPage: data.currentPage || 1,
+        totalPages: data.pages || data.totalPages || 1,
+        currentPage: data.currentPage || data.page || 1,
         totalResults: data.totalResults || data.total || list.length || 0,
+        isLast: data.isLast !== undefined ? data.isLast : (data.isLastPage !== undefined ? data.isLastPage : false),
     };
 }
 
@@ -276,39 +279,63 @@ export function mapProfileResponse(data: any): MappedYearIncharge {
 // 4. Year Incharge Service Methods
 export const YearInchargeService = {
     getStats: async (filter?: string) => {
-        const url = filter && filter !== 'total'
-            ? `${API_ENDPOINTS.YEAR_INCHARGE.STATS}?filter=${filter}` 
+        let backendFilter = filter;
+        if (filter === 'weekly') backendFilter = 'weekly';
+        if (filter === 'monthly') backendFilter = 'monthly';
+        const url = backendFilter && backendFilter !== 'total'
+            ? `${API_ENDPOINTS.YEAR_INCHARGE.STATS}?filter=${backendFilter}`
             : API_ENDPOINTS.YEAR_INCHARGE.STATS;
         console.log(`[YearInchargeService.getStats] Request: Method: GET, URL: ${url}, Token: ${localStorage.getItem('token') ? 'Bearer present' : 'Missing'}`);
         try {
             const response = await api.get(url);
             console.log(`[YearInchargeService.getStats] Response: Status: ${response.status}, Raw Data:`, response.data);
-            return mapStatsResponse(response.data);
+            const mapped = mapStatsResponse(response.data);
+
+            // Extract recentpasses if available
+            const statsObj = response.data?.stats?.[0] || response.data?.data?.[0] || {};
+            const recentpasses = statsObj?.recentpasses || response.data?.recentpasses || [];
+
+            return {
+                ...mapped,
+                recentpasses: Array.isArray(recentpasses) ? recentpasses.map(mapOutpassResponse) : []
+            };
         } catch (error: any) {
             console.error(`[YearInchargeService.getStats] Error: Status: ${error.response?.status}, Data:`, error.response?.data || error.message);
             throw error;
         }
     },
 
-    getOutpasses: async (page: number, filter?: string) => {
-        const filterParam = filter && filter !== 'total' ? `&filter=${filter}` : '';
-        const url = `${API_ENDPOINTS.YEAR_INCHARGE.OUTPASS_LIST}?page=${page}&limit=10${filterParam}`;
-        console.log('Filter Changed:', filter || 'total');
+    getOutpasses: async (page: number, appliedDate?: string, status?: string, search?: string, filter?: string) => {
+        const appliedDateParam = appliedDate && appliedDate !== 'total' && appliedDate !== 'all' ? `&appliedDate=${appliedDate}` : '';
+        const statusParam = status && status !== 'all' ? `&status=${status}` : '';
+        const searchParam = search ? `&search=${search}` : '';
+        const filterParam = filter && filter !== 'all' && filter !== 'total' ? `&filter=${filter}` : '';
+        const url = `${API_ENDPOINTS.YEAR_INCHARGE.OUTPASS_LIST}?page=${page}&limit=10${appliedDateParam}${statusParam}${searchParam}${filterParam}`;
         console.log('API Request:', url);
         try {
             const response = await api.get(url);
             console.log('API Response:', response.data);
             return mapPaginatedResponse<MappedOutpass>(response.data, mapOutpassResponse);
         } catch (error: any) {
-            console.error(`[YearInchargeService.getOutpasses] Error: Status: ${error.response?.status}, Data:`, error.response?.data || error.message);
+            if (error?.response?.status === 404) {
+                return {
+                    data: [],
+                    totalPages: 1,
+                    currentPage: page,
+                    totalResults: 0,
+                    isLast: true
+                };
+            }
+            console.error(`[YearInchargeService.getOutpasses] Error: Status: ${error?.response?.status}, Data:`, error?.response?.data || error?.message);
             throw error;
         }
     },
 
-    getPendingOutpasses: async (page: number, limit: number, filter?: string) => {
-        const filterParam = filter && filter !== 'total' ? `&filter=${filter}` : '';
-        const url = `${API_ENDPOINTS.YEAR_INCHARGE.PENDING_LIST}?page=${page}&limit=${limit}${filterParam}`;
-        console.log('Filter Changed:', filter || 'total');
+    getPendingOutpasses: async (page: number, limit: number, appliedDate?: string, search?: string, filter?: string): Promise<PaginatedResult<MappedOutpass>> => {
+        const appliedDateParam = appliedDate && appliedDate !== 'total' && appliedDate !== 'all' ? `&appliedDate=${appliedDate}` : '';
+        const searchParam = search ? `&search=${search}` : '';
+        const filterParam = filter && filter !== 'all' && filter !== 'total' ? `&filter=${filter}` : '';
+        const url = `${API_ENDPOINTS.YEAR_INCHARGE.PENDING_LIST}?page=${page}&limit=${limit}${appliedDateParam}${searchParam}${filterParam}`;
         console.log('API Request:', url);
         try {
             const response = await api.get(url);
@@ -317,91 +344,77 @@ export const YearInchargeService = {
         } catch (error: any) {
             if (error.response?.status === 404) {
                 // TEMPORARY FALLBACK
-                // Backend pending endpoint currently returns 404.
-                // Remove this fallback once backend provides a dedicated pending API.
                 console.warn(
                     "Using fallback pending-outpass implementation because backend endpoint returned 404"
                 );
 
-                // Fetch outpasses from fallback endpoint — include filter param if provided
-                const fallbackFilterParam = filter && filter !== 'total' ? `&filter=${filter}` : '';
-                const fallbackUrl = `${API_ENDPOINTS.YEAR_INCHARGE.OUTPASS_LIST}?page=1&limit=200${fallbackFilterParam}`;
-                console.log('API Request (Fallback):', fallbackUrl);
+                try {
+                    const fallbackUrl = `${API_ENDPOINTS.YEAR_INCHARGE.OUTPASS_LIST}?page=1&limit=200${appliedDateParam}${searchParam}${filterParam}`;
+                    console.log('API Request (Fallback):', fallbackUrl);
 
-                const fallbackResponse = await api.get(fallbackUrl);
-                console.log('API Response (Fallback):', fallbackResponse.data);
+                    const fallbackResponse = await api.get(fallbackUrl);
+                    console.log('API Response (Fallback):', fallbackResponse.data);
 
-                const rawList = fallbackResponse.data.outpasses ||
-                                  fallbackResponse.data.outpasslist ||
-                                  fallbackResponse.data.filterOutpass ||
-                                  fallbackResponse.data.data ||
-                                  (Array.isArray(fallbackResponse.data) ? fallbackResponse.data : []);
+                    const rawList = fallbackResponse.data.outpasses ||
+                        fallbackResponse.data.outpasslist ||
+                        fallbackResponse.data.filterOutpass ||
+                        fallbackResponse.data.data ||
+                        (Array.isArray(fallbackResponse.data) ? fallbackResponse.data : []);
 
-                // Apply client-side date filter if backend does not support filter param
-                const now = new Date();
-                const dateFilteredList = rawList.filter((o: any) => {
-                    if (!filter || filter === 'total') return true;
-                    const created = o.createdAt ? new Date(o.createdAt) : null;
-                    if (!created) return false;
-                    if (filter === 'today') {
-                        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                        return created >= start;
+                    const totalOutpasses = rawList.length;
+
+                    // Inspect actual status field
+                    let actualStatusField = 'none';
+                    if (totalOutpasses > 0) {
+                        const firstItem = rawList[0];
+                        if (firstItem.yearinchargeapprovalstatus !== undefined) {
+                            actualStatusField = 'yearinchargeapprovalstatus';
+                        } else if (firstItem.yearincharge?.status !== undefined) {
+                            actualStatusField = 'yearincharge.status';
+                        } else if (firstItem.status !== undefined) {
+                            actualStatusField = 'status';
+                        }
                     }
-                    if (filter === 'weekly') {
-                        const start = new Date(now);
-                        start.setDate(now.getDate() - 6);
-                        start.setHours(0, 0, 0, 0);
-                        return created >= start;
-                    }
-                    if (filter === 'monthly') {
-                        const start = new Date(now.getFullYear(), now.getMonth(), 1);
-                        return created >= start;
-                    }
-                    return true;
-                });
 
-                const totalOutpasses = dateFilteredList.length;
+                    // Filter for pending status locally
+                    const pendingRawList = rawList.filter((o: any) => {
+                        const statusVal = o.yearinchargeapprovalstatus || o.yearincharge?.status || o.status;
+                        return typeof statusVal === 'string' && statusVal.toLowerCase() === 'pending';
+                    });
 
-                // Inspect actual status field
-                let actualStatusField = 'none';
-                if (totalOutpasses > 0) {
-                    const firstItem = dateFilteredList[0];
-                    if (firstItem.yearinchargeapprovalstatus !== undefined) {
-                        actualStatusField = 'yearinchargeapprovalstatus';
-                    } else if (firstItem.yearincharge?.status !== undefined) {
-                        actualStatusField = 'yearincharge.status';
-                    } else if (firstItem.status !== undefined) {
-                        actualStatusField = 'status';
+                    const pendingCount = pendingRawList.length;
+
+                    console.log(`[YearInchargeService.getPendingOutpasses] Fallback Analysis:`, {
+                        totalOutpasses,
+                        pendingCountDerived: pendingCount,
+                        actualStatusFieldUsed: actualStatusField,
+                        failedEndpoint: url
+                    });
+
+                    const mappedPending = pendingRawList.map(mapOutpassResponse);
+                    const startIndex = (page - 1) * limit;
+                    const paginatedData = mappedPending.slice(startIndex, startIndex + limit);
+                    const totalPages = Math.max(1, Math.ceil(pendingCount / limit));
+
+                    return {
+                        data: paginatedData,
+                        totalPages,
+                        currentPage: page,
+                        totalResults: pendingCount,
+                        isLast: page >= totalPages
+                    };
+                } catch (fallbackError: any) {
+                    if (fallbackError.response?.status === 404) {
+                        return {
+                            data: [],
+                            totalPages: 1,
+                            currentPage: page,
+                            totalResults: 0,
+                            isLast: true
+                        };
                     }
+                    throw fallbackError;
                 }
-
-                // Filter for pending status locally
-                const pendingRawList = dateFilteredList.filter((o: any) => {
-                    const statusVal = o.yearinchargeapprovalstatus || o.yearincharge?.status || o.status;
-                    return typeof statusVal === 'string' && statusVal.toLowerCase() === 'pending';
-                });
-
-                const pendingCount = pendingRawList.length;
-
-                console.log(`[YearInchargeService.getPendingOutpasses] Fallback Analysis:`, {
-                    totalOutpasses,
-                    pendingCountDerived: pendingCount,
-                    actualStatusFieldUsed: actualStatusField,
-                    appliedFilter: filter || 'total',
-                    failedEndpoint: url
-                });
-
-                const mappedPending = pendingRawList.map(mapOutpassResponse);
-                const startIndex = (page - 1) * limit;
-                const paginatedData = mappedPending.slice(startIndex, startIndex + limit);
-                const totalPages = Math.max(1, Math.ceil(pendingCount / limit));
-
-                return {
-                    data: paginatedData,
-                    totalPages,
-                    currentPage: page,
-                    totalResults: pendingCount
-                };
             }
             console.error(`[YearInchargeService.getPendingOutpasses] Error: Status: ${error.response?.status}, Data:`, error.response?.data || error.message);
             throw error;

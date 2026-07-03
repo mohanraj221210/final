@@ -314,10 +314,7 @@ const Welcome: React.FC = () => {
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
                 </svg>
-                Login / Signup
-              </button>
-              <button className="jit-hamburger" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Menu">
-                <span/><span/><span/>
+                Login
               </button>
             </div>
           </div>
@@ -595,7 +592,11 @@ const Welcome: React.FC = () => {
               </svg>
               <span className="jit-footer-name">JIT Campus One</span>
             </div>
-            <span className="jit-footer-copy">© 2025 Jeppiaar Institute of Technology. All rights reserved.</span>
+            <span className="jit-footer-copy">
+              © 2025 Jeppiaar Institute of Technology. All rights reserved.
+              <span style={{ margin: '0 10px', color: '#CBD5E1' }}>|</span>
+              Support: <a href="mailto:jeppiaaroutpass@gmail.com" style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 600 }}>jeppiaaroutpass@gmail.com</a>
+            </span>
             <span className="jit-footer-tag">v2.0 · Digital Campus Platform</span>
           </div>
         </footer>

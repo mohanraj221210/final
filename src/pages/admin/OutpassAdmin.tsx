@@ -6,209 +6,126 @@ import 'react-toastify/dist/ReactToastify.css';
 
 interface Outpass {
     _id: string;
-    // The API seems to return lowercase 'studentid' based on other files
-    studentid?: {
-        name: string;
-        rollNo?: string;
-        registerNumber?: string;
-        department?: string;
-        year?: string;
-        studentType?: string;
-        residenceType?: string;
-    };
-    // Fallbacks
-    student?: {
-        name: string;
-        rollNo: string;
-        department: string;
-        year: string;
-    };
+    studentid?: { name: string; rollNo?: string; registerNumber?: string; department?: string; year?: string; };
+    student?: { name: string; rollNo: string; department: string; year: string; };
     studentName?: string;
-
-    // Flat properties from API
     name?: string;
     email?: string;
     department?: string;
     semester?: number;
-
     outpassType?: string;
-    outpasstype?: string; // Add lowercase fallback to interface
+    outpasstype?: string;
     type?: string;
-
     reason: string;
-
     fromDate: string;
     outDate?: string;
-
     toDate: string;
-    inDate?: string;
-
     outpassStatus?: string;
     status?: string;
-
-    // Approval Statuses (lowercase based on observation)
-    staffapprovalstatus?: string;
-    wardenapprovalstatus?: string;
-    yearinchargeapprovalstatus?: string;
-
-    // Camelcase fallbacks just in case
-    staffApprovalStatus?: string;
-    wardenApprovalStatus?: string;
-    yearInchargeApprovalStatus?: string;
-
     createdAt: string;
+}
+
+interface StatEntry {
+    _id: string;
+    count: number;
+    approved: number;
+    rejected: number;
+    pending: number;
+    OD: number;
+    Home: number;
+    Outing: number;
+    Emergency: number;
 }
 
 const OutpassAdmin: React.FC = () => {
     const [outpasses, setOutpasses] = useState<Outpass[]>([]);
     const [loading, setLoading] = useState(true);
+    const [statsLoading, setStatsLoading] = useState(true);
     const [filterType, setFilterType] = useState<string>('All');
     const [filterTime, setFilterTime] = useState<string>('All');
-
+    const [filterStatus, setFilterStatus] = useState<string>('All');
+    const [filterDept, setFilterDept] = useState<string>('');
     const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [isLastPage, setIsLastPage] = useState(true);
+    const [statsData, setStatsData] = useState<StatEntry[]>([]);
 
+    // Fetch stats on mount
     useEffect(() => {
-        fetchOutpasses();
+        fetchStats();
     }, []);
+
+    // Fetch outpasses with debounce
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            fetchOutpasses();
+        }, 300);
+        return () => clearTimeout(handler);
+    }, [currentPage, filterType, filterTime, filterStatus, filterDept, searchTerm]);
+
+    const fetchStats = async () => {
+        try {
+            const data = await adminService.getOutpassStats();
+            const statsArray = Array.isArray(data) && data[0]?.stats ? data[0].stats : (Array.isArray(data) ? data : []);
+            setStatsData(statsArray);
+        } catch {
+            // Silent fail for stats
+        } finally {
+            setStatsLoading(false);
+        }
+    };
 
     const fetchOutpasses = async () => {
         try {
-            const data = await adminService.getAllOutpasses();
+            const filters: Record<string, any> = { page: currentPage };
+            if (filterType !== 'All') filters.outpasstype = filterType;
+            if (filterStatus !== 'All') filters.status = filterStatus;
+            if (filterDept.trim()) filters.department = filterDept.trim();
+            if (filterTime === 'Today') filters.appliedDate = 'today';
+            else if (filterTime === 'This Week') filters.appliedDate = 'weekly';
+            else if (filterTime === 'This Month') filters.appliedDate = 'monthly';
+            if (searchTerm) filters.search = searchTerm;
+
+            const data = await adminService.getAllOutpasses(filters);
             // @ts-ignore
             const list = data.outpasses || data.filterOutpass || data.data || [];
-            if (Array.isArray(list)) {
-                setOutpasses(list);
-            } else {
-                setOutpasses([]);
-            }
+            setOutpasses(Array.isArray(list) ? list : []);
+            setIsLastPage(data.isLast ?? true);
         } catch (error) {
-            console.error("Error fetching outpasses:", error);
-            toast.error("Failed to load outpass data");
+            console.error('Error fetching outpasses:', error);
+            toast.error('Failed to load outpass data');
         } finally {
             setLoading(false);
         }
     };
 
-    // Helper to get safe values
     const getStudentName = (op: Outpass) => op.name || op.studentid?.name || op.student?.name || op.studentName || '-';
-    const getStudentRegNo = (op: Outpass) => op.email || op.studentid?.registerNumber || '-';
+    const getStudentEmail = (op: Outpass) => op.email || '-';
     const getStudentDept = (op: Outpass) => op.department || op.studentid?.department || op.student?.department || '-';
     const getStudentYear = (op: Outpass) => op.semester ? `Sem ${op.semester}` : (op.studentid?.year || op.student?.year || '-');
-
-
-
-    const getType = (op: Outpass): string => {
-        // @ts-ignore
-        const val = op.outpassType || op.outpasstype || op.type || '-';
-        return val;
-    };
-
-    // Status is often 'status' or 'outpassStatus'
-    // But specific approvals are usually distinct fields
+    const getType = (op: Outpass): string => op.outpassType || op.outpasstype || op.type || '-';
     const getStatus = (op: Outpass) => op.status || op.outpassStatus || '-';
 
-    const getFromDate = (op: Outpass) => op.fromDate || op.outDate || op.createdAt || '';
-
-
-
-    // Helper to check date ranges
-    const isDateMatch = (dateStr: string, timeFilter: string) => {
-        if (!dateStr) return false;
-        const date = new Date(dateStr);
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-
-        const dateDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-
-        if (timeFilter === 'Today') {
-            return dateDay.getTime() === today.getTime();
-        }
-        if (timeFilter === 'Yesterday') {
-            return dateDay.getTime() === yesterday.getTime();
-        }
-        if (timeFilter === 'This Week') {
-            const startOfWeek = new Date(today);
-            startOfWeek.setDate(today.getDate() - today.getDay());
-            return date >= startOfWeek;
-        }
-        if (timeFilter === 'This Month') {
-            return date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
-        }
-        return true;
-    };
-
-    // Filter Logic
-    const filteredOutpasses = outpasses.filter(op => {
-        const type = getType(op).toLowerCase().replace(/\s+/g, '');
-        const filter = filterType.toLowerCase().replace(/\s+/g, '');
-        const date = getFromDate(op);
-        const search = searchTerm.toLowerCase();
-
-        const typeMatch = filterType === 'All' || type === filter || type.includes(filter);
-        const timeMatch = filterTime === 'All' || isDateMatch(date, filterTime);
-
-        // Search Match
-        const name = getStudentName(op).toLowerCase();
-        const regNo = getStudentRegNo(op).toLowerCase();
-        const fromDateStr = new Date(getFromDate(op)).toLocaleDateString().toLowerCase();
-
-        // Simple Search Check
-        const searchMatch = !searchTerm ||
-            name.includes(search) ||
-            regNo.includes(search) ||
-            fromDateStr.includes(search) ||
-            date.includes(search);
-
-        return typeMatch && timeMatch && searchMatch;
-    });
-
-    // Stats Calculation - Using total counts from 'outpasses' (not filtered ones)
-    const stats = {
-        total: outpasses.length,
-        od: outpasses.filter(o => getType(o).toLowerCase() === 'od').length,
-        home: outpasses.filter(o => getType(o).toLowerCase().replace(/\s+/g, '').includes('home')).length,
-        outing: outpasses.filter(o => getType(o).toLowerCase() === 'outing').length,
-        emergency: outpasses.filter(o => getType(o).toLowerCase() === 'emergency').length,
-    };
-
-    // Date formatter for CSV (short format)
-    const csvDate = (dateStr: string) => {
-        if (!dateStr) return '-';
-        return new Date(dateStr).toISOString().split('T')[0]; // YYYY-MM-DD
-    };
+    // Aggregate stats from API
+    const totalPending = statsData.find(s => s._id === 'pending')?.count || 0;
+    const totalRejected = statsData.find(s => s._id === 'rejected')?.count || 0;
+    const totalApproved = statsData.find(s => s._id === 'approved')?.count || 0;
+    const totalHome = statsData.reduce((sum, s) => sum + (s.Home || 0), 0);
+    const totalOuting = statsData.reduce((sum, s) => sum + (s.Outing || 0), 0);
+    const totalOD = statsData.reduce((sum, s) => sum + (s.OD || 0), 0);
+    const totalEmergency = statsData.reduce((sum, s) => sum + (s.Emergency || 0), 0);
+    const grandTotal = totalPending + totalRejected + totalApproved;
 
     // Download CSV
     const handleDownload = () => {
-        const headers = [
-            "S.No",
-            "Student Name",
-            "Department",
-            "Batch (Semester)",
-            "Pass Type",
-            "Status",
-            "Applied On"
-        ];
-
-        const rows = filteredOutpasses.map((op, index) => {
-            return [
-                index + 1,
-                `"${getStudentName(op)}"`,
-                `"${getStudentDept(op)}"`,
-                `"${getStudentYear(op)}"`,
-                getType(op),
-                getStatus(op),
-                csvDate(op.createdAt)
-            ];
-        });
-
-        const csvContent = [
-            headers.join(','),
-            ...rows.map(row => row.join(','))
-        ].join('\n');
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const headers = ['S.No', 'Student Name', 'Email', 'Department', 'Semester', 'Pass Type', 'Status', 'Applied On'];
+        const rows = outpasses.map((op, index) => [
+            index + 1, `"${getStudentName(op)}"`, `"${getStudentEmail(op)}"`,
+            `"${getStudentDept(op)}"`, getStudentYear(op), getType(op), getStatus(op),
+            op.createdAt ? new Date(op.createdAt).toISOString().split('T')[0] : '-'
+        ]);
+        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.setAttribute('href', url);
@@ -218,313 +135,260 @@ const OutpassAdmin: React.FC = () => {
         document.body.removeChild(link);
     };
 
-    if (loading) return <AdminLayout title="Outpass Management"><div>Loading...</div></AdminLayout>;
+    const getTypeBadgeColor = (type: string) => {
+        switch (type?.toLowerCase()) {
+            case 'home': return { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' };
+            case 'outing': return { bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0' };
+            case 'od': return { bg: '#fdf4ff', color: '#7e22ce', border: '#e9d5ff' };
+            case 'emergency': return { bg: '#fff7ed', color: '#c2410c', border: '#fed7aa' };
+            default: return { bg: '#f9fafb', color: '#6b7280', border: '#e5e7eb' };
+        }
+    };
+
+    const getStatusColors = (status: string) => {
+        switch (status?.toLowerCase()) {
+            case 'approved': return { bg: '#f0fdf4', color: '#15803d', dot: '#22c55e' };
+            case 'rejected': return { bg: '#fff1f2', color: '#be123c', dot: '#f43f5e' };
+            case 'pending': return { bg: '#fffbeb', color: '#b45309', dot: '#f59e0b' };
+            default: return { bg: '#f9fafb', color: '#6b7280', dot: '#9ca3af' };
+        }
+    };
 
     return (
         <AdminLayout title="Outpass Management">
-            <ToastContainer />
+            <ToastContainer position="bottom-right" />
 
-            {/* Stats Cards */}
-            <div className="stats-grid">
-                <div className="stat-card">
-                    <h3>Total Requests</h3>
-                    <p className="stat-value">{stats.total}</p>
-                </div>
-                <div className="stat-card card-od">
-                    <h3>OD</h3>
-                    <p className="stat-value">{stats.od}</p>
-                </div>
-                <div className="stat-card card-home">
-                    <h3>Home Pass</h3>
-                    <p className="stat-value">{stats.home}</p>
-                </div>
-                <div className="stat-card card-outing">
-                    <h3>Outing</h3>
-                    <p className="stat-value">{stats.outing}</p>
-                </div>
-                <div className="stat-card card-emergency">
-                    <h3>Emergency</h3>
-                    <p className="stat-value">{stats.emergency}</p>
-                </div>
-            </div>
+            <div style={{ fontFamily: "'Inter', -apple-system, sans-serif" }}>
 
-            {/* Controls */}
-            <div className="controls-bar">
-                <div className="search-bar">
-                    <span className="search-icon">🔍</span>
-                    <input
-                        type="text"
-                        placeholder="Search by name, reg no, date..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                {/* Page Header */}
+                <div style={{ marginBottom: '28px' }}>
+                    <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
+                        Outpass Management
+                    </h1>
+                    <p style={{ color: '#64748b', marginTop: '4px', fontSize: '0.95rem' }}>
+                        Monitor and manage all student outpass requests
+                    </p>
                 </div>
-                <div className="filters">
-                    <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="filter-select">
-                        <option value="All">All Types</option>
-                        <option value="OD">OD</option>
-                        <option value="Home Pass">Home Pass</option>
-                        <option value="Outing">Outing</option>
-                        <option value="Emergency">Emergency</option>
-                    </select>
 
-                    <div style={{ position: 'relative', display: 'inline-block' }}>
-                        <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#6b7280', fontSize: '14px', pointerEvents: 'none' }}>
-                            📅
-                        </span>
-                        <select
-                            value={filterTime}
-                            onChange={(e) => setFilterTime(e.target.value)}
-                            style={{
-                                padding: '10px 32px 10px 36px',
-                                borderRadius: '12px',
-                                border: '1px solid #d1d5db',
-                                background: 'white',
-                                color: '#374151',
-                                fontSize: '14px',
-                                fontWeight: '500',
-                                outline: 'none',
-                                cursor: 'pointer',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
-                                appearance: 'none',
-                                minWidth: '150px'
-                            }}
-                        >
-                            <option value="All">All Time</option>
-                            <option value="Today">Today</option>
-                            <option value="Yesterday">Yesterday</option>
-                            <option value="This Week">This Week</option>
-                            <option value="This Month">This Month</option>
-                        </select>
-                        <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#6b7280', fontSize: '10px', pointerEvents: 'none' }}>
-                            ▼
-                        </span>
+                {/* Stats Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', marginBottom: '28px' }}>
+                    {/* Total */}
+                    <div style={{ background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', borderRadius: '16px', padding: '20px', color: 'white', boxShadow: '0 4px 20px rgba(99,102,241,0.3)' }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.85, marginBottom: '8px' }}>Total</div>
+                        <div style={{ fontSize: '2rem', fontWeight: 800, lineHeight: 1 }}>{statsLoading ? '...' : grandTotal}</div>
+                        <div style={{ fontSize: '0.8rem', opacity: 0.8, marginTop: '4px' }}>All requests</div>
+                    </div>
+                    {/* Pending */}
+                    <div style={{ background: 'white', border: '1px solid #fde68a', borderRadius: '16px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#92400e', marginBottom: '8px' }}>⏳ Pending</div>
+                        <div style={{ fontSize: '2rem', fontWeight: 800, color: '#b45309', lineHeight: 1 }}>{statsLoading ? '...' : totalPending}</div>
+                        <div style={{ fontSize: '0.8rem', color: '#d97706', marginTop: '4px' }}>Awaiting approval</div>
+                    </div>
+                    {/* Approved */}
+                    <div style={{ background: 'white', border: '1px solid #bbf7d0', borderRadius: '16px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#166534', marginBottom: '8px' }}>✅ Approved</div>
+                        <div style={{ fontSize: '2rem', fontWeight: 800, color: '#15803d', lineHeight: 1 }}>{statsLoading ? '...' : totalApproved}</div>
+                        <div style={{ fontSize: '0.8rem', color: '#16a34a', marginTop: '4px' }}>Cleared</div>
+                    </div>
+                    {/* Rejected */}
+                    <div style={{ background: 'white', border: '1px solid #fecdd3', borderRadius: '16px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9f1239', marginBottom: '8px' }}>❌ Rejected</div>
+                        <div style={{ fontSize: '2rem', fontWeight: 800, color: '#be123c', lineHeight: 1 }}>{statsLoading ? '...' : totalRejected}</div>
+                        <div style={{ fontSize: '0.8rem', color: '#f43f5e', marginTop: '4px' }}>Declined</div>
+                    </div>
+                    {/* Home */}
+                    <div style={{ background: 'white', border: '1px solid #bfdbfe', borderRadius: '16px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#1e40af', marginBottom: '8px' }}>🏠 Home</div>
+                        <div style={{ fontSize: '2rem', fontWeight: 800, color: '#1d4ed8', lineHeight: 1 }}>{statsLoading ? '...' : totalHome}</div>
+                        <div style={{ fontSize: '0.8rem', color: '#3b82f6', marginTop: '4px' }}>Home passes</div>
+                    </div>
+                    {/* Outing */}
+                    <div style={{ background: 'white', border: '1px solid #bbf7d0', borderRadius: '16px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#14532d', marginBottom: '8px' }}>🚶 Outing</div>
+                        <div style={{ fontSize: '2rem', fontWeight: 800, color: '#15803d', lineHeight: 1 }}>{statsLoading ? '...' : totalOuting}</div>
+                        <div style={{ fontSize: '0.8rem', color: '#22c55e', marginTop: '4px' }}>Outings</div>
+                    </div>
+                    {/* OD */}
+                    <div style={{ background: 'white', border: '1px solid #e9d5ff', borderRadius: '16px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#581c87', marginBottom: '8px' }}>📋 OD</div>
+                        <div style={{ fontSize: '2rem', fontWeight: 800, color: '#7e22ce', lineHeight: 1 }}>{statsLoading ? '...' : totalOD}</div>
+                        <div style={{ fontSize: '0.8rem', color: '#a855f7', marginTop: '4px' }}>On duty</div>
+                    </div>
+                    {/* Emergency */}
+                    <div style={{ background: 'white', border: '1px solid #fed7aa', borderRadius: '16px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#7c2d12', marginBottom: '8px' }}>🚨 Emergency</div>
+                        <div style={{ fontSize: '2rem', fontWeight: 800, color: '#c2410c', lineHeight: 1 }}>{statsLoading ? '...' : totalEmergency}</div>
+                        <div style={{ fontSize: '0.8rem', color: '#f97316', marginTop: '4px' }}>Emergency</div>
                     </div>
                 </div>
 
-                <button onClick={handleDownload} className="btn-download">
-                    📥 Download Excel
-                </button>
-            </div>
+                {/* Controls Bar */}
+                <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '16px 20px', marginBottom: '20px', display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                    {/* Search */}
+                    <div style={{ flex: '1 1 200px', position: 'relative' }}>
+                        <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', fontSize: '16px', pointerEvents: 'none' }}>🔍</span>
+                        <input
+                            type="text"
+                            placeholder="Search by name or register no..."
+                            value={searchTerm}
+                            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                            style={{ width: '100%', padding: '10px 12px 10px 38px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '0.9rem', outline: 'none', background: '#f8fafc', color: '#0f172a', boxSizing: 'border-box' }}
+                        />
+                    </div>
+                    {/* Status Filter */}
+                    <select
+                        value={filterStatus}
+                        onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
+                        style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '0.9rem', background: '#f8fafc', color: '#374151', outline: 'none', cursor: 'pointer', fontWeight: 500 }}
+                    >
+                        <option value="All">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                    {/* Type Filter */}
+                    <select
+                        value={filterType}
+                        onChange={(e) => { setFilterType(e.target.value); setCurrentPage(1); }}
+                        style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '0.9rem', background: '#f8fafc', color: '#374151', outline: 'none', cursor: 'pointer', fontWeight: 500 }}
+                    >
+                        <option value="All">All Types</option>
+                        <option value="OD">OD</option>
+                        <option value="Home">Home Pass</option>
+                        <option value="Outing">Outing</option>
+                        <option value="Emergency">Emergency</option>
+                    </select>
+                    {/* Time Filter */}
+                    <select
+                        value={filterTime}
+                        onChange={(e) => { setFilterTime(e.target.value); setCurrentPage(1); }}
+                        style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '0.9rem', background: '#f8fafc', color: '#374151', outline: 'none', cursor: 'pointer', fontWeight: 500 }}
+                    >
+                        <option value="All">All Time</option>
+                        <option value="Today">Today</option>
+                        <option value="This Week">This Week</option>
+                        <option value="This Month">This Month</option>
+                    </select>
+                    {/* Department Filter */}
+                    <div style={{ position: 'relative' }}>
+                        <input
+                            type="text"
+                            placeholder="Filter by department..."
+                            value={filterDept}
+                            onChange={(e) => { setFilterDept(e.target.value); setCurrentPage(1); }}
+                            style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '0.9rem', outline: 'none', background: '#f8fafc', color: '#374151', minWidth: '180px' }}
+                        />
+                    </div>
+                    {/* Reset */}
+                    {(filterStatus !== 'All' || filterType !== 'All' || filterTime !== 'All' || filterDept || searchTerm) && (
+                        <button
+                            onClick={() => { setFilterStatus('All'); setFilterType('All'); setFilterTime('All'); setFilterDept(''); setSearchTerm(''); setCurrentPage(1); }}
+                            style={{ padding: '10px 14px', borderRadius: '10px', border: '1px solid #fecdd3', background: '#fff1f2', color: '#be123c', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                        >
+                            ✕ Clear
+                        </button>
+                    )}
+                    {/* Download */}
+                    <button
+                        onClick={handleDownload}
+                        style={{ padding: '10px 18px', borderRadius: '10px', border: 'none', background: 'linear-gradient(135deg, #6366f1, #4f46e5)', color: 'white', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', boxShadow: '0 2px 8px rgba(99,102,241,0.3)' }}
+                    >
+                        📥 Export CSV
+                    </button>
+                </div>
 
-            {/* Table */}
-            <div className="table-container">
-                <table className="data-table">
-                    <thead>
-                        <tr>
-                            <th>S.No</th>
-                            <th>Student Name</th>
-                            <th>Department</th>
-                            <th>Batch (Semester)</th>
-                            <th>Pass Type</th>
-                            <th>Status</th>
-                            <th>Applied On</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredOutpasses.length > 0 ? (
-                            filteredOutpasses.map((op, index) => {
-                                const status = getStatus(op);
-                                return (
-                                    <tr key={op._id}>
-                                        <td>{index + 1}</td>
-                                        <td className="font-medium">{getStudentName(op)}</td>
-                                        <td>{getStudentDept(op)}</td>
-                                        <td>{getStudentYear(op)}</td>
-                                        <td>
-                                            <span className="font-medium text-gray-700">
-                                                {getType(op)}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span className={`status-badge status-${status?.toLowerCase()}`}>
-                                                {status}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span className="text-gray-500 text-sm">
-                                                {op.createdAt ? new Date(op.createdAt).toLocaleDateString() : '-'}
-                                            </span>
-                                        </td>
+                {/* Table */}
+                <div style={{ background: 'white', borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                    {loading ? (
+                        <div style={{ padding: '60px', textAlign: 'center', color: '#94a3b8' }}>
+                            <div style={{ fontSize: '2rem', marginBottom: '12px' }}>⏳</div>
+                            <div style={{ fontWeight: 500 }}>Loading outpasses...</div>
+                        </div>
+                    ) : (
+                        <div style={{ overflowX: 'auto' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                <thead>
+                                    <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                                        {['#', 'Student', 'Department', 'Semester', 'Type', 'Status', 'Applied On'].map(h => (
+                                            <th key={h} style={{ padding: '14px 20px', textAlign: 'left', fontWeight: 600, color: '#64748b', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{h}</th>
+                                        ))}
                                     </tr>
-                                );
-                            })
-                        ) : (
-                            <tr>
-                                <td colSpan={7} className="no-data">No outpasses found matching the filters.</td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+                                </thead>
+                                <tbody>
+                                    {outpasses.length > 0 ? outpasses.map((op, index) => {
+                                        const status = getStatus(op);
+                                        const type = getType(op);
+                                        const typeColors = getTypeBadgeColor(type);
+                                        const statusColors = getStatusColors(status);
+                                        return (
+                                            <tr key={op._id} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.15s' }}
+                                                onMouseEnter={e => (e.currentTarget.style.background = '#f8fafc')}
+                                                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                                            >
+                                                <td style={{ padding: '14px 20px', color: '#94a3b8', fontWeight: 500, fontSize: '0.9rem' }}>
+                                                    {(currentPage - 1) * 20 + index + 1}
+                                                </td>
+                                                <td style={{ padding: '14px 20px' }}>
+                                                    <div style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.9rem' }}>{getStudentName(op)}</div>
+                                                    <div style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: '2px' }}>{getStudentEmail(op)}</div>
+                                                </td>
+                                                <td style={{ padding: '14px 20px', color: '#475569', fontSize: '0.88rem' }}>{getStudentDept(op)}</td>
+                                                <td style={{ padding: '14px 20px', color: '#475569', fontSize: '0.88rem' }}>{getStudentYear(op)}</td>
+                                                <td style={{ padding: '14px 20px' }}>
+                                                    <span style={{ padding: '4px 10px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 600, background: typeColors.bg, color: typeColors.color, border: `1px solid ${typeColors.border}`, whiteSpace: 'nowrap' }}>
+                                                        {type}
+                                                    </span>
+                                                </td>
+                                                <td style={{ padding: '14px 20px' }}>
+                                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 12px', borderRadius: '20px', fontSize: '0.78rem', fontWeight: 600, background: statusColors.bg, color: statusColors.color, whiteSpace: 'nowrap' }}>
+                                                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: statusColors.dot, display: 'inline-block', flexShrink: 0 }} />
+                                                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                                                    </span>
+                                                </td>
+                                                <td style={{ padding: '14px 20px', color: '#64748b', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+                                                    {op.createdAt ? new Date(op.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
+                                                </td>
+                                            </tr>
+                                        );
+                                    }) : (
+                                        <tr>
+                                            <td colSpan={7} style={{ padding: '60px', textAlign: 'center', color: '#94a3b8' }}>
+                                                <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>📭</div>
+                                                <div style={{ fontWeight: 600, fontSize: '1rem', marginBottom: '4px' }}>No outpasses found</div>
+                                                <div style={{ fontSize: '0.85rem' }}>Try adjusting your filters or search term</div>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+
+                {/* Pagination */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', padding: '14px 20px', background: 'white', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                    <button
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        style={{ padding: '8px 18px', borderRadius: '8px', border: '1px solid #e2e8f0', background: currentPage === 1 ? '#f8fafc' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', fontWeight: 600, color: currentPage === 1 ? '#cbd5e1' : '#374151', fontSize: '0.9rem', transition: 'all 0.2s' }}
+                    >
+                        ← Previous
+                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'linear-gradient(135deg,#6366f1,#4f46e5)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.9rem' }}>
+                            {currentPage}
+                        </span>
+                        <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Current page</span>
+                    </div>
+                    <button
+                        disabled={isLastPage}
+                        onClick={() => setCurrentPage(p => p + 1)}
+                        style={{ padding: '8px 18px', borderRadius: '8px', border: '1px solid #e2e8f0', background: isLastPage ? '#f8fafc' : 'white', cursor: isLastPage ? 'not-allowed' : 'pointer', fontWeight: 600, color: isLastPage ? '#cbd5e1' : '#374151', fontSize: '0.9rem', transition: 'all 0.2s' }}
+                    >
+                        Next →
+                    </button>
+                </div>
             </div>
-
-            <style>{`
-                .stats-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-                    gap: 16px;
-                    margin-bottom: 24px;
-                }
-                .stat-card {
-                    background: white;
-                    padding: 20px;
-                    border-radius: 12px;
-                    border: 1px solid #e5e7eb;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-                }
-                .stat-card h3 { margin: 0 0 8px; font-size: 0.9rem; color: #6b7280; font-weight: 500; }
-                .stat-value { font-size: 1.8rem; font-weight: 700; color: #111827; margin: 0; }
-                
-                .card-od .stat-value { color: #6366f1; }
-                .card-home .stat-value { color: #ec4899; }
-                .card-outing .stat-value { color: #f59e0b; }
-                .card-emergency .stat-value { color: #ef4444; }
-
-                .controls-bar {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 20px;
-                    flex-wrap: wrap;
-                    gap: 16px;
-                }
-                .search-bar {
-                    flex: 1;
-                    min-width: 200px;
-                    max-width: 300px;
-                    position: relative;
-                    display: flex;
-                    align-items: center;
-                }
-                .search-bar input {
-                    width: 100%;
-                    padding: 8px 12px 8px 36px;
-                    border: 1px solid #d1d5db;
-                    border-radius: 8px;
-                    font-size: 0.95rem;
-                    outline: none;
-                }
-                .search-bar input:focus {
-                    border-color: #6366f1;
-                    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
-                }
-                .search-icon {
-                    position: absolute;
-                    left: 10px;
-                    color: #9ca3af;
-                }
-                .filters { display: flex; gap: 12px; margin-left: 480px; }
-                .filter-select {
-                    padding: 8px 12px;
-                    border-radius: 8px;
-                    border: 1px solid #d1d5db;
-                    background: white;
-                    font-size: 0.95rem;
-                    color: #374151;
-                    cursor: pointer;
-                }
-                .btn-download {
-                    background: #10b981;
-                    color: white;
-                    border: none;
-                    padding: 8px 16px;
-                    border-radius: 8px;
-                    font-weight: 500;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    transition: background 0.2s;
-                }
-                .btn-download:hover { background: #059669; }
-
-                .table-container {
-                    background: white;
-                    border-radius: 12px;
-                    border: 1px solid #e5e7eb;
-                    overflow: hidden;
-                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-                }
-                .data-table {
-                    width: 100%;
-                    border-collapse: collapse;
-                }
-                .data-table th, .data-table td {
-                    padding: 16px 24px;
-                    text-align: left;
-                    border-bottom: 1px solid #f3f4f6;
-                    vertical-align: middle;
-                }
-                .data-table th {
-                    background: #f9fafb;
-                    font-weight: 600;
-                    color: #4b5563;
-                    font-size: 0.85rem;
-                    text-transform: uppercase;
-                    letter-spacing: 0.05em;
-                }
-                .data-table tbody tr:last-child td { border-bottom: none; }
-                .data-table tbody tr:hover { background: #f9fafb; }
-
-                .reason-cell { max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #4b5563; }
-
-                .status-badge {
-                    padding: 4px 10px;
-                    border-radius: 6px;
-                    font-size: 0.85rem;
-                    font-weight: 600;
-                    text-transform: uppercase;
-                    display: inline-block;
-                }
-                .status-approved { background: #dcfce7; color: #166534; }
-                .status-pending { background: #fff7ed; color: #c2410c; }
-                .status-rejected { background: #fee2e2; color: #991b1b; }
-                .status-declined { background: #fee2e2; color: #991b1b; }
-
-                .approval-status-col { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; }
-                .approval-item { display: flex; gap: 6px; align-items: center; }
-                .approval-item .label { color: #6b7280; width: 85px; }
-                .approval-item .val { font-weight: 600; }
-                .approval-item .val.pending { color: #d97706; }
-                .approval-item .val.approved { color: #059669; }
-                .approval-item .val.rejected, .approval-item .val.declined { color: #dc2626; }
-
-                .no-data { text-align: center; color: #6b7280; padding: 32px; font-style: italic; }
-
-                @media (max-width: 1024px) {
-                    .data-table { display: block; overflow-x: auto; }
-                }
-
-                @media (max-width: 640px) {
-                    .controls-bar { 
-                        flex-direction: column; 
-                        align-items: stretch; 
-                        gap: 10px;
-                    }
-                    .search-bar { width: 100%; max-width: none; }
-                    .search-bar input { width: 100%; }
-                    .filters { 
-                        display: grid; 
-                        grid-template-columns: 1fr 1fr; 
-                        gap: 8px; 
-                    }
-                    .filter-select { 
-                        width: 100%; 
-                        padding: 8px 4px; 
-                        font-size: 0.85rem; 
-                    }
-                    .btn-download { 
-                        width: 100%; 
-                        justify-content: center;
-                        padding: 8px;
-                        font-size: 0.9rem;
-                    }
-                }
-
-                .font-medium { font-weight: 500; color: #111827; }
-                .text-sm { font-size: 0.875rem; }
-                .text-gray-600 { color: #4b5563; }
-            `}</style>
         </AdminLayout>
     );
 };

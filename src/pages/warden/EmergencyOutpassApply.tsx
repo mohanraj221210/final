@@ -124,7 +124,7 @@ const EmergencyOutpassApply: React.FC = () => {
                                     >
                                         <div className="student-select-avatar">
                                             {student.photo ? (
-                                                <img src={`${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${student.photo.replace(/^\//, '')}`} alt={student.name} />
+                                                <img src={student.photo.startsWith('http') ? student.photo : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${student.photo.replace(/^\//, '')}`} alt={student.name} />
                                             ) : (
                                                 <div className="avatar-placeholder">{student.name.charAt(0)}</div>
                                             )}

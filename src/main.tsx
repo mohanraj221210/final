@@ -7,7 +7,6 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Login from './pages/login'
 import StaffDashboard from './pages/staff/StaffDashboard'
 import StaffProfile from './pages/staff/StaffProfile'
-import StaffNotices from './pages/staff/StaffNotices'
 import StudentDetails from './pages/staff/StudentDetails'
 import StudentRegistration from './pages/staff/StudentRegistration'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -18,7 +17,8 @@ import SubjectDetails from './pages/student/SubjectDetails'
 import Profile from './pages/student/Profile'
 import BusRoutes from './pages/student/BusRoutes'
 import Outpass from './pages/student/OutpassDetails'
-import PassApproval from './pages/staff/PassApproval'
+import PendingPasses from './pages/staff/PendingPasses'
+import AllPasses from './pages/staff/AllPasses'
 import OutpassDetails from './pages/student/OutpassDetails'
 import NewOutpass from './pages/student/NewOutpass'
 import StudentViewStaffProfile from './pages/student/StudentViewStaffProfile'
@@ -30,6 +30,7 @@ import EmergencyOutpassApply from './pages/warden/EmergencyOutpassApply'
 import WardenStudentView from './pages/warden/WardenStudentView'
 import WardenEmergencyOutpassList from './pages/warden/WardenEmergencyOutpassList'
 import WardenProfile from './pages/warden/WardenProfile'
+import WardenScanQR from './pages/warden/WardenScanQR'
 import WatchmanProfile from './pages/watchman/WatchmanProfile'
 import WatchmanLogin from './pages/watchman/WatchmanLogin'
 import WatchmanDashboard from './pages/watchman/WatchmanDashboard'
@@ -212,6 +213,11 @@ createRoot(document.getElementById('root')!).render(
           <WardenStudentView />
         </ProtectedRoute>
       } />
+      <Route path="/warden/scan" element={
+        <ProtectedRoute>
+          <WardenScanQR />
+        </ProtectedRoute>
+      } />
       <Route path="/warden/apply-emergency" element={
         <ProtectedRoute>
           <EmergencyOutpassApply />
@@ -227,12 +233,7 @@ createRoot(document.getElementById('root')!).render(
           <StaffDashboard />
         </ProtectedRoute>
       } />
-      <Route path="/staff-notice" element={
-        <ProtectedRoute>
-          <StaffNotices />
-        </ProtectedRoute>
-      } />
-      
+
       <Route path="/staff-profile" element={
         <ProtectedRoute>
           <StaffProfile />
@@ -268,9 +269,14 @@ createRoot(document.getElementById('root')!).render(
           <Outpass />
         </ProtectedRoute>
       } />
-      <Route path="/passapproval" element={
+      <Route path="/pending-passes" element={
         <ProtectedRoute>
-          <PassApproval />
+          <PendingPasses />
+        </ProtectedRoute>
+      } />
+      <Route path="/all-passes" element={
+        <ProtectedRoute>
+          <AllPasses />
         </ProtectedRoute>
       } />
       <Route path="/outpass/:id" element={
@@ -323,11 +329,6 @@ createRoot(document.getElementById('root')!).render(
           <StaffDashboard />
         </ProtectedRoute>
       } />
-      <Route path="/staff-notice" element={
-        <ProtectedRoute>
-          <StaffNotices />
-        </ProtectedRoute>
-      } />
       <Route path="/staff-registration" element={
         <ProtectedRoute>
           <StudentRegistration />
@@ -338,7 +339,7 @@ createRoot(document.getElementById('root')!).render(
           <StudentDetails />
         </ProtectedRoute>
       } />
-    
+
       <Route path="/staff-profile" element={
         <ProtectedRoute>
           <StaffProfile />
@@ -374,9 +375,14 @@ createRoot(document.getElementById('root')!).render(
           <Outpass />
         </ProtectedRoute>
       } />
-      <Route path="/passapproval" element={
+      <Route path="/pending-passes" element={
         <ProtectedRoute>
-          <PassApproval />
+          <PendingPasses />
+        </ProtectedRoute>
+      } />
+      <Route path="/all-passes" element={
+        <ProtectedRoute>
+          <AllPasses />
         </ProtectedRoute>
       } />
       <Route path="/outpass/:id" element={
