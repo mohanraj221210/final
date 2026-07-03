@@ -349,24 +349,24 @@ const Outpass: React.FC = () => {
                                     <div className={`pb-type-cards-grid ${residenceType === 'day scholar' ? 'pb-type-cards-grid-2' : ''}`}>
                                         {residenceType !== 'day scholar' && (
                                             <>
-                                                <button type="button" onClick={() => setFormData(p => ({...p, outpasstype: 'Outing'}))} className={`pb-type-card ${formData.outpasstype === 'Outing' ? 'selected' : ''}`}>
+                                                <button type="button" onClick={() => setFormData(p => ({ ...p, outpasstype: 'Outing' }))} className={`pb-type-card ${formData.outpasstype === 'Outing' ? 'selected' : ''}`}>
                                                     <span className="pb-type-card-icon">🚶</span>
                                                     <span className="pb-type-card-name">Outing</span>
                                                     <span className="pb-type-card-desc">Town Pass</span>
                                                 </button>
-                                                <button type="button" onClick={() => setFormData(p => ({...p, outpasstype: 'Home'}))} className={`pb-type-card ${formData.outpasstype === 'Home' ? 'selected' : ''}`}>
+                                                <button type="button" onClick={() => setFormData(p => ({ ...p, outpasstype: 'Home' }))} className={`pb-type-card ${formData.outpasstype === 'Home' ? 'selected' : ''}`}>
                                                     <span className="pb-type-card-icon">🏠</span>
                                                     <span className="pb-type-card-name">Home</span>
                                                     <span className="pb-type-card-desc">Home Pass</span>
                                                 </button>
                                             </>
                                         )}
-                                        <button type="button" onClick={() => setFormData(p => ({...p, outpasstype: 'OD'}))} className={`pb-type-card ${formData.outpasstype === 'OD' ? 'selected' : ''}`}>
+                                        <button type="button" onClick={() => setFormData(p => ({ ...p, outpasstype: 'OD' }))} className={`pb-type-card ${formData.outpasstype === 'OD' ? 'selected' : ''}`}>
                                             <span className="pb-type-card-icon">📋</span>
                                             <span className="pb-type-card-name">OD</span>
                                             <span className="pb-type-card-desc">On Duty</span>
                                         </button>
-                                        <button type="button" onClick={() => setFormData(p => ({...p, outpasstype: 'Emergency'}))} className={`pb-type-card ${formData.outpasstype === 'Emergency' ? 'selected emergency' : ''}`}>
+                                        <button type="button" onClick={() => setFormData(p => ({ ...p, outpasstype: 'Emergency' }))} className={`pb-type-card ${formData.outpasstype === 'Emergency' ? 'selected emergency' : ''}`}>
                                             <span className="pb-type-card-icon">🚨</span>
                                             <span className="pb-type-card-name">Emergency</span>
                                             <span className="pb-type-card-desc">Urgent</span>
@@ -374,14 +374,14 @@ const Outpass: React.FC = () => {
                                     </div>
                                     {residenceType === 'day scholar' && (
                                         <div className="pb-ds-hint">
-                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
                                             Day Scholars may only apply for OD or Emergency passes.
                                         </div>
                                     )}
 
                                     {/* Portal hours info */}
                                     <div className="pb-info-strip">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
                                         <span>Portal Hours: <strong>6:00 AM – 1:00 PM</strong> daily · Return must be by <strong>6 PM</strong></span>
                                     </div>
 
@@ -649,18 +649,18 @@ const Outpass: React.FC = () => {
                             <div className={`pb-mob-type-grid ${residenceType === 'day scholar' ? 'pb-mob-type-grid-2' : ''}`}>
                                 {residenceType !== 'day scholar' && (
                                     <>
-                                        <button type="button" onClick={() => setFormData(p => ({...p, outpasstype: 'Outing'}))} className={`pb-mob-type-card ${formData.outpasstype === 'Outing' ? 'selected' : ''}`}>
+                                        <button type="button" onClick={() => setFormData(p => ({ ...p, outpasstype: 'Outing' }))} className={`pb-mob-type-card ${formData.outpasstype === 'Outing' ? 'selected' : ''}`}>
                                             <span>🚶</span><span>Outing</span>
                                         </button>
-                                        <button type="button" onClick={() => setFormData(p => ({...p, outpasstype: 'Home'}))} className={`pb-mob-type-card ${formData.outpasstype === 'Home' ? 'selected' : ''}`}>
+                                        <button type="button" onClick={() => setFormData(p => ({ ...p, outpasstype: 'Home' }))} className={`pb-mob-type-card ${formData.outpasstype === 'Home' ? 'selected' : ''}`}>
                                             <span>🏠</span><span>Home</span>
                                         </button>
                                     </>
                                 )}
-                                <button type="button" onClick={() => setFormData(p => ({...p, outpasstype: 'OD'}))} className={`pb-mob-type-card ${formData.outpasstype === 'OD' ? 'selected' : ''}`}>
+                                <button type="button" onClick={() => setFormData(p => ({ ...p, outpasstype: 'OD' }))} className={`pb-mob-type-card ${formData.outpasstype === 'OD' ? 'selected' : ''}`}>
                                     <span>📋</span><span>OD</span>
                                 </button>
-                                <button type="button" onClick={() => setFormData(p => ({...p, outpasstype: 'Emergency'}))} className={`pb-mob-type-card ${formData.outpasstype === 'Emergency' ? 'selected emergency' : ''}`}>
+                                <button type="button" onClick={() => setFormData(p => ({ ...p, outpasstype: 'Emergency' }))} className={`pb-mob-type-card ${formData.outpasstype === 'Emergency' ? 'selected emergency' : ''}`}>
                                     <span>🚨</span><span>Emergency</span>
                                 </button>
                             </div>
