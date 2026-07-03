@@ -801,6 +801,15 @@ const Wardenlogin: React.FC = () => {
           transition: border-color 0.28s ease, box-shadow 0.28s ease, background 0.28s ease;
           -webkit-appearance: none;
         }
+        .wlp-input:-webkit-autofill,
+        .wlp-input:-webkit-autofill:hover, 
+        .wlp-input:-webkit-autofill:focus, 
+        .wlp-input:-webkit-autofill:active {
+          -webkit-box-shadow: 0 0 0 1000px #f0fdf4 inset !important;
+          -webkit-text-fill-color: #0F172A !important;
+          caret-color: #0F172A;
+          transition: background-color 5000s ease-in-out 0s;
+        }
         .wlp-input::placeholder { color: #94A3B8; font-weight: 400; }
         .wlp-input:hover {
           border-color: rgba(5,150,105,0.4);
