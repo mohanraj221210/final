@@ -76,7 +76,7 @@ const SecurityDetailsAdmin: React.FC = () => {
     const handlePasswordUpdate = async (password: string) => {
         if (!watchman) return;
         try {
-            await adminService.resetSecurityPassword(security._id, password);
+            await adminService.resetSecurityPassword(watchman._id, password);
             toast.success("Password updated successfully");
         } catch (error) {
             toast.error("Failed to update password");
