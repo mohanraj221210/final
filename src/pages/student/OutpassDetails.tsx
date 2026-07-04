@@ -44,6 +44,8 @@ interface OutpassData {
     createdAt: string;
     document?: string;
     remarks?: string;
+    out?: string;
+    in?: string;
 }
 
 const OutpassDetails: React.FC = () => {
@@ -109,6 +111,8 @@ const OutpassDetails: React.FC = () => {
                         createdAt: item.createdAt,
                         document: item.proof || item.document || item.file || null,
                         remarks: item.remarks || '',
+                        out: item.out,
+                        in: item.in,
                         staffApproval: {
                             status: item.staff?.status || item.staffapprovalstatus || 'pending',
                             approverName: item.staffid?.name,
@@ -183,11 +187,11 @@ const OutpassDetails: React.FC = () => {
         setShowDocumentModal(true);
     };
 
-    const isWithinTimeWindow = (fromDate: string) => {
+    const isWithinTimeWindow = (fromDate: string, toDate: string) => {
+        const now = currentTime;
         const fromTime = new Date(fromDate).getTime();
-        const diff = currentTime - fromTime;
-        // Valid from the moment of approval until 30 minutes AFTER the fromDate
-        return diff <= 30 * 60 * 1000;
+        const toTime = new Date(toDate).getTime();
+        return now >= fromTime && now <= toTime;
     };
 
     const filteredOutpasses = outpasses.filter(op => {
@@ -489,6 +493,18 @@ const OutpassDetails: React.FC = () => {
                                                         <span className="val reason-text" style={{ color: '#EF4444', fontWeight: 600 }}>"{selectedOutpass.remarks}"</span>
                                                     </div>
                                                 )}
+                                                {selectedOutpass.out && (
+                                                    <div className="pb-meta-info-item">
+                                                        <span className="label" style={{ color: '#3B82F6' }}>Marked Out Time</span>
+                                                        <span className="val font-semibold" style={{ color: '#2563EB' }}>{formatDateTime(selectedOutpass.out)}</span>
+                                                    </div>
+                                                )}
+                                                {selectedOutpass.in && (
+                                                    <div className="pb-meta-info-item">
+                                                        <span className="label" style={{ color: '#10B981' }}>Marked In Time</span>
+                                                        <span className="val font-semibold" style={{ color: '#059669' }}>{formatDateTime(selectedOutpass.in)}</span>
+                                                    </div>
+                                                )}
                                                 <div className="pb-meta-info-item">
                                                     <span className="label">Applied on</span>
                                                     <span className="val">{formatDateTime(selectedOutpass.createdAt)}</span>
@@ -520,14 +536,26 @@ const OutpassDetails: React.FC = () => {
                                         {selectedOutpass.overallStatus === 'approved' && (
                                             <div className="pb-detail-info-card pb-qr-card-container">
                                                 <h3 className="pb-section-title">Exit Pass QR</h3>
-                                                {isWithinTimeWindow(selectedOutpass.fromDate) ? (
+                                                {isWithinTimeWindow(selectedOutpass.fromDate, selectedOutpass.toDate) ? (
                                                     <div className="pb-qr-wrapper">
                                                         <div className="pb-qr-box">
                                                             <QRCodeSVG value={selectedOutpass.id} size={180} level="H" />
                                                         </div>
                                                         <p className="pb-qr-tip">
                                                             Show this QR code at the security gate.<br/>
-                                                            <small>Valid up to 30 minutes after departure.</small>
+                                                            <small>Valid from {formatDateTime(selectedOutpass.fromDate)} to {formatDateTime(selectedOutpass.toDate)}</small>
+                                                        </p>
+                                                    </div>
+                                                ) : new Date(currentTime).getTime() < new Date(selectedOutpass.fromDate).getTime() ? (
+                                                    <div className="pb-qr-expired">
+                                                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: '#F59E0B' }}>
+                                                            <circle cx="12" cy="12" r="10" />
+                                                            <polyline points="12 6 12 12 16 14" />
+                                                        </svg>
+                                                        <p>
+                                                            QR Code is not yet active.<br/>
+                                                            It will be valid starting from your departure time:<br/>
+                                                            <strong>{formatDateTime(selectedOutpass.fromDate)}</strong>
                                                         </p>
                                                     </div>
                                                 ) : (
@@ -539,8 +567,8 @@ const OutpassDetails: React.FC = () => {
                                                         </svg>
                                                         <p>
                                                             QR Code has expired.<br/>
-                                                            It was valid up to 30 minutes after your departure time:<br/>
-                                                            <strong>{formatDateTime(selectedOutpass.fromDate)}</strong>
+                                                            It was valid up to your arrival time:<br/>
+                                                            <strong>{formatDateTime(selectedOutpass.toDate)}</strong>
                                                         </p>
                                                     </div>
                                                 )}
@@ -673,6 +701,18 @@ const OutpassDetails: React.FC = () => {
                                         <span className="pb-val font-semibold">“{selectedOutpass.remarks}”</span>
                                     </div>
                                 )}
+                                {selectedOutpass.out && (
+                                    <div className="pb-mob-detail-row" style={{ color: '#3B82F6' }}>
+                                        <span className="pb-label" style={{ color: '#3B82F6' }}>Marked Out Time</span>
+                                        <span className="pb-val font-semibold">{formatDateTime(selectedOutpass.out)}</span>
+                                    </div>
+                                )}
+                                {selectedOutpass.in && (
+                                    <div className="pb-mob-detail-row" style={{ color: '#10B981' }}>
+                                        <span className="pb-label" style={{ color: '#10B981' }}>Marked In Time</span>
+                                        <span className="pb-val font-semibold">{formatDateTime(selectedOutpass.in)}</span>
+                                    </div>
+                                )}
                                 <div className="pb-mob-detail-row" style={{borderBottom: 'none'}}><span className="pb-label">Applied</span><span className="pb-val">{formatDateTime(selectedOutpass.createdAt)}</span></div>
                                 {selectedOutpass.document && (
                                     <button onClick={() => handleViewDocument(selectedOutpass.document)} className="pb-mob-view-proof-btn">
@@ -689,9 +729,22 @@ const OutpassDetails: React.FC = () => {
                             {selectedOutpass.overallStatus === 'approved' && (
                                 <div className="pb-mob-detail-card pb-mob-qr-container">
                                     <h3 className="pb-mob-section-title">Exit Pass QR</h3>
-                                    {isWithinTimeWindow(selectedOutpass.fromDate) ? (
+                                    {isWithinTimeWindow(selectedOutpass.fromDate, selectedOutpass.toDate) ? (
                                         <div className="pb-mob-qr-box">
                                             <QRCodeSVG value={selectedOutpass.id} size={160} level="H" />
+                                            <p className="pb-qr-tip" style={{ marginTop: '8px', fontSize: '0.75rem', textAlign: 'center', color: '#64748B' }}>
+                                                Valid till: {formatDateTime(selectedOutpass.toDate)}
+                                            </p>
+                                        </div>
+                                    ) : new Date(currentTime).getTime() < new Date(selectedOutpass.fromDate).getTime() ? (
+                                        <div className="pb-mob-qr-expired">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: '#F59E0B' }}>
+                                                <circle cx="12" cy="12" r="10" />
+                                                <polyline points="12 6 12 12 16 14" />
+                                            </svg>
+                                            <p>
+                                                QR Code is not yet active.<br/>Valid starting at: <br/><strong>{formatDateTime(selectedOutpass.fromDate)}</strong>
+                                            </p>
                                         </div>
                                     ) : (
                                         <div className="pb-mob-qr-expired">
@@ -701,7 +754,7 @@ const OutpassDetails: React.FC = () => {
                                                 <line x1="9" y1="9" x2="15" y2="15" />
                                             </svg>
                                             <p>
-                                                QR Code has expired.<br/>Valid up to 30 mins after: <br/><strong>{formatDateTime(selectedOutpass.fromDate)}</strong>
+                                                QR Code has expired.<br/>Expired at: <br/><strong>{formatDateTime(selectedOutpass.toDate)}</strong>
                                             </p>
                                         </div>
                                     )}
