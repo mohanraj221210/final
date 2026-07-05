@@ -6,6 +6,7 @@ import { adminService } from '../../services/adminService';
 import type { Staff } from '../../types/admin';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ViewDetailsButton from '../../components/ViewDetailsButton';
 
 const ManageStaff: React.FC = () => {
     const navigate = useNavigate();
@@ -156,9 +157,7 @@ const ManageStaff: React.FC = () => {
                                             </td>
                                             <td>{staff.designation || '-'}</td>
                                             <td>
-                                                <button className="btn-view" onClick={() => handleView(staff._id)}>
-                                                    View Details
-                                                </button>
+                                                <ViewDetailsButton onClick={() => handleView(staff._id)} />
                                             </td>
                                         </tr>
                                     ))}

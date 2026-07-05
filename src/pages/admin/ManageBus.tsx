@@ -7,6 +7,7 @@ import type { Bus } from '../../types/admin';
 import DeleteConfirmationModal from '../../components/DeleteConfirmationModal';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ViewDetailsButton from '../../components/ViewDetailsButton';
 
 const ManageBus: React.FC = () => {
     const navigate = useNavigate();
@@ -174,9 +175,7 @@ const ManageBus: React.FC = () => {
                                                 </td>
                                                 <td>
                                                     <div className="action-buttons">
-                                                        <button className="btn-view" onClick={() => navigate(`/admin/bus-details/${bus._id}`)}>
-                                                            View Details
-                                                        </button>
+                                                        <ViewDetailsButton onClick={() => navigate(`/admin/bus-details/${bus._id}`)} />
                                                         <button className="btn-icon delete" onClick={() => handleDeleteClick(bus._id, bus.busnumber)} title="Delete Bus">
                                                             🗑️
                                                         </button>

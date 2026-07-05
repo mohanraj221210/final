@@ -7,6 +7,7 @@ import type { YearIncharge } from '../../types/admin';
 import DeleteConfirmationModal from '../../components/DeleteConfirmationModal';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ViewDetailsButton from '../../components/ViewDetailsButton';
 
 const ManageYearIncharge: React.FC = () => {
     const navigate = useNavigate();
@@ -171,9 +172,7 @@ const ManageYearIncharge: React.FC = () => {
                                             </td>
                                             <td>
                                                 <div className="action-buttons">
-                                                    <button className="btn-view" onClick={() => navigate(`/admin/year-incharge-details/${item._id}`)}>
-                                                        View Details
-                                                    </button>
+                                                    <ViewDetailsButton onClick={() => navigate(`/admin/year-incharge-details/${item._id}`)} />
                                                     <button className="btn-icon delete" onClick={() => handleDeleteClick(item._id, item.name)} title="Remove Incharge">
                                                         🗑️
                                                     </button>

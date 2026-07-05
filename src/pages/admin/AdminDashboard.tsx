@@ -3,6 +3,7 @@ import AdminLayout from './AdminLayout';
 import { adminService } from '../../services/adminService';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ViewDetailsButton from '../../components/ViewDetailsButton';
 import { 
     Users, 
     UserCheck, 
@@ -558,7 +559,7 @@ const AdminDashboard: React.FC = () => {
                                                             </span>
                                                         </td>
                                                         <td className="text-right">
-                                                            <button className="table-action-btn">View</button>
+                                                            <ViewDetailsButton compact label="View" onClick={() => {}} />
                                                         </td>
                                                     </tr>
                                                 );
@@ -1024,12 +1025,6 @@ const AdminDashboard: React.FC = () => {
                     padding: 4px 10px; border-radius: 99px;
                     font-size: 0.75rem; font-weight: 600; text-transform: capitalize;
                 }
-
-                .table-action-btn {
-                    background: transparent; border: none; color: var(--primary);
-                    font-size: 0.85rem; font-weight: 500; cursor: pointer;
-                }
-                .table-action-btn:hover { text-decoration: underline; }
 
                 .table-empty {
                     display: flex; flex-direction: column; align-items: center; justify-content: center;

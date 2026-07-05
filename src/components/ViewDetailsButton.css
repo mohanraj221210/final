@@ -1,0 +1,59 @@
+.view-details-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 14px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    font-family: 'Inter', system-ui, sans-serif;
+    letter-spacing: 0.01em;
+    color: #4338ca;
+    background: linear-gradient(180deg, #ffffff 0%, #f5f3ff 100%);
+    border: 1px solid #c7d2fe;
+    border-radius: 9px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition:
+        color 0.2s ease,
+        background 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.2s ease;
+    box-shadow:
+        0 1px 2px rgba(79, 70, 229, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.view-details-btn:hover {
+    color: #ffffff;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border-color: #4f46e5;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.28);
+    transform: translateY(-1px);
+}
+
+.view-details-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.22);
+}
+
+.view-details-btn:focus-visible {
+    outline: none;
+    box-shadow:
+        0 0 0 3px rgba(99, 102, 241, 0.35),
+        0 2px 8px rgba(79, 70, 229, 0.15);
+}
+
+.view-details-btn--compact {
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+    .view-details-btn {
+        padding: 7px 12px;
+        font-size: 0.78rem;
+    }
+}

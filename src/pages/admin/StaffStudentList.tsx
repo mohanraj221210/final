@@ -6,6 +6,7 @@ import { adminService } from '../../services/adminService';
 import type { Student } from '../../types/admin';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ViewDetailsButton from '../../components/ViewDetailsButton';
 
 const StaffStudentList: React.FC = () => {
     const { id } = useParams<{ id: string }>(); // Staff ID
@@ -189,9 +190,7 @@ const StaffStudentList: React.FC = () => {
                                             <td><span className="badge badge-year"> {student.year}</span></td>
                                             <td>
                                                 <div className="action-buttons">
-                                                    <button className="btn-view" onClick={() => handleViewStudent(student._id)}>
-                                                        View Details
-                                                    </button>
+                                                    <ViewDetailsButton onClick={() => handleViewStudent(student._id)} />
                                                     <button className="btn-icon delete" onClick={() => handleDelete(student._id)} title="Remove Student">
                                                         🗑️
                                                     </button>
