@@ -5,6 +5,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { type User } from '../data/sampleData';
 import { isProfileComplete } from '../utils/profileHelper';
+import '../student-portal.css';
 
 interface StudentBottomNavProps {
     activeTab?: 'home' | 'outpass' | 'subjects' | 'staff' | 'profile' | 'bus';
@@ -12,6 +13,7 @@ interface StudentBottomNavProps {
 
 const StudentBottomNav: React.FC<StudentBottomNavProps> = ({ activeTab }) => {
     const navigate = useNavigate();
+
     const [user, setUser] = useState<User | null>(null);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 850);
 
@@ -29,12 +31,8 @@ const StudentBottomNav: React.FC<StudentBottomNavProps> = ({ activeTab }) => {
                 const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/profile`, {
                     headers: { authorization: `Bearer ${token}` }
                 });
-                if (response.status === 200) {
-                    setUser(response.data.user);
-                }
-            } catch (error) {
-                console.error("Failed to fetch user profile in Bottom Nav");
-            }
+                if (response.status === 200) setUser(response.data.user);
+            } catch (error) { console.error("Failed to fetch user profile in Bottom Nav"); }
         };
         fetchUserProfile();
     }, []);
@@ -52,10 +50,7 @@ const StudentBottomNav: React.FC<StudentBottomNavProps> = ({ activeTab }) => {
             if (isProfileComplete(user)) {
                 navigate(path);
             } else {
-                toast.warn("Complete your profile to access this page", {
-                    position: "top-center",
-                    autoClose: 3000,
-                });
+                toast.warn("Complete your profile to access this page", { position: "top-center", autoClose: 3000 });
             }
         } else {
             navigate(path);

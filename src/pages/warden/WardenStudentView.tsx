@@ -169,7 +169,8 @@ const WardenStudentView: React.FC = () => {
   // Resolve Warden Approval Details
   const wardenName = student.wardenid?.name || student.warden?.name || 'N/A';
   const wardenTime = student.wardenapprovedAt || student.warden?.actionAt || student.approvedAt;
-  const isLateReturn = student.isLate || (student.in && new Date(student.in) > new Date(student.toDate));
+  const isEmergency = (student.outpasstype || '').toLowerCase().includes('emergency');
+  const isLateReturn = !isEmergency && (student.isLate || (student.in && new Date(student.in) > new Date(student.toDate)));
 
   return (
     <div className="page-container warden-view-page">
@@ -313,11 +314,11 @@ const WardenStudentView: React.FC = () => {
               </div>
               <div className="field-group">
                 <label>RETURN STATUS</label>
-                <div 
-                  className="display-box" 
+                <div
+                  className="display-box"
                   style={isLateReturn ? { borderColor: '#FCA5A5', background: '#FEF2F2', color: '#EF4444', fontWeight: 'bold' } : (student.in ? { color: '#10B981', fontWeight: 'bold' } : {})}
                 >
-                  {student.in ? (isLateReturn ? '⏳ Late Return' : '✅ On Time Return') : '🚪 Not Returned Yet'}
+                  {student.in ? (isEmergency ? '✅ Returned' : (isLateReturn ? '⏳ Late Return' : '✅ On Time Return')) : '🚪 Not Returned Yet'}
                 </div>
               </div>
             </div>
