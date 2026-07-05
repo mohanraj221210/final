@@ -20,6 +20,7 @@ const OutpassList: React.FC = () => {
   const [isLast, setIsLast] = useState(true);
   const [totalPages, setTotalPages] = useState(1);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [showLateOnly, setShowLateOnly] = useState(false);
 
   const itemsPerPage = 8;
 
@@ -36,7 +37,7 @@ const OutpassList: React.FC = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [filterStatus, dateFilter, typeFilter]);
+  }, [filterStatus, dateFilter, typeFilter, showLateOnly]);
 
   const getPageNumbers = () => {
     const pages: (number | string)[] = [];
@@ -71,7 +72,7 @@ const OutpassList: React.FC = () => {
 
   useEffect(() => {
     fetchOutpasses();
-  }, [debouncedSearchTerm, currentPage, filterStatus, dateFilter, typeFilter]);
+  }, [debouncedSearchTerm, currentPage, filterStatus, dateFilter, typeFilter, showLateOnly]);
 
   const fetchOutpasses = async () => {
     setLoading(true);
@@ -81,7 +82,7 @@ const OutpassList: React.FC = () => {
       const filterParam = typeFilter === 'All' ? '' : typeFilter;
 
       const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/warden/outpass/list?search=${debouncedSearchTerm}&page=${currentPage}&appliedDate=${dateFilter}&status=${statusParam}&filter=${filterParam}`,
+        `${import.meta.env.VITE_API_URL}/warden/outpass/list?search=${debouncedSearchTerm}&page=${currentPage}&appliedDate=${dateFilter}&status=${statusParam}&filter=${filterParam}&isLate=${showLateOnly}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -208,6 +209,15 @@ const OutpassList: React.FC = () => {
                 <span className="wd-dropdown-arrow">▼</span>
               </div>
 
+              {/* Late Returns Toggle Pill */}
+              <button
+                className={`wd-tab-pill ${showLateOnly ? 'active' : ''}`}
+                onClick={() => setShowLateOnly(!showLateOnly)}
+                style={showLateOnly ? { background: '#fee2e2', color: '#b91c1c', border: '1px solid #fca5a5' } : {}}
+              >
+                ⏰ {showLateOnly ? 'Showing Late Only' : 'Show Late'}
+              </button>
+
               {/* Status Tab Filter Pills */}
               <div className="wd-tab-pills">
                 {(['All', 'Approved', 'Rejected'] as const).map((status) => (
@@ -258,14 +268,23 @@ const OutpassList: React.FC = () => {
                       currentData.map((item, index) => {
                         const isEmergency = (item.outpasstype || '').toLowerCase().includes('emergency');
                         return (
-                          <tr key={item._id || index} onClick={() => navigate(`/warden/student/${item._id}`)}>
+                          <tr 
+                            key={item._id || index} 
+                            onClick={() => navigate(`/warden/student/${item._id}`)}
+                            className={item.isLate ? 'wd-row-late' : ''}
+                          >
                             <td><span className="sd-mono">{startIndex + index + 1}</span></td>
                             <td>
                               <div className="wd-student-cell">
                                 <div className="wd-table-avatar">
                                   {item.student?.name ? item.student.name.charAt(0).toUpperCase() : "?"}
                                 </div>
-                                <span className="wd-name-cell">{item.student?.name || item.studentName || 'Unknown'}</span>
+                                <span className="wd-name-cell" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  {item.student?.name || item.studentName || 'Unknown'}
+                                  {item.isLate && (
+                                    <span className="late-pulse-dot" title="Late Check-In logged" />
+                                  )}
+                                </span>
                               </div>
                             </td>
                             <td><span className="sd-mono">{item.student?.registerNumber || item.registerNumber || 'N/A'}</span></td>
@@ -283,6 +302,11 @@ const OutpassList: React.FC = () => {
                                 <span className={`wd-type-pill ${isEmergency ? 'emergency' : ''}`}>
                                   {item.outpasstype || 'General'}
                                 </span>
+                                {item.isLate && (
+                                  <span className="wd-type-pill" style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fca5a5' }}>
+                                    LATE
+                                  </span>
+                                )}
                                 <span className="wd-reason-text-cell">{item.reason}</span>
                               </div>
                             </td>
@@ -330,7 +354,7 @@ const OutpassList: React.FC = () => {
                   const isEmergency = (item.outpasstype || '').toLowerCase().includes('emergency');
                   return (
                     <div
-                      className="wd-mobile-card"
+                      className={`wd-mobile-card ${item.isLate ? 'wd-card-late' : ''}`}
                       key={item._id || index}
                       onClick={() => navigate(`/warden/student/${item._id}`)}
                     >
@@ -339,12 +363,24 @@ const OutpassList: React.FC = () => {
                           {item.student?.name ? item.student.name.charAt(0).toUpperCase() : "?"}
                         </div>
                         <div>
-                          <h3 className="wd-mobile-name">{item.student?.name || item.studentName || 'Unknown'}</h3>
+                          <h3 className="wd-mobile-name" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            {item.student?.name || item.studentName || 'Unknown'}
+                            {item.isLate && (
+                              <span className="late-pulse-dot" title="Late Check-In logged" />
+                            )}
+                          </h3>
                           <span className="wd-mobile-reg sd-mono">{item.student?.registerNumber || item.registerNumber || 'N/A'}</span>
                         </div>
-                        <span className={`wd-type-pill ${isEmergency ? 'emergency' : ''}`}>
-                          {item.outpasstype || 'General'}
-                        </span>
+                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                          <span className={`wd-type-pill ${isEmergency ? 'emergency' : ''}`}>
+                            {item.outpasstype || 'General'}
+                          </span>
+                          {item.isLate && (
+                            <span className="wd-type-pill" style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fca5a5' }}>
+                              LATE
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       <div className="wd-mobile-details">
@@ -1256,12 +1292,287 @@ const OutpassList: React.FC = () => {
             font-size: 0.75rem;
           }
         }
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1rem;
+          font-weight: bold;
+          transition: var(--wdl-transition);
+        }
+
+        .wd-modal-close:hover {
+          background: #FEF2F2;
+          color: #EF4444;
+          transform: rotate(90deg);
+        }
+
+        .wd-modal-body {
+          flex-grow: 1;
+          background: rgba(248,250,252,0.5);
+          overflow: auto;
+          padding: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .wd-modal-iframe, .wd-modal-img {
+          width: 100%;
+          height: 100%;
+          max-width: 100%;
+          max-height: 100%;
+          border: none;
+          border-radius: 16px;
+          object-fit: contain;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+          background: white;
+        }
+
+        .wd-modal-footer {
+          padding: 16px 28px;
+          border-top: 1px solid rgba(226,232,240,0.6);
+          display: flex;
+          justify-content: flex-end;
+        }
+
+        .wd-btn-download {
+          padding: 10px 24px;
+          background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+          color: white;
+          border-radius: 12px;
+          text-decoration: none;
+          font-size: 0.9rem;
+          font-weight: 700;
+          transition: var(--wdl-transition);
+          box-shadow: 0 4px 12px rgba(59,130,246,0.25);
+        }
+
+        .wd-btn-download:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(59,130,246,0.3);
+        }
+
+        .sd-mono {
+          font-family: 'SF Mono', 'Fira Code', monospace;
+          font-weight: 600;
+        }
+
+        /* ====== RESPONSIVE ====== */
+        .wd-mobile-cards-view { display: none; }
+
+        @media (max-width: 1024px) {
+          .wd-main { padding: 24px; }
+        }
+
+        @media (max-width: 968px) {
+          .wd-main { padding: 16px 16px 0; }
+          .wd-header-row { flex-direction: column; align-items: stretch; gap: 16px; margin-bottom: 8px; }
+          .wd-controls { flex-direction: column; align-items: stretch; gap: 12px; }
+          .wd-search-wrapper { min-width: 100%; }
+          .wd-filter-dropdown { width: 100%; }
+          
+          .wd-tab-pills {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            justify-content: flex-start;
+          }
+          .wd-tab-pills::-webkit-scrollbar { display: none; }
+          .wd-tab-pill { flex-shrink: 0; white-space: nowrap; }
+
+          .wd-table { display: none; }
+          .wd-table-card { background: transparent; box-shadow: none; border: none; padding: 0; }
+          .wd-table-scroll { display: none; }
+
+          /* Mobile Card */
+          .wd-mobile-cards-view {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 24px;
+          }
+
+          .wd-mobile-card {
+            background: var(--wdl-card);
+            backdrop-filter: blur(var(--wdl-blur));
+            border-radius: 20px;
+            padding: 20px;
+            border: var(--wdl-border);
+            box-shadow: var(--wdl-shadow);
+            cursor: pointer;
+            transition: var(--wdl-transition);
+          }
+
+          .wd-mobile-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(59,130,246,0.15);
+          }
+
+          .wd-mobile-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            position: relative;
+          }
+
+          .wd-mobile-avatar {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            box-shadow: 0 4px 10px rgba(59,130,246,0.25);
+          }
+
+          .wd-mobile-name {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #0F172A;
+            margin: 0 0 2px;
+          }
+
+          .wd-mobile-reg {
+            display: block;
+            font-size: 0.8rem;
+            color: #64748B;
+          }
+
+          .wd-mobile-card-header .wd-type-pill {
+            position: absolute;
+            right: 0;
+            top: 0;
+          }
+
+          .wd-mobile-details {
+            border-top: 1px dashed rgba(226,232,240,0.8);
+            border-bottom: 1px dashed rgba(226,232,240,0.8);
+            padding: 14px 0;
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+          }
+
+          .wd-mobile-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+          }
+
+          .wd-mobile-row .label { color: #64748B; font-weight: 600; }
+          .wd-mobile-row .value { color: #0F172A; font-weight: 700; text-align: right; }
+          .wd-mobile-row .reason-truncate {
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #475569;
+          }
+
+          .wd-mobile-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          }
+          
+          .wd-mobile-footer .wd-btn-view-rect, .wd-mobile-footer .wd-btn-doc-rect {
+            padding: 8px 12px;
+            font-size: 0.75rem;
+          }
+        }
         
         @media (max-width: 480px) {
            .wd-mobile-row .reason-truncate { max-width: 140px; }
            .wd-mobile-avatar { width: 38px; height: 38px; font-size: 0.9rem; }
            .wd-mobile-name { font-size: 0.95rem; }
            .wd-title { font-size: 1.5rem; }
+        }
+
+        /* ====== LATE ROW & CARD HIGHLIGHTS ====== */
+        .wd-row-late {
+          background: linear-gradient(90deg, rgba(239, 68, 68, 0.06) 0%, rgba(239, 68, 68, 0.01) 100%) !important;
+          border-left: 5px solid #ef4444 !important;
+        }
+        .wd-row-late td {
+          background: transparent !important;
+          color: #991b1b !important;
+        }
+        .wd-row-late .wd-name-cell {
+          color: #991b1b !important;
+          font-weight: 700 !important;
+        }
+        .wd-row-late:hover td {
+          background: linear-gradient(90deg, rgba(239, 68, 68, 0.08) 0%, rgba(239, 68, 68, 0.03) 100%) !important;
+        }
+        
+        .wd-mobile-card.wd-card-late {
+          background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(255, 255, 255, 0.95) 100%) !important;
+          border: 2px solid rgba(239, 68, 68, 0.2) !important;
+          box-shadow: 0 10px 30px rgba(239, 68, 68, 0.06) !important;
+        }
+
+        .late-pulse-dot {
+          width: 8px;
+          height: 8px;
+          background-color: #ef4444;
+          border-radius: 50%;
+          display: inline-block;
+          box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+          animation: pulse-red 1.8s infinite;
+        }
+
+        @keyframes pulse-red {
+          0% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+          }
+          70% {
+            transform: scale(1);
+            box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+          }
+          100% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+          }
+        }
+
+        .wd-late-timestamp {
+          font-size: 0.74rem;
+          color: #dc2626;
+          font-weight: 700;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          margin-top: 2px;
+        }
+
+        /* ====== LATE FILTER TOGGLE BTN ====== */
+        .wd-late-toggle-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          border: 1px solid rgba(239, 68, 68, 0.2) !important;
+          background: rgba(239, 68, 68, 0.04) !important;
+          color: #dc2626 !important;
+          font-weight: 700 !important;
+        }
+        .wd-late-toggle-btn:hover {
+          background: rgba(239, 68, 68, 0.08) !important;
+          color: #b91c1c !important;
+          border-color: rgba(239, 68, 68, 0.3) !important;
+        }
+        .wd-late-toggle-btn.active {
+          background: linear-gradient(135deg, #ef4444, #b91c1c) !important;
+          color: white !important;
+          box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2) !important;
+          border-color: transparent !important;
         }
       `}</style>
     </div>

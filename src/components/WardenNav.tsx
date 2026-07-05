@@ -31,6 +31,7 @@ const WardenNav: React.FC = () => {
         { path: '/warden/scan',                    label: 'Scan QR',         icon: '📷' },
         { path: '/warden-profile',                 label: 'Profile',         icon: '👤' },
         { path: '/warden/apply-emergency',         label: '🚨 Emergency',   icon: '🚨' },
+        { path: '/warden/emergency-pending-outpass', label: 'Emergency Pending', icon: '🚨' },
     ];
 
     return (

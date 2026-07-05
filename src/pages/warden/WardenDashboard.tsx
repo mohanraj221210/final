@@ -555,6 +555,7 @@ const Dashboard: React.FC = () => {
 
     const quickActions = [
         { path: '/warden/pending-outpass', icon: <IconClock />, label: 'Pending Approvals', desc: 'Review & approve outpass requests', color: '#F59E0B', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)' },
+        { path: '/warden/emergency-pending-outpass', icon: <IconClock />, label: 'Emergency Pending', desc: 'Manage pending emergency leaves', color: '#EF4444', bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.25)' },
         { path: '/warden/outpass-list',    icon: <IconList />,  label: 'Outpass List',       desc: 'View all processed outpasses',  color: '#10B981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.25)' },
         { path: '/warden/scan',            icon: <IconQR />,    label: 'Scan QR',             desc: 'Verify outpass QR codes',       color: '#3B82F6', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.25)' },
         { path: '/warden/apply-emergency', icon: <IconAlertTriangle />, label: 'Emergency Alert', desc: 'Issue emergency outpass',   color: '#EF4444', bg: 'rgba(239,68,68,0.08)',  border: 'rgba(239,68,68,0.25)' },
@@ -1528,7 +1529,7 @@ const Dashboard: React.FC = () => {
                 .wdp-actions-section { display: flex; flex-direction: column; }
                 .wdp-actions-grid {
                     display: grid;
-                    grid-template-columns: repeat(6, 1fr);
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
                     gap: 16px;
                 }
                 .wdp-action-card {
@@ -1911,6 +1912,7 @@ const Dashboard: React.FC = () => {
                 .wdp-anim-stagger-4 { animation: wdpFadeUp 0.4s cubic-bezier(0.16,1,0.3,1) 0.20s both; }
                 .wdp-anim-stagger-5 { animation: wdpFadeUp 0.4s cubic-bezier(0.16,1,0.3,1) 0.25s both; }
                 .wdp-anim-stagger-6 { animation: wdpFadeUp 0.4s cubic-bezier(0.16,1,0.3,1) 0.30s both; }
+                .wdp-anim-stagger-7 { animation: wdpFadeUp 0.4s cubic-bezier(0.16,1,0.3,1) 0.35s both; }
 
                 /* ═══════════════════════════════════════════════ */
                 /* RESPONSIVE — 1280px                           */

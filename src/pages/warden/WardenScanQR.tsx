@@ -13,9 +13,18 @@ const WardenScanQR: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [imageError, setImageError] = useState<boolean>(false);
 
+    // Search Feature states
+    const [searchQuery, setSearchQuery] = useState<string>('');
+    const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [searchLoading, setSearchLoading] = useState<boolean>(false);
+    const [activeTab, setActiveTab] = useState<'scan' | 'search'>('scan');
+    const [loadedFrom, setLoadedFrom] = useState<'scan' | 'search'>('scan');
+    const [showLateModal, setShowLateModal] = useState<boolean>(false);
+
     const handleScan = async (text: string) => {
         if (text && text !== scannedId && !loading) {
             setScannedId(text);
+            setLoadedFrom('scan');
             fetchOutpass(text);
         }
     };
@@ -43,6 +52,32 @@ const WardenScanQR: React.FC = () => {
         }
     };
 
+    const handleSearch = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!searchQuery.trim()) return;
+        setSearchLoading(true);
+        setError(null);
+        setSearchResults([]);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/warden/outpass/qr/list?search=${searchQuery.trim()}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.status === 200 && response.data.outpass) {
+                setSearchResults(response.data.outpass);
+                if (response.data.outpass.length === 0) {
+                    toast.info("No matching outpasses found");
+                }
+            }
+        } catch (err: any) {
+            console.error(err);
+            const msg = err.response?.data?.message || 'Failed to search outpasses';
+            toast.error(msg);
+        } finally {
+            setSearchLoading(false);
+        }
+    };
+
     const handleStatusUpdate = async (type: 'in' | 'out') => {
         if (!scannedId) return;
         try {
@@ -52,11 +87,22 @@ const WardenScanQR: React.FC = () => {
             });
             if (response.status === 200) {
                 toast.success(`Outpass marked as ${type.toUpperCase()} successfully`);
-                setOutpassData(response.data.outpass);
+                resetScan();
             }
         } catch (err: any) {
             console.error(err);
             toast.error(err.response?.data?.message || `Failed to mark outpass as ${type.toUpperCase()}`);
+        }
+    };
+
+    const handleInClick = () => {
+        if (!outpassData) return;
+        const now = new Date();
+        const expectedReturn = new Date(outpassData.toDate);
+        if (now > expectedReturn) {
+            setShowLateModal(true);
+        } else {
+            handleStatusUpdate('in');
         }
     };
 
@@ -65,6 +111,8 @@ const WardenScanQR: React.FC = () => {
         setOutpassData(null);
         setError(null);
         setImageError(false);
+        setSearchQuery('');
+        setSearchResults([]);
     };
 
     // Calculate avatar source
@@ -105,25 +153,108 @@ const WardenScanQR: React.FC = () => {
                     <div className="sd-scanner-card">
                         {!scannedId ? (
                             <div className="sd-scanner-init">
-                                <div className="sd-scanner-instructions">
-                                    <span className="sd-scanner-tip-icon">📷</span>
-                                    <p className="sd-scanner-tip-text">Align the student's digital outpass QR code inside the camera window below.</p>
+                                {/* Tab Selector */}
+                                <div className="sd-tabs-container">
+                                    <button 
+                                        className={`sd-tab-btn ${activeTab === 'scan' ? 'active' : ''}`}
+                                        onClick={() => {
+                                            setActiveTab('scan');
+                                            resetScan();
+                                        }}
+                                    >
+                                        📷 Scan QR Code
+                                    </button>
+                                    <button 
+                                        className={`sd-tab-btn ${activeTab === 'search' ? 'active' : ''}`}
+                                        onClick={() => {
+                                            setActiveTab('search');
+                                            resetScan();
+                                        }}
+                                    >
+                                        🔍 Search Outpass
+                                    </button>
                                 </div>
 
-                                <div className="sd-scanner-viewport-wrapper">
-                                    <div className="sd-scanner-glow-border" />
-                                    <div className="sd-scanner-laser-line" />
-                                    <div className="sd-scanner-element">
-                                        <Scanner
-                                            onScan={(result) => {
-                                                if (result && result.length > 0) {
-                                                    handleScan(result[0].rawValue);
-                                                }
-                                            }}
-                                            onError={(error) => console.log(error?.message)}
-                                        />
+                                {activeTab === 'scan' ? (
+                                    <div className="sd-tab-content active-tab-content">
+                                        <div className="sd-scanner-instructions">
+                                            <span className="sd-scanner-tip-icon">📷</span>
+                                            <p className="sd-scanner-tip-text">Align the student's digital outpass QR code inside the camera window below.</p>
+                                        </div>
+
+                                        <div className="sd-scanner-viewport-wrapper">
+                                            <div className="sd-scanner-glow-border" />
+                                            <div className="sd-scanner-laser-line" />
+                                            <div className="sd-scanner-element">
+                                                <Scanner
+                                                    onScan={(result) => {
+                                                        if (result && result.length > 0) {
+                                                            handleScan(result[0].rawValue);
+                                                        }
+                                                    }}
+                                                    onError={(error) => console.log(error?.message)}
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
+                                ) : (
+                                    <div className="sd-tab-content active-tab-content" style={{ width: '100%' }}>
+                                        <div className="sd-scanner-instructions">
+                                            <span className="sd-scanner-tip-icon">🔍</span>
+                                            <p className="sd-scanner-tip-text">Enter student name or register number to look up their outpass manually.</p>
+                                        </div>
+                                        
+                                        <div className="sd-manual-search-section">
+                                            <form onSubmit={handleSearch} className="sd-search-form">
+                                                <input
+                                                    type="text"
+                                                    value={searchQuery}
+                                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                                    placeholder="Search name or register number..."
+                                                    className="sd-search-input"
+                                                />
+                                                <button type="submit" disabled={searchLoading} className="sd-search-btn">
+                                                    {searchLoading ? 'Searching...' : '🔍 Search'}
+                                                </button>
+                                            </form>
+
+                                            {/* Search Results */}
+                                            {searchResults.length > 0 && (
+                                                <div className="sd-search-results-list">
+                                                    {searchResults.map((outpass) => {
+                                                        const studentName = outpass.student?.name || outpass.name || "Student";
+                                                        const studentReg = outpass.student?.registerNumber || outpass.registerNumber || "N/A";
+                                                        const studentDept = outpass.student?.department || outpass.department || "-";
+                                                        return (
+                                                            <div 
+                                                                key={outpass._id} 
+                                                                className="sd-search-result-item"
+                                                                onClick={() => {
+                                                                    setScannedId(outpass._id);
+                                                                    setLoadedFrom('search');
+                                                                    fetchOutpass(outpass._id);
+                                                                    setSearchResults([]);
+                                                                    setSearchQuery('');
+                                                                }}
+                                                            >
+                                                                <div className="sd-result-student-info">
+                                                                    <span className="sd-result-name">{studentName}</span>
+                                                                    <span className="sd-result-reg">{studentReg} - {studentDept}</span>
+                                                                </div>
+                                                                <div className="sd-result-outpass-meta">
+                                                                    <span className="sd-result-type">{outpass.outpasstype}</span>
+                                                                    <span className={`sd-result-status-pill ${outpass.status || 'pending'}`}>
+                                                                        {outpass.status || 'pending'}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <div className="sd-scanner-results">
@@ -215,20 +346,24 @@ const WardenScanQR: React.FC = () => {
 
                                             {/* Scan action buttons */}
                                             <div className="sd-result-actions">
-                                                <button
-                                                    onClick={() => handleStatusUpdate('out')}
-                                                    disabled={outpassData.out !== null}
-                                                    className="sd-action-btn sd-btn-out"
-                                                >
-                                                    🚪 Mark Student OUT
-                                                </button>
-                                                <button
-                                                    onClick={() => handleStatusUpdate('in')}
-                                                    disabled={outpassData.in !== null || outpassData.out === null}
-                                                    className="sd-action-btn sd-btn-in"
-                                                >
-                                                    🏠 Mark Student IN
-                                                </button>
+                                                {!outpassData.out ? (
+                                                    <button
+                                                        onClick={() => handleStatusUpdate('out')}
+                                                        className="sd-action-btn sd-btn-out"
+                                                        style={{ width: '100%', maxWidth: 'none' }}
+                                                    >
+                                                        🚪 Mark Student OUT
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        onClick={handleInClick}
+                                                        disabled={outpassData.in !== null}
+                                                        className="sd-action-btn sd-btn-in"
+                                                        style={{ width: '100%', maxWidth: 'none' }}
+                                                    >
+                                                        🏠 Mark Student IN
+                                                    </button>
+                                                )}
                                             </div>
 
                                             <button onClick={resetScan} className="sd-btn-reset-bottom">
@@ -240,6 +375,38 @@ const WardenScanQR: React.FC = () => {
                             </div>
                         )}
                     </div>
+
+                    {showLateModal && (
+                        <div className="sd-modal-overlay" onClick={() => setShowLateModal(false)}>
+                            <div className="sd-modal-card" onClick={(e) => e.stopPropagation()}>
+                                <div className="sd-modal-header">
+                                    <h3>🚨 Late Return Warning</h3>
+                                    <button className="sd-close-btn" onClick={() => setShowLateModal(false)}>✕</button>
+                                </div>
+                                <div className="sd-modal-body">
+                                    <div className="sd-warning-icon">⏳</div>
+                                    <p className="sd-warning-text">
+                                        This student has exceeded their allowed outpass return time (expected back by {outpassData ? new Date(outpassData.toDate).toLocaleString() : ''}).
+                                    </p>
+                                    <p className="sd-warning-subtext">
+                                        The check-in will be logged and marked as <strong>LATE</strong> in the system registry. Do you wish to proceed?
+                                    </p>
+                                </div>
+                                <div className="sd-modal-footer">
+                                    <button className="sd-btn-cancel" onClick={() => setShowLateModal(false)}>Cancel</button>
+                                    <button 
+                                        className="sd-btn-confirm" 
+                                        onClick={() => {
+                                            setShowLateModal(false);
+                                            handleStatusUpdate('in');
+                                        }}
+                                    >
+                                        Confirm Check-In
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                 </div>
             </main>
@@ -738,6 +905,343 @@ const WardenScanQR: React.FC = () => {
                     
                     .sd-error-header { font-size: 1.2rem; }
                     .sd-success-title { font-size: 0.95rem; }
+                }
+
+                /* ====== MANUAL SEARCH ====== */
+                .sd-manual-search-section {
+                    width: 100%;
+                    max-width: 480px;
+                    margin: 0 auto;
+                }
+
+                .sd-search-form {
+                    display: flex;
+                    gap: 10px;
+                    width: 100%;
+                }
+
+                .sd-search-input {
+                    flex: 1;
+                    padding: 12px 18px;
+                    border: 2px solid #E2E8F0;
+                    border-radius: 12px;
+                    font-size: 0.95rem;
+                    font-family: inherit;
+                    color: #1F2937;
+                    background: white;
+                    outline: none;
+                    transition: all 0.25s ease;
+                }
+
+                .sd-search-input:focus {
+                    border-color: #0047AB;
+                    box-shadow: 0 0 0 3px rgba(0, 71, 171, 0.1);
+                }
+
+                .sd-search-btn {
+                    padding: 12px 20px;
+                    background: linear-gradient(135deg, #0047AB, #005FDF);
+                    color: white;
+                    border: none;
+                    border-radius: 12px;
+                    font-weight: 700;
+                    cursor: pointer;
+                    transition: all 0.25s ease;
+                    box-shadow: 0 4px 10px rgba(0, 71, 171, 0.15);
+                    font-size: 0.9rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .sd-search-btn:hover:not(:disabled) {
+                    transform: translateY(-1px);
+                    box-shadow: 0 6px 15px rgba(0, 71, 171, 0.25);
+                }
+
+                .sd-search-btn:disabled {
+                    opacity: 0.6;
+                    cursor: not-allowed;
+                }
+
+                .sd-divider {
+                    display: flex;
+                    align-items: center;
+                    width: 100%;
+                    max-width: 480px;
+                    margin: 16px 0;
+                    color: #94A3B8;
+                    font-size: 0.8rem;
+                    font-weight: 700;
+                    letter-spacing: 0.5px;
+                }
+
+                .sd-divider::before,
+                .sd-divider::after {
+                    content: '';
+                    flex: 1;
+                    height: 1px;
+                    background: #E2E8F0;
+                }
+
+                .sd-divider span {
+                    padding: 0 12px;
+                }
+
+                .sd-search-results-list {
+                    background: white;
+                    border: 1px solid #E2E8F0;
+                    border-radius: 16px;
+                    margin-top: 12px;
+                    max-height: 240px;
+                    overflow-y: auto;
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .sd-search-result-item {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 14px 20px;
+                    border-bottom: 1px solid #F1F5F9;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    text-align: left;
+                }
+
+                .sd-search-result-item:last-child {
+                    border-bottom: none;
+                }
+
+                .sd-search-result-item:hover {
+                    background: #F8FAFC;
+                }
+
+                .sd-result-student-info {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                }
+
+                .sd-result-name {
+                    font-weight: 700;
+                    color: #1E293B;
+                    font-size: 0.95rem;
+                }
+
+                .sd-result-reg {
+                    font-size: 0.8rem;
+                    color: #64748B;
+                    font-weight: 500;
+                }
+
+                .sd-result-outpass-meta {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: flex-end;
+                    gap: 6px;
+                }
+
+                .sd-result-type {
+                    font-size: 0.75rem;
+                    font-weight: 700;
+                    color: #0047AB;
+                    background: #EFF6FF;
+                    padding: 3px 8px;
+                    border-radius: 6px;
+                }
+
+                .sd-result-status-pill {
+                    font-size: 0.7rem;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    padding: 2px 8px;
+                    border-radius: 20px;
+                }
+
+                .sd-result-status-pill.approved {
+                    background: #DCFCE7;
+                    color: #166534;
+                    border: 1px solid #86EFAC;
+                }
+
+                .sd-result-status-pill.pending {
+                    background: #F3F4F6;
+                    color: #4B5563;
+                    border: 1px solid #D1D5DB;
+                }
+
+                /* ====== TABS SYSTEM ====== */
+                .sd-tabs-container {
+                    display: flex;
+                    gap: 12px;
+                    width: 100%;
+                    max-width: 480px;
+                    margin: 0 auto 24px;
+                    border-bottom: 2px solid #E2E8F0;
+                    padding-bottom: 8px;
+                }
+
+                .sd-tab-btn {
+                    flex: 1;
+                    padding: 12px 16px;
+                    background: transparent;
+                    border: none;
+                    color: #64748B;
+                    font-size: 0.95rem;
+                    font-weight: 700;
+                    cursor: pointer;
+                    transition: all 0.25s ease;
+                    border-radius: 8px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                }
+
+                .sd-tab-btn:hover {
+                    color: #0047AB;
+                    background: #F1F5F9;
+                }
+
+                .sd-tab-btn.active {
+                    color: #0047AB;
+                    background: #EFF6FF;
+                }
+
+                .sd-tab-content {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 24px;
+                    width: 100%;
+                }
+
+                /* ====== LATE DIALOG MODAL ====== */
+                .sd-modal-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(15, 23, 42, 0.45);
+                    backdrop-filter: blur(4px);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 1000;
+                }
+
+                .sd-modal-card {
+                    background: white;
+                    border-radius: 20px;
+                    width: 90%;
+                    max-width: 460px;
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+                    overflow: hidden;
+                }
+
+                .sd-modal-header {
+                    background: #FEF2F2;
+                    padding: 16px 20px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-bottom: 1px solid #FEE2E2;
+                }
+
+                .sd-modal-header h3 {
+                    margin: 0;
+                    color: #991B1B;
+                    font-size: 1.1rem;
+                    font-weight: 700;
+                }
+
+                .sd-close-btn {
+                    background: transparent;
+                    border: none;
+                    color: #991B1B;
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 6px;
+                    font-size: 1rem;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.2s;
+                }
+
+                .sd-close-btn:hover {
+                    background: rgba(153, 27, 27, 0.1);
+                }
+
+                .sd-modal-body {
+                    padding: 24px;
+                    text-align: center;
+                }
+
+                .sd-warning-icon {
+                    font-size: 3rem;
+                    margin-bottom: 16px;
+                }
+
+                .sd-warning-text {
+                    font-weight: 700;
+                    color: #1F2937;
+                    font-size: 1rem;
+                    line-height: 1.5;
+                    margin: 0 0 12px 0;
+                }
+
+                .sd-warning-subtext {
+                    font-size: 0.9rem;
+                    color: #64748B;
+                    line-height: 1.5;
+                    margin: 0;
+                }
+
+                .sd-modal-footer {
+                    padding: 0 24px 24px 24px;
+                    display: flex;
+                    gap: 12px;
+                    justify-content: flex-end;
+                }
+
+                .sd-btn-cancel {
+                    padding: 10px 20px;
+                    border: none;
+                    border-radius: 10px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                    background: #F1F5F9;
+                    color: #475569;
+                    font-size: 0.9rem;
+                }
+
+                .sd-btn-cancel:hover {
+                    background: #E2E8F0;
+                }
+
+                .sd-btn-confirm {
+                    padding: 10px 20px;
+                    border: none;
+                    border-radius: 10px;
+                    font-weight: 700;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                    background: #EF4444;
+                    color: white;
+                    font-size: 0.9rem;
+                    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+                }
+
+                .sd-btn-confirm:hover {
+                    background: #DC2626;
+                    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
                 }
             `}</style>
         </div>

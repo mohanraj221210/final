@@ -25,7 +25,7 @@ const WardenEmergencyOutpassList: React.FC = () => {
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
-            const outpassData = response.data.outpasses || [];
+            const outpassData = (response.data.outpasses || []).filter((item: any) => item.studentid !== null);
             const sortedList = outpassData.sort((a: any, b: any) => {
                 return new Date(b.createdAt || b.fromDate || Date.now()).getTime() - new Date(a.createdAt || a.fromDate || Date.now()).getTime();
             });
