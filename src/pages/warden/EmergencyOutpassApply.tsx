@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import WardenNav from '../../components/WardenNav';
 const EmergencyOutpassApply: React.FC = () => {
     const navigate = useNavigate();
@@ -85,6 +85,7 @@ const EmergencyOutpassApply: React.FC = () => {
     return (
         <div className="page-container">
             <WardenNav />
+            <ToastContainer position="top-center" />
             <div className="content-container">
                 <button className="back-btn" onClick={() => navigate("/warden-dashboard")}>
                     ← Back to Dashboard

@@ -18,7 +18,7 @@ const WardenScanQR: React.FC = () => {
     const [searchResults, setSearchResults] = useState<any[]>([]);
     const [searchLoading, setSearchLoading] = useState<boolean>(false);
     const [activeTab, setActiveTab] = useState<'scan' | 'search'>('scan');
-    const [loadedFrom, setLoadedFrom] = useState<'scan' | 'search'>('scan');
+    const [, setLoadedFrom] = useState<'scan' | 'search'>('scan');
     const [showLateModal, setShowLateModal] = useState<boolean>(false);
 
     const handleScan = async (text: string) => {
@@ -131,16 +131,16 @@ const WardenScanQR: React.FC = () => {
         <div className="sd-root">
             <WardenNav />
             <ToastContainer position="top-center" />
-            
+
             <main className="sd-main">
                 <div className="sd-container">
-                    
+
                     {/* Header Row */}
                     <div className="sd-header-row">
                         <div>
                             <button className="sd-back-btn" onClick={() => navigate("/warden-dashboard")}>
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M19 12H5M12 5l-7 7 7 7"/>
+                                    <path d="M19 12H5M12 5l-7 7 7 7" />
                                 </svg>
                                 Back to Dashboard
                             </button>
@@ -155,7 +155,7 @@ const WardenScanQR: React.FC = () => {
                             <div className="sd-scanner-init">
                                 {/* Tab Selector */}
                                 <div className="sd-tabs-container">
-                                    <button 
+                                    <button
                                         className={`sd-tab-btn ${activeTab === 'scan' ? 'active' : ''}`}
                                         onClick={() => {
                                             setActiveTab('scan');
@@ -164,7 +164,7 @@ const WardenScanQR: React.FC = () => {
                                     >
                                         📷 Scan QR Code
                                     </button>
-                                    <button 
+                                    <button
                                         className={`sd-tab-btn ${activeTab === 'search' ? 'active' : ''}`}
                                         onClick={() => {
                                             setActiveTab('search');
@@ -203,7 +203,7 @@ const WardenScanQR: React.FC = () => {
                                             <span className="sd-scanner-tip-icon">🔍</span>
                                             <p className="sd-scanner-tip-text">Enter student name or register number to look up their outpass manually.</p>
                                         </div>
-                                        
+
                                         <div className="sd-manual-search-section">
                                             <form onSubmit={handleSearch} className="sd-search-form">
                                                 <input
@@ -226,8 +226,8 @@ const WardenScanQR: React.FC = () => {
                                                         const studentReg = outpass.student?.registerNumber || outpass.registerNumber || "N/A";
                                                         const studentDept = outpass.student?.department || outpass.department || "-";
                                                         return (
-                                                            <div 
-                                                                key={outpass._id} 
+                                                            <div
+                                                                key={outpass._id}
                                                                 className="sd-search-result-item"
                                                                 onClick={() => {
                                                                     setScannedId(outpass._id);
@@ -288,7 +288,7 @@ const WardenScanQR: React.FC = () => {
                                         </div>
 
                                         <div className="sd-result-body">
-                                            
+
                                             {/* Student Card Info */}
                                             <div className="sd-student-profile-strip">
                                                 <div className="sd-student-avatar-wrap">
@@ -394,8 +394,8 @@ const WardenScanQR: React.FC = () => {
                                 </div>
                                 <div className="sd-modal-footer">
                                     <button className="sd-btn-cancel" onClick={() => setShowLateModal(false)}>Cancel</button>
-                                    <button 
-                                        className="sd-btn-confirm" 
+                                    <button
+                                        className="sd-btn-confirm"
                                         onClick={() => {
                                             setShowLateModal(false);
                                             handleStatusUpdate('in');

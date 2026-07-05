@@ -224,7 +224,7 @@ const WardenEmergencyPendingOutpass: React.FC = () => {
 
                     {!loading && currentData.length > 0 && (
                         <div className="mobile-cards-view">
-                            {currentData.map((item, index) => (
+                            {currentData.map((item) => (
                                 <div className="mobile-card" key={item._id}>
                                     <div className="card-header-reg">
                                         <span>Reg: {item.studentid?.registerNumber || 'N/A'}</span>
