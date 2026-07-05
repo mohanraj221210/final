@@ -561,7 +561,7 @@ const AdminLayout: React.FC<LayoutProps> = ({ children, title }) => {
                     border-color: var(--primary);
                     box-shadow: 0 0 0 3px var(--primary-subtle);
                 }
-                .search-icon { color: var(--text-muted); margin-right: 8px; }
+                .search-icon { color: var(--text-muted); margin-right: 8px; position: static !important; }
                 .search-input {
                     border: none;
                     background: transparent;

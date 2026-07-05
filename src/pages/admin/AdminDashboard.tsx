@@ -1039,13 +1039,31 @@ const AdminDashboard: React.FC = () => {
                 .table-empty p { font-size: 0.9rem; margin: 0; }
 
                 /* Skeleton Loaders */
-                .saas-skeleton-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 24px; }
+                .saas-skeleton-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 24px; }
                 .skeleton { background: var(--border-light); border-radius: 12px; animation: pulse 1.5s infinite; }
                 .card-skel { height: 140px; }
                 @keyframes pulse {
                     0% { opacity: 0.6; }
                     50% { opacity: 0.3; }
                     100% { opacity: 0.6; }
+                }
+
+                @media (max-width: 768px) {
+                    .saas-header-actions {
+                        flex-direction: column;
+                        align-items: stretch;
+                        gap: 12px;
+                    }
+                    .header-buttons {
+                        width: 100%;
+                    }
+                    .header-buttons button {
+                        flex: 1;
+                        justify-content: center;
+                    }
+                    .saas-skeleton-container {
+                        grid-template-columns: 1fr;
+                    }
                 }
                 `}</style>
             </div>

@@ -14,6 +14,7 @@ const StaffStudentList: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const [newStudent, setNewStudent] = useState({
         name: '',
         email: '',
@@ -78,6 +79,7 @@ const StaffStudentList: React.FC = () => {
             name: '', email: '', password: '', staffid: id || '',
             residencetype: '', hostelname: '', hostelroomno: '', busno: '', boardingpoint: ''
         });
+        setShowPassword(false);
         setIsAddModalOpen(true);
     };
 
@@ -92,6 +94,7 @@ const StaffStudentList: React.FC = () => {
             await adminService.addStudent({ ...newStudent, staffid: id });
             toast.success("Student added successfully");
             setIsAddModalOpen(false);
+            setShowPassword(false);
             fetchStudents(); // Refresh list
             setNewStudent({
                 name: '', email: '', password: '', staffid: '',
@@ -216,7 +219,7 @@ const StaffStudentList: React.FC = () => {
                         <div className="modal-content">
                             <div className="modal-header">
                                 <h3>Add New Student</h3>
-                                <button className="close-btn" onClick={() => setIsAddModalOpen(false)}>×</button>
+                                <button className="close-btn" onClick={() => { setIsAddModalOpen(false); setShowPassword(false); }}>×</button>
                             </div>
                             <form onSubmit={handleSaveStudent}>
                                 <div className="modal-body">
@@ -244,14 +247,35 @@ const StaffStudentList: React.FC = () => {
                                     </div>
                                     <div className="form-group">
                                         <label>Password</label>
-                                        <input
-                                            type="password"
-                                            required
-                                            placeholder="Create password"
-                                            className="form-input"
-                                            value={newStudent.password}
-                                            onChange={e => setNewStudent({ ...newStudent, password: e.target.value })}
-                                        />
+                                        <div className="input-group">
+                                            <input
+                                                type={showPassword ? "text" : "password"}
+                                                required
+                                                placeholder="Create password"
+                                                className="form-input"
+                                                style={{ paddingRight: '40px' }}
+                                                value={newStudent.password}
+                                                onChange={e => setNewStudent({ ...newStudent, password: e.target.value })}
+                                            />
+                                            <button
+                                                type="button"
+                                                className="password-toggle-btn"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                            >
+                                                {showPassword ? (
+                                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                                                        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                                                        <line x1="1" y1="1" x2="23" y2="23" />
+                                                    </svg>
+                                                ) : (
+                                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                                        <circle cx="12" cy="12" r="3" />
+                                                    </svg>
+                                                )}
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <div className="form-group">
@@ -325,7 +349,7 @@ const StaffStudentList: React.FC = () => {
                                     )}
                                 </div>
                                 <div className="modal-footer">
-                                    <button type="button" className="btn-secondary" onClick={() => setIsAddModalOpen(false)}>Cancel</button>
+                                    <button type="button" className="btn-secondary" onClick={() => { setIsAddModalOpen(false); setShowPassword(false); }}>Cancel</button>
                                     <button type="submit" className="btn-primary">Register Student</button>
                                 </div>
                             </form>
@@ -384,7 +408,7 @@ const StaffStudentList: React.FC = () => {
                 .page-subtitle {
                     color: #6b7280;
                     font-size: 0.95rem;
-                    margin-top: 20px;
+                    margin-top: 6px;
                 }
 
                 .content-card {
@@ -413,7 +437,7 @@ const StaffStudentList: React.FC = () => {
                     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
                 }
 
-                .search-icon { color: #9ca3af; }
+                .search-icon { color: #9ca3af; position: static; }
                 .search-bar input {
                     border: none; background: transparent; outline: none; width: 100%;
                     font-size: 0.9rem; color: #111827;
@@ -498,6 +522,29 @@ const StaffStudentList: React.FC = () => {
                     color: #111827;
                 }
                 .form-input:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+                .input-group {
+                    position: relative;
+                    display: flex;
+                    align-items: center;
+                }
+                .password-toggle-btn {
+                    position: absolute;
+                    right: 12px;
+                    background: none;
+                    border: none;
+                    cursor: pointer;
+                    color: #6b7280;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 4px;
+                    border-radius: 4px;
+                    transition: color 0.15s, background-color 0.15s;
+                }
+                .password-toggle-btn:hover {
+                    color: #374151;
+                    background-color: #f3f4f6;
+                }
                 .modal-footer {
                     padding: 20px 24px;
                     background: #f9fafb;
@@ -510,6 +557,30 @@ const StaffStudentList: React.FC = () => {
                 @keyframes modalSlideIn {
                     from { transform: translateY(20px); opacity: 0; }
                     to { transform: translateY(0); opacity: 1; }
+                }
+
+                @media (max-width: 768px) {
+                    .page-header {
+                        flex-direction: column;
+                        align-items: stretch;
+                        gap: 16px;
+                    }
+                    .flex-row {
+                        flex-direction: column !important;
+                        align-items: stretch !important;
+                        gap: 16px;
+                    }
+                    .search-bar {
+                        width: 100%;
+                    }
+                    .btn-primary {
+                        width: 100%;
+                        justify-content: center;
+                    }
+                    .modern-table th, .modern-table td {
+                        padding: 12px 14px;
+                        font-size: 0.85rem;
+                    }
                 }
             `}</style>
         </AdminLayout>
