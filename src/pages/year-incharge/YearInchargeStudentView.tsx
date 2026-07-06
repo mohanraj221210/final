@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import YearInchargeNav from '../../components/YearInchargeNav';
-import { YearInchargeService } from '../../services/yearInchargeService';
+import { YearInchargeService, calculateProfileCompletion } from '../../services/yearInchargeService';
 
 const YearInchargeStudentView: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -26,6 +26,15 @@ const YearInchargeStudentView: React.FC = () => {
             }
 
             try {
+                // Check profile completion first
+                const profileData = await YearInchargeService.getProfile();
+                const completion = calculateProfileCompletion(profileData);
+                if (completion < 100) {
+                    toast.error("Please complete your profile 100% to handle outpasses");
+                    navigate('/year-incharge-profile');
+                    return;
+                }
+
                 const data = await YearInchargeService.getOutpassDetails(id!);
                 if (data && data._id) {
                     setOutpass(data);

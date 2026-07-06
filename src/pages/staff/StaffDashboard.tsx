@@ -285,7 +285,11 @@ const StaffDashboard: React.FC = () => {
     useEffect(() => {
         const fetchDashboardData = async () => {
             const token = localStorage.getItem('token');
-            if (!token) return;
+            if (!token) {
+                localStorage.clear();
+                navigate('/staff-login');
+                return;
+            }
 
             try {
                 const [profileRes, outpassStatsRes, studentStatsRes] = await Promise.all([

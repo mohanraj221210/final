@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import YearInchargeNav from '../../components/YearInchargeNav';
 import { useNavigate } from 'react-router-dom';
-import { ToastContainer } from 'react-toastify';
-import { YearInchargeService } from '../../services/yearInchargeService';
-import type { MappedStats } from '../../services/yearInchargeService';
+import { toast, ToastContainer } from 'react-toastify';
+import { YearInchargeService, type MappedStats, calculateProfileCompletion } from '../../services/yearInchargeService';
 
 /* ─────────────────────────────────────────────
    Animated Counter Hook
@@ -418,6 +417,7 @@ const YearInchargeDashboard: React.FC = () => {
     const [filter, setFilter] = useState<FilterType>('total');
     const [error, setError] = useState<string | null>(null);
     const [zoomingPath, setZoomingPath] = useState<string | null>(null);
+    const [profileCompletion, setProfileCompletion] = useState(0);
     const navigate = useNavigate();
 
     // Animated counters — update when stats change
@@ -435,7 +435,7 @@ const YearInchargeDashboard: React.FC = () => {
     // Initial full load (profile + stats + pending check + chart data)
     const fetchAll = useCallback(async (selectedFilter: FilterType) => {
         const token = localStorage.getItem('token');
-        if (!token) { navigate('/year-incharge-login'); return; }
+        if (!token) { localStorage.clear(); navigate('/year-incharge-login'); return; }
 
         setInitialLoading(true);
         setError(null);
@@ -460,6 +460,7 @@ const YearInchargeDashboard: React.FC = () => {
                 year: profileData.year || 'N/A',
                 email: profileData.email || 'incharge@jit.edu'
             });
+            setProfileCompletion(calculateProfileCompletion(profileData));
         }
         if (statsData) setStats(statsData);
 
@@ -469,7 +470,7 @@ const YearInchargeDashboard: React.FC = () => {
     // Filter-driven re-fetch (stats + chart data only — no profile re-fetch)
     const fetchFiltered = useCallback(async (selectedFilter: FilterType) => {
         const token = localStorage.getItem('token');
-        if (!token) { navigate('/year-incharge-login'); return; }
+        if (!token) { localStorage.clear(); navigate('/year-incharge-login'); return; }
 
         setStatsLoading(true);
         setChartLoading(true);
@@ -499,6 +500,11 @@ const YearInchargeDashboard: React.FC = () => {
     }, [filter]);
 
     const handleQuickAction = (path: string) => {
+        if ((path === '/year-incharge/pending-outpass' || path === '/year-incharge/outpass-list') && profileCompletion < 100) {
+            toast.error("Please complete your profile 100% to handle outpasses");
+            setTimeout(() => navigate('/year-incharge-profile'), 1500);
+            return;
+        }
         setZoomingPath(path);
         setTimeout(() => navigate(path), 700);
     };

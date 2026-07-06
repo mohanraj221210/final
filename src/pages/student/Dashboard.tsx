@@ -82,7 +82,11 @@ const Dashboard: React.FC = () => {
     useEffect(() => {
         const fetchDashboardData = async () => {
             const token = localStorage.getItem('token');
-            if (!token) return;
+            if (!token) {
+                localStorage.clear();
+                navigate('/');
+                return;
+            }
             try {
                 const [profileRes, statsRes] = await Promise.all([
                     axios.get(`${import.meta.env.VITE_API_URL}/api/profile`, {

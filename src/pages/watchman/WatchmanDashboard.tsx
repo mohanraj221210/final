@@ -274,6 +274,8 @@ const WatchmanDashboard: React.FC = () => {
         const fetchDashboardData = async () => {
             const token = localStorage.getItem('token');
             if (!token) {
+                localStorage.clear();
+                navigate('/watchman-login');
                 if (isMounted) setLoading(false);
                 return;
             }

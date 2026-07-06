@@ -586,10 +586,12 @@ const OutpassDetails: React.FC = () => {
                                     </div>
 
                                     {/* Right Column: Vertical Approval Timeline */}
-                                    <div className="pb-details-right-col">
-                                        <h3 className="pb-section-title">Approval Flow Timeline</h3>
-                                        {renderTimeline(selectedOutpass)}
-                                    </div>
+                                    {selectedOutpass.outpassType?.toLowerCase() !== 'hostel emergency' && (
+                                        <div className="pb-details-right-col">
+                                            <h3 className="pb-section-title">Approval Flow Timeline</h3>
+                                            {renderTimeline(selectedOutpass)}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -778,8 +780,10 @@ const OutpassDetails: React.FC = () => {
                             )}
 
                             {/* Timeline */}
-                            <h3 className="pb-mob-section-header">Approval Timeline</h3>
-                            <div className="pb-mob-timeline">
+                            {selectedOutpass.outpassType?.toLowerCase() !== 'hostel emergency' && (
+                                <>
+                                    <h3 className="pb-mob-section-header">Approval Timeline</h3>
+                                    <div className="pb-mob-timeline">
                                 {[
                                     { title: 'Staff / Tutor Advisor', ...selectedOutpass.staffApproval },
                                     { title: 'Year Incharge', ...selectedOutpass.yearInchargeApproval },
@@ -823,6 +827,8 @@ const OutpassDetails: React.FC = () => {
                                     </div>
                                 ))}
                             </div>
+                                </>
+                            )}
                         </>
                     )}
                 </div>

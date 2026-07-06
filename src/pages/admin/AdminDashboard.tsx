@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AdminLayout from './AdminLayout';
 import { adminService } from '../../services/adminService';
 import { toast, ToastContainer } from 'react-toastify';
@@ -34,6 +35,7 @@ const DEPARTMENTS = [
 const COLORS = ['#4F46E5', '#06B6D4', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#94A3B8'];
 
 const AdminDashboard: React.FC = () => {
+    const navigate = useNavigate();
     // Student Filters
     const [studentDeptFilter, setStudentDeptFilter] = useState('');
 
@@ -60,6 +62,12 @@ const AdminDashboard: React.FC = () => {
     const [exportLoading, setExportLoading] = useState(false);
 
     const fetchData = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            localStorage.clear();
+            navigate('/admin-login');
+            return;
+        }
         setLoading(true);
         try {
             const [students, staff, outpasses] = await Promise.all([
