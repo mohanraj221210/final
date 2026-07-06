@@ -25,6 +25,11 @@ const AdminLayout: React.FC<LayoutProps> = ({ children, title, activeMenu }) => 
 
     return (
         <div className="ent-layout">
+            <div className="admin-bg-mesh">
+                <div className="admin-bg-shape shape-1"></div>
+                <div className="admin-bg-shape shape-2"></div>
+                <div className="admin-bg-shape shape-3"></div>
+            </div>
             <AdminHeader 
                 activeMenu={activeMenu}
                 title={title}
@@ -60,9 +65,12 @@ const AdminLayout: React.FC<LayoutProps> = ({ children, title, activeMenu }) => 
                     --shadow-xs: 0 1px 2px rgba(0,0,0,0.05);
                     --shadow-sm: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
                     --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-                    --sidebar-width: 260px;
-                    --sidebar-collapsed: 72px;
-                    --header-height: 64px;
+                    --sidebar-width: 280px;
+                    --sidebar-collapsed: 80px;
+                    --header-height: 70px;
+                    --glass-bg: rgba(255, 255, 255, 0.7);
+                    --glass-border: rgba(255, 255, 255, 0.4);
+                    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
                 }
 
                 [data-theme="dark"] {
@@ -72,6 +80,9 @@ const AdminLayout: React.FC<LayoutProps> = ({ children, title, activeMenu }) => 
                     --text-muted: #94A3B8;
                     --text-light: #64748B;
                     --border-light: #334155;
+                    --glass-bg: rgba(30, 41, 59, 0.7);
+                    --glass-border: rgba(255, 255, 255, 0.05);
+                    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
                 }
 
                 [data-color="emerald"] {
@@ -116,17 +127,54 @@ const AdminLayout: React.FC<LayoutProps> = ({ children, title, activeMenu }) => 
                 [data-theme="dark"] .saas-table th,
                 [data-theme="dark"] .theme-dropdown,
                 [data-theme="dark"] .search-cmd {
-                    background: var(--bg-surface);
-                    border-color: var(--border-light);
+                    background: var(--glass-bg) !important;
+                    border-color: var(--glass-border) !important;
                 }
                 
                 [data-theme="dark"] .ent-search:focus-within {
-                    background: var(--bg-surface);
+                    background: var(--glass-bg);
                     box-shadow: 0 0 0 1px var(--primary);
                 }
 
                 [data-theme="dark"] .kpi-top .kpi-icon-box {
                     opacity: 0.9;
+                }
+
+                /* Global Glassmorphism Overrides for All Modules */
+                .kpi-card, .saas-card, .detail-card, .custom-modal-content, .content-card, .glass-panel, .profile-card, .detail-section, .profile-card-main {
+                    background: var(--glass-bg) !important;
+                    backdrop-filter: blur(20px) !important;
+                    -webkit-backdrop-filter: blur(20px) !important;
+                    border: 1px solid var(--glass-border) !important;
+                    box-shadow: var(--glass-shadow) !important;
+                }
+                
+                .saas-btn-outline, .admin-action-btn, .btn-outline, .btn-secondary {
+                    background: rgba(255, 255, 255, 0.1) !important;
+                    backdrop-filter: blur(10px) !important;
+                    border-color: var(--glass-border) !important;
+                }
+                [data-theme="dark"] .saas-btn-outline, [data-theme="dark"] .btn-outline, [data-theme="dark"] .btn-secondary {
+                    background: rgba(0, 0, 0, 0.2) !important;
+                }
+                
+                .saas-table, .custom-table {
+                    background: transparent !important;
+                }
+                
+                .saas-table th, .custom-table th {
+                    background: rgba(255, 255, 255, 0.3) !important;
+                    backdrop-filter: blur(10px);
+                }
+                [data-theme="dark"] .saas-table th, [data-theme="dark"] .custom-table th {
+                    background: rgba(0, 0, 0, 0.3) !important;
+                }
+                
+                .saas-table tbody tr:hover, .custom-table tbody tr:hover {
+                    background: rgba(255, 255, 255, 0.4) !important;
+                }
+                [data-theme="dark"] .saas-table tbody tr:hover, [data-theme="dark"] .custom-table tbody tr:hover {
+                    background: rgba(255, 255, 255, 0.1) !important;
                 }
 
                 * { box-sizing: border-box; }
@@ -137,7 +185,56 @@ const AdminLayout: React.FC<LayoutProps> = ({ children, title, activeMenu }) => 
                     background-color: var(--bg-app);
                     font-family: var(--font-sans);
                     color: var(--text-main);
+                    position: relative;
+                    overflow: hidden;
                 }
+                
+                .admin-bg-mesh {
+                    position: fixed;
+                    top: 0; left: 0; right: 0; bottom: 0;
+                    z-index: 0;
+                    overflow: hidden;
+                    pointer-events: none;
+                }
+                
+                .admin-bg-shape {
+                    position: absolute;
+                    filter: blur(80px);
+                    opacity: 0.5;
+                    border-radius: 50%;
+                    animation: floatBg 20s infinite ease-in-out alternate;
+                }
+                
+                .shape-1 {
+                    top: -10%; left: -10%;
+                    width: 50vw; height: 50vw;
+                    background: radial-gradient(circle, rgba(99,102,241,0.2) 0%, rgba(99,102,241,0) 70%);
+                }
+                
+                .shape-2 {
+                    bottom: -10%; right: -10%;
+                    width: 60vw; height: 60vw;
+                    background: radial-gradient(circle, rgba(16,185,129,0.15) 0%, rgba(16,185,129,0) 70%);
+                    animation-delay: -5s;
+                }
+                
+                .shape-3 {
+                    top: 40%; left: 50%;
+                    width: 40vw; height: 40vw;
+                    background: radial-gradient(circle, rgba(236,72,153,0.15) 0%, rgba(236,72,153,0) 70%);
+                    animation-delay: -10s;
+                }
+                
+                @keyframes floatBg {
+                    0% { transform: translate(0, 0) scale(1); }
+                    33% { transform: translate(3%, 5%) scale(1.05); }
+                    66% { transform: translate(-2%, 2%) scale(0.95); }
+                    100% { transform: translate(0, 0) scale(1); }
+                }
+
+                [data-theme="dark"] .shape-1 { background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, rgba(99,102,241,0) 70%); }
+                [data-theme="dark"] .shape-2 { background: radial-gradient(circle, rgba(16,185,129,0.1) 0%, rgba(16,185,129,0) 70%); }
+                [data-theme="dark"] .shape-3 { background: radial-gradient(circle, rgba(236,72,153,0.1) 0%, rgba(236,72,153,0) 70%); }
 
                 /* Main Content Area */
                 .ent-main {
@@ -149,6 +246,8 @@ const AdminLayout: React.FC<LayoutProps> = ({ children, title, activeMenu }) => 
                     transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                     padding-top: var(--header-height); /* Offset for sticky header */
                     box-sizing: border-box;
+                    position: relative;
+                    z-index: 1;
                 }
                 .ent-main.collapsed { margin-left: var(--sidebar-collapsed); }
 

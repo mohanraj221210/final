@@ -184,11 +184,13 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
         <div className="adm-sidebar-inner">
             <div className="adm-sidebar-header">
                 <div className="adm-brand-card">
-                    <div className="adm-sidebar-logo">🎓</div>
+                    <div className="lux-logo-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px', flexShrink: 0 }}>
+                        <img src="/jit permigo.png" alt="JIT Permigo" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '8px' }} />
+                    </div>
                     {!isCollapsedVal && (
                         <div className="adm-brand-copy">
-                            <div className="adm-sidebar-brand">JIT Admin</div>
-                            <div className="adm-sidebar-subbrand">Campus Access</div>
+                            <div className="adm-sidebar-brand" style={{ color: 'var(--text-main)' }}>JIT Admin</div>
+                            <div className="adm-sidebar-subbrand" style={{ color: 'var(--text-muted)' }}>Campus Access</div>
                         </div>
                     )}
                     {!isCollapsedVal && <span className="adm-live-badge">Live</span>}
@@ -437,18 +439,19 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
                     --primary-gradient: linear-gradient(135deg, var(--primary, #4F46E5) 0%, var(--primary-hover, #4338CA) 100%);
                 }
 
-                /* Layout Core Sidebar Styles */
                 .adm-sidebar {
                     position: fixed;
                     top: 0; left: 0; bottom: 0;
                     width: var(--sidebar-width);
-                    background: linear-gradient(180deg, #0b0f19 0%, #111827 50%, #030712 100%);
+                    background: var(--glass-bg, rgba(255,255,255,0.7));
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
                     z-index: 100;
                     overflow: hidden;
                     display: flex;
                     flex-direction: column;
-                    border-right: 1px solid rgba(255,255,255,0.06);
-                    box-shadow: 10px 0 35px rgba(2, 6, 23, 0.25);
+                    border-right: 1px solid var(--glass-border, rgba(255,255,255,0.4));
+                    box-shadow: var(--glass-shadow, 0 8px 32px 0 rgba(31,38,135,0.05));
                     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 }
                 .adm-sidebar.collapsed {
@@ -475,9 +478,9 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
                     width: 100%;
                     padding: 10px 12px;
                     border-radius: 12px;
-                    background: rgba(255,255,255,0.03);
-                    border: 1px solid rgba(255,255,255,0.06);
-                    box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+                    background: var(--glass-bg);
+                    border: 1px solid var(--glass-border);
+                    box-shadow: var(--shadow-sm);
                     box-sizing: border-box;
                     overflow: hidden;
                 }
@@ -536,14 +539,14 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
                     padding: 12px 14px;
                     margin: 8px 4px 16px;
                     border-radius: 12px;
-                    background: linear-gradient(135deg, rgba(79, 70, 229, 0.12) 0%, rgba(99, 102, 241, 0.03) 100%);
-                    border: 1px solid rgba(99, 102, 241, 0.1);
+                    background: linear-gradient(135deg, rgba(78, 70, 229, 0.48) 0%, rgba(99, 101, 241, 0.34) 100%);
+                    border: 1px solid rgba(99, 101, 241, 0.38);
                 }
                 .adm-hero-label {
                     margin: 0 0 4px;
                     font-size: 0.62rem;
                     font-weight: 700;
-                    color: #818cf8;
+                    color: #202550ff;
                     text-transform: uppercase;
                     letter-spacing: 0.1em;
                 }
@@ -590,7 +593,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
                     height: 42px;
                     padding: 0 12px;
                     border-radius: 10px;
-                    color: rgba(255,255,255,0.6);
+                    color: var(--text-muted);
                     font-size: 0.88rem;
                     font-weight: 550;
                     cursor: pointer;
@@ -609,8 +612,8 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
                 }
 
                 .adm-nav-link:hover {
-                    color: #FFFFFF;
-                    background: rgba(255,255,255,0.05);
+                    color: var(--primary);
+                    background: var(--primary-subtle);
                     transform: translateX(2px);
                 }
                 .adm-sidebar.collapsed .adm-nav-link:hover {
@@ -618,9 +621,9 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
                 }
 
                 .adm-nav-link.adm-active {
-                    color: #FFFFFF;
-                    background: linear-gradient(135deg, rgba(79, 70, 229, 0.15) 0%, rgba(99, 102, 241, 0.08) 100%);
-                    box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.15);
+                    color: var(--primary);
+                    background: var(--primary-subtle);
+                    box-shadow: inset 0 0 0 1px var(--primary-subtle);
                     font-weight: 650;
                 }
 
@@ -661,8 +664,8 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
                     align-items: center;
                     gap: 10px;
                     padding: 8px 10px;
-                    background: rgba(255,255,255,0.03);
-                    border: 1px solid rgba(255,255,255,0.06);
+                    background: rgba(255, 255, 255, 0.42);
+                    border: 1px solid rgba(105, 94, 170, 0.88);
                     border-radius: 12px;
                     box-sizing: border-box;
                 }
@@ -691,14 +694,14 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
                 .adm-user-name-label {
                     font-size: 0.82rem;
                     font-weight: 600;
-                    color: white;
+                    color: black;
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;
                 }
                 .adm-user-role-label {
                     font-size: 0.68rem;
-                    color: rgba(255,255,255,0.45);
+                    color: rgba(47, 44, 44, 0.59);
                     margin-top: 1px;
                 }
 
@@ -725,17 +728,16 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
                     background: rgba(239, 68, 68, 0.12) !important;
                 }
 
-                /* Header Bar (Desktop & Mobile Unified Top Header) */
                 .adm-header-bar {
                     position: fixed;
                     top: 0;
                     right: 0;
                     left: var(--sidebar-width);
                     height: var(--header-height);
-                    background: rgba(255, 255, 255, 0.8);
-                    backdrop-filter: blur(12px);
-                    -webkit-backdrop-filter: blur(12px);
-                    border-bottom: 1px solid var(--border-light, #E2E8F0);
+                    background: var(--glass-bg);
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
+                    border-bottom: 1px solid var(--glass-border);
                     display: flex;
                     align-items: center;
                     justify-content: space-between;

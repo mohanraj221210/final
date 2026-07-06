@@ -469,7 +469,7 @@ const OutpassDetails: React.FC = () => {
                                     </button>
                                 </div>
 
-                                <div className="pb-details-layout-grid">
+                                <div className={`pb-details-layout-grid ${selectedOutpass.outpassType?.toLowerCase().replace(/\s+/g, '') === 'hostelemergency' ? 'single-col' : ''}`}>
                                     {/* Left Column: Outpass Details */}
                                     <div className="pb-details-left-col">
                                         <div className="pb-detail-info-card">
@@ -586,7 +586,7 @@ const OutpassDetails: React.FC = () => {
                                     </div>
 
                                     {/* Right Column: Vertical Approval Timeline */}
-                                    {selectedOutpass.outpassType?.toLowerCase() !== 'hostel emergency' && (
+                                    {selectedOutpass.outpassType?.toLowerCase().replace(/\s+/g, '') !== 'hostelemergency' && (
                                         <div className="pb-details-right-col">
                                             <h3 className="pb-section-title">Approval Flow Timeline</h3>
                                             {renderTimeline(selectedOutpass)}
@@ -780,7 +780,7 @@ const OutpassDetails: React.FC = () => {
                             )}
 
                             {/* Timeline */}
-                            {selectedOutpass.outpassType?.toLowerCase() !== 'hostel emergency' && (
+                            {selectedOutpass.outpassType?.toLowerCase().replace(/\s+/g, '') !== 'hostelemergency' && (
                                 <>
                                     <h3 className="pb-mob-section-header">Approval Timeline</h3>
                                     <div className="pb-mob-timeline">
@@ -1141,6 +1141,10 @@ const OutpassDetails: React.FC = () => {
                     grid-template-columns: 1fr 1.2fr;
                     gap: 32px;
                     align-items: start;
+                }
+                .pb-details-layout-grid.single-col {
+                    grid-template-columns: minmax(auto, 900px);
+                    justify-content: center;
                 }
                 @media (max-width: 992px) {
                     .pb-details-layout-grid {

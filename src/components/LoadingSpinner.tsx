@@ -22,13 +22,12 @@ const LoadingSpinner: React.FC = () => {
                     <div className="pulse-ring ring-1"></div>
                     <div className="pulse-ring ring-2"></div>
                     <div className="logo-box">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="logo-icon">
-                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                        </svg>
+                        <div className="lux-logo-icon">
+                            <img src="/jit permigo.png" alt="JIT Permigo" style={{ width: '64px', height: '64px', objectFit: 'contain', borderRadius: '4px' }} />
+                        </div>
                     </div>
                 </div>
-                
+
                 <div className="text-container">
                     <h2 className="loading-title">JIT PERMIGO</h2>
                     <p className="loading-subtitle">Preparing your workspace<span className="dots">...</span></p>
@@ -96,7 +95,7 @@ const LoadingSpinner: React.FC = () => {
                     position: relative;
                     width: 64px;
                     height: 64px;
-                    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+                    background: linear-gradient(135deg, #2563eb, #5977caff);
                     border-radius: 20px;
                     display: flex;
                     align-items: center;
