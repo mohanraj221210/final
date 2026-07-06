@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Toast from '../../components/Toast';
-import { type User, RECENT_DOWNLOADS } from '../../data/sampleData';
+import { type User } from '../../data/sampleData';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
@@ -44,6 +44,7 @@ const Profile: React.FC = () => {
     const [showCropper, setShowCropper] = useState(false);
     const [tempImage, setTempImage] = useState<string | null>(null);
     const [imageError, setImageError] = useState(false);
+    const [recentPasses, setRecentPasses] = useState<any[]>([]);
 
     const calculateCompletion = (userData: User) => {
         const commonFields = [
@@ -96,7 +97,25 @@ const Profile: React.FC = () => {
                 toast.error("Failed to fetch user profile");
             }
         };
+
+        const fetchOutpassStats = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) return;
+                const statsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/outpass/stats`, {
+                    headers: { authorization: `Bearer ${token}` }
+                });
+                if (statsRes.status === 200 && statsRes.data && statsRes.data.stats && statsRes.data.stats.length > 0) {
+                    const passes = statsRes.data.stats[0].recentpasses || [];
+                    setRecentPasses(passes);
+                }
+            } catch (error) {
+                console.error("Failed to fetch outpass stats", error);
+            }
+        };
+
         fetchUserProfile();
+        fetchOutpassStats();
     }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -354,31 +373,85 @@ const Profile: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Recent Downloads & Activity */}
+                                {/* Recent Passes */}
                                 <div className="pb-profile-main-card pb-activity-sidebar-card pb-animate-stagger-3">
-                                    <h3 className="pb-section-title">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '6px', verticalAlign: 'middle' }}>
-                                            <circle cx="12" cy="12" r="10" />
-                                            <polyline points="12 6 12 12 16 14" />
-                                        </svg>
-                                        History Log
+                                    <h3 className="pb-section-title" style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ display: 'flex', alignItems: 'center' }}>
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '6px', verticalAlign: 'middle' }}>
+                                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                                <line x1="16" y1="2" x2="16" y2="6" />
+                                                <line x1="8" y1="2" x2="8" y2="6" />
+                                                <line x1="3" y1="10" x2="21" y2="10" />
+                                            </svg>
+                                            Recent Outpasses
+                                        </span>
+                                        <button 
+                                            style={{ background: 'none', border: 'none', color: 'var(--pb-primary)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', padding: 0 }}
+                                            onClick={() => navigate('/outpass')}
+                                        >
+                                            View All
+                                        </button>
                                     </h3>
                                     <div className="pb-recent-download-list">
-                                        {RECENT_DOWNLOADS.slice(0, 3).map(item => (
-                                            <div key={item.id} className="pb-download-item">
-                                                <div className="pb-dl-icon">
-                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                                                        <polyline points="7 10 12 15 17 10" />
-                                                        <line x1="12" y1="15" x2="12" y2="3" />
-                                                    </svg>
-                                                </div>
-                                                <div className="pb-dl-info">
-                                                    <p className="pb-dl-title">Downloaded <strong>{item.title}</strong></p>
-                                                    <span className="pb-dl-date">{item.date}</span>
-                                                </div>
+                                        {recentPasses.length > 0 ? (
+                                            recentPasses.slice(0, 3).map((pass, idx) => {
+                                                const status = (pass.status || 'Pending').toLowerCase();
+                                                let statusBg = 'rgba(245, 158, 11, 0.08)';
+                                                let statusColor = '#D97706';
+                                                
+                                                if (status === 'approved') {
+                                                    statusBg = 'rgba(16, 185, 129, 0.08)';
+                                                    statusColor = '#059669';
+                                                } else if (status === 'rejected') {
+                                                    statusBg = 'rgba(239, 68, 68, 0.08)';
+                                                    statusColor = '#DC2626';
+                                                } else if (status === 'checkedout') {
+                                                    statusBg = 'rgba(59, 130, 246, 0.08)';
+                                                    statusColor = '#2563EB';
+                                                } else if (status === 'checkedin') {
+                                                    statusBg = 'rgba(139, 92, 246, 0.08)';
+                                                    statusColor = '#7C3AED';
+                                                }
+
+                                                return (
+                                                    <div key={pass._id || idx} className="pb-download-item" style={{ width: '100%' }}>
+                                                        <div className="pb-dl-icon" style={{ backgroundColor: statusBg, color: statusColor, borderColor: 'transparent' }}>
+                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                                                <polyline points="14 2 14 8 20 8" />
+                                                            </svg>
+                                                        </div>
+                                                        <div className="pb-dl-info" style={{ minWidth: 0 }}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                                                                <p className="pb-dl-title" style={{ fontWeight: 600, color: 'var(--pb-text)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }} title={pass.reason}>
+                                                                    {pass.reason}
+                                                                </p>
+                                                                <span style={{ 
+                                                                    fontSize: '0.62rem', 
+                                                                    fontWeight: 800, 
+                                                                    textTransform: 'uppercase', 
+                                                                    backgroundColor: statusBg, 
+                                                                    color: statusColor, 
+                                                                    padding: '2px 6px', 
+                                                                    borderRadius: '4px',
+                                                                    flexShrink: 0
+                                                                }}>
+                                                                    {pass.status || 'Pending'}
+                                                                </span>
+                                                            </div>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--pb-text-4)', marginTop: '4px' }}>
+                                                                <span>{pass.outpasstype || pass.outpassType || 'General'}</span>
+                                                                <span>{new Date(pass.createdAt).toLocaleDateString()}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })
+                                        ) : (
+                                            <div style={{ textAlign: 'center', padding: '16px 0', width: '100%', color: 'var(--pb-text-4)', fontSize: '0.8rem' }}>
+                                                No recent outpasses found.
                                             </div>
-                                        ))}
+                                        )}
                                     </div>
                                 </div>
                             </div>
