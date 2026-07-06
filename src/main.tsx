@@ -296,7 +296,7 @@ createRoot(document.getElementById('root')!).render(
             <WardenEmergencyPendingOutpass />
           </ProtectedRoute>
         } />
-        <Route path="/staff-dashboard" element={
+        <Route path="/watchman-dashboard" element={
           <ProtectedRoute>
             <WatchmanDashboard />
           </ProtectedRoute>

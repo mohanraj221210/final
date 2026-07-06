@@ -7,6 +7,7 @@ import type { Bus } from '../../types/admin';
 import DeleteConfirmationModal from '../../components/DeleteConfirmationModal';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ViewDetailsButton from '../../components/ViewDetailsButton';
 
 const ManageBus: React.FC = () => {
     const navigate = useNavigate();
@@ -174,9 +175,7 @@ const ManageBus: React.FC = () => {
                                                 </td>
                                                 <td>
                                                     <div className="action-buttons">
-                                                        <button className="btn-view" onClick={() => navigate(`/admin/bus-details/${bus._id}`)}>
-                                                            View Details
-                                                        </button>
+                                                        <ViewDetailsButton onClick={() => navigate(`/admin/bus-details/${bus._id}`)} />
                                                         <button className="btn-icon delete" onClick={() => handleDeleteClick(bus._id, bus.busnumber)} title="Delete Bus">
                                                             🗑️
                                                         </button>
@@ -331,7 +330,7 @@ const ManageBus: React.FC = () => {
                     border-color: #4f46e5;
                     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
                 }
-                .search-icon { font-size: 1rem; color: #9ca3af; }
+                .search-icon { font-size: 1rem; color: #9ca3af; position: static; }
                 .search-bar input {
                     border: none;
                     outline: none;
@@ -350,9 +349,9 @@ const ManageBus: React.FC = () => {
                 }
 
                 .page-subtitle {
-                    color: #111827;
+                    color: #4b5563;
                     font-size: 0.95rem;
-                    margin-top: 20px;
+                    margin-top: 6px;
                 }
 
 
@@ -435,6 +434,31 @@ const ManageBus: React.FC = () => {
 
                 @keyframes spin { to { transform: rotate(360deg); } }
                 @keyframes modalSlide { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+                @media (max-width: 768px) {
+                    .page-header {
+                        flex-direction: column;
+                        align-items: stretch;
+                        gap: 16px;
+                    }
+                    .header-actions {
+                        flex-direction: column;
+                        align-items: stretch;
+                        width: 100%;
+                        gap: 12px;
+                    }
+                    .search-bar {
+                        width: 100%;
+                    }
+                    .btn-primary {
+                        width: 100%;
+                        justify-content: center;
+                    }
+                    .modern-table th, .modern-table td {
+                        padding: 12px 14px;
+                        font-size: 0.85rem;
+                    }
+                }
             `}</style>
         </AdminLayout>
     );

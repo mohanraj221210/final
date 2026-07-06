@@ -262,7 +262,7 @@ const OutpassAdmin: React.FC = () => {
                 </div>
 
                 {/* Controls Bar */}
-                <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '16px 20px', marginBottom: '20px', display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                <div className="controls-bar">
                     {/* Search */}
                     <div style={{ flex: '1 1 200px', position: 'relative' }}>
                         <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', fontSize: '16px', pointerEvents: 'none' }}>🔍</span>
@@ -622,6 +622,33 @@ const OutpassAdmin: React.FC = () => {
                 }
                 .custom-modal-footer .confirm-btn:hover {
                     background: var(--primary-hover);
+                }
+
+                .controls-bar {
+                    background: white;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 16px;
+                    padding: 16px 20px;
+                    margin-bottom: 20px;
+                    display: flex;
+                    gap: 12px;
+                    align-items: center;
+                    flex-wrap: wrap;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+                }
+
+                @media (max-width: 768px) {
+                    .controls-bar {
+                        flex-direction: column;
+                        align-items: stretch;
+                        gap: 10px;
+                    }
+                    .controls-bar > div,
+                    .controls-bar > select,
+                    .controls-bar > button {
+                        width: 100% !important;
+                        flex: none !important;
+                    }
                 }
             `}</style>
         </AdminLayout>

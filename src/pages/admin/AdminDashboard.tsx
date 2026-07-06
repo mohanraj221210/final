@@ -3,6 +3,7 @@ import AdminLayout from './AdminLayout';
 import { adminService } from '../../services/adminService';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ViewDetailsButton from '../../components/ViewDetailsButton';
 import { 
     Users, 
     UserCheck, 
@@ -558,7 +559,7 @@ const AdminDashboard: React.FC = () => {
                                                             </span>
                                                         </td>
                                                         <td className="text-right">
-                                                            <button className="table-action-btn">View</button>
+                                                            <ViewDetailsButton compact label="View" onClick={() => {}} />
                                                         </td>
                                                     </tr>
                                                 );
@@ -1025,12 +1026,6 @@ const AdminDashboard: React.FC = () => {
                     font-size: 0.75rem; font-weight: 600; text-transform: capitalize;
                 }
 
-                .table-action-btn {
-                    background: transparent; border: none; color: var(--primary);
-                    font-size: 0.85rem; font-weight: 500; cursor: pointer;
-                }
-                .table-action-btn:hover { text-decoration: underline; }
-
                 .table-empty {
                     display: flex; flex-direction: column; align-items: center; justify-content: center;
                     padding: 60px 20px; color: var(--text-light);
@@ -1039,13 +1034,31 @@ const AdminDashboard: React.FC = () => {
                 .table-empty p { font-size: 0.9rem; margin: 0; }
 
                 /* Skeleton Loaders */
-                .saas-skeleton-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 24px; }
+                .saas-skeleton-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 24px; }
                 .skeleton { background: var(--border-light); border-radius: 12px; animation: pulse 1.5s infinite; }
                 .card-skel { height: 140px; }
                 @keyframes pulse {
                     0% { opacity: 0.6; }
                     50% { opacity: 0.3; }
                     100% { opacity: 0.6; }
+                }
+
+                @media (max-width: 768px) {
+                    .saas-header-actions {
+                        flex-direction: column;
+                        align-items: stretch;
+                        gap: 12px;
+                    }
+                    .header-buttons {
+                        width: 100%;
+                    }
+                    .header-buttons button {
+                        flex: 1;
+                        justify-content: center;
+                    }
+                    .saas-skeleton-container {
+                        grid-template-columns: 1fr;
+                    }
                 }
                 `}</style>
             </div>

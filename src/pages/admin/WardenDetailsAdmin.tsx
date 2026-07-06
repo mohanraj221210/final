@@ -11,6 +11,14 @@ import DeleteConfirmationModal from '../../components/DeleteConfirmationModal';
 
 import { GENDERS } from '../../constants/dropdownOptions';
 
+const HOSTEL_OPTIONS = ['Boys Hostel', 'Girls Hostel'];
+const GENDER_OPTIONS = GENDERS.map((value) => ({
+    value,
+    label: value.charAt(0).toUpperCase() + value.slice(1)
+}));
+
+type SelectOption = string | { value: string; label: string };
+
 const WardenDetailsAdmin: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -38,7 +46,10 @@ const WardenDetailsAdmin: React.FC = () => {
         try {
             const data = await adminService.getWardenById(wardenId);
             setWarden(data);
-            setFormData(data);
+            setFormData({
+                ...data,
+                gender: data.gender?.toLowerCase() || 'male'
+            });
         } catch (error) {
             console.error(error);
             toast.error("Failed to fetch warden details");
@@ -52,8 +63,22 @@ const WardenDetailsAdmin: React.FC = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const resetFormData = () => {
+        if (!warden) return;
+        setFormData({
+            ...warden,
+            gender: warden.gender?.toLowerCase() || 'male'
+        });
+    };
+
     const handleUpdate = async () => {
         if (!warden) return;
+
+        if (!formData.hostelname) {
+            toast.error("Please select a hostel");
+            return;
+        }
+
         try {
             await adminService.updateWarden(warden._id, formData);
             toast.success("Warden updated successfully");
@@ -116,7 +141,7 @@ const WardenDetailsAdmin: React.FC = () => {
                             </>
                         ) : (
                             <>
-                                <button className="btn-secondary" onClick={() => { setIsEditing(false); setFormData(warden); }}>Cancel</button>
+                                <button className="btn-secondary" onClick={() => { setIsEditing(false); resetFormData(); }}>Cancel</button>
                                 <button className="btn-success" onClick={handleUpdate}>Save Changes</button>
                             </>
                         )}
@@ -166,23 +191,25 @@ const WardenDetailsAdmin: React.FC = () => {
                             <h3 className="section-title">Personal Information</h3>
                             <div className="fields-grid">
                                 <Field label="Full Name" name="name" value={formData.name} isEditing={isEditing} onChange={handleInputChange} />
-                                <Field label="Email Address" name="email" value={formData.email} isEditing={isEditing} onChange={handleInputChange} />
-                                <Field label="Phone Number" name="phone" value={formData.phone} isEditing={isEditing} onChange={handleInputChange} />
+                                <Field label="Email" name="email" value={formData.email} isEditing={isEditing} onChange={handleInputChange} />
+                                <Field
+                                    label="Hostel Name"
+                                    name="hostelname"
+                                    value={formData.hostelname}
+                                    isEditing={isEditing}
+                                    onChange={handleInputChange}
+                                    options={HOSTEL_OPTIONS}
+                                    placeholder="Select Hostel"
+                                />
                                 <Field
                                     label="Gender"
                                     name="gender"
-                                    value={formData.gender}
+                                    value={formData.gender?.toLowerCase() || 'male'}
                                     isEditing={isEditing}
                                     onChange={handleInputChange}
-                                    options={GENDERS}
+                                    options={GENDER_OPTIONS}
                                 />
-                            </div>
-                        </div>
-
-                        <div className="detail-section">
-                            <h3 className="section-title">Assignment Details</h3>
-                            <div className="fields-grid">
-                                <Field label="Assigned Hostel" name="hostelname" value={formData.hostelname} isEditing={isEditing} onChange={handleInputChange} />
+                                <Field label="Phone" name="phone" value={formData.phone} isEditing={isEditing} onChange={handleInputChange} />
                             </div>
                         </div>
                     </div>
@@ -374,6 +401,23 @@ const WardenDetailsAdmin: React.FC = () => {
                     .profile-layout { grid-template-columns: 1fr; }
                     .profile-sidebar { max-width: 400px; margin: 0 auto; width: 100%; }
                 }
+
+                @media (max-width: 768px) {
+                    .page-header {
+                        flex-direction: column;
+                        align-items: stretch;
+                        gap: 16px;
+                    }
+                    .header-actions {
+                        flex-direction: column;
+                        width: 100%;
+                        gap: 10px;
+                    }
+                    .header-actions button {
+                        width: 100%;
+                        justify-content: center;
+                    }
+                }
             `}</style>
             <ChangePasswordModal
                 isOpen={isPasswordModalOpen}
@@ -392,24 +436,44 @@ const WardenDetailsAdmin: React.FC = () => {
     );
 };
 
-const Field = ({ label, name, value, isEditing, onChange, options }: any) => (
-    <div className="field-group">
-        <label className="field-label">{label}</label>
-        {isEditing ? (
-            options ? (
-                <select name={name} value={value || ''} onChange={onChange} className="field-input">
-                    <option value="">Select {label}</option>
-                    {options.map((opt: string) => (
-                        <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                </select>
+const Field = ({ label, name, value, isEditing, onChange, options, placeholder }: {
+    label: string;
+    name: string;
+    value?: string;
+    isEditing: boolean;
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+    options?: SelectOption[];
+    placeholder?: string;
+}) => {
+    const getOptionValue = (opt: SelectOption) => (typeof opt === 'string' ? opt : opt.value);
+    const getOptionLabel = (opt: SelectOption) => (typeof opt === 'string' ? opt : opt.label);
+    const displayValue = options
+        ? getOptionLabel(options.find(opt => getOptionValue(opt) === value) ?? value ?? '')
+        : value;
+
+    return (
+        <div className="field-group">
+            <label className="field-label">{label}</label>
+            {isEditing ? (
+                options ? (
+                    <select name={name} value={value || ''} onChange={onChange} className="field-input">
+                        <option value="" disabled>{placeholder || `Select ${label}`}</option>
+                        {options.map((opt) => {
+                            const optValue = getOptionValue(opt);
+                            const optLabel = getOptionLabel(opt);
+                            return (
+                                <option key={optValue} value={optValue}>{optLabel}</option>
+                            );
+                        })}
+                    </select>
+                ) : (
+                    <input name={name} value={value || ''} onChange={onChange} className="field-input" />
+                )
             ) : (
-                <input name={name} value={value || ''} onChange={onChange} className="field-input" />
-            )
-        ) : (
-            <div className="field-value">{value || '-'}</div>
-        )}
-    </div>
-);
+                <div className="field-value">{displayValue || '-'}</div>
+            )}
+        </div>
+    );
+};
 
 export default WardenDetailsAdmin;

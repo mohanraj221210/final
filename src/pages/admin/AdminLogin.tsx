@@ -22,18 +22,7 @@ function mkParticles(w: number, h: number, n: number): Particle[] {
 }
 
 /* ─── Password strength helper ─── */
-function pwStrength(pw: string): { score: number; label: string; color: string } {
-  if (!pw) return { score: 0, label: "", color: "#00E5FF" };
-  let s = 0;
-  if (pw.length >= 8) s++;
-  if (pw.length >= 12) s++;
-  if (/[A-Z]/.test(pw)) s++;
-  if (/[0-9]/.test(pw)) s++;
-  if (/[^A-Za-z0-9]/.test(pw)) s++;
-  if (s <= 1) return { score: s, label: "WEAK", color: "#ff4d6d" };
-  if (s <= 3) return { score: s, label: "MODERATE", color: "#f59e0b" };
-  return { score: s, label: "STRONG", color: "#00FFAE" };
-}
+
 
 /* ═══════════════════════════════════════════════════════
    AdminLogin Component
@@ -62,7 +51,7 @@ const AdminLogin: React.FC = () => {
   const [deniedPhase, setDeniedPhase] = useState(0);   // 0=idle 1=flash 2=warning 3=fadeout
   const [deniedMsg, setDeniedMsg] = useState("");
   const [wrongAttempt, setWrongAttempt] = useState(false);
-  const strength = pwStrength(password);
+
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
@@ -447,18 +436,7 @@ const AdminLogin: React.FC = () => {
               </div>
             </div>
 
-            {/* Password strength meter */}
-            {password.length > 0 && (
-              <div className="al-strength">
-                <div className="al-str-bars">
-                  {[1, 2, 3, 4, 5].map(n => (
-                    <div key={n} className="al-str-seg" style={{ background: n <= strength.score ? strength.color : "rgba(255,255,255,0.06)", boxShadow: n <= strength.score ? `0 0 6px ${strength.color}60` : "none" }} />
-                  ))}
-                </div>
-                <span className="al-str-lbl" style={{ color: strength.color }}>{strength.label}</span>
-              </div>
-            )}
-
+            
             {/* Remember me + Forgot */}
             <div className="al-remember-row">
               <label className="al-remember">

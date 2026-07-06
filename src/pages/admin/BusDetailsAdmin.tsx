@@ -362,6 +362,23 @@ const BusDetailsAdmin: React.FC = () => {
                     .profile-layout { grid-template-columns: 1fr; }
                     .profile-sidebar { max-width: 400px; margin: 0 auto; width: 100%; }
                 }
+
+                @media (max-width: 768px) {
+                    .page-header {
+                        flex-direction: column;
+                        align-items: stretch;
+                        gap: 16px;
+                    }
+                    .header-actions {
+                        flex-direction: column;
+                        width: 100%;
+                        gap: 10px;
+                    }
+                    .header-actions button {
+                        width: 100%;
+                        justify-content: center;
+                    }
+                }
             `}</style>
         </AdminLayout>
     );
