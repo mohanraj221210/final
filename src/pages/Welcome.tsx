@@ -562,12 +562,7 @@ const Welcome: React.FC = () => {
                     <div className="jit-feat-icon">{f.icon}</div>
                     <h3 className="jit-feat-title">{f.title}</h3>
                     <p className="jit-feat-desc">{f.desc}</p>
-                    <div className="jit-feat-link">
-                      Learn more
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M5 12h14M12 5l7 7-7 7" />
-                      </svg>
-                    </div>
+                    
                   </div>
                 ))}
               </div>
@@ -581,7 +576,7 @@ const Welcome: React.FC = () => {
             <div className="jit-container jit-cta-inner">
               <div className="jit-cta-content jit-reveal jit-fade-up">
                 <h2 className="jit-cta-h2">Start Your Digital Campus Journey</h2>
-                <p className="jit-cta-sub">Join 1,200+ students and 85+ faculty members already on JIT Campus One.</p>
+                <p className="jit-cta-sub">Join 1,200+ students and 85+ faculty members already on JIT Permigo.</p>
                 <button className="jit-btn-primary jit-btn-lg" id="cta-access" onClick={() => scrollTo('portals-section')}>
                   Access Your Portal
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
