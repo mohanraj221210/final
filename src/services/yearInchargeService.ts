@@ -161,7 +161,7 @@ export function mapOutpassResponse(o: any): MappedOutpass {
     if (!o) return {} as MappedOutpass;
 
     // Resolve student
-    let rawStudent = o.student || o.studentid || {};
+    let rawStudent = o.student || o.studentid || (o.name || o.registerNumber ? o : {});
     if (Array.isArray(rawStudent)) {
         rawStudent = rawStudent[0] || {};
     }

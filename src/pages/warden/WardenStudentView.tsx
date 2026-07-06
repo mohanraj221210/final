@@ -8,6 +8,7 @@ const WardenStudentView: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [student, setStudent] = useState<any>(null);
+  const [outpassHistory, setOutpassHistory] = useState<any[]>([]);
 
   useEffect(() => {
     fetchStudent();
@@ -23,6 +24,9 @@ const WardenStudentView: React.FC = () => {
         }
       );
       setStudent(res.data.outpassdetail || (res.data.filterOutpass && res.data.filterOutpass[0]) || null);
+      if (res.data.outpassHistory) {
+        setOutpassHistory(res.data.outpassHistory);
+      }
       setImageError(false);
     } catch (error) {
       console.error("Failed to fetch student details:", error);
@@ -513,6 +517,38 @@ const WardenStudentView: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Section 7: Outpass History */}
+        {outpassHistory && outpassHistory.length > 0 && (
+          <div className="section-card gate-movement-card">
+            <div className="section-header">
+              <h3>📜 Outpass History</h3>
+            </div>
+            <div className="section-body" style={{ padding: '20px' }}>
+              <div className="history-grid" style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                {outpassHistory.map((historyItem, idx) => (
+                  <div key={idx} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#3B82F6', background: '#DBEAFE', padding: '4px 8px', borderRadius: '6px' }}>
+                        {historyItem.outpasstype || 'General'}
+                      </span>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: historyItem.status === 'approved' ? '#10B981' : historyItem.status === 'rejected' ? '#EF4444' : '#F59E0B', background: historyItem.status === 'approved' ? '#D1FAE5' : historyItem.status === 'rejected' ? '#FEE2E2' : '#FEF3C7', padding: '4px 8px', borderRadius: '6px', textTransform: 'capitalize' }}>
+                        {historyItem.status || 'Pending'}
+                      </span>
+                    </div>
+                    <p style={{ margin: '0 0 8px 0', fontSize: '0.85rem', color: '#475569', fontWeight: 500, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      <strong>Reason:</strong> {historyItem.reason || 'N/A'}
+                    </p>
+                    <div style={{ fontSize: '0.75rem', color: '#64748B', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <div><strong>From:</strong> {historyItem.fromDate ? new Date(historyItem.fromDate).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A'}</div>
+                      <div><strong>To:</strong> {historyItem.toDate ? new Date(historyItem.toDate).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A'}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="section-body workflow-container" style={{ padding: 0 }}>
           {/* Action Buttons if Pending */}

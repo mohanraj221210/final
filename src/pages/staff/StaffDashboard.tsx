@@ -331,7 +331,7 @@ const StaffDashboard: React.FC = () => {
                             name: studentDetails.name || item.name || 'Student',
                             registerNumber: studentDetails.registerNumber || item.registerNumber || 'N/A',
                             photo: studentDetails.photo || item.photo || '',
-                            status: item.status || 'pending',
+                            status: item.staffapprovalstatus || item.status || 'pending',
                             outpasstype: item.outpasstype || 'General'
                         };
                     });
@@ -340,7 +340,18 @@ const StaffDashboard: React.FC = () => {
                     // Fallback to stats recentpasses if list endpoint failed
                     const statsArray = outpassStatsRes.data.stats || [];
                     if (statsArray.length > 0 && statsArray[0].recentpasses) {
-                        setRecentPasses(statsArray[0].recentpasses);
+                        const mappedRecent = statsArray[0].recentpasses.map((item: any) => {
+                            const studentDetails = item.studentid || {};
+                            return {
+                                ...item,
+                                name: studentDetails.name || item.name || 'Student',
+                                registerNumber: studentDetails.registerNumber || item.registerNumber || 'N/A',
+                                photo: studentDetails.photo || item.photo || '',
+                                status: item.staffapprovalstatus || item.status || 'pending',
+                                outpasstype: item.outpasstype || 'General'
+                            };
+                        });
+                        setRecentPasses(mappedRecent);
                     }
                 }
 
