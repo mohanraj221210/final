@@ -708,7 +708,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
                 .adm-sidebar-logout-btn {
                     background: transparent;
                     border: none;
-                    color: rgba(255,255,255,0.4);
+                    color: rgba(228, 22, 22, 0.82);
                     cursor: pointer;
                     padding: 6px;
                     border-radius: 6px;
