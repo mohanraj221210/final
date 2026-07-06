@@ -406,8 +406,16 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
                 
                 .lux-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-                .lux-chevron { transition: transform 0.2s ease; }
+                .lux-chevron { 
+                    transition: transform 0.2s ease; 
+                    color: var(--sp-text-3, #64748B);
+                    display: inline-block;
+                    flex-shrink: 0;
+                }
                 .lux-chevron.open { transform: rotate(180deg); }
+                .sp-user-pill:hover .lux-chevron {
+                    color: var(--sp-primary, #6366F1);
+                }
 
                 .lux-dropdown-menu {
                     position: absolute;
@@ -454,7 +462,7 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
                 }
                 .lux-dropdown-item:hover { background: rgba(59,130,246,0.05); color: #0F172A; }
                 .lux-dropdown-item.lux-danger { color: #DC2626; }
-                .lux-dropdown-item.lux-danger:hover { background: rgba(239,68,68,0.06); }
+                .lux-dropdown-item.lux-danger:hover { background: rgba(239, 68, 68, 0); }
 
                 .lux-incomplete-badge {
                     padding: 5px 12px;

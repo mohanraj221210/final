@@ -46,6 +46,7 @@ interface OutpassData {
     remarks?: string;
     out?: string;
     in?: string;
+    isLate?: boolean;
 }
 
 const OutpassDetails: React.FC = () => {
@@ -113,6 +114,7 @@ const OutpassDetails: React.FC = () => {
                         remarks: item.remarks || '',
                         out: item.out,
                         in: item.in,
+                        isLate: !!item.isLate || (item.in && new Date(item.in) > new Date(item.toDate)),
                         staffApproval: {
                             status: item.staff?.status || item.staffapprovalstatus || 'pending',
                             approverName: item.staffid?.name,
@@ -389,13 +391,20 @@ const OutpassDetails: React.FC = () => {
                                         {filteredOutpasses.map((outpass, index) => {
                                             const staggerIndex = (index % 6) + 1;
                                             return (
-                                                <div key={outpass.id} className={`pb-outpass-item-card pb-animate-stagger-${staggerIndex}`}>
+                                                <div key={outpass.id} className={`pb-outpass-item-card ${outpass.isLate ? 'late-card-red' : ''} pb-animate-stagger-${staggerIndex}`}>
                                                     <div className="pb-card-top-row">
-                                                        <span className={`pb-outpass-type-indicator ${
-                                                            outpass.outpassType.toLowerCase() === 'emergency' ? 'emergency' : ''
-                                                        }`}>
-                                                            {outpass.outpassType}
-                                                        </span>
+                                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                            <span className={`pb-outpass-type-indicator ${
+                                                                outpass.outpassType.toLowerCase() === 'emergency' ? 'emergency' : ''
+                                                            }`}>
+                                                                {outpass.outpassType}
+                                                            </span>
+                                                            {outpass.isLate && (
+                                                                <span className="pb-outpass-type-indicator emergency" style={{ textTransform: 'uppercase' }}>
+                                                                    ⏳ Late
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         {getStatusBadge(outpass.overallStatus)}
                                                     </div>
 
@@ -648,11 +657,18 @@ const OutpassDetails: React.FC = () => {
                                 filteredOutpasses.map((op, index) => {
                                     const staggerIndex = (index % 5) + 1;
                                     return (
-                                        <div key={op.id} className={`pb-mob-outpass-card pb-animate-stagger-${staggerIndex}`} onClick={() => setSelectedOutpass(op)}>
+                                        <div key={op.id} className={`pb-mob-outpass-card ${op.isLate ? 'late-card-red' : ''} pb-animate-stagger-${staggerIndex}`} onClick={() => setSelectedOutpass(op)}>
                                             <div className="pb-mob-op-top">
-                                                <span className={`pb-outpass-type-indicator ${op.outpassType.toLowerCase() === 'emergency' ? 'emergency' : ''}`}>
-                                                    {op.outpassType}
-                                                </span>
+                                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                    <span className={`pb-outpass-type-indicator ${op.outpassType.toLowerCase() === 'emergency' ? 'emergency' : ''}`}>
+                                                        {op.outpassType}
+                                                    </span>
+                                                    {op.isLate && (
+                                                        <span className="pb-outpass-type-indicator emergency" style={{ textTransform: 'uppercase' }}>
+                                                            ⏳ Late
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 {getStatusBadge(op.overallStatus)}
                                             </div>
                                             <div className="pb-mob-op-dates">
@@ -943,6 +959,18 @@ const OutpassDetails: React.FC = () => {
                     backdrop-filter: blur(20px);
                     -webkit-backdrop-filter: blur(20px);
                     transition: var(--pb-transition);
+                }
+                .pb-outpass-item-card.late-card-red,
+                .pb-mob-outpass-card.late-card-red {
+                    background: rgba(239, 68, 68, 0.05) !important;
+                    border-color: rgba(239, 68, 68, 0.25) !important;
+                    box-shadow: 0 4px 20px rgba(239, 68, 68, 0.08) !important;
+                }
+                [data-theme="dark"] .pb-outpass-item-card.late-card-red,
+                [data-theme="dark"] .pb-mob-outpass-card.late-card-red {
+                    background: rgba(239, 68, 68, 0.1) !important;
+                    border-color: rgba(239, 68, 68, 0.3) !important;
+                    box-shadow: 0 4px 20px rgba(239, 68, 68, 0.15) !important;
                 }
                 .pb-outpass-item-card:hover {
                     transform: translateY(-4px);
