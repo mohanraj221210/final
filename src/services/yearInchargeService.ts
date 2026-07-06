@@ -279,6 +279,23 @@ export function mapProfileResponse(data: any): MappedYearIncharge {
     };
 }
 
+export function calculateProfileCompletion(data: any): number {
+    if (!data) return 0;
+    const fields = ['name', 'email', 'phone', 'gender', 'photo', 'handlingyears', 'handlingbatches', 'handlingdepartments'];
+    let completed = 0;
+
+    fields.forEach(field => {
+        const value = data[field];
+        if (Array.isArray(value)) {
+            if (value.length > 0) completed++;
+        } else if (value && (typeof value === 'string' ? value.trim() !== '' : true)) {
+            completed++;
+        }
+    });
+
+    return Math.round((completed / fields.length) * 100);
+}
+
 // 4. Year Incharge Service Methods
 export const YearInchargeService = {
     getStats: async (filter?: string) => {

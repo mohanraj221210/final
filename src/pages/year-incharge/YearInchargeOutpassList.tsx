@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import YearInchargeNav from '../../components/YearInchargeNav';
-import { YearInchargeService } from '../../services/yearInchargeService';
+import { YearInchargeService, calculateProfileCompletion } from '../../services/yearInchargeService';
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 
@@ -97,6 +97,15 @@ const YearInchargeOutpassList: React.FC = () => {
         setError(null);
 
         try {
+            // Check profile completion first
+            const profileData = await YearInchargeService.getProfile();
+            const completion = calculateProfileCompletion(profileData);
+            if (completion < 100) {
+                toast.error("Please complete your profile 100% to handle outpasses");
+                navigate('/year-incharge-profile');
+                return;
+            }
+
             const result = await YearInchargeService.getOutpasses(page, appliedDate, status, search, filter);
             const sortedList = result.data.sort((a: any, b: any) => {
                 const isAEmergency = a.outpasstype?.toLowerCase() === 'emergency';

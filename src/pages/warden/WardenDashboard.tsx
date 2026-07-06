@@ -406,6 +406,11 @@ const Dashboard: React.FC = () => {
         const fetchUserData = async () => {
             setLoading(true);
             const token = localStorage.getItem('token');
+            if (!token) {
+                localStorage.clear();
+                navigate('/warden-login');
+                return;
+            }
             const userType = localStorage.getItem('userType');
             if (token) {
                 try {

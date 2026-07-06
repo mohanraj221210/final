@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import YearInchargeNav from "../../components/YearInchargeNav";
-import { YearInchargeService, type MappedOutpass } from "../../services/yearInchargeService";
+import { YearInchargeService, type MappedOutpass, calculateProfileCompletion } from "../../services/yearInchargeService";
+import { toast } from 'react-toastify';
 
 type ApiFilter = 'total' | 'today' | 'weekly' | 'monthly';
 const FILTER_OPTIONS: { value: ApiFilter; label: string; icon: string }[] = [
@@ -132,6 +133,15 @@ const YearInchargePendingOutpass: React.FC = () => {
         setError(null);
 
         try {
+            // Check profile completion first
+            const profileData = await YearInchargeService.getProfile();
+            const completion = calculateProfileCompletion(profileData);
+            if (completion < 100) {
+                toast.error("Please complete your profile 100% to handle outpasses");
+                navigate('/year-incharge-profile');
+                return;
+            }
+
             const result = await YearInchargeService.getPendingOutpasses(page, 10, appliedDate, search);
 
             // Sort Emergency first
