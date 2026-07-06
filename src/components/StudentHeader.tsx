@@ -69,14 +69,6 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
     };
 
     const handleNavigation = (path: string) => {
-        if (path === '/subjects') {
-            toast.info("enabled in future updates", {
-                position: "top-center",
-                autoClose: 3000,
-            });
-            setIsMobileMenuOpen(false);
-            return;
-        }
         if (path === '/dashboard' || path === '/profile') {
             navigate(path);
         } else {
@@ -95,7 +87,6 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
         { path: '/dashboard', label: 'Dashboard', icon: '🏠' },
         { path: '/staffs', label: 'Staffs', icon: '👥' },
         { path: '/outpass', label: 'Outpass', icon: '📝' },
-        { path: '/subjects', label: 'Subjects', icon: '📚' },
         { path: '/profile', label: 'Profile', icon: '👤' },
     ];
 
@@ -134,7 +125,6 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
                                 key={item.path}
                                 className={`sp-nav-btn${isActive(item.path) ? ' sp-active' : ''}`}
                                 onClick={() => handleNavigation(item.path)}
-                                style={item.path === '/subjects' ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
                             >
                                 {item.label}
                             </button>
@@ -149,11 +139,7 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
                             </button>
                         )}
 
-                        {/* Notification Bell */}
-                        <button className="lux-icon-btn">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
-                            <span className="lux-notification-dot"></span>
-                        </button>
+
 
                         {/* User Dropdown */}
                         <div className="sp-dropdown-wrap" ref={dropdownRef}>
@@ -224,7 +210,6 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
                                     key={item.path}
                                     className={`lux-mobile-link ${isActive(item.path) ? 'active' : ''}`}
                                     onClick={() => handleNavigation(item.path)}
-                                    style={item.path === '/subjects' ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
                                 >
                                     <span className="lux-mobile-icon">{item.icon}</span>
                                     {item.label}

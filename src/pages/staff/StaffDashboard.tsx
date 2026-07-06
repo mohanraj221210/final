@@ -323,7 +323,14 @@ const StaffDashboard: React.FC = () => {
                 }
 
                 if (outpassListRes?.status === 200) {
-                    const rawList = outpassListRes.data.outpasses || outpassListRes.data.filterOutpass || outpassListRes.data.data || [];
+                    const rawList = outpassListRes.data.recentoutpass || 
+                                    outpassListRes.data.recentOutpass || 
+                                    outpassListRes.data.recentpasses || 
+                                    outpassListRes.data.recentPasses || 
+                                    outpassListRes.data.outpasses || 
+                                    outpassListRes.data.filterOutpass || 
+                                    outpassListRes.data.data || 
+                                    [];
                     const mappedList = rawList.map((item: any) => {
                         const studentDetails = item.studentid || {};
                         return {
@@ -331,23 +338,36 @@ const StaffDashboard: React.FC = () => {
                             name: studentDetails.name || item.name || 'Student',
                             registerNumber: studentDetails.registerNumber || item.registerNumber || 'N/A',
                             photo: studentDetails.photo || item.photo || '',
-                            status: item.staffapprovalstatus || item.status || 'pending',
+                            status: item.status || 'pending',
+                            staffApproval: item.staff?.status || item.staffapprovalstatus || 'pending',
                             outpasstype: item.outpasstype || 'General'
                         };
                     });
                     setRecentPasses(mappedList);
                 } else if (outpassStatsRes?.status === 200) {
-                    // Fallback to stats recentpasses if list endpoint failed
+                    // Fallback to stats recentpasses / recentoutpass if list endpoint failed
                     const statsArray = outpassStatsRes.data.stats || [];
-                    if (statsArray.length > 0 && statsArray[0].recentpasses) {
-                        const mappedRecent = statsArray[0].recentpasses.map((item: any) => {
+                    const statsRecent = (statsArray.length > 0 ? (
+                        statsArray[0].recentoutpass ||
+                        statsArray[0].recentOutpass ||
+                        statsArray[0].recentpasses ||
+                        statsArray[0].recentPasses
+                    ) : null) ||
+                    outpassStatsRes.data.recentoutpass ||
+                    outpassStatsRes.data.recentOutpass ||
+                    outpassStatsRes.data.recentpasses ||
+                    outpassStatsRes.data.recentPasses;
+
+                    if (statsRecent && Array.isArray(statsRecent)) {
+                        const mappedRecent = statsRecent.map((item: any) => {
                             const studentDetails = item.studentid || {};
                             return {
                                 ...item,
                                 name: studentDetails.name || item.name || 'Student',
                                 registerNumber: studentDetails.registerNumber || item.registerNumber || 'N/A',
                                 photo: studentDetails.photo || item.photo || '',
-                                status: item.staffapprovalstatus || item.status || 'pending',
+                                status: item.status || 'pending',
+                                staffApproval: item.staff?.status || item.staffapprovalstatus || 'pending',
                                 outpasstype: item.outpasstype || 'General'
                             };
                         });
@@ -531,6 +551,13 @@ const StaffDashboard: React.FC = () => {
         const currentWeek = Math.min(Math.floor((now.getDate() - 1) / 7), 4);
         return weekLabels.slice(0, currentWeek + 1).map((label, i) => ({ label, value: counts[i] }));
     }, [chartRange, chartTypeFilter, recentPasses]);
+
+    const formatDateTime = (dateString: any) => {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return 'N/A';
+        return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) + ' ' + date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+    };
 
     if (!appReady) return <PremiumStaffLoader isDataReady={!!staff} onComplete={() => setAppReady(true)} />;
     if (!staff) return null;
@@ -819,6 +846,8 @@ const StaffDashboard: React.FC = () => {
                                             <tr>
                                                 <th>Student</th>
                                                 <th>Register No.</th>
+                                                <th>Department</th>
+                                                <th>Period</th>
                                                 <th>Reason</th>
                                                 <th>Status</th>
                                                 <th>Applied</th>
@@ -827,7 +856,7 @@ const StaffDashboard: React.FC = () => {
                                         </thead>
                                         <tbody>
                                             {recentPasses.slice(0, 10).map((pass, idx) => (
-                                                <tr key={pass._id || idx} onClick={() => navigate(pass.status?.toLowerCase() === 'pending' ? '/pending-passes' : '/all-passes')} tabIndex={0} role="button" aria-label={`Review outpass for ${pass.name || 'Student'}`}>
+                                                <tr key={pass._id || idx} onClick={() => navigate((pass.staffApproval || pass.status)?.toLowerCase() === 'pending' ? '/pending-passes' : '/all-passes')} tabIndex={0} role="button" aria-label={`Review outpass for ${pass.name || 'Student'}`}>
                                                     <td>
                                                         <div className="sd-student-cell">
                                                             <img
@@ -839,6 +868,15 @@ const StaffDashboard: React.FC = () => {
                                                         </div>
                                                     </td>
                                                     <td className="sd-mono">{pass.registerNumber}</td>
+                                                    <td style={{ fontSize: '0.82rem', color: '#475569' }}>{pass.department || 'N/A'}</td>
+                                                    <td className="sd-date" style={{ whiteSpace: 'nowrap', fontSize: '0.82rem' }}>
+                                                        {pass.fromDate ? (
+                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                                                <div><span style={{ color: '#64748B', fontWeight: 500 }}>From:</span> <span style={{ fontWeight: 600, color: '#334155' }}>{formatDateTime(pass.fromDate)}</span></div>
+                                                                <div><span style={{ color: '#64748B', fontWeight: 500 }}>To:</span> <span style={{ fontWeight: 600, color: '#334155' }}>{formatDateTime(pass.toDate)}</span></div>
+                                                            </div>
+                                                        ) : 'N/A'}
+                                                    </td>
                                                     <td className="sd-reason" title={pass.reason}>{pass.reason}</td>
                                                     <td>
                                                         <span className={`sd-status sd-status-${(pass.status || 'pending').toLowerCase()}`}>
@@ -1416,7 +1454,7 @@ const StaffDashboard: React.FC = () => {
 
                 .sd-table {
                     width: 100%; border-collapse: collapse; text-align: left;
-                    min-width: 700px;
+                    min-width: 1050px;
                 }
                 .sd-table th {
                     position: sticky; top: 0;
