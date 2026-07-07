@@ -562,7 +562,7 @@ const Welcome: React.FC = () => {
                     <div className="jit-feat-icon">{f.icon}</div>
                     <h3 className="jit-feat-title">{f.title}</h3>
                     <p className="jit-feat-desc">{f.desc}</p>
-                    
+
                   </div>
                 ))}
               </div>

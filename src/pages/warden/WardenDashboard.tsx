@@ -640,6 +640,7 @@ const Dashboard: React.FC = () => {
         { path: '/warden/pending-outpass', icon: <IconClock />, label: 'Pending Approvals', desc: 'Review & approve outpass requests', color: '#F59E0B', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)' },
         { path: '/warden/emergency-pending-outpass', icon: <IconClock />, label: 'Emergency Pending', desc: 'Manage pending emergency leaves', color: '#EF4444', bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.25)' },
         { path: '/warden/outpass-list',    icon: <IconList />,  label: 'Outpass List',       desc: 'View all processed outpasses',  color: '#10B981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.25)' },
+        { path: '/warden/pending-in',      icon: <IconAlertTriangle />, label: 'Pending In', desc: 'Students not checked in',       color: '#EAB308', bg: 'rgba(234,179,8,0.08)', border: 'rgba(234,179,8,0.25)' },
         { path: '/warden/scan',            icon: <IconQR />,    label: 'Scan QR',             desc: 'Verify outpass QR codes',       color: '#3B82F6', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.25)' },
         { path: '/warden/apply-emergency', icon: <IconAlertTriangle />, label: 'Emergency Alert', desc: 'Issue emergency outpass',   color: '#EF4444', bg: 'rgba(239,68,68,0.08)',  border: 'rgba(239,68,68,0.25)' },
         { path: '/warden/emergency-outpass-list', icon: <IconMedical />, label: 'Emergency Logs', desc: 'View emergency history',    color: '#8B5CF6', bg: 'rgba(139,92,246,0.08)', border: 'rgba(139,92,246,0.25)' },
