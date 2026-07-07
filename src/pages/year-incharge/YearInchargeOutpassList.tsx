@@ -161,7 +161,7 @@ const YearInchargeOutpassList: React.FC = () => {
 
     const handleViewDocument = (url: string | null) => {
         if (!url) return;
-        const fullUrl = url.startsWith('http') ? url : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${url.replace(/^\//, '')}`;
+        const fullUrl = url;
         setDocumentUrl(fullUrl);
         setDocumentType(url.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image');
         setShowDocumentModal(true);

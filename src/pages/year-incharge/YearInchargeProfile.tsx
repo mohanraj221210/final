@@ -257,9 +257,7 @@ const YearInchargeProfile: React.FC = () => {
                                     <img
                                         src={
                                             previewImage
-                                                ? (previewImage.startsWith('data:') || previewImage.startsWith('http')
-                                                    ? previewImage
-                                                    : `${import.meta.env.VITE_CDN_URL}${previewImage}`)
+                                                ? previewImage
                                                 : jitProfile
                                         }
                                         alt="Profile"

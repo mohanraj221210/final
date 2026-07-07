@@ -134,7 +134,7 @@ const StudentDetails: React.FC = () => {
             toast.error("Document not found");
             return;
         }
-        const fullUrl = `${import.meta.env.VITE_CDN_URL}${url}`;
+        const fullUrl = `${url}`;
         setDocumentUrl(fullUrl);
         if (url.toLowerCase().endsWith('.pdf')) {
             setDocumentType('pdf');
@@ -180,9 +180,9 @@ const StudentDetails: React.FC = () => {
                             <div className="avatar-large">
                                 {student.photo ? (
                                     <img
-                                        src={student.photo.startsWith('http') || student.photo.startsWith('data:') || student.photo.startsWith('blob:')
+                                        src={student.photo.startsWith('data:') || student.photo.startsWith('blob:')
                                             ? student.photo
-                                            : `${import.meta.env.VITE_CDN_URL}${student.photo}`}
+                                            : `${student.photo}`}
                                         alt={student.name}
                                     />
                                 ) : (

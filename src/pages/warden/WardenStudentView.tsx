@@ -47,7 +47,7 @@ const WardenStudentView: React.FC = () => {
       toast.error("Document not found");
       return;
     }
-    const fullUrl = `${import.meta.env.VITE_CDN_URL}${url}`;
+    const fullUrl = `${url}`;
     setDocumentUrl(fullUrl);
     if (url.toLowerCase().endsWith('.pdf')) {
       setDocumentType('pdf');
@@ -210,7 +210,7 @@ const WardenStudentView: React.FC = () => {
               {s.photo && !imageError ? (
                 <img
                   src={
-                    s.photo.startsWith('http') || s.photo.startsWith('data:')
+                    s.photo.startsWith('data:')
                       ? s.photo
                       : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${s.photo?.replace(/^\//, '')}`
                   }

@@ -97,7 +97,7 @@ const YearInchargeStudentView: React.FC = () => {
             toast.error("Document not found");
             return;
         }
-        const fullUrl = url.startsWith('http') ? url : `${import.meta.env.VITE_CDN_URL}${url}`;
+        const fullUrl = url;
         setDocumentUrl(fullUrl);
         // Basic check for PDF
         if (url.toLowerCase().endsWith('.pdf')) {
@@ -202,9 +202,9 @@ const YearInchargeStudentView: React.FC = () => {
                             <div className="avatar-large">
                                 {outpass.studentid?.photo && !imageError ? (
                                     <img
-                                        src={outpass.studentid.photo.startsWith('http') || outpass.studentid.photo.startsWith('data:')
+                                        src={outpass.studentid.photo.startsWith('data:')
                                             ? outpass.studentid.photo
-                                            : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${outpass.studentid.photo.replace(/^\//, '')}`}
+                                            : `${outpass.studentid.photo}`}
                                         alt="Student"
                                         style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
                                         onError={() => setImageError(true)}

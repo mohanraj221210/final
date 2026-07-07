@@ -864,7 +864,7 @@ const StaffDashboard: React.FC = () => {
                                                     <td>
                                                         <div className="sd-student-cell">
                                                             <img
-                                                                src={pass.photo ? (pass.photo.startsWith('http') ? pass.photo : `${import.meta.env.VITE_CDN_URL}${pass.photo}`) : 'https://ui-avatars.com/api/?name=' + (pass.name || 'Student') + '&background=EFF6FF&color=3B82F6&bold=true'}
+                                                                src={pass.photo ? pass.photo : 'https://ui-avatars.com/api/?name=' + (pass.name || 'Student') + '&background=EFF6FF&color=3B82F6&bold=true'}
                                                                 alt={pass.name || 'Student'}
                                                                 className="sd-avatar"
                                                             />

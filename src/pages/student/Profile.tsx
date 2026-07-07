@@ -303,9 +303,9 @@ const Profile: React.FC = () => {
                                             <div className="pb-avatar-wrapper">
                                                 {!imageError && user.photo ? (
                                                     <img
-                                                        src={user.photo.startsWith("blob:") || user.photo.startsWith("data:") || user.photo.startsWith("http")
+                                                        src={user.photo.startsWith("data:") || user.photo.startsWith("http")
                                                             ? user.photo
-                                                            : `${import.meta.env.VITE_CDN_URL || ''}${user.photo.startsWith('/') ? user.photo.slice(1) : user.photo}`
+                                                            : `${user.photo.startsWith('/') ? user.photo.slice(1) : user.photo}`
                                                         }
                                                         alt="Profile Avatar"
                                                         className="pb-avatar-img"

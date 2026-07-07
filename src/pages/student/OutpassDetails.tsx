@@ -179,7 +179,7 @@ const OutpassDetails: React.FC = () => {
             toast.error("Document not found");
             return;
         }
-        const fullUrl = `${import.meta.env.VITE_CDN_URL}${url}`;
+        const fullUrl = `${url}`;
         setDocumentUrl(fullUrl);
         if (url.toLowerCase().endsWith('.pdf')) {
             setDocumentType('pdf');

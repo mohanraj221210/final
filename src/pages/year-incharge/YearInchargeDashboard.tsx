@@ -704,7 +704,7 @@ const YearInchargeDashboard: React.FC = () => {
                                                 onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; }}>
                                                 <td style={{ padding: '14px 24px', borderBottom: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '12px' }}>
                                                     <img
-                                                        src={photoUrl ? (photoUrl.startsWith('http') ? photoUrl : `${import.meta.env.VITE_CDN_URL}${photoUrl}`) : 'https://ui-avatars.com/api/?name=' + sName + '&background=EFF6FF&color=3B82F6&bold=true'}
+                                                        src={photoUrl ? photoUrl : 'https://ui-avatars.com/api/?name=' + sName + '&background=EFF6FF&color=3B82F6&bold=true'}
                                                         alt={sName}
                                                         style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #E2E8F0', flexShrink: 0 }}
                                                     />

@@ -118,9 +118,9 @@ const WardenScanQR: React.FC = () => {
     // Calculate avatar source
     const studentPhoto = outpassData?.studentid?.photo || outpassData?.student?.photo;
     const avatarSrc = studentPhoto
-        ? (studentPhoto.startsWith('http') || studentPhoto.startsWith('data:')
+        ? (studentPhoto.startsWith('data:')
             ? studentPhoto
-            : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${studentPhoto.replace(/^\//, '')}`)
+            : `${studentPhoto}`)
         : null;
 
     const studentName = outpassData?.studentid?.name || outpassData?.student?.name || "Student";

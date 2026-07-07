@@ -332,12 +332,11 @@ const StaffProfile: React.FC = () => {
                                     {((formData.photo && formData.photo.trim() !== '') || (staff.photo && staff.photo.trim() !== '')) ? (
                                         <img
                                             src={formData.photo
-                                                ? formData.photo.startsWith("data:") ||
-                                                    formData.photo.startsWith("blob:") ||
+                                                ? formData.photo.startsWith("blob:") ||
                                                     formData.photo.startsWith("http")
                                                     ? formData.photo
-                                                    : `${import.meta.env.VITE_CDN_URL}${formData.photo}`
-                                                : `${import.meta.env.VITE_CDN_URL}${staff.photo}`}
+                                                    : `${formData.photo}`
+                                                : `${staff.photo}`}
                                             alt={formData.name}
                                             className="hero-avatar"
                                             onError={(e) => {

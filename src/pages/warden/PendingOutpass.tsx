@@ -160,7 +160,7 @@ const PendingOutpass: React.FC = () => {
 
   const handleViewDocument = (url: string | null) => {
     if (!url) return;
-    const fullUrl = `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${url.replace(/^\//, '')}`;
+    const fullUrl = `${url}`;
     setDocumentUrl(fullUrl);
     if (url.toLowerCase().endsWith('.pdf')) {
       setDocumentType('pdf');
@@ -200,9 +200,9 @@ const PendingOutpass: React.FC = () => {
   const getStudentAvatar = (s: Student) => {
     const studentPhoto = s.student?.photo || (typeof s.studentid === 'object' ? s.studentid?.photo : undefined);
     if (studentPhoto && !imageErrors[s._id || s.id || '']) {
-      const src = studentPhoto.startsWith('http') || studentPhoto.startsWith('data:')
+      const src = studentPhoto.startsWith('data:')
         ? studentPhoto
-        : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${studentPhoto.replace(/^\//, '')}`;
+        : `${studentPhoto}`;
       return (
         <img
           src={src}

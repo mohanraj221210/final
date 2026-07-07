@@ -149,9 +149,9 @@ const WatchmanStudentView: React.FC = () => {
                 {s.photo && !imageError ? (
                   <img
                     src={
-                      s.photo.startsWith('http') || s.photo.startsWith('data:')
+                      s.photo.startsWith('data:')
                         ? s.photo
-                        : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${s.photo.replace(/^\//, '')}`
+                        : `${s.photo}`
                     }
                     alt="Student"
                     className="sd-profile-img"

@@ -522,9 +522,9 @@ const Dashboard: React.FC = () => {
 
     const profilePhoto = user.photo;
     const avatarSrc = profilePhoto
-        ? (profilePhoto.startsWith('http') || profilePhoto.startsWith('data:')
+        ? (profilePhoto.startsWith('data:')
             ? profilePhoto
-            : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${profilePhoto.replace(/^\//, '')}`)
+            : `${profilePhoto}`)
         : null;
 
     const maxTypeCount = Math.max(stats.Home, stats.Outing, stats.OD, stats.Emergency, 1);

@@ -198,7 +198,7 @@ const WatchmanProfile: React.FC = () => {
                             <div className="sd-avatar-uploader-container">
                                 <div className="sd-profile-avatar-wrapper">
                                     <img
-                                        src={previewUrl || `${import.meta.env.VITE_CDN_URL}${watchman.photo}` || watchmanProfile}
+                                        src={previewUrl || `${watchman.photo}` || watchmanProfile}
                                         alt="Profile"
                                         className="sd-profile-img"
                                         onError={(e) => {

@@ -68,7 +68,7 @@ const Dashboard: React.FC = () => {
         gender: "",
         parentnumber: "",
         residencetype: "",
-        hostelname: "",
+        hostelname: "",   
         hostelroomno: "",
         busno: "",
         boardingpoint: "",
@@ -194,9 +194,9 @@ const Dashboard: React.FC = () => {
 
     const getAvatarSrc = () => {
         if (!user.photo) return null;
-        if (user.photo.startsWith("blob:") || user.photo.startsWith("data:") || user.photo.startsWith("http")) return user.photo;
+        if (user.photo.startsWith("data:") || user.photo.startsWith("http")) return user.photo;
         const normalizedPath = user.photo.startsWith("/") ? user.photo.slice(1) : user.photo;
-        const cdnUrl = import.meta.env.VITE_CDN_URL || '';
+        const cdnUrl = '';
         const normalizedCdnUrl = cdnUrl.endsWith("/") ? cdnUrl : `${cdnUrl}/`;
         return `${normalizedCdnUrl}${normalizedPath}`;
     };

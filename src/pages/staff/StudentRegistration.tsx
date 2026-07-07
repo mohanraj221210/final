@@ -557,9 +557,9 @@ const StudentRegistration: React.FC = () => {
                                                                     <div className="student-avatar-small">
                                                                         {student.photo ? (
                                                                             <img
-                                                                                src={student.photo.startsWith('http') || student.photo.startsWith('data:') || student.photo.startsWith('blob:')
+                                                                                src={student.photo.startsWith('data:') || student.photo.startsWith('blob:')
                                                                                     ? student.photo
-                                                                                    : `${import.meta.env.VITE_CDN_URL}${student.photo}`}
+                                                                                    : `${student.photo}`}
                                                                                 alt={student.name}
                                                                             />
                                                                         ) : (

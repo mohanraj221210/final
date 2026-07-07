@@ -26,8 +26,8 @@ const ManageSecurity: React.FC = () => {
 
     const getImageUrl = (photo: string) => {
         if (!photo) return '';
-        if (photo.startsWith('http') || photo.startsWith('data:')) return photo;
-        const baseUrl = import.meta.env.VITE_CDN_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        if (photo.startsWith('data:')) return photo;
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
         const cleanPhoto = photo.startsWith('/') ? photo : `/${photo}`;
         return `${cleanBase}${cleanPhoto}`;

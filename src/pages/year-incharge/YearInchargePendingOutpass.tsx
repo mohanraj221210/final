@@ -179,7 +179,7 @@ const YearInchargePendingOutpass: React.FC = () => {
 
     const handleViewDocument = (url: string | null) => {
         if (!url) return;
-        const fullUrl = url.startsWith('http') ? url : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${url.replace(/^\//, '')}`;
+        const fullUrl = url;
         setDocumentUrl(fullUrl);
         if (url.toLowerCase().endsWith('.pdf')) {
             setDocumentType('pdf');

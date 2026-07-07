@@ -244,11 +244,10 @@ const WardenProfile: React.FC = () => {
                       src={
                         previewUrl ||
                         (warden.photo
-                          ? warden.photo.startsWith("data:") ||
-                            warden.photo.startsWith("blob:") ||
+                          ? warden.photo.startsWith("blob:") ||
                             warden.photo.startsWith("http")
                             ? warden.photo
-                            : `${(import.meta.env.VITE_CDN_URL || '').replace(/\/$/, '')}/${warden.photo.replace(/^\//, '')}?t=${imageRefreshKey}`
+                            : `${('').replace(/\/$/, '')}/${warden.photo.replace(/^\//, '')}?t=${imageRefreshKey}`
                           : "")
                       }
                       alt="Profile"

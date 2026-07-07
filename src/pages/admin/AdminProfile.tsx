@@ -120,7 +120,7 @@ const AdminProfile: React.FC = () => {
 
     const getImageUrl = (path: string) => {
         if (!path) return '';
-        if (path.startsWith('data:') || path.startsWith('http') || path.startsWith('blob:')) return path;
+        if (path.startsWith('http') || path.startsWith('blob:')) return path;
         return `${API_BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
     };
 
