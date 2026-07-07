@@ -227,6 +227,7 @@ const Welcome: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [heroMouse, setHeroMouse] = useState({ x: 0, y: 0 });
+  const [highlightEmail, setHighlightEmail] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 60);
@@ -246,7 +247,15 @@ const Welcome: React.FC = () => {
   }, []);
 
   const scrollTo = useCallback((id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    if (id === 'contact-section') {
+      setHighlightEmail(true);
+      setTimeout(() => setHighlightEmail(false), 3000);
+    }
+    if (id === 'jit-root') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    }
     setMobileMenuOpen(false);
   }, []);
 
@@ -275,6 +284,7 @@ const Welcome: React.FC = () => {
   }, []);
 
   const navLinks = ['Home', 'Services', 'Campus', 'About', 'Contact'];
+  const navTargets = ['jit-root', 'portals-section', 'features-section', 'about-section', 'contact-section'];
 
   return (
     <div className="jit-root" ref={pageRef}>
@@ -307,7 +317,7 @@ const Welcome: React.FC = () => {
                 <button
                   key={link}
                   className={`jit-nav-link${i === 0 ? ' jit-nav-link-active' : ''}`}
-                  onClick={() => i === 1 ? scrollTo('portals-section') : i === 2 ? scrollTo('features-section') : undefined}
+                  onClick={() => scrollTo(navTargets[i])}
                 >
                   {link}
                   {i === 0 && <span className="jit-nav-underline" />}
@@ -328,8 +338,8 @@ const Welcome: React.FC = () => {
 
           {/* Mobile drawer */}
           <div className={`jit-mobile-menu${mobileMenuOpen ? ' jit-mobile-open' : ''}`}>
-            {navLinks.map((link) => (
-              <button key={link} className="jit-mobile-link" onClick={() => scrollTo('portals-section')}>{link}</button>
+            {navLinks.map((link, i) => (
+              <button key={link} className="jit-mobile-link" onClick={() => scrollTo(navTargets[i])}>{link}</button>
             ))}
             <button className="jit-nav-btn jit-mobile-cta" onClick={() => scrollTo('portals-section')}>Login / Signup</button>
           </div>
@@ -473,7 +483,7 @@ const Welcome: React.FC = () => {
           </section>
 
           {/* ══════════ STATS BAR ══════════ */}
-          <section className="jit-stats-section">
+          <section id="about-section" className="jit-stats-section">
             <div className="jit-container">
               <div className="jit-stats-bar">
                 {statsData.map((stat, i) => (
@@ -552,12 +562,7 @@ const Welcome: React.FC = () => {
                     <div className="jit-feat-icon">{f.icon}</div>
                     <h3 className="jit-feat-title">{f.title}</h3>
                     <p className="jit-feat-desc">{f.desc}</p>
-                    <div className="jit-feat-link">
-                      Learn more
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M5 12h14M12 5l7 7-7 7" />
-                      </svg>
-                    </div>
+
                   </div>
                 ))}
               </div>
@@ -571,7 +576,7 @@ const Welcome: React.FC = () => {
             <div className="jit-container jit-cta-inner">
               <div className="jit-cta-content jit-reveal jit-fade-up">
                 <h2 className="jit-cta-h2">Start Your Digital Campus Journey</h2>
-                <p className="jit-cta-sub">Join 1,200+ students and 85+ faculty members already on JIT Campus One.</p>
+                <p className="jit-cta-sub">Join 1,200+ students and 85+ faculty members already on JIT Permigo.</p>
                 <button className="jit-btn-primary jit-btn-lg" id="cta-access" onClick={() => scrollTo('portals-section')}>
                   Access Your Portal
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -584,7 +589,7 @@ const Welcome: React.FC = () => {
         </main>
 
         {/* ══════════ FOOTER ══════════ */}
-        <footer className="jit-footer">
+        <footer className="jit-footer" id="contact-section">
           <div className="jit-container jit-footer-inner">
             <div className="jit-footer-brand">
               <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
@@ -597,12 +602,12 @@ const Welcome: React.FC = () => {
                   </linearGradient>
                 </defs>
               </svg>
-              <span className="jit-footer-name">JIT Campus One</span>
+              <span className="jit-footer-name">JIT Permigo</span>
             </div>
             <span className="jit-footer-copy">
               © 2025 Jeppiaar Institute of Technology. All rights reserved.
               <span style={{ margin: '0 10px', color: '#CBD5E1' }}>|</span>
-              Support: <a href="mailto:jeppiaaroutpass@gmail.com" style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 600 }}>jeppiaaroutpass@gmail.com</a>
+              Support: <a href="mailto:jeppiaaroutpass@gmail.com" className={`jit-support-email${highlightEmail ? ' email-highlight-pulse' : ''}`} style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 600, display: 'inline-block', transition: 'all 0.3s ease' }}>jeppiaaroutpass@gmail.com</a>
             </span>
             <span className="jit-footer-tag">v2.0 · Digital Campus Platform</span>
           </div>
@@ -1402,6 +1407,17 @@ const Welcome: React.FC = () => {
           .jit-footer-inner { flex-direction: column; text-align: center; gap: 10px; }
           .jit-cta-h2 { font-size: 28px; letter-spacing: -1px; }
           .jit-cta-sub { font-size: 15px; }
+        }
+
+        @keyframes emailGlow {
+          0% { transform: scale(1); background: transparent; }
+          25% { transform: scale(1.15); background: rgba(59, 130, 246, 0.15); box-shadow: 0 0 12px rgba(59, 130, 246, 0.4); border-radius: 6px; padding: 2px 8px; }
+          50% { transform: scale(1.15); background: rgba(59, 130, 246, 0.25); box-shadow: 0 0 20px rgba(59, 130, 246, 0.6); border-radius: 6px; padding: 2px 8px; }
+          75% { transform: scale(1.15); background: rgba(59, 130, 246, 0.15); box-shadow: 0 0 12px rgba(59, 130, 246, 0.4); border-radius: 6px; padding: 2px 8px; }
+          100% { transform: scale(1); background: transparent; }
+        }
+        .email-highlight-pulse {
+          animation: emailGlow 2.5s ease-in-out;
         }
       `}</style>
     </div>

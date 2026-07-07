@@ -292,11 +292,10 @@ const StaffDashboard: React.FC = () => {
             }
 
             try {
-                const [profileRes, outpassStatsRes, studentStatsRes, outpassListRes] = await Promise.all([
+                const [profileRes, outpassStatsRes, studentStatsRes] = await Promise.all([
                     axios.get(`${import.meta.env.VITE_API_URL}/staff/profile`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null),
                     axios.get(`${import.meta.env.VITE_API_URL}/staff/outpass/stats`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null),
-                    axios.get(`${import.meta.env.VITE_API_URL}/staff/student/stats`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null),
-                    axios.get(`${import.meta.env.VITE_API_URL}/staff/outpass/list?limit=100`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null)
+                    axios.get(`${import.meta.env.VITE_API_URL}/staff/student/stats`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null)
                 ]);
 
                 if (profileRes?.status === 200) {
@@ -324,54 +323,30 @@ const StaffDashboard: React.FC = () => {
                             style: { fontWeight: 'bold', fontSize: '16px' }
                         });
                     }
-                }
 
-                if (outpassListRes?.status === 200) {
-                    const rawList = outpassListRes.data.recentoutpass || 
-                                    outpassListRes.data.recentOutpass || 
-                                    outpassListRes.data.recentpasses || 
-                                    outpassListRes.data.recentPasses || 
-                                    outpassListRes.data.outpasses || 
-                                    outpassListRes.data.filterOutpass || 
-                                    outpassListRes.data.data || 
-                                    [];
-                    const mappedList = rawList.map((item: any) => {
-                        const studentDetails = item.studentid || {};
-                        return {
-                            ...item,
-                            name: studentDetails.name || item.name || 'Student',
-                            registerNumber: studentDetails.registerNumber || item.registerNumber || 'N/A',
-                            photo: studentDetails.photo || item.photo || '',
-                            status: item.status || 'pending',
-                            staffApproval: item.staff?.status || item.staffapprovalstatus || 'pending',
-                            outpasstype: item.outpasstype || 'General'
-                        };
-                    });
-                    setRecentPasses(mappedList);
-                } else if (outpassStatsRes?.status === 200) {
-                    // Fallback to stats recentpasses / recentoutpass if list endpoint failed
-                    const statsArray = outpassStatsRes.data.stats || [];
+                    // Get recent passes from stats API response of recentpasses
                     const statsRecent = (statsArray.length > 0 ? (
-                        statsArray[0].recentoutpass ||
-                        statsArray[0].recentOutpass ||
                         statsArray[0].recentpasses ||
-                        statsArray[0].recentPasses
+                        statsArray[0].recentPasses ||
+                        statsArray[0].recentoutpass ||
+                        statsArray[0].recentOutpass
                     ) : null) ||
+                    outpassStatsRes.data.recentpasses ||
+                    outpassStatsRes.data.recentPasses ||
                     outpassStatsRes.data.recentoutpass ||
                     outpassStatsRes.data.recentOutpass ||
-                    outpassStatsRes.data.recentpasses ||
-                    outpassStatsRes.data.recentPasses;
+                    [];
 
-                    if (statsRecent && Array.isArray(statsRecent)) {
+                    if (Array.isArray(statsRecent)) {
                         const mappedRecent = statsRecent.map((item: any) => {
                             const studentDetails = item.studentid || {};
                             return {
                                 ...item,
-                                name: studentDetails.name || item.name || 'Student',
-                                registerNumber: studentDetails.registerNumber || item.registerNumber || 'N/A',
-                                photo: studentDetails.photo || item.photo || '',
+                                name: item.name || studentDetails.name || 'Student',
+                                registerNumber: item.registerNumber || studentDetails.registerNumber || 'N/A',
+                                photo: item.photo || studentDetails.photo || '',
                                 status: item.status || 'pending',
-                                staffApproval: item.staff?.status || item.staffapprovalstatus || 'pending',
+                                staffApproval: item.staff?.status || item.staffapprovalstatus || item.status || 'pending',
                                 outpasstype: item.outpasstype || 'General'
                             };
                         });

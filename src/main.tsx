@@ -32,6 +32,7 @@ import EmergencyOutpassApply from './pages/warden/EmergencyOutpassApply'
 import WardenStudentView from './pages/warden/WardenStudentView'
 import WardenEmergencyOutpassList from './pages/warden/WardenEmergencyOutpassList'
 import WardenEmergencyPendingOutpass from './pages/warden/WardenEmergencyPendingOutpass'
+import PendingInStudents from './pages/warden/PendingInStudents'
 import WardenProfile from './pages/warden/WardenProfile'
 import WardenScanQR from './pages/warden/WardenScanQR'
 import WatchmanProfile from './pages/watchman/WatchmanProfile'
@@ -269,6 +270,11 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/warden/outpass-list" element={
           <ProtectedRoute>
             <OutpassList />
+          </ProtectedRoute>
+        } />
+        <Route path="/warden/pending-in" element={
+          <ProtectedRoute>
+            <PendingInStudents />
           </ProtectedRoute>
         } />
         <Route path="/warden/student/:id" element={

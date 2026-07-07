@@ -526,25 +526,43 @@ const WardenStudentView: React.FC = () => {
             </div>
             <div className="section-body" style={{ padding: '20px' }}>
               <div className="history-grid" style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-                {outpassHistory.map((historyItem, idx) => (
-                  <div key={idx} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '16px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#3B82F6', background: '#DBEAFE', padding: '4px 8px', borderRadius: '6px' }}>
-                        {historyItem.outpasstype || 'General'}
-                      </span>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: historyItem.status === 'approved' ? '#10B981' : historyItem.status === 'rejected' ? '#EF4444' : '#F59E0B', background: historyItem.status === 'approved' ? '#D1FAE5' : historyItem.status === 'rejected' ? '#FEE2E2' : '#FEF3C7', padding: '4px 8px', borderRadius: '6px', textTransform: 'capitalize' }}>
-                        {historyItem.status || 'Pending'}
-                      </span>
+                {outpassHistory.map((historyItem, idx) => {
+                  const isLate = historyItem.isLate || historyItem.islate;
+                  return (
+                    <div 
+                      key={idx} 
+                      style={{ 
+                        background: isLate ? '#FEF2F2' : '#F8FAFC', 
+                        border: isLate ? '1px solid #FCA5A5' : '1px solid #E2E8F0', 
+                        borderRadius: '12px', 
+                        padding: '16px' 
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#3B82F6', background: '#DBEAFE', padding: '4px 8px', borderRadius: '6px' }}>
+                          {historyItem.outpasstype || 'General'}
+                        </span>
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                          {isLate && (
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#DC2626', background: '#FEE2E2', border: '1px solid #FCA5A5', padding: '4px 8px', borderRadius: '6px' }}>
+                              LATE
+                            </span>
+                          )}
+                          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: historyItem.status === 'approved' ? '#10B981' : historyItem.status === 'rejected' ? '#EF4444' : '#F59E0B', background: historyItem.status === 'approved' ? '#D1FAE5' : historyItem.status === 'rejected' ? '#FEE2E2' : '#FEF3C7', padding: '4px 8px', borderRadius: '6px', textTransform: 'capitalize' }}>
+                            {historyItem.status || 'Pending'}
+                          </span>
+                        </div>
+                      </div>
+                      <p style={{ margin: '0 0 8px 0', fontSize: '0.85rem', color: '#475569', fontWeight: 500, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        <strong>Reason:</strong> {historyItem.reason || 'N/A'}
+                      </p>
+                      <div style={{ fontSize: '0.75rem', color: '#64748B', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div><strong>From:</strong> {historyItem.fromDate ? new Date(historyItem.fromDate).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A'}</div>
+                        <div><strong>To:</strong> {historyItem.toDate ? new Date(historyItem.toDate).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A'}</div>
+                      </div>
                     </div>
-                    <p style={{ margin: '0 0 8px 0', fontSize: '0.85rem', color: '#475569', fontWeight: 500, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                      <strong>Reason:</strong> {historyItem.reason || 'N/A'}
-                    </p>
-                    <div style={{ fontSize: '0.75rem', color: '#64748B', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <div><strong>From:</strong> {historyItem.fromDate ? new Date(historyItem.fromDate).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A'}</div>
-                      <div><strong>To:</strong> {historyItem.toDate ? new Date(historyItem.toDate).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A'}</div>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -635,7 +653,7 @@ const WardenStudentView: React.FC = () => {
           min-height: 100vh;
           font-family: 'Inter', sans-serif;
           padding-top: 85px; 
-          padding-bottom: 40px;
+          padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
         }
 
         .content-wrapper {
@@ -939,6 +957,17 @@ const WardenStudentView: React.FC = () => {
 
           .dial-btn {
              display: inline-flex !important;
+          }
+
+          .workflow-actions {
+            flex-direction: column;
+            width: 100%;
+            gap: 12px;
+          }
+
+          .btn-approve, .btn-reject {
+            width: 100%;
+            text-align: center;
           }
         }
 

@@ -415,84 +415,88 @@ const WardenScanQR: React.FC = () => {
                 /* ====== ROOT LAYOUT ====== */
                 .sd-root {
                     min-height: 100vh;
-                    background: linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 45%, #DBEAFE 100%);
+                    background: linear-gradient(135deg, #f0f4f8 0%, #e0e8f0 100%);
                     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-                    padding-top: var(--nav-height, 64px);
+                    padding-top: var(--nav-height, 80px);
                     padding-bottom: calc(100px + env(safe-area-inset-bottom));
                 }
 
                 .sd-main {
-                    padding: 24px 32px;
-                    max-width: var(--content-max, 1280px);
+                    padding: 24px 20px;
+                    max-width: 900px;
                     margin: 0 auto;
                 }
 
                 .sd-container {
                     display: flex;
                     flex-direction: column;
-                    gap: 28px;
+                    gap: 32px;
                 }
 
                 /* ====== HEADER ROW ====== */
                 .sd-header-row {
                     display: flex;
                     justify-content: space-between;
-                    align-items: flex-end;
-                    flex-wrap: wrap;
-                    gap: 20px;
+                    align-items: flex-start;
+                    flex-direction: column;
+                    gap: 16px;
                 }
 
                 .sd-back-btn {
                     display: inline-flex;
                     align-items: center;
                     gap: 8px;
-                    background: white;
-                    border: 1px solid #E2E8F0;
-                    color: #0047AB;
-                    font-size: 0.85rem;
-                    font-weight: 700;
-                    padding: 10px 18px;
-                    border-radius: 100px;
+                    background: rgba(255, 255, 255, 0.7);
+                    backdrop-filter: blur(10px);
+                    border: 1px solid rgba(255, 255, 255, 0.5);
+                    color: #1e293b;
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                    padding: 8px 16px;
+                    border-radius: 12px;
                     cursor: pointer;
                     box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-                    transition: all 0.2s ease;
-                    font-family: inherit;
+                    transition: all 0.3s ease;
                 }
 
                 .sd-back-btn:hover {
-                    background: #EFF6FF;
-                    transform: translateX(-4px);
-                    box-shadow: 0 6px 12px rgba(0, 71, 171, 0.08);
+                    background: rgba(255, 255, 255, 0.9);
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 12px rgba(0,0,0,0.05);
                 }
 
                 .sd-title {
-                    font-size: 1.8rem;
+                    font-size: 2.2rem;
                     font-weight: 800;
-                    color: #0F172A;
-                    margin: 12px 0 4px;
-                    letter-spacing: -0.02em;
+                    color: #0f172a;
+                    margin: 0;
+                    letter-spacing: -0.03em;
+                    background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
                 }
 
                 .sd-subtitle {
-                    font-size: 0.9rem;
-                    color: #64748B;
-                    margin: 0;
+                    font-size: 1rem;
+                    color: #475569;
+                    margin: 8px 0 0 0;
                     font-weight: 500;
                 }
 
                 /* ====== SCANNER CARD ====== */
                 .sd-scanner-card {
-                    background: rgba(255, 255, 255, 0.9);
-                    backdrop-filter: blur(16px);
-                    -webkit-backdrop-filter: blur(16px);
-                    border: 1px solid rgba(255, 255, 255, 0.7);
-                    border-radius: 24px;
+                    background: rgba(255, 255, 255, 0.65);
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
+                    border: 1px solid rgba(255, 255, 255, 0.8);
+                    border-radius: 28px;
                     padding: 40px;
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.03), 0 0 0 1px rgba(226,232,240,0.5);
-                    max-width: 600px;
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,1);
+                    max-width: 650px;
                     margin: 0 auto;
                     width: 100%;
                     box-sizing: border-box;
+                    transition: all 0.3s ease;
                 }
 
                 /* Scanner Init Mode */
@@ -502,56 +506,95 @@ const WardenScanQR: React.FC = () => {
                     align-items: center;
                     gap: 32px;
                 }
+                
+                .sd-tabs-container {
+                    display: flex;
+                    background: rgba(255, 255, 255, 0.5);
+                    border-radius: 16px;
+                    padding: 6px;
+                    width: 100%;
+                    max-width: 400px;
+                    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+                }
+
+                .sd-tab-btn {
+                    flex: 1;
+                    padding: 12px 16px;
+                    border: none;
+                    background: transparent;
+                    color: #64748b;
+                    font-weight: 600;
+                    font-size: 0.95rem;
+                    border-radius: 12px;
+                    cursor: pointer;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+
+                .sd-tab-btn.active {
+                    background: white;
+                    color: #0f172a;
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+                }
+                
+                .sd-tab-content {
+                    width: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    animation: fadeIn 0.4s ease forwards;
+                }
 
                 .sd-scanner-instructions {
                     text-align: center;
                     max-width: 380px;
+                    margin-bottom: 24px;
                 }
 
                 .sd-scanner-tip-icon {
                     font-size: 2.5rem;
                     display: block;
-                    margin-bottom: 12px;
+                    margin-bottom: 16px;
+                    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
                 }
 
                 .sd-scanner-tip-text {
                     font-size: 0.95rem;
-                    color: #64748B;
+                    color: #475569;
                     font-weight: 500;
-                    line-height: 1.5;
+                    line-height: 1.6;
                     margin: 0;
                 }
 
                 .sd-scanner-viewport-wrapper {
                     position: relative;
-                    width: 280px;
-                    height: 280px;
-                    border-radius: 24px;
+                    width: 300px;
+                    height: 300px;
+                    border-radius: 28px;
                     overflow: hidden;
-                    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-                    border: 4px solid #1E293B;
+                    box-shadow: 0 24px 48px rgba(0,0,0,0.12);
+                    border: 6px solid white;
+                    background: #000;
                 }
 
                 .sd-scanner-glow-border {
                     position: absolute;
                     inset: 0;
-                    border: 3px solid #0047AB;
-                    border-radius: 20px;
+                    border: 2px solid rgba(255,255,255,0.2);
+                    border-radius: 22px;
                     pointer-events: none;
                     z-index: 10;
-                    box-shadow: 0 0 15px rgba(0, 71, 171, 0.5);
                 }
 
                 .sd-scanner-laser-line {
                     position: absolute;
                     left: 0;
                     width: 100%;
-                    height: 3px;
-                    background: linear-gradient(90deg, transparent, #3B82F6, transparent);
+                    height: 2px;
+                    background: #3B82F6;
                     z-index: 9;
                     pointer-events: none;
-                    animation: scannerSweep 2s ease-in-out infinite;
-                    box-shadow: 0 0 10px #3B82F6;
+                    animation: scannerSweep 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+                    box-shadow: 0 0 15px 2px #3B82F6, 0 0 30px 4px rgba(59, 130, 246, 0.5);
                 }
 
                 .sd-scanner-element {
@@ -562,61 +605,192 @@ const WardenScanQR: React.FC = () => {
                 .sd-scanner-element video {
                     object-fit: cover !important;
                 }
+                
+                /* Manual Search Section */
+                .sd-manual-search-section {
+                    width: 100%;
+                    max-width: 500px;
+                }
+
+                .sd-search-form {
+                    display: flex;
+                    gap: 12px;
+                    margin-bottom: 24px;
+                }
+
+                .sd-search-input {
+                    flex: 1;
+                    padding: 14px 20px;
+                    border-radius: 16px;
+                    border: 1px solid rgba(226, 232, 240, 0.8);
+                    background: rgba(255, 255, 255, 0.9);
+                    font-size: 1rem;
+                    outline: none;
+                    transition: all 0.3s;
+                    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+                }
+
+                .sd-search-input:focus {
+                    border-color: #3b82f6;
+                    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+                    background: white;
+                }
+
+                .sd-search-btn {
+                    padding: 0 24px;
+                    border-radius: 16px;
+                    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+                    color: white;
+                    font-weight: 600;
+                    border: none;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+                }
+                
+                .sd-search-btn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+                }
+
+                .sd-search-results-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                    max-height: 400px;
+                    overflow-y: auto;
+                    padding-right: 8px;
+                }
+                
+                .sd-search-results-list::-webkit-scrollbar {
+                    width: 6px;
+                }
+                .sd-search-results-list::-webkit-scrollbar-thumb {
+                    background: #cbd5e1;
+                    border-radius: 10px;
+                }
+
+                .sd-search-result-item {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    background: white;
+                    border: 1px solid #e2e8f0;
+                    padding: 16px;
+                    border-radius: 16px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+                }
+
+                .sd-search-result-item:hover {
+                    border-color: #94a3b8;
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 16px rgba(0,0,0,0.06);
+                }
+
+                .sd-result-student-info {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                }
+                
+                .sd-result-name {
+                    font-weight: 700;
+                    color: #0f172a;
+                    font-size: 1.05rem;
+                }
+                
+                .sd-result-reg {
+                    font-size: 0.85rem;
+                    color: #64748b;
+                }
+
+                .sd-result-outpass-meta {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: flex-end;
+                    gap: 6px;
+                }
+                
+                .sd-result-type {
+                    font-size: 0.75rem;
+                    font-weight: 700;
+                    color: #475569;
+                    text-transform: uppercase;
+                }
+                
+                .sd-result-status-pill {
+                    font-size: 0.75rem;
+                    padding: 4px 10px;
+                    border-radius: 20px;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                }
+                
+                .sd-result-status-pill.approved { background: #dcfce7; color: #166534; }
+                .sd-result-status-pill.rejected { background: #fee2e2; color: #991b1b; }
+                .sd-result-status-pill.pending { background: #fef9c3; color: #854d0e; }
 
                 /* ====== RESULTS DISPLAY ====== */
                 .sd-scanner-results {
                     width: 100%;
+                    animation: fadeIn 0.4s ease forwards;
                 }
 
                 .sd-result-loading {
                     text-align: center;
-                    padding: 40px 0;
+                    padding: 60px 0;
                 }
 
                 .sd-loader-spin {
-                    width: 48px;
-                    height: 48px;
-                    border: 4px solid #E2E8F0;
-                    border-top-color: #0047AB;
+                    width: 56px;
+                    height: 56px;
+                    border: 4px solid rgba(226, 232, 240, 0.5);
+                    border-top-color: #3b82f6;
                     border-radius: 50%;
                     animation: spin 0.8s linear infinite;
-                    margin: 0 auto 20px;
+                    margin: 0 auto 24px;
                 }
 
                 .sd-result-loading h3 {
-                    margin: 0 0 6px;
-                    font-size: 1.1rem;
-                    color: #0F172A;
+                    margin: 0 0 8px;
+                    font-size: 1.2rem;
+                    color: #0f172a;
                 }
 
                 .sd-result-loading p {
                     margin: 0;
-                    font-size: 0.85rem;
-                    color: #64748B;
+                    font-size: 0.95rem;
+                    color: #64748b;
                 }
 
                 /* Error results */
                 .sd-result-error {
                     text-align: center;
-                    padding: 20px 0;
+                    padding: 40px 20px;
+                    background: rgba(254, 242, 242, 0.8);
+                    border-radius: 24px;
+                    border: 1px solid rgba(254, 202, 202, 0.5);
                 }
 
                 .sd-error-badge-large {
-                    font-size: 3.5rem;
-                    margin-bottom: 20px;
+                    font-size: 4rem;
+                    margin-bottom: 24px;
+                    filter: drop-shadow(0 8px 16px rgba(239,68,68,0.2));
                 }
 
                 .sd-error-header {
-                    font-size: 1.35rem;
+                    font-size: 1.5rem;
                     font-weight: 800;
-                    color: #EF4444;
-                    margin: 0 0 10px;
+                    color: #b91c1c;
+                    margin: 0 0 12px;
                 }
 
                 .sd-error-desc {
-                    font-size: 0.95rem;
-                    color: #64748B;
-                    line-height: 1.5;
+                    font-size: 1rem;
+                    color: #7f1d1d;
+                    line-height: 1.6;
                     margin: 0 0 32px;
                 }
 
@@ -630,56 +804,68 @@ const WardenScanQR: React.FC = () => {
                 .sd-success-banner {
                     display: flex;
                     align-items: center;
-                    gap: 16px;
-                    background: #ECFDF5;
+                    gap: 20px;
+                    background: linear-gradient(135deg, #dcfce7 0%, #ecfdf5 100%);
                     border: 1px solid rgba(16, 185, 129, 0.2);
-                    padding: 16px 20px;
-                    border-radius: 16px;
+                    padding: 20px 24px;
+                    border-radius: 20px;
+                    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.1);
                 }
 
                 .sd-success-checkmark {
-                    width: 36px;
-                    height: 36px;
+                    width: 48px;
+                    height: 48px;
                     border-radius: 50%;
-                    background: #10B981;
+                    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
                     color: white;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     font-weight: bold;
-                    font-size: 1.1rem;
+                    font-size: 1.5rem;
+                    box-shadow: 0 4px 10px rgba(16,185,129,0.3);
                 }
 
                 .sd-success-title {
-                    font-size: 1rem;
+                    font-size: 1.15rem;
                     font-weight: 800;
-                    color: #065F46;
-                    margin: 0;
+                    color: #064e3b;
+                    margin: 0 0 4px 0;
                 }
 
                 .sd-success-subtitle {
-                    font-size: 0.8rem;
+                    font-size: 0.9rem;
                     color: #047857;
-                    margin: 2px 0 0;
+                    margin: 0;
                     font-weight: 600;
+                }
+
+                .sd-result-body {
+                    background: white;
+                    border-radius: 20px;
+                    padding: 24px;
+                    border: 1px solid rgba(226,232,240,0.8);
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.03);
                 }
 
                 /* Student profile strip */
                 .sd-student-profile-strip {
                     display: flex;
                     align-items: center;
-                    gap: 20px;
-                    padding-bottom: 20px;
-                    border-bottom: 1px solid #E2E8F0;
+                    gap: 24px;
+                    padding-bottom: 24px;
+                    border-bottom: 1px solid #f1f5f9;
+                    margin-bottom: 24px;
                 }
 
                 .sd-student-avatar-wrap {
-                    width: 64px;
-                    height: 64px;
+                    width: 80px;
+                    height: 80px;
                     border-radius: 50%;
                     overflow: hidden;
-                    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+                    box-shadow: 0 8px 16px rgba(0,0,0,0.08);
                     flex-shrink: 0;
+                    border: 3px solid white;
                 }
 
                 .sd-student-img {
@@ -694,34 +880,34 @@ const WardenScanQR: React.FC = () => {
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    background: linear-gradient(135deg, #0047AB 0%, #2563EB 100%);
+                    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
                     color: white;
-                    font-weight: 700;
-                    font-size: 1.6rem;
+                    font-weight: 800;
+                    font-size: 2rem;
                 }
 
                 .sd-student-identity {
                     display: flex;
                     flex-direction: column;
-                    gap: 2px;
+                    gap: 4px;
                 }
 
                 .sd-student-name {
-                    font-size: 1.2rem;
+                    font-size: 1.4rem;
                     font-weight: 800;
-                    color: #0F172A;
+                    color: #0f172a;
                     margin: 0;
                 }
 
                 .sd-student-reg {
-                    font-size: 0.88rem;
-                    color: #64748B;
+                    font-size: 0.95rem;
+                    color: #475569;
                     font-weight: 600;
                 }
 
                 .sd-student-dept {
-                    font-size: 0.8rem;
-                    color: #64748B;
+                    font-size: 0.85rem;
+                    color: #64748b;
                     font-weight: 500;
                 }
 
@@ -729,17 +915,17 @@ const WardenScanQR: React.FC = () => {
                 .sd-details-grid {
                     display: grid;
                     grid-template-columns: repeat(2, 1fr);
-                    gap: 16px;
-                    background: #F8FAFC;
-                    border: 1px solid rgba(226,232,240,0.6);
-                    padding: 20px;
+                    gap: 20px;
+                    background: #f8fafc;
+                    border: 1px solid #f1f5f9;
+                    padding: 24px;
                     border-radius: 16px;
                 }
 
                 .sd-detail-item {
                     display: flex;
                     flex-direction: column;
-                    gap: 4px;
+                    gap: 6px;
                 }
 
                 .sd-detail-item.full-width {
@@ -747,109 +933,90 @@ const WardenScanQR: React.FC = () => {
                 }
 
                 .sd-detail-item .label {
-                    font-size: 0.68rem;
-                    color: #94A3B8;
+                    font-size: 0.75rem;
+                    color: #64748b;
                     font-weight: 700;
                     text-transform: uppercase;
-                    letter-spacing: 0.02em;
+                    letter-spacing: 0.05em;
                 }
 
                 .sd-detail-item .value {
-                    font-size: 0.9rem;
-                    font-weight: 600;
-                    color: #334155;
+                    font-size: 1rem;
+                    font-weight: 700;
+                    color: #1e293b;
                 }
 
                 .sd-detail-item .value-p {
-                    font-size: 0.88rem;
-                    color: #475569;
+                    font-size: 0.95rem;
+                    color: #334155;
                     font-weight: 500;
                     margin: 0;
-                    line-height: 1.4;
+                    line-height: 1.5;
                 }
 
                 .sd-pill-type {
                     display: inline-flex;
-                    padding: 2px 6px;
-                    border-radius: 4px;
-                    font-size: 0.72rem;
+                    padding: 4px 10px;
+                    border-radius: 6px;
+                    font-size: 0.8rem;
+                    font-weight: 800;
                     text-transform: uppercase;
-                    background: #EFF6FF;
-                    color: #0047AB;
+                    background: #e0f2fe;
+                    color: #0369a1;
                     width: fit-content;
                 }
 
                 .sd-pill-type.emergency {
-                    background: #FEF2F2;
-                    color: #EF4444;
+                    background: #fef2f2;
+                    color: #dc2626;
                 }
 
                 .sd-timestamp {
-                    color: #0F172A;
-                    font-family: 'SF Mono', monospace;
+                    color: #0f172a;
+                    font-family: 'SF Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+                    font-size: 0.9rem !important;
                 }
 
                 /* Interactive actions */
                 .sd-result-actions {
                     display: flex;
                     gap: 16px;
-                    margin-top: 10px;
+                    margin-top: 24px;
                 }
 
                 .sd-action-btn {
                     flex: 1;
-                    padding: 14px 20px;
+                    padding: 16px 24px;
                     border: none;
-                    border-radius: 12px;
-                    font-weight: 700;
-                    font-size: 0.9rem;
+                    border-radius: 16px;
+                    font-size: 1.1rem;
+                    font-weight: 800;
                     cursor: pointer;
-                    transition: all 0.2s ease;
-                    display: inline-flex;
+                    display: flex;
                     align-items: center;
                     justify-content: center;
-                    gap: 8px;
-                    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+                    gap: 12px;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    color: white;
+                    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
                 }
 
                 .sd-btn-out {
-                    background: #EF4444;
-                    color: white;
+                    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+                    box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
                 }
-
-                .sd-btn-out:hover:not(:disabled) {
-                    background: #DC2626;
-                    box-shadow: 0 6px 16px rgba(239,68,68,0.3);
-                    transform: translateY(-2px);
+                
+                .sd-btn-out:hover {
+                    transform: translateY(-3px);
+                    box-shadow: 0 15px 30px rgba(245, 158, 11, 0.4);
                 }
 
                 .sd-btn-in {
-                    background: #10B981;
-                    color: white;
+                    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                    box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
                 }
-
+                
                 .sd-btn-in:hover:not(:disabled) {
-                    background: #059669;
-                    box-shadow: 0 6px 16px rgba(16,185,129,0.3);
-                    transform: translateY(-2px);
-                }
-
-                .sd-action-btn:disabled {
-                    opacity: 0.45;
-                    cursor: not-allowed;
-                    transform: none !important;
-                    box-shadow: none !important;
-                }
-
-                .sd-btn-retry {
-                    width: 100%;
-                    max-width: 240px;
-                    background: #0047AB;
-                    color: white;
-                    margin: 0 auto;
-                }
-
-                .sd-btn-retry:hover {
                     background: #003682;
                     box-shadow: 0 4px 12px rgba(0,71,171,0.25);
                 }

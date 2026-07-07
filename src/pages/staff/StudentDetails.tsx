@@ -5,6 +5,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import StaffHeader from '../../components/StaffHeader';
 import { DEPARTMENTS, YEARS, BATCHES, GENDERS } from '../../constants/dropdownOptions';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 // Define Student Interface matching the API response
 interface Student {
@@ -144,7 +145,7 @@ const StudentDetails: React.FC = () => {
         setShowDocumentModal(true);
     };
 
-    if (loading) return <div className="loading-screen">Loading...</div>;
+    if (loading) return <LoadingSpinner />;
     if (!student) return <div className="error-screen">Student not found</div>;
 
     return (

@@ -276,17 +276,26 @@ const WardenEmergencyOutpassList: React.FC = () => {
 
             <style>{`
                 /* Page Container */
+                .page-container {
+                    min-height: 100vh;
+                    background: linear-gradient(135deg, #f0f4f8 0%, #e0e8f0 100%);
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                    padding-top: var(--nav-height, 80px);
+                    padding-bottom: calc(100px + env(safe-area-inset-bottom));
+                }
+
                 .list-container {
-                    padding: 24px 40px;
-                    animation: fadeInUp 0.6s ease;
-                    margin-top: 10px;
+                    padding: 24px 32px;
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    animation: fadeInUp 0.5s ease-out;
                 }
 
                 .header-row {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    margin-bottom: 20px;
+                    margin-bottom: 24px;
                     flex-wrap: wrap;
                     gap: 16px;
                 }
@@ -294,182 +303,216 @@ const WardenEmergencyOutpassList: React.FC = () => {
                 .filter-tabs {
                     display: flex;
                     gap: 12px;
+                    align-items: center;
                 }
 
                 .apply-emergency-btn {
                     padding: 10px 20px;
                     border: none;
-                    background: #ef4444; /* Red color for emergency action */
+                    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
                     color: white;
                     font-weight: 600;
-                    font-size: 14px;
+                    font-size: 0.95rem;
                     cursor: pointer;
-                    border-radius: 8px;
+                    border-radius: 12px;
                     transition: all 0.3s ease;
                     display: inline-flex;
                     align-items: center;
                     gap: 8px;
-                    box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.2);
+                    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
                 }
 
                 .apply-emergency-btn:hover {
-                    background: #dc2626;
                     transform: translateY(-2px);
-                    box-shadow: 0 6px 12px -2px rgba(239, 68, 68, 0.3);
+                    box-shadow: 0 6px 12px rgba(239, 68, 68, 0.4);
                 }
 
                 .back-btn {
-                    background: white;
-                    border: 1px solid #cbd5e1;
-                    font-size: 16px;
-                    color: #1e3a8a;
+                    background: rgba(255, 255, 255, 0.7);
+                    backdrop-filter: blur(10px);
+                    border: 1px solid rgba(255, 255, 255, 0.5);
+                    color: #1e293b;
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                    padding: 10px 20px;
+                    border-radius: 12px;
                     cursor: pointer;
                     display: inline-flex;
                     align-items: center;
                     gap: 8px;
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
                     transition: all 0.3s ease;
-                    padding: 10px 24px;
-                    border-radius: 50px;
-                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                    font-weight: 600;
                 }
 
                 .back-btn:hover {
-                    background: #f1f5f9;
-                    transform: translateX(-5px);
-                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+                    background: rgba(255, 255, 255, 0.9);
+                    transform: translateX(-4px);
+                    box-shadow: 0 6px 12px rgba(0,0,0,0.05);
                 }
 
                 .list-container h1 {
-                    font-size: 22px;
-                    margin-bottom: 16px;
-                    color: #1e3a8a;
-                    font-weight: 700;
+                    font-size: 1.8rem;
+                    font-weight: 800;
+                    color: #0f172a;
+                    margin-bottom: 24px;
+                    letter-spacing: -0.02em;
                 }
 
                 /* Table Card */
                 .outpass-card {
-                    background: white;
+                    background: rgba(255, 255, 255, 0.85);
+                    backdrop-filter: blur(16px);
                     border-radius: 24px;
                     padding: 24px;
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.06);
-                    border: 1px solid rgba(0,0,0,0.05);
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.04), 0 1px 0 rgba(255,255,255,0.6) inset;
+                    border: 1px solid rgba(255,255,255,0.9);
                     overflow: hidden;
                 }
 
                 /* Table */
                 .outpass-table {
                     width: 100%;
-                    border-collapse: collapse;
+                    border-collapse: separate;
+                    border-spacing: 0;
                 }
 
                 .outpass-table thead {
-                    background: linear-gradient(135deg, #1e3a8a, #0f172a);
-                    color: white;
+                    background: #f8fafc;
                 }
 
                 .outpass-table th {
-                    padding: 14px;
+                    padding: 16px;
                     text-align: left;
-                    font-weight: 600;
+                    font-weight: 700;
+                    font-size: 0.85rem;
+                    color: #64748b;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                    border-bottom: 2px solid #e2e8f0;
                 }
 
+                .outpass-table th:first-child { border-top-left-radius: 12px; }
+                .outpass-table th:last-child { border-top-right-radius: 12px; }
+
                 .outpass-table td {
-                    padding: 14px;
+                    padding: 16px;
                     border-bottom: 1px solid #f1f5f9;
                     color: #334155;
+                    font-size: 0.95rem;
+                    vertical-align: middle;
                 }
 
                 .outpass-table tbody tr {
-                    transition: all 0.3s ease;
+                    transition: all 0.2s ease;
+                    background: transparent;
                 }
 
                 .outpass-table tbody tr:hover {
-                    background: #eff6ff;
-                    transform: translateX(4px);
+                    background: rgba(248, 250, 252, 0.8);
+                }
+                
+                .outpass-table tbody tr:last-child td {
+                    border-bottom: none;
                 }
 
                 /* Status */
                 .status {
-                    padding: 8px 18px;
-                    border-radius: 999px;
-                    font-size: 16px;
+                    padding: 6px 14px;
+                    border-radius: 20px;
+                    font-size: 0.85rem;
                     font-weight: 700;
+                    display: inline-flex;
+                    align-items: center;
+                    border: 1px solid transparent;
                 }
 
                 .status.approved {
-                    background: #dcfce7;
+                    background: #f0fdf4;
                     color: #166534;
+                    border-color: #bbf7d0;
                 }
 
                 .status.rejected {
-                    background: #fee2e2;
+                    background: #fef2f2;
                     color: #991b1b;
+                    border-color: #fecaca;
                 }
 
                 /* Emergency Badge */
                 .emergency-badge {
-                    background: rgba(239, 68, 68, 0.1);
-                    color: #ef4444;
+                    background: #fef2f2;
+                    color: #dc2626;
                     padding: 4px 8px;
-                    border-radius: 4px;
-                    font-size: 11px;
-                    font-weight: bold;
+                    border-radius: 6px;
+                    font-size: 0.7rem;
+                    font-weight: 800;
                     margin-left: 8px;
-                    border: 1px solid rgba(239, 68, 68, 0.2);
+                    border: 1px solid #fca5a5;
                     display: inline-block;
                     margin-top: 4px;
                 }
 
                 /* View Button */
                 .view-btn {
-                    padding: 6px 14px;
+                    padding: 8px 16px;
                     border-radius: 10px;
                     border: none;
-                    background: linear-gradient(135deg, #2563eb, #1e3a8a);
+                    background: linear-gradient(135deg, #2563eb, #1d4ed8);
                     color: white;
-                    font-weight: 500;
+                    font-weight: 600;
+                    font-size: 0.85rem;
                     cursor: pointer;
-                    transition: 0.3s;
+                    transition: all 0.3s;
+                    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
                 }
 
                 .view-btn:hover {
-                    transform: translateY(-1px);
-                    box-shadow: 0 6px 16px rgba(37,99,235,0.4);
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 12px rgba(37,99,235,0.3);
                 }
 
                 /* Pagination */
                 .pagination {
-                    margin-top: 24px;
+                    margin-top: 32px;
                     display: flex;
                     justify-content: center;
                     align-items: center;
-                    gap: 20px;
+                    gap: 16px;
                 }
 
                 .pagination button {
-                    padding: 8px 18px;
+                    padding: 8px 20px;
                     border-radius: 10px;
                     border: none;
-                    background: #1e3a8a;
-                    color: white;
+                    background: white;
+                    color: #334155;
                     font-weight: 600;
                     cursor: pointer;
-                    transition: 0.3s;
+                    transition: all 0.2s;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+                    border: 1px solid #e2e8f0;
                 }
 
-                .pagination button:hover {
-                    background: #2563eb;
+                .pagination button:hover:not(:disabled) {
+                    background: #f8fafc;
+                    border-color: #cbd5e1;
+                    transform: translateY(-1px);
                 }
 
                 .pagination button:disabled {
-                    opacity: 0.4;
+                    opacity: 0.5;
                     cursor: not-allowed;
+                }
+                
+                .pagination span {
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                    color: #64748b;
                 }
 
                 /* Animations */
                 @keyframes fadeInUp {
-                    from { opacity: 0; transform: translateY(20px); }
+                    from { opacity: 0; transform: translateY(15px); }
                     to { opacity: 1; transform: translateY(0); }
                 }
 
@@ -478,24 +521,33 @@ const WardenEmergencyOutpassList: React.FC = () => {
                 }
 
                 /* Mobile */
-                @media (max-width: 768px) {
+                @media (max-width: 1024px) {
                     .list-container {
                         padding: 16px;
-                        margin-top: 5px;
                     }
 
                     .list-container h1 {
-                        font-size: 18px;
-                        margin-bottom: 12px;
+                        font-size: 1.5rem;
+                        margin-bottom: 20px;
                     }
 
                     .header-row {
                         flex-direction: column;
-                        align-items: flex-start;
+                        align-items: stretch;
                         gap: 16px;
                     }
                     
                     .filter-tabs {
+                        width: 100%;
+                        flex-direction: column;
+                    }
+
+                    .filter-tabs > div {
+                        width: 100%;
+                        margin-right: 0 !important;
+                    }
+                    
+                    .date-filter-select {
                         width: 100%;
                     }
                     
@@ -506,7 +558,7 @@ const WardenEmergencyOutpassList: React.FC = () => {
                     }
 
                     .outpass-table {
-                        display: none; /* Hide table on mobile */
+                        display: none;
                     }
 
                     .outpass-card {
@@ -524,40 +576,41 @@ const WardenEmergencyOutpassList: React.FC = () => {
                     }
 
                     .mobile-card {
-                        background: white;
-                        border-radius: 16px;
+                        background: rgba(255, 255, 255, 0.85);
+                        backdrop-filter: blur(16px);
+                        border-radius: 20px;
                         padding: 20px;
-                        position: relative;
-                        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-                        border: 1px solid rgba(0,0,0,0.02);
-                        margin-bottom: 16px;
+                        box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+                        border: 1px solid rgba(255,255,255,0.8);
+                        animation: fadeInUp 0.4s ease;
                     }
 
                     .card-badge {
                         background: linear-gradient(135deg, #2563eb, #1e40af);
                         color: white;
                         display: inline-block;
-                        padding: 8px 0;
+                        padding: 6px 0;
                         width: 100%;
                         text-align: center;
-                        border-radius: 8px;
+                        border-radius: 10px;
                         font-weight: 700;
-                        font-size: 14px;
+                        font-size: 0.9rem;
                         margin-bottom: 16px;
                         box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
                     }
 
                     .card-name {
-                        font-size: 18px;
-                        font-weight: 700;
-                        color: #1e293b;
+                        font-size: 1.1rem;
+                        font-weight: 800;
+                        color: #0f172a;
                         margin-bottom: 4px;
                     }
 
                     .card-details {
-                        font-size: 13px;
+                        font-size: 0.9rem;
                         color: #64748b;
                         margin-bottom: 20px;
+                        line-height: 1.5;
                     }
 
                     .emergency-badge.mobile {
@@ -575,28 +628,28 @@ const WardenEmergencyOutpassList: React.FC = () => {
                     }
 
                     .status-pill {
-                        font-size: 13px;
+                        font-size: 0.8rem;
                         font-weight: 700;
-                        padding: 6px 16px;
+                        padding: 6px 12px;
                         border-radius: 20px;
                     }
 
                     .status-approved {
                         background: #f0fdf4;
                         color: #166534;
-                        border: 1px solid #dcfce7;
+                        border: 1px solid #bbf7d0;
                     }
 
                     .status-rejected {
                         background: #fef2f2;
                         color: #991b1b;
-                        border: 1px solid #fee2e2;
+                        border: 1px solid #fecaca;
                     }
 
                     .card-view-link {
                         color: #2563eb;
-                        font-weight: 600;
-                        font-size: 14px;
+                        font-weight: 700;
+                        font-size: 0.9rem;
                         text-decoration: none;
                         display: flex;
                         align-items: center;
