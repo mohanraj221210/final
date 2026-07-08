@@ -3,6 +3,8 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import WardenNav from '../../components/WardenNav';
+import { AlertTriangle } from 'lucide-react';
+
 const EmergencyOutpassApply: React.FC = () => {
     const navigate = useNavigate();
     const [searchRoom, setSearchRoom] = useState('');
@@ -93,9 +95,10 @@ const EmergencyOutpassApply: React.FC = () => {
 
                 <div className="emergency-form-wrapper">
                     <div className="emergency-header">
-                        <h2>🚨 Apply Emergency Outpass</h2>
+                        <h2 style={{ display: 'flex', alignItems: 'center' }}><AlertTriangle size={28} style={{ color: '#ef4444', marginRight: '8px' }} /> Apply Emergency Outpass</h2>
                         <p>For critical health issues. Outpass will be instantly approved.</p>
                     </div>
+
 
                     <div className="search-section card">
                         <h3>1. Search Student Room</h3>

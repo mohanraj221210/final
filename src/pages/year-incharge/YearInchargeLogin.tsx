@@ -4,6 +4,8 @@ import Toast from '../../components/Toast';
 import axios from 'axios';
 import { toast, ToastContainer } from "react-toastify";
 import SEO from '../../components/SEO';
+import { Activity, Ticket, GraduationCap, ClipboardList, Lock, Building2, Globe } from 'lucide-react';
+
 
 /* ─────────────────────────────────────────────────────────────────────────────
    BACKGROUND CANVAS  — flowing light waves + floating dots
@@ -200,17 +202,18 @@ const YearInchargeLogin: React.FC = () => {
   };
 
   const featureCards = [
-    { icon: '📊', label: 'Year\nDashboard' },
-    { icon: '🎫', label: 'Outpass\nApprovals' },
-    { icon: '👨‍🎓', label: 'Student\nOversight' },
-    { icon: '📋', label: 'Academic\nReports' },
+    { icon: <Activity size={24} />, label: 'Year\nDashboard' },
+    { icon: <Ticket size={24} />, label: 'Outpass\nApprovals' },
+    { icon: <GraduationCap size={24} />, label: 'Student\nOversight' },
+    { icon: <ClipboardList size={24} />, label: 'Academic\nReports' },
   ];
 
   const footerItems = [
-    { icon: '🔒', title: 'Secure & Protected', sub: 'Role-based access control' },
-    { icon: '🏫', title: 'Administrative Portal', sub: 'Year-level management' },
-    { icon: '🌍', title: 'Always Accessible', sub: 'Anytime, Anywhere' },
+    { icon: <Lock size={20} />, title: 'Secure & Protected', sub: 'Role-based access control' },
+    { icon: <Building2 size={20} />, title: 'Administrative Portal', sub: 'Year-level management' },
+    { icon: <Globe size={20} />, title: 'Always Accessible', sub: 'Anytime, Anywhere' },
   ];
+
 
   return (
     <div className={`yi-root ${mounted ? 'yi-mounted' : ''} ${successAnim ? 'yi-success-zoom' : ''}`}>
@@ -275,10 +278,11 @@ const YearInchargeLogin: React.FC = () => {
           <div className="yi-features">
             {featureCards.map((fc, i) => (
               <div className="yi-feat-card" key={i} style={{ animationDelay: `${120 + i * 80}ms` }}>
-                <span className="yi-feat-icon">{fc.icon}</span>
+                <span className="yi-feat-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{fc.icon}</span>
                 <span className="yi-feat-label">{fc.label}</span>
               </div>
             ))}
+
           </div>
 
           {/* Quote card */}
@@ -479,13 +483,14 @@ const YearInchargeLogin: React.FC = () => {
       <footer className="yi-footer">
         {footerItems.map((fi, i) => (
           <div className="yi-footer-item" key={i}>
-            <span className="yi-footer-icon">{fi.icon}</span>
+            <span className="yi-footer-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{fi.icon}</span>
             <div className="yi-footer-text">
               <span className="yi-footer-title">{fi.title}</span>
               <span className="yi-footer-sub">{fi.sub}</span>
             </div>
           </div>
         ))}
+
       </footer>
 
       <style>{`

@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import { toast, ToastContainer } from 'react-toastify';
 import axios from 'axios';
+import { Camera, Search, XCircle, LogOut, LogIn, AlertTriangle, Clock } from 'lucide-react';
+
 
 const WardenScanQR: React.FC = () => {
     const navigate = useNavigate();
@@ -161,8 +163,9 @@ const WardenScanQR: React.FC = () => {
                                             setActiveTab('scan');
                                             resetScan();
                                         }}
+                                        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                                     >
-                                        📷 Scan QR Code
+                                        <Camera size={16} style={{ marginRight: '8px' }} /> Scan QR Code
                                     </button>
                                     <button
                                         className={`sd-tab-btn ${activeTab === 'search' ? 'active' : ''}`}
@@ -170,17 +173,20 @@ const WardenScanQR: React.FC = () => {
                                             setActiveTab('search');
                                             resetScan();
                                         }}
+                                        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                                     >
-                                        🔍 Search Outpass
+                                        <Search size={16} style={{ marginRight: '8px' }} /> Search Outpass
                                     </button>
+
                                 </div>
 
                                 {activeTab === 'scan' ? (
                                     <div className="sd-tab-content active-tab-content">
                                         <div className="sd-scanner-instructions">
-                                            <span className="sd-scanner-tip-icon">📷</span>
+                                            <span className="sd-scanner-tip-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><Camera size={36} /></span>
                                             <p className="sd-scanner-tip-text">Align the student's digital outpass QR code inside the camera window below.</p>
                                         </div>
+
 
                                         <div className="sd-scanner-viewport-wrapper">
                                             <div className="sd-scanner-glow-border" />
@@ -200,9 +206,10 @@ const WardenScanQR: React.FC = () => {
                                 ) : (
                                     <div className="sd-tab-content active-tab-content" style={{ width: '100%' }}>
                                         <div className="sd-scanner-instructions">
-                                            <span className="sd-scanner-tip-icon">🔍</span>
+                                            <span className="sd-scanner-tip-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><Search size={36} /></span>
                                             <p className="sd-scanner-tip-text">Enter student name or register number to look up their outpass manually.</p>
                                         </div>
+
 
                                         <div className="sd-manual-search-section">
                                             <form onSubmit={handleSearch} className="sd-search-form">
@@ -213,9 +220,10 @@ const WardenScanQR: React.FC = () => {
                                                     placeholder="Search name or register number..."
                                                     className="sd-search-input"
                                                 />
-                                                <button type="submit" disabled={searchLoading} className="sd-search-btn">
-                                                    {searchLoading ? 'Searching...' : '🔍 Search'}
+                                                <button type="submit" disabled={searchLoading} className="sd-search-btn" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                    {searchLoading ? 'Searching...' : <><Search size={16} style={{ marginRight: '6px' }} /> Search</>}
                                                 </button>
+
                                             </form>
 
                                             {/* Search Results */}
@@ -268,7 +276,7 @@ const WardenScanQR: React.FC = () => {
 
                                 {error && !loading && (
                                     <div className="sd-result-error">
-                                        <div className="sd-error-badge-large">❌</div>
+                                        <div className="sd-error-badge-large" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><XCircle size={48} style={{ color: '#EF4444' }} /></div>
                                         <h2 className="sd-error-header">Access Denied / Verification Failed</h2>
                                         <p className="sd-error-desc">{error}</p>
                                         <button onClick={resetScan} className="sd-action-btn sd-btn-retry">
@@ -350,20 +358,21 @@ const WardenScanQR: React.FC = () => {
                                                     <button
                                                         onClick={() => handleStatusUpdate('out')}
                                                         className="sd-action-btn sd-btn-out"
-                                                        style={{ width: '100%', maxWidth: 'none' }}
+                                                        style={{ width: '100%', maxWidth: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                                                     >
-                                                        🚪 Mark Student OUT
+                                                        <LogOut size={16} style={{ marginRight: '8px' }} /> Mark Student OUT
                                                     </button>
                                                 ) : (
                                                     <button
                                                         onClick={handleInClick}
                                                         disabled={outpassData.in !== null}
                                                         className="sd-action-btn sd-btn-in"
-                                                        style={{ width: '100%', maxWidth: 'none' }}
+                                                        style={{ width: '100%', maxWidth: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                                                     >
-                                                        🏠 Mark Student IN
+                                                        <LogIn size={16} style={{ marginRight: '8px' }} /> Mark Student IN
                                                     </button>
                                                 )}
+
                                             </div>
 
                                             <button onClick={resetScan} className="sd-btn-reset-bottom">
@@ -379,12 +388,13 @@ const WardenScanQR: React.FC = () => {
                     {showLateModal && (
                         <div className="sd-modal-overlay" onClick={() => setShowLateModal(false)}>
                             <div className="sd-modal-card" onClick={(e) => e.stopPropagation()}>
-                                <div className="sd-modal-header">
-                                    <h3>🚨 Late Return Warning</h3>
+                                <div className="sd-modal-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <h3 style={{ display: 'flex', alignItems: 'center', margin: 0 }}><AlertTriangle size={20} style={{ color: '#EF4444', marginRight: '8px' }} /> Late Return Warning</h3>
                                     <button className="sd-close-btn" onClick={() => setShowLateModal(false)}>✕</button>
                                 </div>
                                 <div className="sd-modal-body">
-                                    <div className="sd-warning-icon">⏳</div>
+                                    <div className="sd-warning-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><Clock size={48} style={{ color: '#F59E0B' }} /></div>
+
                                     <p className="sd-warning-text">
                                         This student has exceeded their allowed outpass return time (expected back by {outpassData ? new Date(outpassData.toDate).toLocaleString() : ''}).
                                     </p>

@@ -4,6 +4,8 @@ import Nav from "../../components/WardenNav";
 import Toast from "../../components/Toast";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
+import { Camera } from "lucide-react";
+
 import ImageCropper from "../../components/ImageCropper";
 import imageCompression from 'browser-image-compression';
 
@@ -303,8 +305,9 @@ const WardenProfile: React.FC = () => {
                   </div>
 
                   {isEditing && (
-                    <label className="avatar-upload">
-                      <span>📷</span>
+                    <label className="avatar-upload" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Camera size={20} />
+
                       <input
                         type="file"
                         accept="image/jpeg, image/png"

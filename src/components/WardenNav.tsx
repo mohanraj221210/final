@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
+
 
 const WardenNav: React.FC = () => {
     const navigate = useNavigate();
@@ -104,7 +106,9 @@ const WardenNav: React.FC = () => {
             <header className={`wn-header ${scrolled ? 'wn-scrolled' : ''}`}>
                 <div className="wn-container">
                     <div className="wn-brand" onClick={() => navigate('/warden-dashboard')}>
-                        <span className="wn-brand-icon">🏠</span>
+                        <div className="lux-logo-icon">
+                            <img src="/jit permigo.png" alt="JIT Permigo" style={{ width: '22px', height: '22px', objectFit: 'contain', borderRadius: '4px' }} />
+                        </div>
                         <span className="wn-brand-text">JIT Warden</span>
                     </div>
 
@@ -138,7 +142,9 @@ const WardenNav: React.FC = () => {
                 <div className="wn-overlay" onClick={() => setIsMobileMenuOpen(false)}>
                     <div className="wn-mobile-menu" onClick={e => e.stopPropagation()}>
                         <div className="wn-mobile-head">
-                            <span style={{ fontSize: '2rem' }}>🏠</span>
+                            <div className="lux-logo-icon">
+                            <img src="/jit permigo.png" alt="JIT Permigo" style={{ width: '22px', height: '22px', objectFit: 'contain', borderRadius: '4px' }} />
+                        </div>
                             <div>
                                 <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-1)' }}>JIT Warden Portal</div>
                                 <div style={{ fontSize: '0.78rem', color: 'var(--text-3)' }}>Warden</div>
@@ -154,7 +160,9 @@ const WardenNav: React.FC = () => {
                             </button>
                         ))}
                         <div style={{ height: 1, background: 'var(--border)', margin: '8px 0' }}></div>
-                        <button className="wn-mobile-logout" onClick={handleLogout}>🚪 Logout</button>
+                        <button className="wn-mobile-logout" onClick={handleLogout}>
+                            <LogOut size={18} style={{ marginRight: '8px', display: 'inline-flex', alignItems: 'center' }} /> Logout
+                        </button>
                     </div>
                 </div>
             )}

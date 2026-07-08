@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import WatchmanNav from '../../components/WatchmanNav';
+import { Camera, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import { toast, ToastContainer } from 'react-toastify';
@@ -110,7 +111,7 @@ const WatchmanScanQR: React.FC = () => {
                         {!scannedId ? (
                             <div className="sd-scanner-init">
                                 <div className="sd-scanner-instructions">
-                                    <span className="sd-scanner-tip-icon">📷</span>
+                                    <span className="sd-scanner-tip-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><Camera size={24} /></span>
                                     <p className="sd-scanner-tip-text">Align the student's digital outpass QR code inside the camera window below.</p>
                                 </div>
 
@@ -141,7 +142,9 @@ const WatchmanScanQR: React.FC = () => {
 
                                 {error && !loading && (
                                     <div className="sd-result-error">
-                                        <div className="sd-error-badge-large">❌</div>
+                                        <div className="sd-error-badge-large" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <XCircle size={48} style={{ color: '#EF4444' }} />
+                                        </div>
                                         <h2 className="sd-error-header">Access Denied / Failed</h2>
                                         <p className="sd-error-desc">{error}</p>
                                         <button onClick={resetScan} className="sd-action-btn sd-btn-retry">

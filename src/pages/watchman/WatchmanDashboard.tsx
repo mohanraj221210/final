@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import Nav from '../../components/WatchmanNav';
+import { Camera, ClipboardList, Ticket } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import axios from 'axios';
@@ -458,7 +459,7 @@ const WatchmanDashboard: React.FC = () => {
                                     <span className="sd-pulse-dot" />
                                     Active Duty
                                 </div>
-                                <h1 className="sd-hero-title">Hello, {user.name || 'Officer'}! 👋</h1>
+                                <h1 className="sd-hero-title">Hello, {user.name || 'Officer'}!</h1>
                                 <p className="sd-hero-subtitle">JIT Campus Gate Security Control Center</p>
                             </div>
                             <div className="sd-hero-meta">
@@ -621,7 +622,7 @@ const WatchmanDashboard: React.FC = () => {
                                 style={{ borderLeft: '5px solid #3B82F6' }}
                             >
                                 <div className="sd-action-top">
-                                    <span className="sd-action-icon">📷</span>
+                                    <span className="sd-action-icon"><Camera size={24} /></span>
                                     <span className="sd-action-arrow">
                                         <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H7M17 7v10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                                     </span>
@@ -639,7 +640,7 @@ const WatchmanDashboard: React.FC = () => {
                                 style={{ borderLeft: '5px solid #10B981' }}
                             >
                                 <div className="sd-action-top">
-                                    <span className="sd-action-icon">📋</span>
+                                    <span className="sd-action-icon"><ClipboardList size={24} /></span>
                                     <span className="sd-action-arrow">
                                         <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H7M17 7v10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                                     </span>
@@ -716,7 +717,9 @@ const WatchmanDashboard: React.FC = () => {
                                 </div>
                             ) : (
                                 <div className="sd-empty">
-                                    <span className="sd-empty-icon" style={{ fontSize: '2.5rem' }}>🎫</span>
+                                    <span className="sd-empty-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Ticket size={40} style={{ color: '#CBD5E1' }} />
+                                    </span>
                                     <h3 className="sd-empty-title">No Activity Logged Yet</h3>
                                     <p className="sd-empty-desc">Once students scan out or in at the gate, their logs will compile here in real-time.</p>
                                 </div>

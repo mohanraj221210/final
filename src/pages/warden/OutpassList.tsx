@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import WardenNav from "../../components/WardenNav";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { toast, ToastContainer } from "react-toastify";
+import { Search, Calendar, Clock, ClipboardList, FileText, ChevronDown } from 'lucide-react';
+
 
 const OutpassList: React.FC = () => {
   const navigate = useNavigate();
@@ -167,8 +169,9 @@ const OutpassList: React.FC = () => {
 
             {/* Filter controls panel */}
             <div className="wd-controls">
-              <div className="wd-search-wrapper">
-                <span className="wd-search-icon">🔍</span>
+              <div className="wd-search-wrapper" style={{ display: 'flex', alignItems: 'center' }}>
+                <Search size={18} className="wd-search-icon" style={{ position: 'absolute', left: '16px', color: '#94A3B8' }} />
+
                 <input
                   type="text"
                   placeholder="Search name, register no..."
@@ -178,8 +181,8 @@ const OutpassList: React.FC = () => {
                 />
               </div>
 
-              <div className="wd-dropdown-wrapper">
-                <span className="wd-dropdown-icon">📅</span>
+              <div className="wd-dropdown-wrapper" style={{ display: 'flex', alignItems: 'center' }}>
+                <Calendar size={18} className="wd-dropdown-icon" style={{ position: 'absolute', left: '14px', color: '#94A3B8' }} />
                 <select
                   className="wd-filter-dropdown"
                   value={dateFilter}
@@ -190,11 +193,12 @@ const OutpassList: React.FC = () => {
                   <option value="weekly">This Week</option>
                   <option value="monthly">This Month</option>
                 </select>
-                <span className="wd-dropdown-arrow">▼</span>
+                <ChevronDown size={14} className="wd-dropdown-arrow" style={{ position: 'absolute', right: '14px', color: '#64748B', pointerEvents: 'none' }} />
               </div>
 
-              <div className="wd-dropdown-wrapper">
-                <span className="wd-dropdown-icon">🏷️</span>
+
+              <div className="wd-dropdown-wrapper" style={{ display: 'flex', alignItems: 'center' }}>
+                <span className="wd-dropdown-icon" style={{ position: 'absolute', left: '14px', color: '#94A3B8', fontWeight: 'bold' }}>#</span>
                 <select
                   className="wd-filter-dropdown"
                   value={typeFilter}
@@ -206,17 +210,19 @@ const OutpassList: React.FC = () => {
                   <option value="OD">OD</option>
                   <option value="Emergency">Emergency</option>
                 </select>
-                <span className="wd-dropdown-arrow">▼</span>
+                <ChevronDown size={14} className="wd-dropdown-arrow" style={{ position: 'absolute', right: '14px', color: '#64748B', pointerEvents: 'none' }} />
               </div>
+
 
               {/* Late Returns Toggle Pill */}
               <button
                 className={`wd-tab-pill ${showLateOnly ? 'active' : ''}`}
                 onClick={() => setShowLateOnly(!showLateOnly)}
-                style={showLateOnly ? { background: '#fee2e2', color: '#b91c1c', border: '1px solid #fca5a5' } : {}}
+                style={showLateOnly ? { background: '#fee2e2', color: '#b91c1c', border: '1px solid #fca5a5', display: 'inline-flex', alignItems: 'center', gap: '6px' } : { display: 'inline-flex', alignItems: 'center', gap: '6px' }}
               >
-                ⏰ {showLateOnly ? 'Showing Late Only' : 'Show Late'}
+                <Clock size={16} /> {showLateOnly ? 'Showing Late Only' : 'Show Late'}
               </button>
+
 
               {/* Status Tab Filter Pills */}
               <div className="wd-tab-pills">
@@ -258,10 +264,11 @@ const OutpassList: React.FC = () => {
                       <tr>
                         <td colSpan={7} className="wd-empty-cell">
                           <div className="wd-table-empty">
-                            <span className="wd-empty-icon">📋</span>
+                            <span className="wd-empty-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><ClipboardList size={40} style={{ color: '#CBD5E1' }} /></span>
                             <h3 className="wd-empty-title">No Outpasses Found</h3>
                             <p className="wd-empty-desc">No outpass logs matched your active search criteria.</p>
                           </div>
+
                         </td>
                       </tr>
                     ) : (
@@ -408,7 +415,8 @@ const OutpassList: React.FC = () => {
                               className="wd-btn-doc-rect"
                               style={{ padding: '4px 8px', fontSize: '0.75rem' }}
                             >
-                              📄 Doc
+                              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><FileText size={12} style={{ marginRight: '4px' }} /> Doc</span>
+
                             </button>
                           )}
                           <button

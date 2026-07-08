@@ -261,11 +261,11 @@ function buildChartData(stats: MappedStats, filter: FilterType): ChartPoint[] {
             const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const slots = [
                 { label: '12AM', start: 0, end: 4 },
-                { label: '4AM',  start: 4, end: 8 },
-                { label: '8AM',  start: 8, end: 12 },
+                { label: '4AM', start: 4, end: 8 },
+                { label: '8AM', start: 8, end: 12 },
                 { label: '12PM', start: 12, end: 16 },
-                { label: '4PM',  start: 16, end: 20 },
-                { label: '8PM',  start: 20, end: 24 },
+                { label: '4PM', start: 16, end: 20 },
+                { label: '8PM', start: 20, end: 24 },
             ];
             const counts = slots.map(() => 0);
             passes.forEach(pass => {
@@ -696,9 +696,9 @@ const YearInchargeDashboard: React.FC = () => {
                                         const rNum = pass.studentid?.registerNumber || 'N/A';
                                         const status = (pass.yearinchargeapprovalstatus || pass.status || 'pending').toLowerCase();
                                         const photoUrl = pass.studentid?.photo;
-                                        
+
                                         return (
-                                            <tr key={pass._id || idx} style={{ cursor: 'pointer', outline: 'none' }} 
+                                            <tr key={pass._id || idx} style={{ cursor: 'pointer', outline: 'none' }}
                                                 onClick={() => handleQuickAction(status === 'pending' ? '/year-incharge/pending-outpass' : '/year-incharge/outpass-list')}
                                                 onMouseOver={(e) => { e.currentTarget.style.background = '#F8FAFC'; }}
                                                 onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; }}>
@@ -717,7 +717,7 @@ const YearInchargeDashboard: React.FC = () => {
                                                     {pass.reason}
                                                 </td>
                                                 <td style={{ padding: '14px 24px', borderBottom: '1px solid #F1F5F9' }}>
-                                                    <span style={{ 
+                                                    <span style={{
                                                         display: 'inline-flex', alignItems: 'center',
                                                         padding: '4px 12px', borderRadius: '20px', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em',
                                                         background: status === 'approved' ? '#ECFDF5' : status === 'rejected' ? '#FEF2F2' : '#FFFBEB',
@@ -733,9 +733,9 @@ const YearInchargeDashboard: React.FC = () => {
                                                     <button style={{
                                                         padding: '7px 16px', borderRadius: '8px', background: '#EFF6FF', color: '#3B82F6', border: 'none', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', minHeight: '36px', transition: 'all 0.2s ease'
                                                     }}
-                                                    onMouseOver={(e) => { e.currentTarget.style.background = '#3B82F6'; e.currentTarget.style.color = 'white'; }}
-                                                    onMouseOut={(e) => { e.currentTarget.style.background = '#EFF6FF'; e.currentTarget.style.color = '#3B82F6'; }}
-                                                    tabIndex={-1}>Review</button>
+                                                        onMouseOver={(e) => { e.currentTarget.style.background = '#3B82F6'; e.currentTarget.style.color = 'white'; }}
+                                                        onMouseOut={(e) => { e.currentTarget.style.background = '#EFF6FF'; e.currentTarget.style.color = '#3B82F6'; }}
+                                                        tabIndex={-1}>Review</button>
                                                 </td>
                                             </tr>
                                         );

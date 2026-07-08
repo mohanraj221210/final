@@ -4,6 +4,8 @@ import Toast from '../../components/Toast';
 import axios from 'axios';
 import { toast, ToastContainer } from "react-toastify";
 import SEO from '../../components/SEO';
+import { Home, Ticket, Users, Shield, Lock, Globe } from 'lucide-react';
+
 
 /* ─────────────────────────────────────────────────────────────────────────────
    BACKGROUND CANVAS  — flowing light waves + floating dots (warden teal theme)
@@ -217,16 +219,16 @@ const Wardenlogin: React.FC = () => {
   };
 
   const featureCards = [
-    { icon: '🏠', label: 'Hostel\nManagement' },
-    { icon: '🎫', label: 'Outpass\nApproval' },
-    { icon: '👥', label: 'Student\nOversight' },
-    { icon: '🛡️', label: 'Campus\nSecurity' },
+    { icon: <Home size={24} />, label: 'Hostel\nManagement' },
+    { icon: <Ticket size={24} />, label: 'Outpass\nApproval' },
+    { icon: <Users size={24} />, label: 'Student\nOversight' },
+    { icon: <Shield size={24} />, label: 'Campus\nSecurity' },
   ];
 
   const footerItems = [
-    { icon: '🔒', title: 'Secure & Protected', sub: 'Your data is safe with us' },
-    { icon: '🛡️', title: 'Warden Access Only', sub: 'Authorized personnel' },
-    { icon: '🌍', title: 'Always Accessible', sub: 'Anytime, Anywhere' },
+    { icon: <Lock size={20} />, title: 'Secure & Protected', sub: 'Your data is safe with us' },
+    { icon: <Shield size={20} />, title: 'Warden Access Only', sub: 'Authorized personnel' },
+    { icon: <Globe size={20} />, title: 'Always Accessible', sub: 'Anytime, Anywhere' },
   ];
 
   return (
@@ -298,7 +300,7 @@ const Wardenlogin: React.FC = () => {
           <div className="wlp-features">
             {featureCards.map((fc, i) => (
               <div className="wlp-feat-card" key={i} style={{ animationDelay: `${120 + i * 80}ms` }}>
-                <span className="wlp-feat-icon">{fc.icon}</span>
+                <span className="wlp-feat-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{fc.icon}</span>
                 <span className="wlp-feat-label">{fc.label}</span>
               </div>
             ))}
@@ -506,7 +508,7 @@ const Wardenlogin: React.FC = () => {
       <footer className="wlp-footer">
         {footerItems.map((fi, i) => (
           <div className="wlp-footer-item" key={i}>
-            <span className="wlp-footer-icon">{fi.icon}</span>
+            <span className="wlp-footer-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{fi.icon}</span>
             <div className="wlp-footer-text">
               <span className="wlp-footer-title">{fi.title}</span>
               <span className="wlp-footer-sub">{fi.sub}</span>

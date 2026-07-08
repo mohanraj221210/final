@@ -3,6 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import WardenNav from "../../components/WardenNav";
 import { toast, ToastContainer } from "react-toastify";
+import { AlertTriangle, Clock, User, Phone, Building2, FileText, Eye, CheckCircle, LogIn, LogOut, Check, Home, History } from 'lucide-react';
+
 
 const WardenStudentView: React.FC = () => {
   const { id } = useParams();
@@ -190,21 +192,23 @@ const WardenStudentView: React.FC = () => {
           <h1>
             Outpass Approval
             {student.outpasstype?.toLowerCase().includes('emergency') && (
-              <span className="emergency-header-badge" style={{ WebkitTextFillColor: 'initial' }}>🚨 EMERGENCY</span>
+              <span className="emergency-header-badge" style={{ WebkitTextFillColor: 'initial', display: 'inline-flex', alignItems: 'center' }}><AlertTriangle size={14} style={{ marginRight: 4 }} /> EMERGENCY</span>
             )}
             {isLateReturn && (
-              <span className="emergency-header-badge" style={{ background: '#FEF2F2', color: '#EF4444', border: '1px solid #FCA5A5', marginLeft: '10px', WebkitTextFillColor: 'initial' }}>
-                ⏳ LATE RETURN
+              <span className="emergency-header-badge" style={{ background: '#FEF2F2', color: '#EF4444', border: '1px solid #FCA5A5', marginLeft: '10px', WebkitTextFillColor: 'initial', display: 'inline-flex', alignItems: 'center' }}>
+                <Clock size={14} style={{ marginRight: 4 }} /> LATE RETURN
               </span>
             )}
           </h1>
+
         </div>
 
         {/* Section 1: Student Personal Details */}
         <div className="section-card">
           <div className="section-header">
-            <h3>👤 Student Personal Details</h3>
+            <h3 style={{ display: 'flex', alignItems: 'center' }}><User size={20} style={{ marginRight: 8 }} /> Student Personal Details</h3>
           </div>
+
           <div className="section-body info-grid-with-avatar">
             <div className="avatar-box">
               {s.photo && !imageError ? (
@@ -251,9 +255,11 @@ const WardenStudentView: React.FC = () => {
                       href={`tel:${s.phone}`}
                       className="dial-btn"
                       title="Call Student"
+                      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                     >
-                      📞
+                      <Phone size={14} />
                     </a>
+
                   )}
                 </div>
               </div>
@@ -266,9 +272,11 @@ const WardenStudentView: React.FC = () => {
                       href={`tel:${s.parentPhone || s.parentnumber}`}
                       className="dial-btn"
                       title="Call Parent"
+                      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                     >
-                      📞
+                      <Phone size={14} />
                     </a>
+
                   )}
                 </div>
               </div>
@@ -279,8 +287,9 @@ const WardenStudentView: React.FC = () => {
         {/* Section 3: Hostel Details */}
         <div className="section-card">
           <div className="section-header">
-            <h3>🏢 Hostel Details</h3>
+            <h3 style={{ display: 'flex', alignItems: 'center' }}><Building2 size={20} style={{ marginRight: 8 }} /> Hostel Details</h3>
           </div>
+
           <div className="section-body info-grid-4">
             <div className="field-group">
               <label>HOSTEL NAME</label>
@@ -296,8 +305,9 @@ const WardenStudentView: React.FC = () => {
         {/* Section 4: Outpass Request Details */}
         <div className="section-card highlight-border">
           <div className="section-header">
-            <h3>📄 Outpass Request Details</h3>
+            <h3 style={{ display: 'flex', alignItems: 'center' }}><FileText size={20} style={{ marginRight: 8 }} /> Outpass Request Details</h3>
           </div>
+
           <div className="section-body">
             <div className="field-group full-width">
               <label>REASON FOR OUTPASS</label>
@@ -322,7 +332,18 @@ const WardenStudentView: React.FC = () => {
                   className="display-box"
                   style={isLateReturn ? { borderColor: '#FCA5A5', background: '#FEF2F2', color: '#EF4444', fontWeight: 'bold' } : (student.in ? { color: '#10B981', fontWeight: 'bold' } : {})}
                 >
-                  {student.in ? (isEmergency ? '✅ Returned' : (isLateReturn ? '⏳ Late Return' : '✅ On Time Return')) : '🚪 Not Returned Yet'}
+                  {student.in ? (
+                    isEmergency ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center' }}><CheckCircle size={16} style={{ marginRight: 6, color: '#10B981' }} /> Returned</span>
+                    ) : isLateReturn ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center' }}><Clock size={16} style={{ marginRight: 6, color: '#EF4444' }} /> Late Return</span>
+                    ) : (
+                      <span style={{ display: 'inline-flex', alignItems: 'center' }}><CheckCircle size={16} style={{ marginRight: 6, color: '#10B981' }} /> On Time Return</span>
+                    )
+                  ) : (
+                    <span style={{ display: 'inline-flex', alignItems: 'center' }}><LogOut size={16} style={{ marginRight: 6, color: '#64748B' }} /> Not Returned Yet</span>
+                  )}
+
                 </div>
               </div>
             </div>
@@ -334,9 +355,11 @@ const WardenStudentView: React.FC = () => {
                   <button
                     className="view-doc-btn"
                     onClick={() => handleViewDocument(student.proof || student.document || student.file)}
+                    style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                   >
-                    <span>👁️</span> View Document
+                    <Eye size={16} style={{ marginRight: 6 }} /> View Document
                   </button>
+
                 </div>
               </div>
             )}
@@ -347,8 +370,9 @@ const WardenStudentView: React.FC = () => {
         {student.outpasstype?.toLowerCase() !== 'hostelemergency' && (
           <div className="section-card">
             <div className="section-header">
-              <h3>✅ Approval Status &amp; Workflow</h3>
+              <h3 style={{ display: 'flex', alignItems: 'center' }}><CheckCircle size={20} style={{ marginRight: 8 }} /> Approval Status &amp; Workflow</h3>
             </div>
+
             <div className="section-body">
               <div className="workflow-status-grid">
                 {/* Staff Approval */}
@@ -451,12 +475,13 @@ const WardenStudentView: React.FC = () => {
         {/* Section 6: Gate Movement Details */}
         <div className="section-card gate-movement-card">
           <div className="section-header">
-            <h3>🚪 Gate Movement Timeline</h3>
+            <h3 style={{ display: 'flex', alignItems: 'center' }}><LogIn size={20} style={{ marginRight: 8 }} /> Gate Movement Timeline</h3>
           </div>
+
           <div className="section-body">
             <div className="movement-timeline">
               <div className="timeline-item completed">
-                <div className="timeline-badge">📝</div>
+                <div className="timeline-badge" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><FileText size={16} /></div>
                 <div className="timeline-panel">
                   <h4 className="timeline-title">Outpass Request Applied</h4>
                   <p className="timeline-time">
@@ -466,7 +491,7 @@ const WardenStudentView: React.FC = () => {
               </div>
 
               <div className={`timeline-item ${wardenStatus === 'approved' ? 'completed' : 'pending'}`}>
-                <div className="timeline-badge">{wardenStatus === 'approved' ? '✅' : '⏳'}</div>
+                <div className="timeline-badge" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{wardenStatus === 'approved' ? <Check size={16} /> : <Clock size={16} />}</div>
                 <div className="timeline-panel">
                   <h4 className="timeline-title">Warden Approval Status</h4>
                   <p className="timeline-time">
@@ -480,7 +505,7 @@ const WardenStudentView: React.FC = () => {
               </div>
 
               <div className={`timeline-item ${student.out ? 'completed' : 'pending emergency-placeholder'}`}>
-                <div className="timeline-badge">{student.out ? '📤' : '🚪'}</div>
+                <div className="timeline-badge" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{student.out ? <LogOut size={16} /> : <LogIn size={16} />}</div>
                 <div className="timeline-panel">
                   <h4 className="timeline-title">Gate Exit Departure</h4>
                   <p className="timeline-time">
@@ -494,15 +519,15 @@ const WardenStudentView: React.FC = () => {
               </div>
 
               <div className={`timeline-item ${student.in ? 'completed' : 'pending emergency-placeholder'} ${isLateReturn ? 'timeline-item-late' : ''}`}>
-                <div className="timeline-badge">{isLateReturn ? '⏰' : (student.in ? '📥' : '🏠')}</div>
+                <div className="timeline-badge" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{isLateReturn ? <Clock size={16} /> : (student.in ? <LogIn size={16} /> : <Home size={16} />)}</div>
                 <div className="timeline-panel" style={isLateReturn ? { borderColor: '#FCA5A5', background: '#FEF2F2' } : {}}>
                   <h4 className="timeline-title" style={isLateReturn ? { color: '#B91C1C', display: 'flex', alignItems: 'center', gap: '6px' } : {}}>
                     Gate Entry Arrival
                     {isLateReturn && <span className="late-timeline-tag">LATE</span>}
                   </h4>
                   {isLateReturn && (
-                    <p className="late-timeline-desc" style={{ color: '#B91C1C', fontSize: '0.8rem', margin: '0 0 6px 0', fontWeight: 600 }}>
-                      ⚠️ Student returned late. Expected back by: {new Date(student.toDate).toLocaleString()}
+                    <p className="late-timeline-desc" style={{ color: '#B91C1C', fontSize: '0.8rem', margin: '0 0 6px 0', fontWeight: 600, display: 'inline-flex', alignItems: 'center' }}>
+                      <AlertTriangle size={16} style={{ color: '#EF4444', marginRight: 8 }} /> Student returned late. Expected back by: {new Date(student.toDate).toLocaleString()}
                     </p>
                   )}
                   <p className="timeline-time">
@@ -514,6 +539,7 @@ const WardenStudentView: React.FC = () => {
                   </p>
                 </div>
               </div>
+
             </div>
           </div>
         </div>
@@ -522,8 +548,9 @@ const WardenStudentView: React.FC = () => {
         {outpassHistory && outpassHistory.length > 0 && (
           <div className="section-card gate-movement-card">
             <div className="section-header">
-              <h3>📜 Outpass History</h3>
+              <h3 style={{ display: 'flex', alignItems: 'center' }}><History size={20} style={{ marginRight: 8 }} /> Outpass History</h3>
             </div>
+
             <div className="section-body" style={{ padding: '20px' }}>
               <div className="history-grid" style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                 {outpassHistory.map((historyItem, idx) => {

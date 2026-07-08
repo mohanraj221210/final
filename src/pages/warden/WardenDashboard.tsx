@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { type User } from '../../data/sampleData';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
+import { ClipboardList, Clock, CheckCircle, XCircle, LogOut, LogIn, Trees, GraduationCap, AlertTriangle, Home, UserMinus, Ticket } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
 /*  Animated Counter Hook                                              */
@@ -648,12 +649,12 @@ const Dashboard: React.FC = () => {
     ];
 
     const kpiCards = [
-        { label: 'Total Requests', value: aniTotal,    icon: '📋', color: '#3B82F6', bg: 'rgba(59,130,246,0.08)',  trend: '+12%', up: true,  sparkData: [3,5,4,8,6,9,7,10] },
-        { label: 'Pending',        value: aniPending,  icon: '⏳', color: '#F59E0B', bg: 'rgba(245,158,11,0.08)',  trend: '-8%',  up: false, sparkData: [8,6,9,5,7,4,6,3]  },
-        { label: 'Approved',       value: aniApproved, icon: '✅', color: '#10B981', bg: 'rgba(16,185,129,0.08)',  trend: '+20%', up: true,  sparkData: [4,6,5,8,7,10,9,12] },
-        { label: 'Rejected',       value: aniRejected, icon: '❌', color: '#EF4444', bg: 'rgba(239,68,68,0.08)',   trend: '0%',   up: true,  sparkData: [2,1,3,0,2,1,0,1]  },
-        { label: 'Checked Out',    value: aniOut,      icon: '🚪', color: '#8B5CF6', bg: 'rgba(139,92,246,0.08)', trend: '+15%', up: true,  sparkData: [2,4,3,6,5,8,6,9]  },
-        { label: 'Checked In',     value: aniIn,       icon: '🏠', color: '#EC4899', bg: 'rgba(236,72,153,0.08)', trend: '+5%',  up: true,  sparkData: [1,3,2,5,4,6,5,7]  },
+        { label: 'Total Requests', value: aniTotal,    icon: <ClipboardList size={22} />, color: '#3B82F6', bg: 'rgba(59,130,246,0.08)',  trend: '+12%', up: true,  sparkData: [3,5,4,8,6,9,7,10] },
+        { label: 'Pending',        value: aniPending,  icon: <Clock size={22} />, color: '#F59E0B', bg: 'rgba(245,158,11,0.08)',  trend: '-8%',  up: false, sparkData: [8,6,9,5,7,4,6,3]  },
+        { label: 'Approved',       value: aniApproved, icon: <CheckCircle size={22} />, color: '#10B981', bg: 'rgba(16,185,129,0.08)',  trend: '+20%', up: true,  sparkData: [4,6,5,8,7,10,9,12] },
+        { label: 'Rejected',       value: aniRejected, icon: <XCircle size={22} />, color: '#EF4444', bg: 'rgba(239,68,68,0.08)',   trend: '0%',   up: true,  sparkData: [2,1,3,0,2,1,0,1]  },
+        { label: 'Checked Out',    value: aniOut,      icon: <LogOut size={22} />, color: '#8B5CF6', bg: 'rgba(139,92,246,0.08)', trend: '+15%', up: true,  sparkData: [2,4,3,6,5,8,6,9]  },
+        { label: 'Checked In',     value: aniIn,       icon: <LogIn size={22} />, color: '#EC4899', bg: 'rgba(236,72,153,0.08)', trend: '+5%',  up: true,  sparkData: [1,3,2,5,4,6,5,7]  },
     ];
 
     return (
@@ -710,7 +711,7 @@ const Dashboard: React.FC = () => {
                                         </div>
                                     )}
                                     <p className="wdp-hero-greeting">{getGreeting()},</p>
-                                    <h1 className="wdp-hero-title">Hello, {user.name || 'Warden'} 👋</h1>
+                                    <h1 className="wdp-hero-title">Hello, {user.name || 'Warden'}</h1>
                                     <p className="wdp-hero-subtitle">
                                         Manage hostel outpass approvals, student movements,<br />
                                         and campus security efficiently.
@@ -896,10 +897,10 @@ const Dashboard: React.FC = () => {
                                     <p className="wdp-chart-sub" style={{ marginBottom: '20px' }}>Distribution by type</p>
                                     <div className="wdp-category-list">
                                         {[
-                                            { label: 'Home', count: stats.Home,      icon: '🏡', color: '#3B82F6' },
-                                            { label: 'Outing', count: stats.Outing,  icon: '🌳', color: '#F59E0B' },
-                                            { label: 'OD', count: stats.OD,          icon: '🎓', color: '#10B981' },
-                                            { label: 'Emergency', count: stats.Emergency, icon: '🚨', color: '#EF4444' },
+                                            { label: 'Home', count: stats.Home,      icon: <Home size={18} />, color: '#3B82F6' },
+                                            { label: 'Outing', count: stats.Outing,  icon: <Trees size={18} />, color: '#F59E0B' },
+                                            { label: 'OD', count: stats.OD,          icon: <GraduationCap size={18} />, color: '#10B981' },
+                                            { label: 'Emergency', count: stats.Emergency, icon: <AlertTriangle size={18} />, color: '#EF4444' },
                                         ].map((cat, i) => (
                                             <div key={i} className="wdp-category-item">
                                                 <div className="wdp-cat-header">
@@ -1040,8 +1041,8 @@ const Dashboard: React.FC = () => {
                                             </div>
                                         ) : (
                                             <div className="wdp-empty-state">
-                                                <div className="wdp-empty-icon">
-                                                    <span>🎫</span>
+                                                <div className="wdp-empty-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                    <Ticket size={40} style={{ color: '#CBD5E1' }} />
                                                 </div>
                                                 <h3>No Activity Logs</h3>
                                                 <p>Student gate activity logs under your hostel block will appear here in real time.</p>
@@ -1101,12 +1102,12 @@ const Dashboard: React.FC = () => {
                                             </span>
                                         </div>
                                         <div className="wdp-live-grid">
-                                            {[
-                                                { label: 'Hostel Occupancy', value: `${Math.max(stats.total - stats.out, 0)}`, icon: <IconHome />, color: '#3B82F6' },
-                                                { label: 'Students Outside', value: `${stats.out}`,  icon: '🚶', color: '#F59E0B' },
-                                                { label: 'Gate Activity',    value: `${stats.in}`,   icon: <IconActivity />, color: '#10B981' },
-                                                { label: 'Emergency Pass',   value: `${stats.Emergency}`, icon: '🚨', color: '#EF4444' },
-                                            ].map((item, i) => (
+                                                {[
+                                                    { label: 'Hostel Occupancy', value: `${Math.max(stats.total - stats.out, 0)}`, icon: <IconHome />, color: '#3B82F6' },
+                                                    { label: 'Students Outside', value: `${stats.out}`,  icon: <UserMinus size={16} />, color: '#F59E0B' },
+                                                    { label: 'Gate Activity',    value: `${stats.in}`,   icon: <IconActivity />, color: '#10B981' },
+                                                    { label: 'Emergency Pass',   value: `${stats.Emergency}`, icon: <AlertTriangle size={16} />, color: '#EF4444' },
+                                                ].map((item, i) => (
                                                 <div key={i} className="wdp-live-item">
                                                     <div className="wdp-live-icon" style={{ color: item.color }}>
                                                         {item.icon}
@@ -1125,12 +1126,12 @@ const Dashboard: React.FC = () => {
                                         <h3 className="wdp-sidebar-title">Hostel Insights</h3>
                                         <div className="wdp-insights-list">
                                             {[
-                                                { label: 'Students Inside Hostel', value: Math.max(stats.total - stats.out, 0), color: '#3B82F6', icon: '🏠' },
-                                                { label: 'Students Outside',        value: stats.out,       color: '#F59E0B', icon: '🚶' },
-                                                { label: 'Emergency Passes',        value: stats.Emergency, color: '#EF4444', icon: '🚨' },
-                                                { label: 'Home Passes',             value: stats.Home,      color: '#10B981', icon: '🏡' },
-                                                { label: 'OD Passes',               value: stats.OD,        color: '#8B5CF6', icon: '🎓' },
-                                                { label: 'Outing Passes',           value: stats.Outing,    color: '#EC4899', icon: '🌳' },
+                                                { label: 'Students Inside Hostel', value: Math.max(stats.total - stats.out, 0), color: '#3B82F6', icon: <Home size={16} /> },
+                                                { label: 'Students Outside',        value: stats.out,       color: '#F59E0B', icon: <UserMinus size={16} /> },
+                                                { label: 'Emergency Passes',        value: stats.Emergency, color: '#EF4444', icon: <AlertTriangle size={16} /> },
+                                                { label: 'Home Passes',             value: stats.Home,      color: '#10B981', icon: <Home size={16} /> },
+                                                { label: 'OD Passes',               value: stats.OD,        color: '#8B5CF6', icon: <GraduationCap size={16} /> },
+                                                { label: 'Outing Passes',           value: stats.Outing,    color: '#EC4899', icon: <Trees size={16} /> },
                                             ].map((item, i) => (
                                                 <div key={i} className="wdp-insight-row">
                                                     <span className="wdp-insight-icon">{item.icon}</span>

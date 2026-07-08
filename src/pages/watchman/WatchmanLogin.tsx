@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from 'react-router-dom';
 import Toast from '../../components/Toast';
 import axios from 'axios';
+import { Shield, Ticket, Video, Siren, Lock, Globe } from 'lucide-react';
 import { toast, ToastContainer } from "react-toastify";
 import SEO from '../../components/SEO';
 
@@ -200,16 +201,16 @@ const WatchmanLogin: React.FC = () => {
   };
 
   const featureCards = [
-    { icon: '🛡️', label: 'Gate\nControl' },
-    { icon: '🎫', label: 'Pass\nVerification' },
-    { icon: '📹', label: 'Campus\nSecurity' },
-    { icon: '🚨', label: 'Incident\nReports' },
+    { icon: <Shield size={24} style={{ display: 'inline-flex' }} />, label: 'Gate\nControl' },
+    { icon: <Ticket size={24} style={{ display: 'inline-flex' }} />, label: 'Pass\nVerification' },
+    { icon: <Video size={24} style={{ display: 'inline-flex' }} />, label: 'Campus\nSecurity' },
+    { icon: <Siren size={24} style={{ display: 'inline-flex' }} />, label: 'Incident\nReports' },
   ];
 
   const footerItems = [
-    { icon: '🔒', title: 'Secure & Encrypted', sub: 'Role-based access control' },
-    { icon: '🛡️', title: 'Campus Security', sub: 'Gate pass verification' },
-    { icon: '🌍', title: 'Always On Duty', sub: '24/7 campus protection' },
+    { icon: <Lock size={20} style={{ display: 'inline-flex' }} />, title: 'Secure & Encrypted', sub: 'Role-based access control' },
+    { icon: <Shield size={20} style={{ display: 'inline-flex' }} />, title: 'Campus Security', sub: 'Gate pass verification' },
+    { icon: <Globe size={20} style={{ display: 'inline-flex' }} />, title: 'Always On Duty', sub: '24/7 campus protection' },
   ];
 
   return (

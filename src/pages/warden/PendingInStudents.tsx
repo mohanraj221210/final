@@ -3,6 +3,8 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import WardenNav from "../../components/WardenNav";
 import { toast, ToastContainer } from "react-toastify";
+import { ClipboardList } from 'lucide-react';
+
 
 const PendingInStudents: React.FC = () => {
   const navigate = useNavigate();
@@ -154,7 +156,7 @@ const PendingInStudents: React.FC = () => {
                     <tr>
                       <td colSpan={7} className="wd-empty-cell">
                         <div className="wd-table-empty">
-                          <span className="wd-empty-icon">📋</span>
+                          <span className="wd-empty-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><ClipboardList size={40} style={{ color: '#CBD5E1' }} /></span>
                           <h3 className="wd-empty-title">No Pending Records Found</h3>
                           <p className="wd-empty-desc">All checked-out students have returned to the hostel.</p>
                         </div>

@@ -3,6 +3,8 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import WardenNav from "../../components/WardenNav";
 import LoadingSpinner from "../../components/LoadingSpinner";
+import { Calendar, ChevronDown, AlertTriangle } from 'lucide-react';
+
 
 const WardenEmergencyOutpassList: React.FC = () => {
     const navigate = useNavigate();
@@ -85,9 +87,10 @@ const WardenEmergencyOutpassList: React.FC = () => {
 
                     <div className="filter-tabs">
                         <div style={{ position: 'relative', display: 'inline-block', marginRight: '10px' }}>
-                            <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '14px', pointerEvents: 'none' }}>
-                                📅
+                            <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', display: 'inline-flex', alignItems: 'center', pointerEvents: 'none' }}>
+                                <Calendar size={16} />
                             </span>
+
                             <select
                                 className="date-filter-select"
                                 value={dateFilter}
@@ -113,9 +116,10 @@ const WardenEmergencyOutpassList: React.FC = () => {
                                 <option value="this_week">This Week</option>
                                 <option value="this_month">This Month</option>
                             </select>
-                            <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '10px', pointerEvents: 'none' }}>
-                                ▼
+                            <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', display: 'inline-flex', alignItems: 'center', pointerEvents: 'none' }}>
+                                <ChevronDown size={14} />
                             </span>
+
                         </div>
                         <button
                             className="apply-emergency-btn"
@@ -177,7 +181,8 @@ const WardenEmergencyOutpassList: React.FC = () => {
                                             </td>
                                             <td data-label="Emergency Reason">
                                                 {item.reason}
-                                                <span className="emergency-badge">🚨 EMERGENCY</span>
+                                                <span className="emergency-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><AlertTriangle size={12} /> EMERGENCY</span>
+
                                             </td>
                                             <td data-label="Status">
                                                 <span className={`status ${item.status?.toLowerCase() === 'rejected' ? 'rejected' : 'approved'}`}>
@@ -226,7 +231,8 @@ const WardenEmergencyOutpassList: React.FC = () => {
                                     <p className="card-details">
                                         {item.studentid?.year ? `Year ${item.studentid.year} • ` : ''}
                                         Applied on {new Date(item.createdAt || item.fromDate).toLocaleDateString()}
-                                        <div className="emergency-badge mobile">🚨 EMERGENCY</div>
+                                        <div className="emergency-badge mobile" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><AlertTriangle size={12} /> EMERGENCY</div>
+
                                     </p>
 
                                     <div className="card-footer" style={{ flexWrap: 'wrap', gap: '8px' }}>

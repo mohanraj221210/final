@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import WardenNav from "../../components/WardenNav";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { toast, ToastContainer } from "react-toastify";
+import { Search, AlertTriangle, CheckCircle } from 'lucide-react';
+
 
 interface Student {
     _id?: string;
@@ -110,8 +112,9 @@ const WardenEmergencyPendingOutpass: React.FC = () => {
                         ← Back to Dashboard
                     </button>
 
-                    <div className="search-bar-container">
-                        <span className="search-icon">🔍</span>
+                    <div className="search-bar-container" style={{ display: 'flex', alignItems: 'center' }}>
+                        <Search size={18} className="search-icon" style={{ position: 'absolute', left: '14px', color: '#94a3b8' }} />
+
                         <input
                             type="text"
                             placeholder="Search by name or reg no..."
@@ -123,7 +126,8 @@ const WardenEmergencyPendingOutpass: React.FC = () => {
                 </div>
 
                 <div className="title-row">
-                    <h1>🚨 Emergency Pending Outpasses</h1>
+                    <h1 style={{ display: 'flex', alignItems: 'center' }}><AlertTriangle size={28} style={{ color: '#EF4444', marginRight: '8px' }} /> Emergency Pending Outpasses</h1>
+
                     <span className="pending-badge-count">
                         {filteredOutpasses.length} Currently Out
                     </span>
@@ -150,8 +154,9 @@ const WardenEmergencyPendingOutpass: React.FC = () => {
                                     <tr>
                                         <td colSpan={7} className="no-data-cell" style={{ textAlign: "center", padding: "40px" }}>
                                             <div className="empty-state-content">
-                                                <span style={{ fontSize: "48px", display: "block", marginBottom: "16px" }}>✅</span>
+                                                <span style={{ display: "block", marginBottom: "16px" }}><CheckCircle size={48} style={{ color: '#10B981', margin: '0 auto' }} /></span>
                                                 <h3 style={{ color: "#1e3a8a", margin: "0 0 8px 0" }}>All Clear!</h3>
+
                                                 <p style={{ color: "#64748b", margin: 0 }}>No students are currently out on emergency leave.</p>
                                             </div>
                                         </td>
@@ -196,7 +201,8 @@ const WardenEmergencyPendingOutpass: React.FC = () => {
                                                 </div>
                                             </td>
                                             <td data-label="Status">
-                                                <span className="emergency-status-badge">🚨 OUT ON EMERGENCY</span>
+                                                <span className="emergency-status-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><AlertTriangle size={12} /> OUT ON EMERGENCY</span>
+
                                             </td>
                                             <td data-label="Action">
                                                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -228,7 +234,8 @@ const WardenEmergencyPendingOutpass: React.FC = () => {
                                 <div className="mobile-card" key={item._id}>
                                     <div className="card-header-reg">
                                         <span>Reg: {item.studentid?.registerNumber || 'N/A'}</span>
-                                        <span className="emergency-status-badge">🚨 OUT</span>
+                                        <span className="emergency-status-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><AlertTriangle size={12} /> OUT</span>
+
                                     </div>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
                                         {item.studentid?.photo ? (
