@@ -243,19 +243,9 @@ const YearInchargeLogin: React.FC = () => {
           {/* Brand */}
           <div className="yi-brand">
             <div className="yi-brand-logo">
-              <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-                <rect width="36" height="36" rx="9" fill="url(#yiBrandGrad)" />
-                <path d="M9 26L18 10L27 26H9Z" fill="white" fillOpacity="0.96" />
-                <rect x="14.5" y="20" width="7" height="6" rx="2" fill="url(#yiBrandGrad2)" />
-                <defs>
-                  <linearGradient id="yiBrandGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#D97706" /><stop offset="1" stopColor="#F59E0B" />
-                  </linearGradient>
-                  <linearGradient id="yiBrandGrad2" x1="0" y1="0" x2="7" y2="6" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#B45309" /><stop offset="1" stopColor="#D97706" />
-                  </linearGradient>
-                </defs>
-              </svg>
+              <div className="lux-logo-icon">
+                <img src="/orange permigo.png" alt="JIT Permigo" style={{ width: '50px', height: '50px', objectFit: 'contain', borderRadius: '4px' }} />
+              </div>
               <div className="yi-brand-text">
                 <span className="yi-brand-jit">JIT</span>
                 <span className="yi-brand-campus">PERMIGO</span>
@@ -301,27 +291,7 @@ const YearInchargeLogin: React.FC = () => {
         <main className="yi-right">
 
           {/* Mobile brand */}
-          <div className="yi-mobile-brand">
-            <div className="yi-brand-logo">
-              <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-                <rect width="36" height="36" rx="9" fill="url(#yiBrandGradMob)" />
-                <path d="M9 26L18 10L27 26H9Z" fill="white" fillOpacity="0.96" />
-                <rect x="14.5" y="20" width="7" height="6" rx="2" fill="url(#yiBrandGrad2Mob)" />
-                <defs>
-                  <linearGradient id="yiBrandGradMob" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#D97706" /><stop offset="1" stopColor="#F59E0B" />
-                  </linearGradient>
-                  <linearGradient id="yiBrandGrad2Mob" x1="0" y1="0" x2="7" y2="6" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#B45309" /><stop offset="1" stopColor="#D97706" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              <div className="yi-brand-text">
-                <span className="yi-brand-jit">JIT</span>
-                <span className="yi-brand-campus">PERMIGO</span>
-              </div>
-            </div>
-          </div>
+          
 
           {/* Back button */}
           <button className="yi-back-btn" onClick={() => navigate('/')}>
@@ -334,10 +304,9 @@ const YearInchargeLogin: React.FC = () => {
           {/* Floating logo */}
           <div className="yi-float-logo">
             <div className="yi-float-logo-inner">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="3" width="20" height="14" rx="2"/>
-                <path d="M8 21h8M12 17v4"/>
-              </svg>
+             
+                <img src="/orange permigo.png" alt="JIT Permigo" style={{ width: '50px', height: '50px', objectFit: 'contain', borderRadius: '4px' }} />
+      
             </div>
           </div>
 

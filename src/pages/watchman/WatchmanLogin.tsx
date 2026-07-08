@@ -241,19 +241,9 @@ const WatchmanLogin: React.FC = () => {
           {/* Brand */}
           <div className="wm-brand">
             <div className="wm-brand-logo">
-              <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-                <rect width="36" height="36" rx="9" fill="url(#wmBrandGrad)" />
-                <path d="M9 26L18 10L27 26H9Z" fill="white" fillOpacity="0.96" />
-                <rect x="14.5" y="20" width="7" height="6" rx="2" fill="url(#wmBrandGrad2)" />
-                <defs>
-                  <linearGradient id="wmBrandGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#059669" /><stop offset="1" stopColor="#10B981" />
-                  </linearGradient>
-                  <linearGradient id="wmBrandGrad2" x1="0" y1="0" x2="7" y2="6" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#047857" /><stop offset="1" stopColor="#059669" />
-                  </linearGradient>
-                </defs>
-              </svg>
+              <div className="lux-logo-icon">
+                <img src="/green permigo.png" alt="JIT Permigo" style={{ width: '50px', height: '50px', objectFit: 'contain', borderRadius: '4px' }} />
+              </div>
               <div className="wm-brand-text">
                 <span className="wm-brand-jit">JIT</span>
                 <span className="wm-brand-campus">PERMIGO</span>
@@ -299,27 +289,7 @@ const WatchmanLogin: React.FC = () => {
         <main className="wm-right">
 
           {/* Mobile brand */}
-          <div className="wm-mobile-brand">
-            <div className="wm-brand-logo">
-              <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-                <rect width="36" height="36" rx="9" fill="url(#wmBrandGradMob)" />
-                <path d="M9 26L18 10L27 26H9Z" fill="white" fillOpacity="0.96" />
-                <rect x="14.5" y="20" width="7" height="6" rx="2" fill="url(#wmBrandGrad2Mob)" />
-                <defs>
-                  <linearGradient id="wmBrandGradMob" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#059669" /><stop offset="1" stopColor="#10B981" />
-                  </linearGradient>
-                  <linearGradient id="wmBrandGrad2Mob" x1="0" y1="0" x2="7" y2="6" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#047857" /><stop offset="1" stopColor="#059669" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              <div className="wm-brand-text">
-                <span className="wm-brand-jit">JIT</span>
-                <span className="wm-brand-campus">PERMIGO</span>
-              </div>
-            </div>
-          </div>
+          
 
           {/* Back button */}
           <button className="wm-back-btn" onClick={() => navigate('/')}>
@@ -332,9 +302,9 @@ const WatchmanLogin: React.FC = () => {
           {/* Floating logo */}
           <div className="wm-float-logo">
             <div className="wm-float-logo-inner">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              </svg>
+              <div className="lux-logo-icon">
+                <img src="/green permigo.png" alt="JIT Permigo" style={{ width: '50px', height: '50px', objectFit: 'contain', borderRadius: '4px' }} />
+              </div>
             </div>
           </div>
 

@@ -592,16 +592,9 @@ const Welcome: React.FC = () => {
         <footer className="jit-footer" id="contact-section">
           <div className="jit-container jit-footer-inner">
             <div className="jit-footer-brand">
-              <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
-                <rect width="32" height="32" rx="9" fill="url(#ftG)" />
-                <path d="M8 24L16 9L24 24H8Z" fill="white" fillOpacity="0.95" />
-                <rect x="13" y="18" width="6" height="5" rx="1.5" fill="url(#ftG)" />
-                <defs>
-                  <linearGradient id="ftG" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#3B82F6" /><stop offset="1" stopColor="#1D4ED8" />
-                  </linearGradient>
-                </defs>
-              </svg>
+              <div className="lux-logo-icon">
+                <img src="/jit permigo.png" alt="JIT Permigo" style={{ width: '25px', height: '25px', objectFit: 'contain', borderRadius: '4px' }} />
+              </div>
               <span className="jit-footer-name">JIT Permigo</span>
             </div>
             <span className="jit-footer-copy">

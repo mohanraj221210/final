@@ -254,19 +254,9 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
           {/* JIT Logo wordmark */}
           <div className="lp-brand">
             <div className="lp-brand-logo">
-              <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-                <rect width="36" height="36" rx="9" fill="url(#lpBrandGrad)" />
-                <path d="M9 26L18 10L27 26H9Z" fill="white" fillOpacity="0.96" />
-                <rect x="14.5" y="20" width="7" height="6" rx="2" fill="url(#lpBrandGrad2)" />
-                <defs>
-                  <linearGradient id="lpBrandGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#2563EB" /><stop offset="1" stopColor="#60A5FA" />
-                  </linearGradient>
-                  <linearGradient id="lpBrandGrad2" x1="0" y1="0" x2="7" y2="6" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#1D4ED8" /><stop offset="1" stopColor="#3B82F6" />
-                  </linearGradient>
-                </defs>
-              </svg>
+              <div className="lux-logo-icon">
+                <img src="/jit permigo.png" alt="JIT Permigo" style={{ width: '50px', height: '50px', objectFit: 'contain', borderRadius: '4px' }} />
+              </div>
               <div className="lp-brand-text">
                 <span className="lp-brand-jit">JIT</span>
                 <span className="lp-brand-campus">PERMIGO</span>
@@ -320,28 +310,7 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
         <main className="lp-right">
 
           {/* Mobile Brand Header */}
-          <div className="lp-mobile-brand">
-            <div className="lp-brand-logo">
-              <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-                <rect width="36" height="36" rx="9" fill="url(#lpBrandGradMobile)" />
-                <path d="M9 26L18 10L27 26H9Z" fill="white" fillOpacity="0.96" />
-                <rect x="14.5" y="20" width="7" height="6" rx="2" fill="url(#lpBrandGrad2Mobile)" />
-                <defs>
-                  <linearGradient id="lpBrandGradMobile" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#2563EB" /><stop offset="1" stopColor="#60A5FA" />
-                  </linearGradient>
-                  <linearGradient id="lpBrandGrad2Mobile" x1="0" y1="0" x2="7" y2="6" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#1D4ED8" /><stop offset="1" stopColor="#3B82F6" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              <div className="lp-brand-text">
-                <span className="lp-brand-jit">JIT</span>
-                <span className="lp-brand-campus">PERMIGO</span>
-              </div>
-            </div>
-          </div>
-
+          
           {/* Back button */}
           <button className="lp-back-btn" onClick={() => navigate('/')}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -353,19 +322,9 @@ const Login: React.FC<LoginProps> = ({ initialType = 'student' }) => {
           {/* Floating 3D logo above card */}
           <div className="lp-float-logo">
             <div className="lp-float-logo-inner">
-              <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
-                <rect width="38" height="38" rx="11" fill="url(#lpFLGrad)" />
-                <path d="M10 27L19 11L28 27H10Z" fill="white" fillOpacity="0.95"/>
-                <rect x="15.5" y="21" width="7" height="6" rx="2" fill="url(#lpFLGrad2)" />
-                <defs>
-                  <linearGradient id="lpFLGrad" x1="0" y1="0" x2="38" y2="38" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#3B82F6" /><stop offset="1" stopColor="#93C5FD" />
-                  </linearGradient>
-                  <linearGradient id="lpFLGrad2" x1="0" y1="0" x2="7" y2="6" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#1D4ED8" /><stop offset="1" stopColor="#60A5FA" />
-                  </linearGradient>
-                </defs>
-              </svg>
+              <div className="lux-logo-icon">
+                <img src="/jit permigo.png" alt="JIT Permigo" style={{ width: '50px', height: '50px', objectFit: 'contain', borderRadius: '4px' }} />
+              </div>
             </div>
           </div>
 
