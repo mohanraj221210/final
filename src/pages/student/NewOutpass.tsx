@@ -167,6 +167,12 @@ const Outpass: React.FC = () => {
         e.preventDefault();
         setIsSubmitting(true);
 
+        if (!isEmergency && hasPendingOutpass) {
+            toast.error("You cannot apply for a non-emergency outpass while you have a pending request.");
+            setIsSubmitting(false);
+            return;
+        }
+
         if (!isEmergency && !isPortalOpen) {
             toast.error("Portal is open from 6:00 AM to 8:00 PM only.");
             setIsSubmitting(false);
@@ -412,7 +418,7 @@ const Outpass: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {hasPendingOutpass && (
+                                    {hasPendingOutpass && !isEmergency && (
                                         <div className="pb-notice-panel pb-panel-danger" style={{ marginTop: '24px' }}>
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '8px', flexShrink: 0 }}>
                                                 <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" />
@@ -585,9 +591,9 @@ const Outpass: React.FC = () => {
                                         <button
                                             type="submit"
                                             className="pb-submit-action-btn"
-                                            disabled={isSubmitting || hasPendingOutpass}
+                                            disabled={isSubmitting || (hasPendingOutpass && !isEmergency)}
                                         >
-                                            {isSubmitting ? 'Submitting...' : (hasPendingOutpass ? 'Pending Request Active' : 'Submit Outpass')}
+                                            {isSubmitting ? 'Submitting...' : ((hasPendingOutpass && !isEmergency) ? 'Pending Request Active' : 'Submit Outpass')}
                                         </button>
                                     </div>
                                 </form>
@@ -635,7 +641,7 @@ const Outpass: React.FC = () => {
                         )}
                     </div>
 
-                    {hasPendingOutpass && (
+                    {hasPendingOutpass && !isEmergency && (
                         <div className="pb-mob-alert-card pb-alert-danger pb-animate-stagger-2">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
                             <span>You have an active pending outpass request</span>
@@ -768,10 +774,10 @@ const Outpass: React.FC = () => {
                                     <button
                                         type="submit"
                                         className="pb-mob-cta-btn"
-                                        disabled={isSubmitting || hasPendingOutpass}
+                                        disabled={isSubmitting || (hasPendingOutpass && !isEmergency)}
                                         style={{ flex: 1 }}
                                     >
-                                        {isSubmitting ? 'Submitting…' : hasPendingOutpass ? 'Request Active' : 'Submit'}
+                                        {isSubmitting ? 'Submitting…' : (hasPendingOutpass && !isEmergency) ? 'Request Active' : 'Submit'}
                                     </button>
                                 </div>
                             </div>
