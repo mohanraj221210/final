@@ -600,7 +600,7 @@ const Welcome: React.FC = () => {
             <span className="jit-footer-copy">
               © 2025 Jeppiaar Institute of Technology. All rights reserved.
               <span style={{ margin: '0 10px', color: '#CBD5E1' }}>|</span>
-              Support: <a href="mailto:jeppiaaroutpass@gmail.com" className={`jit-support-email${highlightEmail ? ' email-highlight-pulse' : ''}`} style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 600, display: 'inline-block', transition: 'all 0.3s ease' }}>jeppiaaroutpass@gmail.com</a>
+              Support: <a href="mailto:outpass@jeppiaarinstitute.org" className={`jit-support-email${highlightEmail ? ' email-highlight-pulse' : ''}`} style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 600, display: 'inline-block', transition: 'all 0.3s ease' }}>outpass@jeppiaarinstitute.org</a>
             </span>
             <span className="jit-footer-tag">v2.0 · Digital Campus Platform</span>
           </div>

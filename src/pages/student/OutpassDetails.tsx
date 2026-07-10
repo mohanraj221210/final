@@ -192,8 +192,9 @@ const OutpassDetails: React.FC = () => {
     const isWithinTimeWindow = (fromDate: string, toDate: string) => {
         const now = currentTime;
         const fromTime = new Date(fromDate).getTime();
+        const thirtyMinsBefore = fromTime - 30 * 60 * 1000;
         const toTime = new Date(toDate).getTime();
-        return now >= fromTime && now <= toTime;
+        return now >= thirtyMinsBefore && now <= toTime;
     };
 
     const filteredOutpasses = outpasses.filter(op => {
@@ -555,7 +556,7 @@ const OutpassDetails: React.FC = () => {
                                                             <small>Valid from {formatDateTime(selectedOutpass.fromDate)} to {formatDateTime(selectedOutpass.toDate)}</small>
                                                         </p>
                                                     </div>
-                                                ) : new Date(currentTime).getTime() < new Date(selectedOutpass.fromDate).getTime() ? (
+                                                ) : new Date(currentTime).getTime() < new Date(selectedOutpass.fromDate).getTime() - 30 * 60 * 1000 ? (
                                                     <div className="pb-qr-expired">
                                                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: '#F59E0B' }}>
                                                             <circle cx="12" cy="12" r="10" />
@@ -754,7 +755,7 @@ const OutpassDetails: React.FC = () => {
                                                 Valid till: {formatDateTime(selectedOutpass.toDate)}
                                             </p>
                                         </div>
-                                    ) : new Date(currentTime).getTime() < new Date(selectedOutpass.fromDate).getTime() ? (
+                                    ) : new Date(currentTime).getTime() < new Date(selectedOutpass.fromDate).getTime() - 30 * 60 * 1000 ? (
                                         <div className="pb-mob-qr-expired">
                                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: '#F59E0B' }}>
                                                 <circle cx="12" cy="12" r="10" />
