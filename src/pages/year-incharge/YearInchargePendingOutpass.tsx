@@ -75,7 +75,7 @@ const YearInchargePendingOutpass: React.FC = () => {
                     pending: statsResult.pending,
                     approved: statsResult.approved,
                     rejected: statsResult.rejected,
-                    recentpasses: statsResult.recentpasses || []
+                    recentpasses: (statsResult.recentpasses || []).filter(pass => String(pass.outpasstype || '').toLowerCase().replace(/\s+/g, '') !== 'outing')
                 });
             }
         } catch (err) {
@@ -144,8 +144,9 @@ const YearInchargePendingOutpass: React.FC = () => {
 
             const result = await YearInchargeService.getPendingOutpasses(page, 10, appliedDate, search);
 
-            // Sort Emergency first
-            const sorted = result.data.sort((a: any, b: any) => {
+            // Filter out 'Outing' and Sort Emergency first
+            const filteredData = result.data.filter((item: any) => String(item.outpasstype || '').toLowerCase().replace(/\s+/g, '') !== 'outing');
+            const sorted = filteredData.sort((a: any, b: any) => {
                 const aType = String(a.outpasstype || '').toLowerCase();
                 const bType = String(b.outpasstype || '').toLowerCase();
                 if (aType === 'emergency' && bType !== 'emergency') return -1;
@@ -290,14 +291,10 @@ const YearInchargePendingOutpass: React.FC = () => {
                                 <p className="po-stats-card-sub">Distribution by outpass type</p>
                             </div>
                         </div>
-                        <div className="po-stats-grid po-stats-grid-4">
+                        <div className="po-stats-grid po-stats-grid-3">
                             <div className="po-stat-item po-stat-home">
                                 <span className="po-stat-val">{statsLoading ? <span className="po-stat-skeleton" /> : getTypeCount('Home')}</span>
                                 <span className="po-stat-label">🏠 Home</span>
-                            </div>
-                            <div className="po-stat-item po-stat-outing">
-                                <span className="po-stat-val">{statsLoading ? <span className="po-stat-skeleton" /> : getTypeCount('Outing')}</span>
-                                <span className="po-stat-label">🚶 Outing</span>
                             </div>
                             <div className="po-stat-item po-stat-emerg">
                                 <span className="po-stat-val">{statsLoading ? <span className="po-stat-skeleton" /> : getTypeCount('Emergency')}</span>
@@ -918,9 +915,6 @@ const YearInchargePendingOutpass: React.FC = () => {
                 .po-stat-home .po-stat-val   { color: #1d4ed8; }
                 .po-stat-home .po-stat-label { color: #1e40af; }
 
-                .po-stat-outing { background: #f0fdf4; border-color: #bbf7d0; }
-                .po-stat-outing .po-stat-val { color: #047857; }
-                .po-stat-outing .po-stat-label { color: #065f46; }
 
                 .po-stat-emerg  { background: #fff1f2; border-color: #fecdd3; }
                 .po-stat-emerg .po-stat-val  { color: #dc2626; }

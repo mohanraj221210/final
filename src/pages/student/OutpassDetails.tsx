@@ -203,7 +203,9 @@ const OutpassDetails: React.FC = () => {
     });
 
     const renderTimeline = (outpass: OutpassData) => {
-        const steps = [
+        const isOuting = outpass.outpassType?.toLowerCase().replace(/\s+/g, '') === 'outing';
+
+        const steps = !isOuting ? [
             {
                 title: 'Staff / Tutor Advisor',
                 status: outpass.staffApproval.status,
@@ -234,7 +236,7 @@ const OutpassDetails: React.FC = () => {
                     </svg>
                 )
             }
-        ];
+        ] : [];
 
         if (residenceType === 'hostel') {
             steps.push({
@@ -786,8 +788,10 @@ const OutpassDetails: React.FC = () => {
                                     <h3 className="pb-mob-section-header">Approval Timeline</h3>
                                     <div className="pb-mob-timeline">
                                 {[
-                                    { title: 'Staff / Tutor Advisor', ...selectedOutpass.staffApproval },
-                                    { title: 'Year Incharge', ...selectedOutpass.yearInchargeApproval },
+                                    ...(selectedOutpass.outpassType?.toLowerCase().replace(/\s+/g, '') === 'outing' ? [] : [
+                                        { title: 'Staff / Tutor Advisor', ...selectedOutpass.staffApproval },
+                                        { title: 'Year Incharge', ...selectedOutpass.yearInchargeApproval }
+                                    ]),
                                     ...(residenceType === 'hostel' ? [{ title: 'Hostel Warden', ...selectedOutpass.wardenApproval }] : [])
                                 ].map((step, idx, arr) => (
                                     <div key={idx} className="pb-mob-timeline-step">

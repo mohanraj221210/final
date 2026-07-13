@@ -182,11 +182,16 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ imageSrc, onCropComplete, o
                 }
                 .btn-cancel {
                     padding: 8px 16px;
-                    border: 1px solid #e2e8f0;
-                    background: white;
+                    border: 1px solid #cbd5e1;
+                    background: #f1f5f9;
+                    color: #0f172a;
                     border-radius: 6px;
                     cursor: pointer;
                     font-weight: 500;
+                    transition: all 0.2s;
+                }
+                .btn-cancel:hover {
+                    background: #e2e8f0;
                 }
                 .btn-save {
                     padding: 8px 16px;

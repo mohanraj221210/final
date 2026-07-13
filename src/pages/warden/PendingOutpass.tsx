@@ -123,10 +123,38 @@ const PendingOutpass: React.FC = () => {
         }
       );
 
-      const allData = res.data.outpasses || res.data.filterOutpass || res.data.data || res.data.students || [];
+      let allData = res.data.outpasses || res.data.filterOutpass || res.data.data || res.data.students || [];
+
+      // Fetch all outpasses to include pending 'Outing' passes which might be hidden by backend due to staff bypass
+      try {
+        const resAll = await axios.get(
+            `${import.meta.env.VITE_API_URL}/warden/outpass/list?search=${debouncedSearchTerm}&page=1&limit=300`,
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const allOutpasses = resAll.data.outpasses || resAll.data.filterOutpass || resAll.data.data || resAll.data.students || [];
+        const pendingOuting = allOutpasses.filter((item: any) => {
+            const type = String(item.outpasstype || item.outpassType || '').toLowerCase().replace(/\s+/g, '');
+            const ws = item.wardenapprovalstatus?.toLowerCase() || "";
+            const gs = item.status?.toLowerCase() || "";
+            return type === 'outing' && 
+                   ws !== 'approved' && ws !== 'rejected' && ws !== 'declined' &&
+                   gs !== 'approved' && gs !== 'rejected' && gs !== 'declined';
+        });
+        
+        const existingIds = new Set(allData.map((d: any) => d._id || d.id));
+        pendingOuting.forEach((item: any) => {
+            if (!existingIds.has(item._id || item.id)) {
+                allData.push(item);
+            }
+        });
+      } catch (err) {
+          console.error("Failed to fetch all outpasses for outing filter", err);
+      }
       const pendingData = allData.filter((item: any) => {
         const ws = item.wardenapprovalstatus?.toLowerCase() || "";
-        return ws !== 'approved' && ws !== 'rejected' && ws !== 'declined';
+        const gs = item.status?.toLowerCase() || "";
+        return ws !== 'approved' && ws !== 'rejected' && ws !== 'declined' &&
+               gs !== 'approved' && gs !== 'rejected' && gs !== 'declined';
       }).sort((a: any, b: any) => {
         // Priority 1: Emergency first
         const isAEmergency = (a.outpasstype || a.outpassType || '').toLowerCase() === 'emergency';

@@ -389,13 +389,49 @@ const Dashboard: React.FC = () => {
                 `${import.meta.env.VITE_API_URL}/warden/outpass/stats?filter=${filterVal}`,
                 { headers: { authorization: `Bearer ${token}` } }
             );
+
+            let statsObject = { total: 0, pending: 0, approved: 0, rejected: 0, Outing: 0, Home: 0, OD: 0, Emergency: 0, out: 0, in: 0 };
+            let recentList: any[] = [];
+
             if (response.status === 200 && response.data.stats) {
                 const facetData = response.data.stats?.[0] || { stats: [], recentpasses: [] };
-                const statsObject = facetData.stats?.[0] || { total: 0, pending: 0, approved: 0, rejected: 0, Outing: 0, Home: 0, OD: 0, Emergency: 0, out: 0, in: 0 };
-                const recentList = facetData.recentpasses || [];
-                setStats(statsObject);
-                setRecentPasses(recentList);
+                statsObject = { ...statsObject, ...(facetData.stats?.[0] || {}) };
+                recentList = facetData.recentpasses || [];
             }
+
+            // Fetch pending Outing passes from all list to bypass backend staff lock
+            try {
+                const resAll = await axios.get(
+                    `${import.meta.env.VITE_API_URL}/warden/outpass/list?page=1&limit=50`,
+                    { headers: { authorization: `Bearer ${token}` } }
+                );
+                const allOutpasses = resAll.data.outpasses || resAll.data.filterOutpass || resAll.data.data || resAll.data.students || [];
+                const pendingOuting = allOutpasses.filter((item: any) => {
+                    const type = String(item.outpasstype || item.outpassType || '').toLowerCase().replace(/\s+/g, '');
+                    const ws = item.wardenapprovalstatus?.toLowerCase() || "";
+                    return type === 'outing' && ws !== 'approved' && ws !== 'rejected' && ws !== 'declined';
+                });
+
+                if (pendingOuting.length > 0) {
+                    const existingIds = new Set(recentList.map((d: any) => d._id || d.id));
+                    let addedCount = 0;
+                    pendingOuting.forEach((item: any) => {
+                        if (!existingIds.has(item._id || item.id)) {
+                            recentList.unshift(item); // add to top of recent
+                            addedCount++;
+                        }
+                    });
+                    
+                    statsObject.pending = (statsObject.pending || 0) + addedCount;
+                    statsObject.total = (statsObject.total || 0) + addedCount;
+                    statsObject.Outing = (statsObject.Outing || 0) + addedCount;
+                }
+            } catch (err) {
+                console.error("Failed to fetch pending Outing passes for dashboard stats", err);
+            }
+
+            setStats(statsObject);
+            setRecentPasses(recentList);
         } catch (err) {
             console.error("Failed to load statistics:", err);
         } finally {
@@ -645,7 +681,7 @@ const Dashboard: React.FC = () => {
         { path: '/warden/scan',            icon: <IconQR />,    label: 'Scan QR',             desc: 'Verify outpass QR codes',       color: '#3B82F6', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.25)' },
         { path: '/warden/apply-emergency', icon: <IconAlertTriangle />, label: 'Emergency Alert', desc: 'Issue emergency outpass',   color: '#EF4444', bg: 'rgba(239,68,68,0.08)',  border: 'rgba(239,68,68,0.25)' },
         { path: '/warden/emergency-outpass-list', icon: <IconMedical />, label: 'Emergency Logs', desc: 'View emergency history',    color: '#8B5CF6', bg: 'rgba(139,92,246,0.08)', border: 'rgba(139,92,246,0.25)' },
-        { path: '/warden-profile',         icon: <IconUsers />, label: 'Student Search',     desc: 'Search hostel students',        color: '#EC4899', bg: 'rgba(236,72,153,0.08)', border: 'rgba(236,72,153,0.25)' },
+        { path: '/warden-profile',         icon: <IconUsers />, label: 'Profile',     desc: 'View and edit profile',        color: '#EC4899', bg: 'rgba(236,72,153,0.08)', border: 'rgba(236,72,153,0.25)' },
     ];
 
     const kpiCards = [

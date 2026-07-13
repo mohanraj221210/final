@@ -161,7 +161,7 @@ const WardenProfile: React.FC = () => {
   const handleSave = async () => {
     const formData = new FormData();
     if (selectedPhoto) {
-      formData.append("photo", selectedPhoto);
+      formData.append("file", selectedPhoto);
     }
     formData.append("name", warden.name);
     formData.append("hostelname", warden.hostelname);
@@ -249,7 +249,7 @@ const WardenProfile: React.FC = () => {
                           ? warden.photo.startsWith("blob:") ||
                             warden.photo.startsWith("http")
                             ? warden.photo
-                            : `${('').replace(/\/$/, '')}/${warden.photo.replace(/^\//, '')}?t=${imageRefreshKey}`
+                            : `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/${warden.photo.replace(/^\//, '')}?t=${imageRefreshKey}`
                           : "")
                       }
                       alt="Profile"

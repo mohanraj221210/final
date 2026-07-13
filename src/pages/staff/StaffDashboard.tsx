@@ -349,7 +349,7 @@ const StaffDashboard: React.FC = () => {
                                 staffApproval: item.staff?.status || item.staffapprovalstatus || item.status || 'pending',
                                 outpasstype: item.outpasstype || 'General'
                             };
-                        });
+                        }).filter((item: any) => String(item.outpasstype).toLowerCase().replace(/\s+/g, '') !== 'outing');
                         setRecentPasses(mappedRecent);
                     }
                 }

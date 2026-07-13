@@ -205,6 +205,10 @@ const Outpass: React.FC = () => {
                 submitData.append('file', selectedFile);
             }
 
+            // We cannot inject approval status fields here because the backend enforces strict validation 
+            // and will return a validation error ("staffapprovalstatus is not allowed").
+
+
             const response = await axios.post(
                 `${import.meta.env.VITE_API_URL}/api/outpass/apply`,
                 submitData,
@@ -222,7 +226,17 @@ const Outpass: React.FC = () => {
             }
         } catch (error: any) {
             console.error('Error submitting outpass:', error);
-            toast.error(error.response?.data?.message || 'Failed to submit application');
+            const errData = error.response?.data;
+            let errMsg = errData?.message || 'Failed to submit application';
+            if (errData?.error && typeof errData.error === 'string') {
+                errMsg = errData.error;
+            } else if (errData?.errors && Array.isArray(errData.errors)) {
+                errMsg = errData.errors.map((e: any) => e.msg || e.message || e).join(', ');
+            } else if (errData?.message && typeof errData.message === 'string' && errData.message.includes('validation')) {
+                // if the message is a generic 'validation error', try to find specifics
+                errMsg = errData.details || errData.message;
+            }
+            toast.error(errMsg);
         } finally {
             setIsSubmitting(false);
         }

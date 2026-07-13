@@ -241,7 +241,7 @@ const PendingPasses: React.FC = () => {
                                     residencetype: studentDetails.residencetype || 'dayScholar',
                                     document: item.proof || item.document || item.file || null
                                 };
-                            });
+                            }).filter((item: any) => String(item.outpasstype || '').toLowerCase().replace(/\s+/g, '') !== 'outing');
 
                         // Sort: Emergency first
                         mappedStudents.sort((a: any, b: any) => {
@@ -548,9 +548,8 @@ const PendingPasses: React.FC = () => {
                                     >
                                         <option value="all">All Types</option>
                                         <option value="Home">Home</option>
-                                        <option value="Outing">Outing</option>
                                         <option value="Emergency">Emergency</option>
-                                        <option value="OD">OD</option>
+                                        <option value="OD">On Duty</option>
                                     </select>
                                 </div>
 

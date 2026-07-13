@@ -314,10 +314,17 @@ export const YearInchargeService = {
             // Extract recentpasses if available
             const statsObj = response.data?.stats?.[0] || response.data?.data?.[0] || {};
             const recentpasses = statsObj?.recentpasses || response.data?.recentpasses || [];
+            
+            // Filter out 'Outing' passes since they bypass Year Incharge
+            const filteredRecent = Array.isArray(recentpasses) 
+                ? recentpasses
+                    .map(mapOutpassResponse)
+                    .filter(op => op.outpasstype.toLowerCase().replace(/\s+/g, '') !== 'outing')
+                : [];
 
             return {
                 ...mapped,
-                recentpasses: Array.isArray(recentpasses) ? recentpasses.map(mapOutpassResponse) : []
+                recentpasses: filteredRecent
             };
         } catch (error: any) {
             console.error(`[YearInchargeService.getStats] Error: Status: ${error.response?.status}, Data:`, error.response?.data || error.message);

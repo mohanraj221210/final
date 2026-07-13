@@ -279,6 +279,7 @@ const EmergencyOutpassApply: React.FC = () => {
                     border-radius: 16px;
                     border: 1px solid rgba(226, 232, 240, 0.8);
                     background: rgba(255, 255, 255, 0.9);
+                    color: #1e293b;
                     font-size: 1rem;
                     outline: none;
                     transition: all 0.3s;

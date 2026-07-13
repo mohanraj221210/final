@@ -20,7 +20,7 @@ const WardenScanQR: React.FC = () => {
     const [searchResults, setSearchResults] = useState<any[]>([]);
     const [searchLoading, setSearchLoading] = useState<boolean>(false);
     const [activeTab, setActiveTab] = useState<'scan' | 'search'>('scan');
-    const [, setLoadedFrom] = useState<'scan' | 'search'>('scan');
+    const [loadedFrom, setLoadedFrom] = useState<'scan' | 'search'>('scan');
     const [showLateModal, setShowLateModal] = useState<boolean>(false);
 
     const handleScan = async (text: string) => {
@@ -87,7 +87,7 @@ const WardenScanQR: React.FC = () => {
             const response = await axios.get(`${import.meta.env.VITE_API_URL}/warden/outpass/${scannedId}/${type}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            if (response.status === 200) {
+            if (response.status >= 200 && response.status < 300) {
                 toast.success(`Outpass marked as ${type.toUpperCase()} successfully`);
                 resetScan();
             }
@@ -355,13 +355,15 @@ const WardenScanQR: React.FC = () => {
                                             {/* Scan action buttons */}
                                             <div className="sd-result-actions">
                                                 {!outpassData.out ? (
-                                                    <button
-                                                        onClick={() => handleStatusUpdate('out')}
-                                                        className="sd-action-btn sd-btn-out"
-                                                        style={{ width: '100%', maxWidth: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-                                                    >
-                                                        <LogOut size={16} style={{ marginRight: '8px' }} /> Mark Student OUT
-                                                    </button>
+                                                    loadedFrom === 'scan' && (
+                                                        <button
+                                                            onClick={() => handleStatusUpdate('out')}
+                                                            className="sd-action-btn sd-btn-out"
+                                                            style={{ width: '100%', maxWidth: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                                                        >
+                                                            <LogOut size={16} style={{ marginRight: '8px' }} /> Mark Student OUT
+                                                        </button>
+                                                    )
                                                 ) : (
                                                     <button
                                                         onClick={handleInClick}
@@ -577,13 +579,16 @@ const WardenScanQR: React.FC = () => {
 
                 .sd-scanner-viewport-wrapper {
                     position: relative;
-                    width: 300px;
-                    height: 300px;
+                    width: 100%;
+                    max-width: 300px;
+                    aspect-ratio: 1;
+                    height: auto;
                     border-radius: 28px;
                     overflow: hidden;
                     box-shadow: 0 24px 48px rgba(0,0,0,0.12);
                     border: 6px solid white;
                     background: #000;
+                    margin: 0 auto;
                 }
 
                 .sd-scanner-glow-border {
@@ -1072,6 +1077,7 @@ const WardenScanQR: React.FC = () => {
                     .sd-header-row { flex-direction: column; align-items: stretch; gap: 16px; margin-bottom: 8px; }
                     .sd-scanner-card { padding: 24px 20px; border-radius: 20px; }
                     .sd-title { font-size: 1.5rem; }
+                    .sd-scanner-viewport-wrapper { max-width: 260px; }
                     
                     .sd-details-grid { grid-template-columns: 1fr; gap: 12px; }
                     .sd-detail-item.full-width { grid-column: span 1; }
@@ -1082,6 +1088,22 @@ const WardenScanQR: React.FC = () => {
                     
                     .sd-error-header { font-size: 1.2rem; }
                     .sd-success-title { font-size: 0.95rem; }
+
+                    /* Manual Search Mobile Optimization */
+                    .sd-tabs-container { flex-direction: column; gap: 8px; }
+                    .sd-tab-btn { width: 100%; }
+                    .sd-search-form { flex-direction: column; gap: 12px; }
+                    .sd-search-btn { width: 100%; padding: 14px; }
+                    .sd-search-result-item { flex-direction: column; align-items: flex-start; gap: 8px; }
+                    .sd-result-outpass-meta { 
+                        flex-direction: row; 
+                        justify-content: space-between; 
+                        align-items: center;
+                        width: 100%; 
+                        padding-top: 10px;
+                        margin-top: 4px;
+                        border-top: 1px dashed #e2e8f0;
+                    }
                 }
 
                 /* ====== MANUAL SEARCH ====== */
