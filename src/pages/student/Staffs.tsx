@@ -195,7 +195,7 @@ const Staffs: React.FC = () => {
                     ) : (
                         filteredStaff.map((staff, index) => {
                             const staggerIndex = (index % 5) + 1;
-                            const photoUrl = staff.photo ? (staff.photo.startsWith('http') ? staff.photo : `${import.meta.env.VITE_CDN_URL || ''}${staff.photo}`) : null;
+                            const photoUrl = staff.photo ? staff.photo : null;
                             return (
                                 <div key={staff._id} className={`pb-mob-staff-card pb-animate-stagger-${staggerIndex}`} onClick={() => navigate(`/staffs/${staff._id}`)  }>
                                     <div className="pb-mob-staff-avatar-ring">

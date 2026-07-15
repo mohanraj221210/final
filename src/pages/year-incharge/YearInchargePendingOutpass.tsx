@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import YearInchargeNav from "../../components/YearInchargeNav";
-import { YearInchargeService, type MappedOutpass } from "../../services/yearInchargeService";
+import { YearInchargeService, type MappedOutpass, calculateProfileCompletion } from "../../services/yearInchargeService";
+import { toast } from 'react-toastify';
 
 type ApiFilter = 'total' | 'today' | 'weekly' | 'monthly';
 const FILTER_OPTIONS: { value: ApiFilter; label: string; icon: string }[] = [
@@ -74,7 +75,7 @@ const YearInchargePendingOutpass: React.FC = () => {
                     pending: statsResult.pending,
                     approved: statsResult.approved,
                     rejected: statsResult.rejected,
-                    recentpasses: statsResult.recentpasses || []
+                    recentpasses: (statsResult.recentpasses || []).filter(pass => String(pass.outpasstype || '').toLowerCase().replace(/\s+/g, '') !== 'outing')
                 });
             }
         } catch (err) {
@@ -132,10 +133,20 @@ const YearInchargePendingOutpass: React.FC = () => {
         setError(null);
 
         try {
+            // Check profile completion first
+            const profileData = await YearInchargeService.getProfile();
+            const completion = calculateProfileCompletion(profileData);
+            if (completion < 100) {
+                toast.error("Please complete your profile 100% to handle outpasses");
+                navigate('/year-incharge-profile');
+                return;
+            }
+
             const result = await YearInchargeService.getPendingOutpasses(page, 10, appliedDate, search);
 
-            // Sort Emergency first
-            const sorted = result.data.sort((a: any, b: any) => {
+            // Filter out 'Outing' and Sort Emergency first
+            const filteredData = result.data.filter((item: any) => String(item.outpasstype || '').toLowerCase().replace(/\s+/g, '') !== 'outing');
+            const sorted = filteredData.sort((a: any, b: any) => {
                 const aType = String(a.outpasstype || '').toLowerCase();
                 const bType = String(b.outpasstype || '').toLowerCase();
                 if (aType === 'emergency' && bType !== 'emergency') return -1;
@@ -169,7 +180,7 @@ const YearInchargePendingOutpass: React.FC = () => {
 
     const handleViewDocument = (url: string | null) => {
         if (!url) return;
-        const fullUrl = url.startsWith('http') ? url : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${url.replace(/^\//, '')}`;
+        const fullUrl = url;
         setDocumentUrl(fullUrl);
         if (url.toLowerCase().endsWith('.pdf')) {
             setDocumentType('pdf');
@@ -246,7 +257,7 @@ const YearInchargePendingOutpass: React.FC = () => {
                     <div className="po-stats-card">
                         <div className="po-stats-card-header">
                             <div className="po-stats-card-icon-wrap po-icon-wrap-blue">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" /></svg>
                             </div>
                             <div>
                                 <h3 className="po-stats-card-title">Approval Overview</h3>
@@ -273,21 +284,17 @@ const YearInchargePendingOutpass: React.FC = () => {
                     <div className="po-stats-card">
                         <div className="po-stats-card-header">
                             <div className="po-stats-card-icon-wrap po-icon-wrap-purple">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" /><line x1="7" y1="7" x2="7.01" y2="7" /></svg>
                             </div>
                             <div>
                                 <h3 className="po-stats-card-title">Outpass Categories</h3>
                                 <p className="po-stats-card-sub">Distribution by outpass type</p>
                             </div>
                         </div>
-                        <div className="po-stats-grid po-stats-grid-4">
+                        <div className="po-stats-grid po-stats-grid-3">
                             <div className="po-stat-item po-stat-home">
                                 <span className="po-stat-val">{statsLoading ? <span className="po-stat-skeleton" /> : getTypeCount('Home')}</span>
                                 <span className="po-stat-label">🏠 Home</span>
-                            </div>
-                            <div className="po-stat-item po-stat-outing">
-                                <span className="po-stat-val">{statsLoading ? <span className="po-stat-skeleton" /> : getTypeCount('Outing')}</span>
-                                <span className="po-stat-label">🚶 Outing</span>
                             </div>
                             <div className="po-stat-item po-stat-emerg">
                                 <span className="po-stat-val">{statsLoading ? <span className="po-stat-skeleton" /> : getTypeCount('Emergency')}</span>
@@ -384,10 +391,10 @@ const YearInchargePendingOutpass: React.FC = () => {
                     {loading ? (
                         [1, 2, 3, 4, 5].map((idx) => (
                             <div className="po-card po-card-skeleton" key={idx}>
-                                <div className="po-skeleton" style={{width:140, height:52, borderRadius:12}} />
+                                <div className="po-skeleton" style={{ width: 140, height: 52, borderRadius: 12 }} />
                                 <div className="po-skeleton-body">
-                                    <div className="po-skeleton" style={{width:'55%', height:22}} />
-                                    <div className="po-skeleton" style={{width:'80%', height:15, marginTop:6}} />
+                                    <div className="po-skeleton" style={{ width: '55%', height: 22 }} />
+                                    <div className="po-skeleton" style={{ width: '80%', height: 15, marginTop: 6 }} />
                                 </div>
                                 <div className="po-card-right"></div>
                             </div>
@@ -908,9 +915,6 @@ const YearInchargePendingOutpass: React.FC = () => {
                 .po-stat-home .po-stat-val   { color: #1d4ed8; }
                 .po-stat-home .po-stat-label { color: #1e40af; }
 
-                .po-stat-outing { background: #f0fdf4; border-color: #bbf7d0; }
-                .po-stat-outing .po-stat-val { color: #047857; }
-                .po-stat-outing .po-stat-label { color: #065f46; }
 
                 .po-stat-emerg  { background: #fff1f2; border-color: #fecdd3; }
                 .po-stat-emerg .po-stat-val  { color: #dc2626; }

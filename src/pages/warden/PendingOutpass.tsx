@@ -3,6 +3,8 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import WardenNav from "../../components/WardenNav";
 import { toast, ToastContainer } from "react-toastify";
+import { Search, Calendar, ChevronDown, Sparkles, FileText } from 'lucide-react';
+
 
 interface Student {
   _id?: string;
@@ -121,10 +123,38 @@ const PendingOutpass: React.FC = () => {
         }
       );
 
-      const allData = res.data.outpasses || res.data.filterOutpass || res.data.data || res.data.students || [];
+      let allData = res.data.outpasses || res.data.filterOutpass || res.data.data || res.data.students || [];
+
+      // Fetch all outpasses to include pending 'Outing' passes which might be hidden by backend due to staff bypass
+      try {
+        const resAll = await axios.get(
+            `${import.meta.env.VITE_API_URL}/warden/outpass/list?search=${debouncedSearchTerm}&page=1&limit=300`,
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const allOutpasses = resAll.data.outpasses || resAll.data.filterOutpass || resAll.data.data || resAll.data.students || [];
+        const pendingOuting = allOutpasses.filter((item: any) => {
+            const type = String(item.outpasstype || item.outpassType || '').toLowerCase().replace(/\s+/g, '');
+            const ws = item.wardenapprovalstatus?.toLowerCase() || "";
+            const gs = item.status?.toLowerCase() || "";
+            return type === 'outing' && 
+                   ws !== 'approved' && ws !== 'rejected' && ws !== 'declined' &&
+                   gs !== 'approved' && gs !== 'rejected' && gs !== 'declined';
+        });
+        
+        const existingIds = new Set(allData.map((d: any) => d._id || d.id));
+        pendingOuting.forEach((item: any) => {
+            if (!existingIds.has(item._id || item.id)) {
+                allData.push(item);
+            }
+        });
+      } catch (err) {
+          console.error("Failed to fetch all outpasses for outing filter", err);
+      }
       const pendingData = allData.filter((item: any) => {
         const ws = item.wardenapprovalstatus?.toLowerCase() || "";
-        return ws !== 'approved' && ws !== 'rejected' && ws !== 'declined';
+        const gs = item.status?.toLowerCase() || "";
+        return ws !== 'approved' && ws !== 'rejected' && ws !== 'declined' &&
+               gs !== 'approved' && gs !== 'rejected' && gs !== 'declined';
       }).sort((a: any, b: any) => {
         // Priority 1: Emergency first
         const isAEmergency = (a.outpasstype || a.outpassType || '').toLowerCase() === 'emergency';
@@ -160,7 +190,7 @@ const PendingOutpass: React.FC = () => {
 
   const handleViewDocument = (url: string | null) => {
     if (!url) return;
-    const fullUrl = `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${url.replace(/^\//, '')}`;
+    const fullUrl = `${url}`;
     setDocumentUrl(fullUrl);
     if (url.toLowerCase().endsWith('.pdf')) {
       setDocumentType('pdf');
@@ -200,9 +230,9 @@ const PendingOutpass: React.FC = () => {
   const getStudentAvatar = (s: Student) => {
     const studentPhoto = s.student?.photo || (typeof s.studentid === 'object' ? s.studentid?.photo : undefined);
     if (studentPhoto && !imageErrors[s._id || s.id || '']) {
-      const src = studentPhoto.startsWith('http') || studentPhoto.startsWith('data:')
+      const src = studentPhoto.startsWith('data:')
         ? studentPhoto
-        : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${studentPhoto.replace(/^\//, '')}`;
+        : `${studentPhoto}`;
       return (
         <img
           src={src}
@@ -244,8 +274,9 @@ const PendingOutpass: React.FC = () => {
             </div>
 
             <div className="wd-controls">
-              <div className="wd-search-wrapper">
-                <span className="wd-search-icon">🔍</span>
+              <div className="wd-search-wrapper" style={{ display: 'flex', alignItems: 'center' }}>
+                <Search size={18} className="wd-search-icon" style={{ position: 'absolute', left: '16px', color: '#94A3B8' }} />
+
                 <input
                   type="text"
                   placeholder="Search name, register no..."
@@ -255,8 +286,8 @@ const PendingOutpass: React.FC = () => {
                 />
               </div>
 
-              <div className="wd-dropdown-wrapper">
-                <span className="wd-dropdown-icon">📅</span>
+              <div className="wd-dropdown-wrapper" style={{ display: 'flex', alignItems: 'center' }}>
+                <Calendar size={18} className="wd-dropdown-icon" style={{ position: 'absolute', left: '14px', color: '#94A3B8' }} />
                 <select
                   className="wd-filter-dropdown"
                   value={dateFilter}
@@ -268,8 +299,9 @@ const PendingOutpass: React.FC = () => {
                   <option value="this_week">This Week</option>
                   <option value="this_month">This Month</option>
                 </select>
-                <span className="wd-dropdown-arrow">▼</span>
+                <ChevronDown size={14} className="wd-dropdown-arrow" style={{ position: 'absolute', right: '14px', color: '#64748B', pointerEvents: 'none' }} />
               </div>
+
             </div>
           </div>
 
@@ -281,10 +313,11 @@ const PendingOutpass: React.FC = () => {
             </div>
           ) : filteredStudents.length === 0 ? (
             <div className="wd-empty-state">
-              <span className="wd-empty-icon">✨</span>
+              <span className="wd-empty-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><Sparkles size={40} style={{ color: '#CBD5E1' }} /></span>
               <h3 className="wd-empty-title">All Caught Up!</h3>
               <p className="wd-empty-desc">There are no pending outpass requests matching your criteria.</p>
             </div>
+
           ) : (
             <div className="wd-cards-grid">
               {filteredStudents.map((s) => {
@@ -350,7 +383,8 @@ const PendingOutpass: React.FC = () => {
                             handleViewDocument(url);
                           }}
                         >
-                          📄 View Document
+                          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><FileText size={14} style={{ marginRight: '6px' }} /> View Document</span>
+
                         </button>
                       )}
                       <button className="wd-btn-review">

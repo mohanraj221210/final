@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import YearInchargeNav from '../../components/YearInchargeNav';
-import { YearInchargeService } from '../../services/yearInchargeService';
+import { YearInchargeService, calculateProfileCompletion } from '../../services/yearInchargeService';
+import { GraduationCap, Home, Building2, Phone, Users, CheckCircle, XCircle, Clock, Eye, ClipboardList, FileText, X } from 'lucide-react';
+
 
 const YearInchargeStudentView: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -26,6 +28,15 @@ const YearInchargeStudentView: React.FC = () => {
             }
 
             try {
+                // Check profile completion first
+                const profileData = await YearInchargeService.getProfile();
+                const completion = calculateProfileCompletion(profileData);
+                if (completion < 100) {
+                    toast.error("Please complete your profile 100% to handle outpasses");
+                    navigate('/year-incharge-profile');
+                    return;
+                }
+
                 const data = await YearInchargeService.getOutpassDetails(id!);
                 if (data && data._id) {
                     setOutpass(data);
@@ -88,7 +99,7 @@ const YearInchargeStudentView: React.FC = () => {
             toast.error("Document not found");
             return;
         }
-        const fullUrl = url.startsWith('http') ? url : `${import.meta.env.VITE_CDN_URL}${url}`;
+        const fullUrl = url;
         setDocumentUrl(fullUrl);
         // Basic check for PDF
         if (url.toLowerCase().endsWith('.pdf')) {
@@ -193,9 +204,9 @@ const YearInchargeStudentView: React.FC = () => {
                             <div className="avatar-large">
                                 {outpass.studentid?.photo && !imageError ? (
                                     <img
-                                        src={outpass.studentid.photo.startsWith('http') || outpass.studentid.photo.startsWith('data:')
+                                        src={outpass.studentid.photo.startsWith('data:')
                                             ? outpass.studentid.photo
-                                            : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${outpass.studentid.photo.replace(/^\//, '')}`}
+                                            : `${outpass.studentid.photo}`}
                                         alt="Student"
                                         style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
                                         onError={() => setImageError(true)}
@@ -209,7 +220,7 @@ const YearInchargeStudentView: React.FC = () => {
                         </div>
                         <div className="card-body-modern">
                             <div className="info-row-modern">
-                                <span className="icon">🎓</span>
+                                <span className="icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><GraduationCap size={18} /></span>
                                 <div>
                                     <label>Department & Year</label>
                                     <p>
@@ -218,7 +229,7 @@ const YearInchargeStudentView: React.FC = () => {
                                 </div>
                             </div>
                             <div className="info-row-modern">
-                                <span className="icon">🏠</span>
+                                <span className="icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><Home size={18} /></span>
                                 <div>
                                     <label>Residence Type</label>
                                     <p style={{ textTransform: 'capitalize' }}>
@@ -226,9 +237,10 @@ const YearInchargeStudentView: React.FC = () => {
                                     </p>
                                 </div>
                             </div>
+
                             {typeof outpass.studentid?.residencetype === 'string' && outpass.studentid.residencetype.toLowerCase().replace(/\s/g, '') !== 'dayscholar' && (
                                 <div className="info-row-modern">
-                                    <span className="icon">🏢</span>
+                                    <span className="icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><Building2 size={18} /></span>
                                     <div>
                                         <label>Accommodation</label>
                                         <p>
@@ -238,9 +250,10 @@ const YearInchargeStudentView: React.FC = () => {
                                         </p>
                                     </div>
                                 </div>
+
                             )}
                             <div className="info-row-modern">
-                                <span className="icon">📞</span>
+                                <span className="icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><Phone size={18} /></span>
                                 <div>
                                     <label>Contact Number</label>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -251,14 +264,14 @@ const YearInchargeStudentView: React.FC = () => {
                                                 className="dial-btn"
                                                 title="Call Student"
                                             >
-                                                📞
+                                                <Phone size={12} />
                                             </a>
                                         )}
                                     </div>
                                 </div>
                             </div>
                             <div className="info-row-modern">
-                                <span className="icon">👨‍👩‍👧‍👦</span>
+                                <span className="icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><Users size={18} /></span>
                                 <div>
                                     <label>Parent Contact</label>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -272,12 +285,13 @@ const YearInchargeStudentView: React.FC = () => {
                                                 className="dial-btn"
                                                 title="Call Parent"
                                             >
-                                                📞
+                                                <Phone size={12} />
                                             </a>
                                         )}
                                     </div>
                                 </div>
                             </div>
+
                         </div>
                     </div>
 
@@ -388,9 +402,10 @@ const YearInchargeStudentView: React.FC = () => {
                                             cursor: 'pointer'
                                         }}
                                     >
-                                        <span style={{ fontSize: '1.1rem' }}>👁️</span> View Document
+                                        <Eye size={16} /> View Document
                                     </button>
                                 </div>
+
                             )}
 
                             <div className="detail-group">
@@ -414,8 +429,9 @@ const YearInchargeStudentView: React.FC = () => {
                                 alignItems: 'center',
                                 gap: '8px'
                             }}>
-                                📋 Audit Log & History
+                                <ClipboardList size={18} /> Audit Log & History
                             </h3>
+
                             <div className="audit-timeline" style={{
                                 display: 'flex',
                                 flexDirection: 'column',
@@ -423,7 +439,7 @@ const YearInchargeStudentView: React.FC = () => {
                             }}>
                                 {/* Applied Entry */}
                                 <div style={{ display: 'flex', gap: '12px' }}>
-                                    <div style={{ fontSize: '1rem' }}>📝</div>
+                                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><FileText size={16} /></div>
                                     <div>
                                         <p style={{ margin: 0, fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>Applied At</p>
                                         <p style={{ margin: 0, color: '#64748b', fontSize: '0.85rem' }}>
@@ -435,12 +451,14 @@ const YearInchargeStudentView: React.FC = () => {
                                     </div>
                                 </div>
 
+
                                 {/* Staff Entry */}
                                 {(staffName !== 'N/A' || staffStatus !== 'pending') && (
-                                    <div style={{ display: 'flex', gap: '12px' }}>
-                                        <div style={{ fontSize: '1rem' }}>
-                                            {staffStatus === 'approved' ? '✅' : staffStatus === 'rejected' ? '❌' : '⏳'}
+                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                        <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            {staffStatus === 'approved' ? <CheckCircle size={16} style={{ color: '#22c55e' }} /> : staffStatus === 'rejected' ? <XCircle size={16} style={{ color: '#ef4444' }} /> : <Clock size={16} style={{ color: '#f59e0b' }} />}
                                         </div>
+
                                         <div>
                                             <p style={{ margin: 0, fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>
                                                 Staff Decision: {staffStatus.charAt(0).toUpperCase() + staffStatus.slice(1)}
@@ -458,10 +476,11 @@ const YearInchargeStudentView: React.FC = () => {
 
                                 {/* Year Incharge Entry */}
                                 {yearInchargeStatus !== 'pending' && (
-                                    <div style={{ display: 'flex', gap: '12px' }}>
-                                        <div style={{ fontSize: '1rem' }}>
-                                            {yearInchargeStatus === 'approved' ? '✅' : '❌'}
+                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                        <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            {yearInchargeStatus === 'approved' ? <CheckCircle size={16} style={{ color: '#22c55e' }} /> : <XCircle size={16} style={{ color: '#ef4444' }} />}
                                         </div>
+
                                         <div>
                                             <p style={{ margin: 0, fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>
                                                 Year Incharge Decision: {yearInchargeStatus.charAt(0).toUpperCase() + yearInchargeStatus.slice(1)}
@@ -493,10 +512,11 @@ const YearInchargeStudentView: React.FC = () => {
 
                                 {/* Warden Entry */}
                                 {wardenStatus !== 'pending' && (
-                                    <div style={{ display: 'flex', gap: '12px' }}>
-                                        <div style={{ fontSize: '1rem' }}>
-                                            {wardenStatus === 'approved' ? '✅' : '❌'}
+                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                        <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            {wardenStatus === 'approved' ? <CheckCircle size={16} style={{ color: '#22c55e' }} /> : <XCircle size={16} style={{ color: '#ef4444' }} />}
                                         </div>
+
                                         <div>
                                             <p style={{ margin: 0, fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>
                                                 Warden Decision: {wardenStatus.charAt(0).toUpperCase() + wardenStatus.slice(1)}
@@ -562,7 +582,7 @@ const YearInchargeStudentView: React.FC = () => {
                         {showApproveModal && (
                             <div className="modal-overlay" onClick={() => setShowApproveModal(false)}>
                                 <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', padding: '32px', textAlign: 'center', borderRadius: '24px' }}>
-                                    <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px' }}>✅</span>
+                                    <CheckCircle size={48} style={{ color: '#10b981', margin: '0 auto 16px', display: 'block' }} />
                                     <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1e293b', marginBottom: '12px' }}>Confirm Approval</h3>
                                     <p style={{ color: '#64748b', fontSize: '0.95rem', marginBottom: '24px', lineHeight: 1.5 }}>
                                         Are you sure you want to approve this outpass request? This action cannot be undone.
@@ -613,7 +633,7 @@ const YearInchargeStudentView: React.FC = () => {
                     <div className="modal-content doc-modal" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
                             <h3>Document Viewer</h3>
-                            <button className="close-btn" onClick={() => setShowDocumentModal(false)}>×</button>
+                            <button className="close-btn" onClick={() => setShowDocumentModal(false)} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></button>
                         </div>
                         <div className="modal-body doc-body">
                             {documentType === 'image' ? (

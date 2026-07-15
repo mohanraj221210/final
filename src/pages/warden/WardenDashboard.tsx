@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { type User } from '../../data/sampleData';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
+import { ClipboardList, Clock, CheckCircle, XCircle, LogOut, LogIn, Trees, GraduationCap, AlertTriangle, Home, UserMinus, Ticket } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
 /*  Animated Counter Hook                                              */
@@ -388,13 +389,49 @@ const Dashboard: React.FC = () => {
                 `${import.meta.env.VITE_API_URL}/warden/outpass/stats?filter=${filterVal}`,
                 { headers: { authorization: `Bearer ${token}` } }
             );
+
+            let statsObject = { total: 0, pending: 0, approved: 0, rejected: 0, Outing: 0, Home: 0, OD: 0, Emergency: 0, out: 0, in: 0 };
+            let recentList: any[] = [];
+
             if (response.status === 200 && response.data.stats) {
                 const facetData = response.data.stats?.[0] || { stats: [], recentpasses: [] };
-                const statsObject = facetData.stats?.[0] || { total: 0, pending: 0, approved: 0, rejected: 0, Outing: 0, Home: 0, OD: 0, Emergency: 0, out: 0, in: 0 };
-                const recentList = facetData.recentpasses || [];
-                setStats(statsObject);
-                setRecentPasses(recentList);
+                statsObject = { ...statsObject, ...(facetData.stats?.[0] || {}) };
+                recentList = facetData.recentpasses || [];
             }
+
+            // Fetch pending Outing passes from all list to bypass backend staff lock
+            try {
+                const resAll = await axios.get(
+                    `${import.meta.env.VITE_API_URL}/warden/outpass/list?page=1&limit=50`,
+                    { headers: { authorization: `Bearer ${token}` } }
+                );
+                const allOutpasses = resAll.data.outpasses || resAll.data.filterOutpass || resAll.data.data || resAll.data.students || [];
+                const pendingOuting = allOutpasses.filter((item: any) => {
+                    const type = String(item.outpasstype || item.outpassType || '').toLowerCase().replace(/\s+/g, '');
+                    const ws = item.wardenapprovalstatus?.toLowerCase() || "";
+                    return type === 'outing' && ws !== 'approved' && ws !== 'rejected' && ws !== 'declined';
+                });
+
+                if (pendingOuting.length > 0) {
+                    const existingIds = new Set(recentList.map((d: any) => d._id || d.id));
+                    let addedCount = 0;
+                    pendingOuting.forEach((item: any) => {
+                        if (!existingIds.has(item._id || item.id)) {
+                            recentList.unshift(item); // add to top of recent
+                            addedCount++;
+                        }
+                    });
+                    
+                    statsObject.pending = (statsObject.pending || 0) + addedCount;
+                    statsObject.total = (statsObject.total || 0) + addedCount;
+                    statsObject.Outing = (statsObject.Outing || 0) + addedCount;
+                }
+            } catch (err) {
+                console.error("Failed to fetch pending Outing passes for dashboard stats", err);
+            }
+
+            setStats(statsObject);
+            setRecentPasses(recentList);
         } catch (err) {
             console.error("Failed to load statistics:", err);
         } finally {
@@ -406,6 +443,11 @@ const Dashboard: React.FC = () => {
         const fetchUserData = async () => {
             setLoading(true);
             const token = localStorage.getItem('token');
+            if (!token) {
+                localStorage.clear();
+                navigate('/warden-login');
+                return;
+            }
             const userType = localStorage.getItem('userType');
             if (token) {
                 try {
@@ -517,25 +559,103 @@ const Dashboard: React.FC = () => {
 
     const profilePhoto = user.photo;
     const avatarSrc = profilePhoto
-        ? (profilePhoto.startsWith('http') || profilePhoto.startsWith('data:')
+        ? (profilePhoto.startsWith('data:')
             ? profilePhoto
-            : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${profilePhoto.replace(/^\//, '')}`)
+            : `${profilePhoto}`)
         : null;
 
     const maxTypeCount = Math.max(stats.Home, stats.Outing, stats.OD, stats.Emergency, 1);
 
-    // Chart data
-    const chartData = {
-        today: [2, 5, 3, 7, 4, 8, 6],
-        weekly: [12, 18, 14, 22, 16, 25, 20],
-        monthly: [45, 62, 55, 78, 60, 82, 71],
-        total: [120, 180, 145, 210, 165, 240, 195],
-    };
-    const chartLabels = {
-        today: ['09','10','11','12','13','14','15'],
-        weekly: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
-        monthly: ['W1','W2','W3','W4','W5','W6','W7'],
-        total: ['Jan','Feb','Mar','Apr','May','Jun','Jul'],
+    // Dynamic chart data builder based on stats response
+    const getDynamicChartData = (): { data: number[]; labels: string[] } => {
+        const now = new Date();
+        
+        if (statsFilter === 'today') {
+            const labels = ['06AM', '08AM', '10AM', '12PM', '02PM', '04PM', '06PM'];
+            const data = [0, 0, 0, 0, 0, 0, 0];
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            todayStart.setHours(0, 0, 0, 0);
+            
+            recentPasses.forEach(pass => {
+                const d = new Date(pass.createdAt);
+                if (d >= todayStart) {
+                    const h = d.getHours();
+                    if (h >= 6 && h < 8) data[0]++;
+                    else if (h >= 8 && h < 10) data[1]++;
+                    else if (h >= 10 && h < 12) data[2]++;
+                    else if (h >= 12 && h < 14) data[3]++;
+                    else if (h >= 14 && h < 16) data[4]++;
+                    else if (h >= 16 && h < 18) data[5]++;
+                    else if (h >= 18 || h < 6) data[6]++;
+                }
+            });
+            return { data, labels };
+        }
+        
+        if (statsFilter === 'weekly') {
+            const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const data = [0, 0, 0, 0, 0, 0, 0];
+            
+            // Get start of the current week (Monday)
+            const currentDay = now.getDay();
+            const distanceToMonday = currentDay === 0 ? 6 : currentDay - 1;
+            const mondayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - distanceToMonday);
+            mondayStart.setHours(0, 0, 0, 0);
+            
+            recentPasses.forEach(pass => {
+                const d = new Date(pass.createdAt);
+                if (d >= mondayStart) {
+                    const dayIdx = d.getDay();
+                    const mapIdx = dayIdx === 0 ? 6 : dayIdx - 1;
+                    if (mapIdx >= 0 && mapIdx < 7) {
+                        data[mapIdx]++;
+                    }
+                }
+            });
+            return { data, labels };
+        }
+        
+        if (statsFilter === 'monthly') {
+            const labels = ['W1', 'W2', 'W3', 'W4', 'W5'];
+            const data = [0, 0, 0, 0, 0];
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+            
+            recentPasses.forEach(pass => {
+                const d = new Date(pass.createdAt);
+                if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+                    const dateNum = d.getDate();
+                    const weekIdx = Math.min(Math.floor((dateNum - 1) / 7), 4);
+                    data[weekIdx]++;
+                }
+            });
+            return { data, labels };
+        }
+        
+        // total (all time, bucketed by month of the current year)
+        if (statsFilter === 'total') {
+            const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const data = new Array(12).fill(0);
+            const currentYear = now.getFullYear();
+            
+            recentPasses.forEach(pass => {
+                const d = new Date(pass.createdAt);
+                if (d.getFullYear() === currentYear) {
+                    const monthIdx = d.getMonth();
+                    if (monthIdx >= 0 && monthIdx < 12) {
+                        data[monthIdx]++;
+                    }
+                }
+            });
+            
+            const currentMonthIdx = now.getMonth();
+            return {
+                data: data.slice(0, currentMonthIdx + 1),
+                labels: labels.slice(0, currentMonthIdx + 1)
+            };
+        }
+        
+        return { data: [], labels: [] };
     };
 
     const donutSegments = [
@@ -555,20 +675,22 @@ const Dashboard: React.FC = () => {
 
     const quickActions = [
         { path: '/warden/pending-outpass', icon: <IconClock />, label: 'Pending Approvals', desc: 'Review & approve outpass requests', color: '#F59E0B', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)' },
+        { path: '/warden/emergency-pending-outpass', icon: <IconClock />, label: 'Emergency Pending', desc: 'Manage pending emergency leaves', color: '#EF4444', bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.25)' },
         { path: '/warden/outpass-list',    icon: <IconList />,  label: 'Outpass List',       desc: 'View all processed outpasses',  color: '#10B981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.25)' },
+        { path: '/warden/pending-in',      icon: <IconAlertTriangle />, label: 'Pending In', desc: 'Students not checked in',       color: '#EAB308', bg: 'rgba(234,179,8,0.08)', border: 'rgba(234,179,8,0.25)' },
         { path: '/warden/scan',            icon: <IconQR />,    label: 'Scan QR',             desc: 'Verify outpass QR codes',       color: '#3B82F6', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.25)' },
         { path: '/warden/apply-emergency', icon: <IconAlertTriangle />, label: 'Emergency Alert', desc: 'Issue emergency outpass',   color: '#EF4444', bg: 'rgba(239,68,68,0.08)',  border: 'rgba(239,68,68,0.25)' },
         { path: '/warden/emergency-outpass-list', icon: <IconMedical />, label: 'Emergency Logs', desc: 'View emergency history',    color: '#8B5CF6', bg: 'rgba(139,92,246,0.08)', border: 'rgba(139,92,246,0.25)' },
-        { path: '/warden-profile',         icon: <IconUsers />, label: 'Student Search',     desc: 'Search hostel students',        color: '#EC4899', bg: 'rgba(236,72,153,0.08)', border: 'rgba(236,72,153,0.25)' },
+        { path: '/warden-profile',         icon: <IconUsers />, label: 'Profile',     desc: 'View and edit profile',        color: '#EC4899', bg: 'rgba(236,72,153,0.08)', border: 'rgba(236,72,153,0.25)' },
     ];
 
     const kpiCards = [
-        { label: 'Total Requests', value: aniTotal,    icon: '📋', color: '#3B82F6', bg: 'rgba(59,130,246,0.08)',  trend: '+12%', up: true,  sparkData: [3,5,4,8,6,9,7,10] },
-        { label: 'Pending',        value: aniPending,  icon: '⏳', color: '#F59E0B', bg: 'rgba(245,158,11,0.08)',  trend: '-8%',  up: false, sparkData: [8,6,9,5,7,4,6,3]  },
-        { label: 'Approved',       value: aniApproved, icon: '✅', color: '#10B981', bg: 'rgba(16,185,129,0.08)',  trend: '+20%', up: true,  sparkData: [4,6,5,8,7,10,9,12] },
-        { label: 'Rejected',       value: aniRejected, icon: '❌', color: '#EF4444', bg: 'rgba(239,68,68,0.08)',   trend: '0%',   up: true,  sparkData: [2,1,3,0,2,1,0,1]  },
-        { label: 'Checked Out',    value: aniOut,      icon: '🚪', color: '#8B5CF6', bg: 'rgba(139,92,246,0.08)', trend: '+15%', up: true,  sparkData: [2,4,3,6,5,8,6,9]  },
-        { label: 'Checked In',     value: aniIn,       icon: '🏠', color: '#EC4899', bg: 'rgba(236,72,153,0.08)', trend: '+5%',  up: true,  sparkData: [1,3,2,5,4,6,5,7]  },
+        { label: 'Total Requests', value: aniTotal,    icon: <ClipboardList size={22} />, color: '#3B82F6', bg: 'rgba(59,130,246,0.08)',  trend: '+12%', up: true,  sparkData: [3,5,4,8,6,9,7,10] },
+        { label: 'Pending',        value: aniPending,  icon: <Clock size={22} />, color: '#F59E0B', bg: 'rgba(245,158,11,0.08)',  trend: '-8%',  up: false, sparkData: [8,6,9,5,7,4,6,3]  },
+        { label: 'Approved',       value: aniApproved, icon: <CheckCircle size={22} />, color: '#10B981', bg: 'rgba(16,185,129,0.08)',  trend: '+20%', up: true,  sparkData: [4,6,5,8,7,10,9,12] },
+        { label: 'Rejected',       value: aniRejected, icon: <XCircle size={22} />, color: '#EF4444', bg: 'rgba(239,68,68,0.08)',   trend: '0%',   up: true,  sparkData: [2,1,3,0,2,1,0,1]  },
+        { label: 'Checked Out',    value: aniOut,      icon: <LogOut size={22} />, color: '#8B5CF6', bg: 'rgba(139,92,246,0.08)', trend: '+15%', up: true,  sparkData: [2,4,3,6,5,8,6,9]  },
+        { label: 'Checked In',     value: aniIn,       icon: <LogIn size={22} />, color: '#EC4899', bg: 'rgba(236,72,153,0.08)', trend: '+5%',  up: true,  sparkData: [1,3,2,5,4,6,5,7]  },
     ];
 
     return (
@@ -625,7 +747,7 @@ const Dashboard: React.FC = () => {
                                         </div>
                                     )}
                                     <p className="wdp-hero-greeting">{getGreeting()},</p>
-                                    <h1 className="wdp-hero-title">Hello, {user.name || 'Warden'} 👋</h1>
+                                    <h1 className="wdp-hero-title">Hello, {user.name || 'Warden'}</h1>
                                     <p className="wdp-hero-subtitle">
                                         Manage hostel outpass approvals, student movements,<br />
                                         and campus security efficiently.
@@ -754,15 +876,22 @@ const Dashboard: React.FC = () => {
                                         </div>
                                     </div>
                                     <div className="wdp-line-chart-wrap">
-                                        <LineChart
-                                            data={chartData[statsFilter]}
-                                            color="#3B82F6"
-                                        />
-                                        <div className="wdp-chart-labels">
-                                            {chartLabels[statsFilter].map((l, i) => (
-                                                <span key={i}>{l}</span>
-                                            ))}
-                                        </div>
+                                        {(() => {
+                                            const { data, labels } = getDynamicChartData();
+                                            return (
+                                                <>
+                                                    <LineChart
+                                                        data={data}
+                                                        color="#3B82F6"
+                                                    />
+                                                    <div className="wdp-chart-labels">
+                                                        {labels.map((l, i) => (
+                                                            <span key={i}>{l}</span>
+                                                        ))}
+                                                    </div>
+                                                </>
+                                            );
+                                        })()}
                                     </div>
                                 </div>
 
@@ -804,10 +933,10 @@ const Dashboard: React.FC = () => {
                                     <p className="wdp-chart-sub" style={{ marginBottom: '20px' }}>Distribution by type</p>
                                     <div className="wdp-category-list">
                                         {[
-                                            { label: 'Home', count: stats.Home,      icon: '🏡', color: '#3B82F6' },
-                                            { label: 'Outing', count: stats.Outing,  icon: '🌳', color: '#F59E0B' },
-                                            { label: 'OD', count: stats.OD,          icon: '🎓', color: '#10B981' },
-                                            { label: 'Emergency', count: stats.Emergency, icon: '🚨', color: '#EF4444' },
+                                            { label: 'Home', count: stats.Home,      icon: <Home size={18} />, color: '#3B82F6' },
+                                            { label: 'Outing', count: stats.Outing,  icon: <Trees size={18} />, color: '#F59E0B' },
+                                            { label: 'OD', count: stats.OD,          icon: <GraduationCap size={18} />, color: '#10B981' },
+                                            { label: 'Emergency', count: stats.Emergency, icon: <AlertTriangle size={18} />, color: '#EF4444' },
                                         ].map((cat, i) => (
                                             <div key={i} className="wdp-category-item">
                                                 <div className="wdp-cat-header">
@@ -948,8 +1077,8 @@ const Dashboard: React.FC = () => {
                                             </div>
                                         ) : (
                                             <div className="wdp-empty-state">
-                                                <div className="wdp-empty-icon">
-                                                    <span>🎫</span>
+                                                <div className="wdp-empty-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                    <Ticket size={40} style={{ color: '#CBD5E1' }} />
                                                 </div>
                                                 <h3>No Activity Logs</h3>
                                                 <p>Student gate activity logs under your hostel block will appear here in real time.</p>
@@ -985,7 +1114,6 @@ const Dashboard: React.FC = () => {
                                         <div className="wdp-profile-divider" />
                                         <div className="wdp-profile-details">
                                             {[
-                                                { label: 'Staff ID',   value: user.staffid?.id || 'N/A' },
                                                 { label: 'Department', value: user.department || 'Hostel Block' },
                                                 { label: 'Email',      value: user.email || 'N/A' },
                                                 { label: 'Mobile',     value: user.phone || 'N/A' },
@@ -1010,12 +1138,12 @@ const Dashboard: React.FC = () => {
                                             </span>
                                         </div>
                                         <div className="wdp-live-grid">
-                                            {[
-                                                { label: 'Hostel Occupancy', value: `${Math.max(stats.total - stats.out, 0)}`, icon: <IconHome />, color: '#3B82F6' },
-                                                { label: 'Students Outside', value: `${stats.out}`,  icon: '🚶', color: '#F59E0B' },
-                                                { label: 'Gate Activity',    value: `${stats.in}`,   icon: <IconActivity />, color: '#10B981' },
-                                                { label: 'Emergency Pass',   value: `${stats.Emergency}`, icon: '🚨', color: '#EF4444' },
-                                            ].map((item, i) => (
+                                                {[
+                                                    { label: 'Hostel Occupancy', value: `${Math.max(stats.total - stats.out, 0)}`, icon: <IconHome />, color: '#3B82F6' },
+                                                    { label: 'Students Outside', value: `${stats.out}`,  icon: <UserMinus size={16} />, color: '#F59E0B' },
+                                                    { label: 'Gate Activity',    value: `${stats.in}`,   icon: <IconActivity />, color: '#10B981' },
+                                                    { label: 'Emergency Pass',   value: `${stats.Emergency}`, icon: <AlertTriangle size={16} />, color: '#EF4444' },
+                                                ].map((item, i) => (
                                                 <div key={i} className="wdp-live-item">
                                                     <div className="wdp-live-icon" style={{ color: item.color }}>
                                                         {item.icon}
@@ -1034,12 +1162,12 @@ const Dashboard: React.FC = () => {
                                         <h3 className="wdp-sidebar-title">Hostel Insights</h3>
                                         <div className="wdp-insights-list">
                                             {[
-                                                { label: 'Students Inside Hostel', value: Math.max(stats.total - stats.out, 0), color: '#3B82F6', icon: '🏠' },
-                                                { label: 'Students Outside',        value: stats.out,       color: '#F59E0B', icon: '🚶' },
-                                                { label: 'Emergency Passes',        value: stats.Emergency, color: '#EF4444', icon: '🚨' },
-                                                { label: 'Home Passes',             value: stats.Home,      color: '#10B981', icon: '🏡' },
-                                                { label: 'OD Passes',               value: stats.OD,        color: '#8B5CF6', icon: '🎓' },
-                                                { label: 'Outing Passes',           value: stats.Outing,    color: '#EC4899', icon: '🌳' },
+                                                { label: 'Students Inside Hostel', value: Math.max(stats.total - stats.out, 0), color: '#3B82F6', icon: <Home size={16} /> },
+                                                { label: 'Students Outside',        value: stats.out,       color: '#F59E0B', icon: <UserMinus size={16} /> },
+                                                { label: 'Emergency Passes',        value: stats.Emergency, color: '#EF4444', icon: <AlertTriangle size={16} /> },
+                                                { label: 'Home Passes',             value: stats.Home,      color: '#10B981', icon: <Home size={16} /> },
+                                                { label: 'OD Passes',               value: stats.OD,        color: '#8B5CF6', icon: <GraduationCap size={16} /> },
+                                                { label: 'Outing Passes',           value: stats.Outing,    color: '#EC4899', icon: <Trees size={16} /> },
                                             ].map((item, i) => (
                                                 <div key={i} className="wdp-insight-row">
                                                     <span className="wdp-insight-icon">{item.icon}</span>
@@ -1528,7 +1656,7 @@ const Dashboard: React.FC = () => {
                 .wdp-actions-section { display: flex; flex-direction: column; }
                 .wdp-actions-grid {
                     display: grid;
-                    grid-template-columns: repeat(6, 1fr);
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
                     gap: 16px;
                 }
                 .wdp-action-card {
@@ -1911,6 +2039,7 @@ const Dashboard: React.FC = () => {
                 .wdp-anim-stagger-4 { animation: wdpFadeUp 0.4s cubic-bezier(0.16,1,0.3,1) 0.20s both; }
                 .wdp-anim-stagger-5 { animation: wdpFadeUp 0.4s cubic-bezier(0.16,1,0.3,1) 0.25s both; }
                 .wdp-anim-stagger-6 { animation: wdpFadeUp 0.4s cubic-bezier(0.16,1,0.3,1) 0.30s both; }
+                .wdp-anim-stagger-7 { animation: wdpFadeUp 0.4s cubic-bezier(0.16,1,0.3,1) 0.35s both; }
 
                 /* ═══════════════════════════════════════════════ */
                 /* RESPONSIVE — 1280px                           */

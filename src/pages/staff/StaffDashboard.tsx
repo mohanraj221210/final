@@ -285,14 +285,17 @@ const StaffDashboard: React.FC = () => {
     useEffect(() => {
         const fetchDashboardData = async () => {
             const token = localStorage.getItem('token');
-            if (!token) return;
+            if (!token) {
+                localStorage.clear();
+                navigate('/staff-login');
+                return;
+            }
 
             try {
-                const [profileRes, outpassStatsRes, studentStatsRes, outpassListRes] = await Promise.all([
+                const [profileRes, outpassStatsRes, studentStatsRes] = await Promise.all([
                     axios.get(`${import.meta.env.VITE_API_URL}/staff/profile`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null),
                     axios.get(`${import.meta.env.VITE_API_URL}/staff/outpass/stats`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null),
-                    axios.get(`${import.meta.env.VITE_API_URL}/staff/student/stats`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null),
-                    axios.get(`${import.meta.env.VITE_API_URL}/staff/outpass/list?limit=100`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null)
+                    axios.get(`${import.meta.env.VITE_API_URL}/staff/student/stats`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null)
                 ]);
 
                 if (profileRes?.status === 200) {
@@ -320,27 +323,34 @@ const StaffDashboard: React.FC = () => {
                             style: { fontWeight: 'bold', fontSize: '16px' }
                         });
                     }
-                }
 
-                if (outpassListRes?.status === 200) {
-                    const rawList = outpassListRes.data.outpasses || outpassListRes.data.filterOutpass || outpassListRes.data.data || [];
-                    const mappedList = rawList.map((item: any) => {
-                        const studentDetails = item.studentid || {};
-                        return {
-                            ...item,
-                            name: studentDetails.name || item.name || 'Student',
-                            registerNumber: studentDetails.registerNumber || item.registerNumber || 'N/A',
-                            photo: studentDetails.photo || item.photo || '',
-                            status: item.status || 'pending',
-                            outpasstype: item.outpasstype || 'General'
-                        };
-                    });
-                    setRecentPasses(mappedList);
-                } else if (outpassStatsRes?.status === 200) {
-                    // Fallback to stats recentpasses if list endpoint failed
-                    const statsArray = outpassStatsRes.data.stats || [];
-                    if (statsArray.length > 0 && statsArray[0].recentpasses) {
-                        setRecentPasses(statsArray[0].recentpasses);
+                    // Get recent passes from stats API response of recentpasses
+                    const statsRecent = (statsArray.length > 0 ? (
+                        statsArray[0].recentpasses ||
+                        statsArray[0].recentPasses ||
+                        statsArray[0].recentoutpass ||
+                        statsArray[0].recentOutpass
+                    ) : null) ||
+                    outpassStatsRes.data.recentpasses ||
+                    outpassStatsRes.data.recentPasses ||
+                    outpassStatsRes.data.recentoutpass ||
+                    outpassStatsRes.data.recentOutpass ||
+                    [];
+
+                    if (Array.isArray(statsRecent)) {
+                        const mappedRecent = statsRecent.map((item: any) => {
+                            const studentDetails = item.studentid || {};
+                            return {
+                                ...item,
+                                name: item.name || studentDetails.name || 'Student',
+                                registerNumber: item.registerNumber || studentDetails.registerNumber || 'N/A',
+                                photo: item.photo || studentDetails.photo || '',
+                                status: item.status || 'pending',
+                                staffApproval: item.staff?.status || item.staffapprovalstatus || item.status || 'pending',
+                                outpasstype: item.outpasstype || 'General'
+                            };
+                        }).filter((item: any) => String(item.outpasstype).toLowerCase().replace(/\s+/g, '') !== 'outing');
+                        setRecentPasses(mappedRecent);
                     }
                 }
 
@@ -520,6 +530,13 @@ const StaffDashboard: React.FC = () => {
         const currentWeek = Math.min(Math.floor((now.getDate() - 1) / 7), 4);
         return weekLabels.slice(0, currentWeek + 1).map((label, i) => ({ label, value: counts[i] }));
     }, [chartRange, chartTypeFilter, recentPasses]);
+
+    const formatDateTime = (dateString: any) => {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return 'N/A';
+        return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) + ' ' + date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+    };
 
     if (!appReady) return <PremiumStaffLoader isDataReady={!!staff} onComplete={() => setAppReady(true)} />;
     if (!staff) return null;
@@ -808,6 +825,8 @@ const StaffDashboard: React.FC = () => {
                                             <tr>
                                                 <th>Student</th>
                                                 <th>Register No.</th>
+                                                <th>Department</th>
+                                                <th>Period</th>
                                                 <th>Reason</th>
                                                 <th>Status</th>
                                                 <th>Applied</th>
@@ -816,11 +835,11 @@ const StaffDashboard: React.FC = () => {
                                         </thead>
                                         <tbody>
                                             {recentPasses.slice(0, 10).map((pass, idx) => (
-                                                <tr key={pass._id || idx} onClick={() => navigate(pass.status?.toLowerCase() === 'pending' ? '/pending-passes' : '/all-passes')} tabIndex={0} role="button" aria-label={`Review outpass for ${pass.name || 'Student'}`}>
+                                                <tr key={pass._id || idx} onClick={() => navigate((pass.staffApproval || pass.status)?.toLowerCase() === 'pending' ? '/pending-passes' : '/all-passes')} tabIndex={0} role="button" aria-label={`Review outpass for ${pass.name || 'Student'}`}>
                                                     <td>
                                                         <div className="sd-student-cell">
                                                             <img
-                                                                src={pass.photo ? (pass.photo.startsWith('http') ? pass.photo : `${import.meta.env.VITE_CDN_URL}${pass.photo}`) : 'https://ui-avatars.com/api/?name=' + (pass.name || 'Student') + '&background=EFF6FF&color=3B82F6&bold=true'}
+                                                                src={pass.photo ? pass.photo : 'https://ui-avatars.com/api/?name=' + (pass.name || 'Student') + '&background=EFF6FF&color=3B82F6&bold=true'}
                                                                 alt={pass.name || 'Student'}
                                                                 className="sd-avatar"
                                                             />
@@ -828,6 +847,15 @@ const StaffDashboard: React.FC = () => {
                                                         </div>
                                                     </td>
                                                     <td className="sd-mono">{pass.registerNumber}</td>
+                                                    <td style={{ fontSize: '0.82rem', color: '#475569' }}>{pass.department || 'N/A'}</td>
+                                                    <td className="sd-date" style={{ whiteSpace: 'nowrap', fontSize: '0.82rem' }}>
+                                                        {pass.fromDate ? (
+                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                                                <div><span style={{ color: '#64748B', fontWeight: 500 }}>From:</span> <span style={{ fontWeight: 600, color: '#334155' }}>{formatDateTime(pass.fromDate)}</span></div>
+                                                                <div><span style={{ color: '#64748B', fontWeight: 500 }}>To:</span> <span style={{ fontWeight: 600, color: '#334155' }}>{formatDateTime(pass.toDate)}</span></div>
+                                                            </div>
+                                                        ) : 'N/A'}
+                                                    </td>
                                                     <td className="sd-reason" title={pass.reason}>{pass.reason}</td>
                                                     <td>
                                                         <span className={`sd-status sd-status-${(pass.status || 'pending').toLowerCase()}`}>
@@ -1405,7 +1433,7 @@ const StaffDashboard: React.FC = () => {
 
                 .sd-table {
                     width: 100%; border-collapse: collapse; text-align: left;
-                    min-width: 700px;
+                    min-width: 1050px;
                 }
                 .sd-table th {
                     position: sticky; top: 0;

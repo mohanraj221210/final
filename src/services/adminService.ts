@@ -311,5 +311,23 @@ export const adminService = {
             responseType: 'blob'
         });
         return response;
+    },
+
+    // Password resets
+    resetInchargePassword: async (id: string, newPassword: string) => {
+        const response = await api.put(`/admin/incharge/forgotpassword/${id}`, { newPassword });
+        return response.data;
+    },
+    resetWardenPassword: async (id: string, newPassword: string) => {
+        const response = await api.put(`/admin/warden/forgotpassword/${id}`, { newPassword });
+        return response.data;
+    },
+    resetSecurityPassword: async (id: string, newPassword: string) => {
+        const response = await api.put(`/admin/security/forgotpassword/${id}`, { newPassword });
+        return response.data;
+    },
+    resetBusPassword: async (id: string, newPassword: string) => {
+        const response = await api.put(`/admin/bus/forgotpassword/${id}`, { newPassword });
+        return response.data;
     }
 };

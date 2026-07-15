@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from 'react-router-dom';
 import Toast from '../../components/Toast';
 import axios from 'axios';
+import { Shield, Ticket, Video, Siren, Lock, Globe } from 'lucide-react';
 import { toast, ToastContainer } from "react-toastify";
 import SEO from '../../components/SEO';
 
@@ -200,16 +201,16 @@ const WatchmanLogin: React.FC = () => {
   };
 
   const featureCards = [
-    { icon: '🛡️', label: 'Gate\nControl' },
-    { icon: '🎫', label: 'Pass\nVerification' },
-    { icon: '📹', label: 'Campus\nSecurity' },
-    { icon: '🚨', label: 'Incident\nReports' },
+    { icon: <Shield size={24} style={{ display: 'inline-flex' }} />, label: 'Gate\nControl' },
+    { icon: <Ticket size={24} style={{ display: 'inline-flex' }} />, label: 'Pass\nVerification' },
+    { icon: <Video size={24} style={{ display: 'inline-flex' }} />, label: 'Campus\nSecurity' },
+    { icon: <Siren size={24} style={{ display: 'inline-flex' }} />, label: 'Incident\nReports' },
   ];
 
   const footerItems = [
-    { icon: '🔒', title: 'Secure & Encrypted', sub: 'Role-based access control' },
-    { icon: '🛡️', title: 'Campus Security', sub: 'Gate pass verification' },
-    { icon: '🌍', title: 'Always On Duty', sub: '24/7 campus protection' },
+    { icon: <Lock size={20} style={{ display: 'inline-flex' }} />, title: 'Secure & Encrypted', sub: 'Role-based access control' },
+    { icon: <Shield size={20} style={{ display: 'inline-flex' }} />, title: 'Campus Security', sub: 'Gate pass verification' },
+    { icon: <Globe size={20} style={{ display: 'inline-flex' }} />, title: 'Always On Duty', sub: '24/7 campus protection' },
   ];
 
   return (
@@ -240,19 +241,9 @@ const WatchmanLogin: React.FC = () => {
           {/* Brand */}
           <div className="wm-brand">
             <div className="wm-brand-logo">
-              <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-                <rect width="36" height="36" rx="9" fill="url(#wmBrandGrad)" />
-                <path d="M9 26L18 10L27 26H9Z" fill="white" fillOpacity="0.96" />
-                <rect x="14.5" y="20" width="7" height="6" rx="2" fill="url(#wmBrandGrad2)" />
-                <defs>
-                  <linearGradient id="wmBrandGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#059669" /><stop offset="1" stopColor="#10B981" />
-                  </linearGradient>
-                  <linearGradient id="wmBrandGrad2" x1="0" y1="0" x2="7" y2="6" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#047857" /><stop offset="1" stopColor="#059669" />
-                  </linearGradient>
-                </defs>
-              </svg>
+              <div className="lux-logo-icon">
+                <img src="/green permigo.png" alt="JIT Permigo" style={{ width: '50px', height: '50px', objectFit: 'contain', borderRadius: '4px' }} />
+              </div>
               <div className="wm-brand-text">
                 <span className="wm-brand-jit">JIT</span>
                 <span className="wm-brand-campus">PERMIGO</span>
@@ -298,27 +289,7 @@ const WatchmanLogin: React.FC = () => {
         <main className="wm-right">
 
           {/* Mobile brand */}
-          <div className="wm-mobile-brand">
-            <div className="wm-brand-logo">
-              <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-                <rect width="36" height="36" rx="9" fill="url(#wmBrandGradMob)" />
-                <path d="M9 26L18 10L27 26H9Z" fill="white" fillOpacity="0.96" />
-                <rect x="14.5" y="20" width="7" height="6" rx="2" fill="url(#wmBrandGrad2Mob)" />
-                <defs>
-                  <linearGradient id="wmBrandGradMob" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#059669" /><stop offset="1" stopColor="#10B981" />
-                  </linearGradient>
-                  <linearGradient id="wmBrandGrad2Mob" x1="0" y1="0" x2="7" y2="6" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#047857" /><stop offset="1" stopColor="#059669" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              <div className="wm-brand-text">
-                <span className="wm-brand-jit">JIT</span>
-                <span className="wm-brand-campus">PERMIGO</span>
-              </div>
-            </div>
-          </div>
+          
 
           {/* Back button */}
           <button className="wm-back-btn" onClick={() => navigate('/')}>
@@ -331,9 +302,9 @@ const WatchmanLogin: React.FC = () => {
           {/* Floating logo */}
           <div className="wm-float-logo">
             <div className="wm-float-logo-inner">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              </svg>
+              <div className="lux-logo-icon">
+                <img src="/green permigo.png" alt="JIT Permigo" style={{ width: '50px', height: '50px', objectFit: 'contain', borderRadius: '4px' }} />
+              </div>
             </div>
           </div>
 
@@ -688,6 +659,15 @@ const WatchmanLogin: React.FC = () => {
           border-radius: 12px; outline: none;
           transition: border-color 0.28s ease, box-shadow 0.28s ease, background 0.28s ease;
           -webkit-appearance: none;
+        }
+        .wm-input:-webkit-autofill,
+        .wm-input:-webkit-autofill:hover, 
+        .wm-input:-webkit-autofill:focus, 
+        .wm-input:-webkit-autofill:active {
+          -webkit-box-shadow: 0 0 0 1000px #f0fdf4 inset !important;
+          -webkit-text-fill-color: #064E3B !important;
+          caret-color: #064E3B;
+          transition: background-color 5000s ease-in-out 0s;
         }
         .wm-input::placeholder { color: #9CA3AF; font-weight: 400; }
         .wm-input:hover { border-color: rgba(5,150,105,0.35); background: rgba(255,255,255,0.95); }

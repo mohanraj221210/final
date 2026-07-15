@@ -5,6 +5,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import StaffHeader from '../../components/StaffHeader';
 import { DEPARTMENTS, YEARS, BATCHES, GENDERS } from '../../constants/dropdownOptions';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 // Define Student Interface matching the API response
 interface Student {
@@ -134,7 +135,7 @@ const StudentDetails: React.FC = () => {
             toast.error("Document not found");
             return;
         }
-        const fullUrl = `${import.meta.env.VITE_CDN_URL}${url}`;
+        const fullUrl = `${url}`;
         setDocumentUrl(fullUrl);
         if (url.toLowerCase().endsWith('.pdf')) {
             setDocumentType('pdf');
@@ -144,7 +145,7 @@ const StudentDetails: React.FC = () => {
         setShowDocumentModal(true);
     };
 
-    if (loading) return <div className="loading-screen">Loading...</div>;
+    if (loading) return <LoadingSpinner />;
     if (!student) return <div className="error-screen">Student not found</div>;
 
     return (
@@ -180,9 +181,9 @@ const StudentDetails: React.FC = () => {
                             <div className="avatar-large">
                                 {student.photo ? (
                                     <img
-                                        src={student.photo.startsWith('http') || student.photo.startsWith('data:') || student.photo.startsWith('blob:')
+                                        src={student.photo.startsWith('data:') || student.photo.startsWith('blob:')
                                             ? student.photo
-                                            : `${import.meta.env.VITE_CDN_URL}${student.photo}`}
+                                            : `${student.photo}`}
                                         alt={student.name}
                                     />
                                 ) : (
@@ -217,7 +218,7 @@ const StudentDetails: React.FC = () => {
                                         value={formData.registerNumber || ''}
                                         onChange={handleInputChange}
                                         style={{
-                                            background: 'rgba(255,255,255,0.15)',
+                                            background: 'rgba(255, 255, 255, 0.15)',
                                             padding: '4px 12px',
                                             borderRadius: '20px',
                                             fontSize: '0.9rem',
@@ -560,7 +561,7 @@ const StudentDetails: React.FC = () => {
                 }
 
                 .badge-reg {
-                    background: rgba(255,255,255,0.15);
+                    background: rgba(255, 255, 255, 0.14);
                     padding: 4px 12px;
                     border-radius: 20px;
                     font-size: 0.9rem;
@@ -640,7 +641,7 @@ const StudentDetails: React.FC = () => {
 
                 .info-row-modern p {
                     font-size: 1rem;
-                    color: #1e293b;
+                    color: #1f2e3dff;
                     font-weight: 600;
                     margin: 0;
                 }
@@ -733,6 +734,8 @@ const StudentDetails: React.FC = () => {
                     border-radius: 6px;
                     font-size: 0.95rem;
                     width: 100%;
+                    background: #ffffff;
+                    color: #0f172a;
                 }
                 .field-input:focus {
                     outline: none;

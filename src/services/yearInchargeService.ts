@@ -161,7 +161,7 @@ export function mapOutpassResponse(o: any): MappedOutpass {
     if (!o) return {} as MappedOutpass;
 
     // Resolve student
-    let rawStudent = o.student || o.studentid || {};
+    let rawStudent = o.student || o.studentid || (o.name || o.registerNumber ? o : {});
     if (Array.isArray(rawStudent)) {
         rawStudent = rawStudent[0] || {};
     }
@@ -279,6 +279,23 @@ export function mapProfileResponse(data: any): MappedYearIncharge {
     };
 }
 
+export function calculateProfileCompletion(data: any): number {
+    if (!data) return 0;
+    const fields = ['name', 'email', 'phone', 'gender', 'photo', 'handlingyears', 'handlingbatches', 'handlingdepartments'];
+    let completed = 0;
+
+    fields.forEach(field => {
+        const value = data[field];
+        if (Array.isArray(value)) {
+            if (value.length > 0) completed++;
+        } else if (value && (typeof value === 'string' ? value.trim() !== '' : true)) {
+            completed++;
+        }
+    });
+
+    return Math.round((completed / fields.length) * 100);
+}
+
 // 4. Year Incharge Service Methods
 export const YearInchargeService = {
     getStats: async (filter?: string) => {
@@ -297,10 +314,17 @@ export const YearInchargeService = {
             // Extract recentpasses if available
             const statsObj = response.data?.stats?.[0] || response.data?.data?.[0] || {};
             const recentpasses = statsObj?.recentpasses || response.data?.recentpasses || [];
+            
+            // Filter out 'Outing' passes since they bypass Year Incharge
+            const filteredRecent = Array.isArray(recentpasses) 
+                ? recentpasses
+                    .map(mapOutpassResponse)
+                    .filter(op => op.outpasstype.toLowerCase().replace(/\s+/g, '') !== 'outing')
+                : [];
 
             return {
                 ...mapped,
-                recentpasses: Array.isArray(recentpasses) ? recentpasses.map(mapOutpassResponse) : []
+                recentpasses: filteredRecent
             };
         } catch (error: any) {
             console.error(`[YearInchargeService.getStats] Error: Status: ${error.response?.status}, Data:`, error.response?.data || error.message);

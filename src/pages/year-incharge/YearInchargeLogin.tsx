@@ -4,6 +4,8 @@ import Toast from '../../components/Toast';
 import axios from 'axios';
 import { toast, ToastContainer } from "react-toastify";
 import SEO from '../../components/SEO';
+import { Activity, Ticket, GraduationCap, ClipboardList, Lock, Building2, Globe } from 'lucide-react';
+
 
 /* ─────────────────────────────────────────────────────────────────────────────
    BACKGROUND CANVAS  — flowing light waves + floating dots
@@ -200,17 +202,18 @@ const YearInchargeLogin: React.FC = () => {
   };
 
   const featureCards = [
-    { icon: '📊', label: 'Year\nDashboard' },
-    { icon: '🎫', label: 'Outpass\nApprovals' },
-    { icon: '👨‍🎓', label: 'Student\nOversight' },
-    { icon: '📋', label: 'Academic\nReports' },
+    { icon: <Activity size={24} />, label: 'Year\nDashboard' },
+    { icon: <Ticket size={24} />, label: 'Outpass\nApprovals' },
+    { icon: <GraduationCap size={24} />, label: 'Student\nOversight' },
+    { icon: <ClipboardList size={24} />, label: 'Academic\nReports' },
   ];
 
   const footerItems = [
-    { icon: '🔒', title: 'Secure & Protected', sub: 'Role-based access control' },
-    { icon: '🏫', title: 'Administrative Portal', sub: 'Year-level management' },
-    { icon: '🌍', title: 'Always Accessible', sub: 'Anytime, Anywhere' },
+    { icon: <Lock size={20} />, title: 'Secure & Protected', sub: 'Role-based access control' },
+    { icon: <Building2 size={20} />, title: 'Administrative Portal', sub: 'Year-level management' },
+    { icon: <Globe size={20} />, title: 'Always Accessible', sub: 'Anytime, Anywhere' },
   ];
+
 
   return (
     <div className={`yi-root ${mounted ? 'yi-mounted' : ''} ${successAnim ? 'yi-success-zoom' : ''}`}>
@@ -240,19 +243,9 @@ const YearInchargeLogin: React.FC = () => {
           {/* Brand */}
           <div className="yi-brand">
             <div className="yi-brand-logo">
-              <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-                <rect width="36" height="36" rx="9" fill="url(#yiBrandGrad)" />
-                <path d="M9 26L18 10L27 26H9Z" fill="white" fillOpacity="0.96" />
-                <rect x="14.5" y="20" width="7" height="6" rx="2" fill="url(#yiBrandGrad2)" />
-                <defs>
-                  <linearGradient id="yiBrandGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#D97706" /><stop offset="1" stopColor="#F59E0B" />
-                  </linearGradient>
-                  <linearGradient id="yiBrandGrad2" x1="0" y1="0" x2="7" y2="6" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#B45309" /><stop offset="1" stopColor="#D97706" />
-                  </linearGradient>
-                </defs>
-              </svg>
+              <div className="lux-logo-icon">
+                <img src="/orange permigo.png" alt="JIT Permigo" style={{ width: '50px', height: '50px', objectFit: 'contain', borderRadius: '4px' }} />
+              </div>
               <div className="yi-brand-text">
                 <span className="yi-brand-jit">JIT</span>
                 <span className="yi-brand-campus">PERMIGO</span>
@@ -275,10 +268,11 @@ const YearInchargeLogin: React.FC = () => {
           <div className="yi-features">
             {featureCards.map((fc, i) => (
               <div className="yi-feat-card" key={i} style={{ animationDelay: `${120 + i * 80}ms` }}>
-                <span className="yi-feat-icon">{fc.icon}</span>
+                <span className="yi-feat-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{fc.icon}</span>
                 <span className="yi-feat-label">{fc.label}</span>
               </div>
             ))}
+
           </div>
 
           {/* Quote card */}
@@ -297,27 +291,7 @@ const YearInchargeLogin: React.FC = () => {
         <main className="yi-right">
 
           {/* Mobile brand */}
-          <div className="yi-mobile-brand">
-            <div className="yi-brand-logo">
-              <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-                <rect width="36" height="36" rx="9" fill="url(#yiBrandGradMob)" />
-                <path d="M9 26L18 10L27 26H9Z" fill="white" fillOpacity="0.96" />
-                <rect x="14.5" y="20" width="7" height="6" rx="2" fill="url(#yiBrandGrad2Mob)" />
-                <defs>
-                  <linearGradient id="yiBrandGradMob" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#D97706" /><stop offset="1" stopColor="#F59E0B" />
-                  </linearGradient>
-                  <linearGradient id="yiBrandGrad2Mob" x1="0" y1="0" x2="7" y2="6" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#B45309" /><stop offset="1" stopColor="#D97706" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              <div className="yi-brand-text">
-                <span className="yi-brand-jit">JIT</span>
-                <span className="yi-brand-campus">PERMIGO</span>
-              </div>
-            </div>
-          </div>
+          
 
           {/* Back button */}
           <button className="yi-back-btn" onClick={() => navigate('/')}>
@@ -330,10 +304,9 @@ const YearInchargeLogin: React.FC = () => {
           {/* Floating logo */}
           <div className="yi-float-logo">
             <div className="yi-float-logo-inner">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="3" width="20" height="14" rx="2"/>
-                <path d="M8 21h8M12 17v4"/>
-              </svg>
+             
+                <img src="/orange permigo.png" alt="JIT Permigo" style={{ width: '50px', height: '50px', objectFit: 'contain', borderRadius: '4px' }} />
+      
             </div>
           </div>
 
@@ -479,13 +452,14 @@ const YearInchargeLogin: React.FC = () => {
       <footer className="yi-footer">
         {footerItems.map((fi, i) => (
           <div className="yi-footer-item" key={i}>
-            <span className="yi-footer-icon">{fi.icon}</span>
+            <span className="yi-footer-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{fi.icon}</span>
             <div className="yi-footer-text">
               <span className="yi-footer-title">{fi.title}</span>
               <span className="yi-footer-sub">{fi.sub}</span>
             </div>
           </div>
         ))}
+
       </footer>
 
       <style>{`
@@ -688,6 +662,15 @@ const YearInchargeLogin: React.FC = () => {
           border-radius: 12px; outline: none;
           transition: border-color 0.28s ease, box-shadow 0.28s ease, background 0.28s ease;
           -webkit-appearance: none;
+        }
+        .yi-input:-webkit-autofill,
+        .yi-input:-webkit-autofill:hover, 
+        .yi-input:-webkit-autofill:focus, 
+        .yi-input:-webkit-autofill:active {
+          -webkit-box-shadow: 0 0 0 1000px #fffbf5 inset !important;
+          -webkit-text-fill-color: #1C1917 !important;
+          caret-color: #1C1917;
+          transition: background-color 5000s ease-in-out 0s;
         }
         .yi-input::placeholder { color: #A8A29E; font-weight: 400; }
         .yi-input:hover { border-color: rgba(217,119,6,0.35); background: rgba(255,255,255,0.95); }

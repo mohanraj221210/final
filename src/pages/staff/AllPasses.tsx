@@ -242,7 +242,7 @@ const AllPasses: React.FC = () => {
                                     residencetype: studentDetails.residencetype || 'dayScholar',
                                     document: item.proof || item.document || item.file || null
                                 };
-                            });
+                            }).filter((item: any) => item.outpasstype?.toLowerCase().replace(/\s+/g, '') !== 'outing');
 
                         // Sort: Emergency first
                         mappedStudents.sort((a: any, b: any) => {
@@ -396,7 +396,7 @@ const AllPasses: React.FC = () => {
             toast.error("Document not found");
             return;
         }
-        const fullUrl = `${import.meta.env.VITE_CDN_URL}${url}`;
+        const fullUrl = `${url}`;
         setDocumentUrl(fullUrl);
         if (url.toLowerCase().endsWith('.pdf')) {
             setDocumentType('pdf');
@@ -495,9 +495,8 @@ const AllPasses: React.FC = () => {
                                     >
                                         <option value="all">All Types</option>
                                         <option value="Home">Home</option>
-                                        <option value="Outing">Outing</option>
                                         <option value="Emergency">Emergency</option>
-                                        <option value="OD">OD</option>
+                                        <option value="OD">On Duty</option>
                                     </select>
                                 </div>
 
@@ -552,7 +551,7 @@ const AllPasses: React.FC = () => {
                                                     <div className="pa-avatar">
                                                         {student.photo && student.photo !== 'Student' ? (
                                                             <img
-                                                                src={student.photo.startsWith('http') ? student.photo : `${import.meta.env.VITE_CDN_URL}${student.photo}`}
+                                                                src={student.photo}
                                                                 alt={student.studentname}
                                                                 onError={(e) => {
                                                                     e.currentTarget.style.display = 'none';
@@ -611,7 +610,7 @@ const AllPasses: React.FC = () => {
                                                                 className="pa-doc-btn"
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    window.open(`${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${student.document!.replace(/^\//, '')}`, '_blank');
+                                                                    window.open(`${student.document!}`, '_blank');
                                                                 }}
                                                             >
                                                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -734,7 +733,7 @@ const AllPasses: React.FC = () => {
                                 <div className="pa-hero-content">
                                     <div className="pa-hero-avatar-wrap">
                                         <img
-                                            src={selectedStudent.photo.startsWith('http') ? selectedStudent.photo : `${import.meta.env.VITE_CDN_URL}${selectedStudent.photo}`}
+                                            src={selectedStudent.photo}
                                             alt={selectedStudent.studentname}
                                             className="pa-hero-avatar"
                                             onError={(e) => {
@@ -898,7 +897,7 @@ const AllPasses: React.FC = () => {
                                                         <div key={roommate._id} className="pa-roommate-card">
                                                             <div className="pa-roommate-avatar">
                                                                 <img
-                                                                    src={roommate.photo ? (roommate.photo.startsWith('http') ? roommate.photo : `${import.meta.env.VITE_CDN_URL}${roommate.photo}`) : `https://ui-avatars.com/api/?name=${roommate.name}&background=random`}
+                                                                    src={roommate.photo ? roommate.photo : `https://ui-avatars.com/api/?name=${roommate.name}&background=random`}
                                                                     alt={roommate.name}
                                                                     onError={(e) => {
                                                                         e.currentTarget.src = `https://ui-avatars.com/api/?name=${roommate.name}&background=random`;

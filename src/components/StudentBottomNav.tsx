@@ -5,6 +5,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { type User } from '../data/sampleData';
 import { isProfileComplete } from '../utils/profileHelper';
+import '../student-portal.css';
 
 interface StudentBottomNavProps {
     activeTab?: 'home' | 'outpass' | 'subjects' | 'staff' | 'profile' | 'bus';
@@ -12,6 +13,7 @@ interface StudentBottomNavProps {
 
 const StudentBottomNav: React.FC<StudentBottomNavProps> = ({ activeTab }) => {
     const navigate = useNavigate();
+
     const [user, setUser] = useState<User | null>(null);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 850);
 
@@ -29,33 +31,20 @@ const StudentBottomNav: React.FC<StudentBottomNavProps> = ({ activeTab }) => {
                 const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/profile`, {
                     headers: { authorization: `Bearer ${token}` }
                 });
-                if (response.status === 200) {
-                    setUser(response.data.user);
-                }
-            } catch (error) {
-                console.error("Failed to fetch user profile in Bottom Nav");
-            }
+                if (response.status === 200) setUser(response.data.user);
+            } catch (error) { console.error("Failed to fetch user profile in Bottom Nav"); }
         };
         fetchUserProfile();
     }, []);
 
     const handleNavigation = (path: string) => {
-        if (path === '/subjects') {
-            toast.info("enabled in future updates", {
-                position: "top-center",
-                autoClose: 3000,
-            });
-            return;
-        }
-        const restrictedPaths = ['/staffs', '/student-notice', '/subjects', '/outpass', '/new-outpass'];
+
+        const restrictedPaths = ['/staffs', '/student-notice', '/outpass', '/new-outpass'];
         if (restrictedPaths.includes(path)) {
             if (isProfileComplete(user)) {
                 navigate(path);
             } else {
-                toast.warn("Complete your profile to access this page", {
-                    position: "top-center",
-                    autoClose: 3000,
-                });
+                toast.warn("Complete your profile to access this page", { position: "top-center", autoClose: 3000 });
             }
         } else {
             navigate(path);
@@ -88,17 +77,7 @@ const StudentBottomNav: React.FC<StudentBottomNavProps> = ({ activeTab }) => {
                 </svg>
             ),
         },
-        {
-            tab: 'subjects',
-            path: '/subjects',
-            label: 'Subjects',
-            icon: (
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                </svg>
-            ),
-        },
+
         {
             tab: 'staff',
             path: '/staffs',
@@ -149,7 +128,6 @@ const StudentBottomNav: React.FC<StudentBottomNavProps> = ({ activeTab }) => {
                         className={`pb-nav-btn ${isTabActive ? 'active' : ''}`}
                         onClick={() => handleNavigation(item.path)}
                         aria-label={item.label}
-                        style={item.path === '/subjects' ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
                     >
                         <div className="pb-nav-icon">{item.icon}</div>
                         <span className="pb-nav-lbl">{item.label}</span>

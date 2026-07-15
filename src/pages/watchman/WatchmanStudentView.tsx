@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { AlertTriangle, FileText } from 'lucide-react';
+
 import axios from "axios";
 import WatchmanNav from "../../components/WatchmanNav";
 import { toast } from "react-toastify";
@@ -56,7 +58,9 @@ const WatchmanStudentView: React.FC = () => {
       <div className="sd-root error-center">
         <WatchmanNav />
         <div className="sd-error-card">
-          <div className="sd-error-icon">⚠️</div>
+          <div className="sd-error-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+            <AlertTriangle size={48} style={{ color: '#EA580C' }} />
+          </div>
           <h2>Record Not Found</h2>
           <p>The student outpass log ID does not exist or may have been archived.</p>
           <button className="sd-btn-error" onClick={() => navigate(-1)}>
@@ -149,9 +153,9 @@ const WatchmanStudentView: React.FC = () => {
                 {s.photo && !imageError ? (
                   <img
                     src={
-                      s.photo.startsWith('http') || s.photo.startsWith('data:')
+                      s.photo.startsWith('data:')
                         ? s.photo
-                        : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${s.photo.replace(/^\//, '')}`
+                        : `${s.photo}`
                     }
                     alt="Student"
                     className="sd-profile-img"
@@ -193,7 +197,9 @@ const WatchmanStudentView: React.FC = () => {
             {/* Right Card: Pass details */}
             <div className="sd-pass-details-card">
               <div className="sd-card-section-header">
-                <span className="sd-section-icon-badge">📄</span>
+                <span className="sd-section-icon-badge" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <FileText size={24} />
+                </span>
                 <h3>Outpass Approval Record</h3>
               </div>
 

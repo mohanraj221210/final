@@ -27,8 +27,8 @@ const StaffDetailsAdmin: React.FC = () => {
 
     const getImageUrl = (photo: string) => {
         if (!photo) return '';
-        if (photo.startsWith('http') || photo.startsWith('data:')) return photo;
-        const baseUrl = import.meta.env.VITE_CDN_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        if (photo.startsWith('data:')) return photo;
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
         const cleanPhoto = photo.startsWith('/') ? photo : `/${photo}`;
         return `${cleanBase}${cleanPhoto}`;
@@ -124,19 +124,19 @@ const StaffDetailsAdmin: React.FC = () => {
     };
 
     if (loading) return (
-        <AdminLayout title="Staff Details">
+        <AdminLayout title="Faculty Details">
             <div className="loading-state">
                 <div className="spinner"></div>
-                <span>Loading staff profile...</span>
+                <span>Loading faculty profile...</span>
             </div>
             <style>{`.loading-state { height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; color: #6b7280; } .spinner { width: 32px; height: 32px; border: 3px solid #e5e7eb; border-top-color: #4f46e5; border-radius: 50%; animation: spin 1s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </AdminLayout>
     );
 
-    if (!staff) return <AdminLayout title="Staff Details"><div className="error-state">Staff not found</div></AdminLayout>;
+    if (!staff) return <AdminLayout title="Faculty Details"><div className="error-state">Faculty not found</div></AdminLayout>;
 
     return (
-        <AdminLayout title="Staff Details" activeMenu="staff">
+        <AdminLayout title="Faculty Details" activeMenu="staff">
             <ToastContainer position="bottom-right" theme="colored" />
 
             <div className="admin-page-content">
@@ -152,7 +152,7 @@ const StaffDetailsAdmin: React.FC = () => {
                             <>
                                 <button className="btn-secondary" onClick={handleChangePassword}>Change Password</button>
                                 <button className="btn-primary" onClick={() => setIsEditing(true)}>Edit Profile</button>
-                                <button className="btn-danger" onClick={() => setIsDeleteModalOpen(true)}>Delete Staff</button>
+                                <button className="btn-danger" onClick={() => setIsDeleteModalOpen(true)}>Delete Faculty</button>
                             </>
                         ) : (
                             <>
@@ -350,11 +350,11 @@ const StaffDetailsAdmin: React.FC = () => {
                     background: white;
                     border: 1px solid #e2e8f0;
                     color: #64748b;
-                    font-size: 0.95rem;
+                    font-size: 0.85rem;
                     font-weight: 600;
                     cursor: pointer;
                     margin-bottom: 24px;
-                    padding: 10px 20px;
+                    padding: 6px 12px;
                     border-radius: 10px;
                     transition: all 0.2s;
                     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
@@ -499,7 +499,7 @@ const StaffDetailsAdmin: React.FC = () => {
                 .field-group { display: flex; flex-direction: column; gap: 6px; }
                 .field-label { font-size: 0.85rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.025em; }
                 .field-value { font-size: 1rem; color: #111827; font-weight: 500; }
-                .field-input {
+                .field-input { background-color: white; color: #111827;
                     padding: 10px 12px;
                     border: 1px solid #d1d5db;
                     border-radius: 8px;
@@ -543,6 +543,23 @@ const StaffDetailsAdmin: React.FC = () => {
                 @media (max-width: 1024px) {
                     .profile-layout { grid-template-columns: 1fr; }
                     .profile-card { max-width: 400px; margin: 0 auto; width: 100%; }
+                }
+
+                @media (max-width: 768px) {
+                    .page-header {
+                        flex-direction: column;
+                        align-items: stretch;
+                        gap: 16px;
+                    }
+                    .header-actions {
+                        flex-direction: column;
+                        width: 100%;
+                        gap: 10px;
+                    }
+                    .header-actions button {
+                        width: 100%;
+                        justify-content: center;
+                    }
                 }
             `}</style>
             <style>{`

@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import axios from 'axios';
 import { type User } from '../data/sampleData';
 import { isProfileComplete } from '../utils/profileHelper';
+import '../student-portal.css';
 
 interface StudentHeaderProps {
     user?: User | null;
@@ -12,20 +13,15 @@ interface StudentHeaderProps {
 const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
     const navigate = useNavigate();
     const location = useLocation();
-
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [user, setUser] = useState<User | null>(initialUser || null);
     const [scrolled, setScrolled] = useState(false);
     const [imageError, setImageError] = useState(false);
-
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (initialUser) {
-            setUser(initialUser);
-            setImageError(false);
-        }
+        if (initialUser) { setUser(initialUser); setImageError(false); }
     }, [initialUser]);
 
     useEffect(() => {
@@ -37,13 +33,8 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
                 const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/profile`, {
                     headers: { authorization: `Bearer ${token}` }
                 });
-                if (response.status === 200) {
-                    setUser(response.data.user);
-                    setImageError(false);
-                }
-            } catch (error) {
-                console.error("Failed to fetch user profile in Header");
-            }
+                if (response.status === 200) { setUser(response.data.user); setImageError(false); }
+            } catch (error) { console.error("Failed to fetch user profile in Header"); }
         };
         fetchUserProfile();
     }, [initialUser]);
@@ -78,24 +69,13 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
     };
 
     const handleNavigation = (path: string) => {
-        if (path === '/subjects') {
-            toast.info("enabled in future updates", {
-                position: "top-center",
-                autoClose: 3000,
-            });
-            setIsMobileMenuOpen(false);
-            return;
-        }
         if (path === '/dashboard' || path === '/profile') {
             navigate(path);
         } else {
             if (isProfileComplete(user)) {
                 navigate(path);
             } else {
-                toast.warn("Complete your profile to access this page", {
-                    position: "top-center",
-                    autoClose: 3000,
-                });
+                toast.warn("Complete your profile to access this page", { position: "top-center", autoClose: 3000 });
             }
         }
         setIsMobileMenuOpen(false);
@@ -107,7 +87,6 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
         { path: '/dashboard', label: 'Dashboard', icon: '🏠' },
         { path: '/staffs', label: 'Staffs', icon: '👥' },
         { path: '/outpass', label: 'Outpass', icon: '📝' },
-        { path: '/subjects', label: 'Subjects', icon: '📚' },
         { path: '/profile', label: 'Profile', icon: '👤' },
     ];
 
@@ -116,14 +95,14 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
 
     const getAvatarSrc = () => {
         if (!user?.photo) return null;
-        if (user.photo.startsWith("blob:") || user.photo.startsWith("data:") || user.photo.startsWith("http")) {
-            return user.photo;
-        }
+        if (user.photo.startsWith("data:") || user.photo.startsWith("http")) return user.photo;
         const normalizedPath = user.photo.startsWith("/") ? user.photo.slice(1) : user.photo;
-        const cdnUrl = import.meta.env.VITE_CDN_URL || '';
+        const cdnUrl = '';
         const normalizedCdnUrl = cdnUrl.endsWith("/") ? cdnUrl : `${cdnUrl}/`;
         return `${normalizedCdnUrl}${normalizedPath}`;
     };
+
+    const avatarSrc = getAvatarSrc();
 
     return (
         <>
@@ -134,48 +113,42 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
                     {/* LEFT: Brand */}
                     <div className="lux-brand" onClick={() => handleNavigation('/dashboard')}>
                         <div className="lux-logo-icon">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
+                            <img src="/jit permigo.png" alt="JIT Permigo" style={{ width: '22px', height: '22px', objectFit: 'contain', borderRadius: '4px' }} />
                         </div>
                         <span className="lux-brand-text">JIT Permigo</span>
                     </div>
 
-                    {/* CENTER: Desktop Nav */}
-                    <nav className="lux-desktop-nav">
+                    {/* Desktop Nav */}
+                    <nav className="sp-nav">
                         {navItems.map(item => (
                             <button
                                 key={item.path}
-                                className={`lux-nav-link ${isActive(item.path) ? 'lux-active' : ''}`}
+                                className={`sp-nav-btn${isActive(item.path) ? ' sp-active' : ''}`}
                                 onClick={() => handleNavigation(item.path)}
-                                style={item.path === '/subjects' ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
                             >
                                 {item.label}
-                                {isActive(item.path) && <div className="lux-nav-indicator" />}
                             </button>
                         ))}
                     </nav>
 
-                    {/* RIGHT: User & Notifications */}
-                    <div className="lux-right">
+                    {/* Right area */}
+                    <div className="sp-header-right">
                         {!profileComplete && (
-                            <button className="lux-incomplete-badge" onClick={() => handleNavigation('/profile')} title="Complete your profile">
+                            <button className="sp-incomplete-badge" onClick={() => handleNavigation('/profile')}>
                                 ⚠️ Complete Profile
                             </button>
                         )}
 
-                        {/* Notification Bell */}
-                        <button className="lux-icon-btn">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
-                            <span className="lux-notification-dot"></span>
-                        </button>
 
-                        {/* User Profile Dropdown */}
-                        <div className="lux-dropdown-wrapper" ref={dropdownRef}>
-                            <button className="lux-user-pill" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-                                <div className="lux-avatar">
-                                    {getAvatarSrc() && !imageError ? (
-                                        <img src={getAvatarSrc()!} alt="Profile" onError={() => setImageError(true)} />
+
+                        {/* User Dropdown */}
+                        <div className="sp-dropdown-wrap" ref={dropdownRef}>
+                            <button className="sp-user-pill" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+                                <div className="sp-user-avatar">
+                                    {avatarSrc && !imageError ? (
+                                        <img src={avatarSrc} alt="Profile" onError={() => setImageError(true)} />
                                     ) : (
-                                        <span>{userInitial}</span>
+                                        userInitial
                                     )}
                                 </div>
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`lux-chevron ${isDropdownOpen ? 'open' : ''}`}><polyline points="6 9 12 15 18 9" /></svg>
@@ -183,10 +156,10 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
 
                             {/* Dropdown Menu */}
                             {isDropdownOpen && (
-                                <div className="lux-dropdown-menu">
-                                    <div className="lux-dropdown-header">
-                                        <div className="lux-dropdown-name">{user?.name || 'Student'}</div>
-                                        <div className="lux-dropdown-email">{user?.email || user?.registerNumber}</div>
+                                <div className="sp-dropdown">
+                                    <div className="sp-dropdown-head">
+                                        <div className="sp-dropdown-uname">{user?.name || 'Student'}</div>
+                                        <div className="sp-dropdown-email">{user?.email || user?.registerNumber}</div>
                                     </div>
                                     <div className="lux-dropdown-divider"></div>
                                     <button className="lux-dropdown-item" onClick={() => handleNavigation('/profile')}>
@@ -202,33 +175,33 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
                             )}
                         </div>
 
-                        {/* Mobile Hamburger */}
+                        {/* Hamburger */}
                         <button
-                            className={`lux-hamburger ${isMobileMenuOpen ? 'open' : ''}`}
+                            className={`sp-hamburger${isMobileMenuOpen ? ' sp-open' : ''}`}
                             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                             aria-label="Toggle menu"
                         >
-                            <span></span><span></span><span></span>
+                            <span/><span/><span/>
                         </button>
                     </div>
                 </div>
             </header>
 
-            {/* Mobile Overlay Menu */}
+            {/* Mobile overlay menu */}
             {isMobileMenuOpen && (
-                <div className="lux-mobile-overlay" onClick={() => setIsMobileMenuOpen(false)}>
-                    <div className="lux-mobile-menu" onClick={e => e.stopPropagation()}>
-                        <div className="lux-mobile-user">
-                            <div className="lux-mobile-avatar">
-                                {getAvatarSrc() && !imageError ? (
-                                    <img src={getAvatarSrc()!} alt="" onError={() => setImageError(true)} />
+                <div className="sp-mob-overlay" onClick={() => setIsMobileMenuOpen(false)}>
+                    <div className="sp-mob-menu" onClick={e => e.stopPropagation()}>
+                        <div className="sp-mob-user-row">
+                            <div className="sp-user-avatar" style={{ width: 44, height: 44, fontSize: '1.1rem', borderRadius: 14, border: '2px solid #E0E7FF' }}>
+                                {avatarSrc && !imageError ? (
+                                    <img src={avatarSrc} alt="" onError={() => setImageError(true)} />
                                 ) : (
-                                    <span>{userInitial}</span>
+                                    userInitial
                                 )}
                             </div>
                             <div>
-                                <div className="lux-mobile-user-name">{user?.name || 'Student'}</div>
-                                <div className="lux-mobile-user-meta">{user?.department} • {user?.year}</div>
+                                <div className="sp-mob-uname">{user?.name || 'Student'}</div>
+                                <div className="sp-mob-umeta">{user?.department} • {user?.year}</div>
                             </div>
                         </div>
                         <div className="lux-mobile-nav">
@@ -237,7 +210,6 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
                                     key={item.path}
                                     className={`lux-mobile-link ${isActive(item.path) ? 'active' : ''}`}
                                     onClick={() => handleNavigation(item.path)}
-                                    style={item.path === '/subjects' ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
                                 >
                                     <span className="lux-mobile-icon">{item.icon}</span>
                                     {item.label}
@@ -419,8 +391,16 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
                 
                 .lux-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-                .lux-chevron { transition: transform 0.2s ease; }
+                .lux-chevron { 
+                    transition: transform 0.2s ease; 
+                    color: var(--sp-text-3, #64748B);
+                    display: inline-block;
+                    flex-shrink: 0;
+                }
                 .lux-chevron.open { transform: rotate(180deg); }
+                .sp-user-pill:hover .lux-chevron {
+                    color: var(--sp-primary, #6366F1);
+                }
 
                 .lux-dropdown-menu {
                     position: absolute;
@@ -467,7 +447,7 @@ const StudentHeader: React.FC<StudentHeaderProps> = ({ user: initialUser }) => {
                 }
                 .lux-dropdown-item:hover { background: rgba(59,130,246,0.05); color: #0F172A; }
                 .lux-dropdown-item.lux-danger { color: #DC2626; }
-                .lux-dropdown-item.lux-danger:hover { background: rgba(239,68,68,0.06); }
+                .lux-dropdown-item.lux-danger:hover { background: rgba(239, 68, 68, 0); }
 
                 .lux-incomplete-badge {
                     padding: 5px 12px;

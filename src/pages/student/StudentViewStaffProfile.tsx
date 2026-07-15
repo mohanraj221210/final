@@ -79,9 +79,7 @@ const StudentViewStaffProfile: React.FC = () => {
 
     const photoUrl = staff.photo || staff.profilePhoto;
     const finalPhotoUrl = photoUrl
-        ? photoUrl.startsWith('http')
-            ? photoUrl
-            : `${import.meta.env.VITE_CDN_URL}${photoUrl}`
+        ? photoUrl
         : `https://ui-avatars.com/api/?name=${staff.name}&background=3B82F6&color=fff&size=200`;
 
     return (

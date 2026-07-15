@@ -14,9 +14,7 @@ const StaffCard: React.FC<StaffCardProps> = ({ staff }) => {
     };
 
     const photoUrl = staff.photo
-        ? staff.photo.startsWith('http')
-            ? staff.photo
-            : `${import.meta.env.VITE_CDN_URL}${staff.photo}`
+        ? staff.photo
         : `https://ui-avatars.com/api/?name=${staff.name}&background=3B82F6&color=fff&size=200`;
 
     return (

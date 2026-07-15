@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { Home, ClipboardList, User, LogOut, Camera } from 'lucide-react';
 
 const WatchmanNav: React.FC = () => {
     const navigate = useNavigate();
@@ -25,9 +26,10 @@ const WatchmanNav: React.FC = () => {
     const isActive = (path: string) => location.pathname === path;
 
     const navItems = [
-        { path: '/watchman-dashboard',   label: 'Dashboard',    icon: '🏠' },
-        { path: '/watchman/outpass-list', label: 'Outpass List', icon: '📋' },
-        { path: '/watchman-profile',      label: 'Profile',      icon: '👤' },
+        { path: '/watchman-dashboard',   label: 'Dashboard',    icon: <Home size={20} /> },
+        { path: '/watchman/outpass-list', label: 'Outpass List', icon: <ClipboardList size={20} /> },
+        { path: '/watchman/scan',         label: 'Scan QR',      icon: <Camera size={20} /> },
+        { path: '/watchman-profile',      label: 'Profile',      icon: <User size={20} /> },
     ];
 
     return (
@@ -35,7 +37,9 @@ const WatchmanNav: React.FC = () => {
             <header className={`wmn-header ${scrolled ? 'wmn-scrolled' : ''}`}>
                 <div className="wmn-container">
                     <div className="wmn-brand" onClick={() => navigate('/watchman-dashboard')}>
-                        <span style={{ fontSize: '1.4rem' }}>👮</span>
+                        <div className="lux-logo-icon">
+                            <img src="/jit permigo.png" alt="JIT Permigo" style={{ width: '22px', height: '22px', objectFit: 'contain', borderRadius: '4px' }} />
+                        </div>
                         <span className="wmn-brand-text">JIT Security</span>
                     </div>
 
@@ -68,7 +72,9 @@ const WatchmanNav: React.FC = () => {
                 <div className="wmn-overlay" onClick={() => setIsMobileMenuOpen(false)}>
                     <div className="wmn-mobile-menu" onClick={e => e.stopPropagation()}>
                         <div className="wmn-mobile-head">
-                            <span style={{ fontSize: '2rem' }}>👮</span>
+                            <div className="lux-logo-icon">
+                                <img src="/jit permigo.png" alt="JIT Permigo" style={{ width: '22px', height: '22px', objectFit: 'contain', borderRadius: '4px' }} />
+                            </div>
                             <div>
                                 <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>JIT Security</div>
                                 <div style={{ fontSize: '0.78rem', color: 'var(--text-3)' }}>Watchman / Security</div>
@@ -80,11 +86,13 @@ const WatchmanNav: React.FC = () => {
                                 className={`wmn-mobile-link ${isActive(item.path) ? 'wmn-ml-active' : ''}`}
                                 onClick={() => { navigate(item.path); setIsMobileMenuOpen(false); }}
                             >
-                                <span>{item.icon}</span>{item.label}
+                                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{item.icon}</span>{item.label}
                             </button>
                         ))}
                         <div style={{ height: 1, background: 'var(--border)', margin: '8px 0' }}></div>
-                        <button className="wmn-mobile-logout" onClick={handleLogout}>🚪 Logout</button>
+                        <button className="wmn-mobile-logout" onClick={handleLogout}>
+                            <LogOut size={18} style={{ marginRight: '8px', display: 'inline-flex', alignItems: 'center' }} /> Logout
+                        </button>
                     </div>
                 </div>
             )}

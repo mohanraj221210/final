@@ -7,6 +7,7 @@ import type { Watchman } from '../../types/admin';
 import DeleteConfirmationModal from '../../components/DeleteConfirmationModal';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ViewDetailsButton from '../../components/ViewDetailsButton';
 
 const ManageSecurity: React.FC = () => {
     const navigate = useNavigate();
@@ -14,6 +15,7 @@ const ManageSecurity: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const [newWatchman, setNewWatchman] = useState({
         name: '',
         email: '',
@@ -24,8 +26,8 @@ const ManageSecurity: React.FC = () => {
 
     const getImageUrl = (photo: string) => {
         if (!photo) return '';
-        if (photo.startsWith('http') || photo.startsWith('data:')) return photo;
-        const baseUrl = import.meta.env.VITE_CDN_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        if (photo.startsWith('data:')) return photo;
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
         const cleanPhoto = photo.startsWith('/') ? photo : `/${photo}`;
         return `${cleanBase}${cleanPhoto}`;
@@ -57,6 +59,7 @@ const ManageSecurity: React.FC = () => {
 
     const handleAddNew = () => {
         setNewWatchman({ name: '', email: '', password: '' });
+        setShowPassword(false);
         setIsModalOpen(true);
     };
 
@@ -66,6 +69,7 @@ const ManageSecurity: React.FC = () => {
             await adminService.addWatchman(newWatchman);
             toast.success("Watchman registered successfully");
             setIsModalOpen(false);
+            setShowPassword(false);
             fetchWatchmen();
         } catch (error: any) {
             toast.error(error.response?.data?.message || "Failed to add watchman");
@@ -161,9 +165,7 @@ const ManageSecurity: React.FC = () => {
                                             <td>{item.phone || '-'}</td>
                                             <td>
                                                 <div className="action-buttons">
-                                                    <button className="btn-view" onClick={() => navigate(`/admin/security-details/${item._id}`)}>
-                                                        View Details
-                                                    </button>
+                                                    <ViewDetailsButton onClick={() => navigate(`/admin/security-details/${item._id}`)} />
                                                     <button className="btn-icon delete" onClick={() => handleDeleteClick(item._id, item.name)} title="Remove Watchman">
                                                         🗑️
                                                     </button>
@@ -190,7 +192,7 @@ const ManageSecurity: React.FC = () => {
                     <div className="modal-content">
                         <div className="modal-header">
                             <h3>Register Watchman</h3>
-                            <button className="close-btn" onClick={() => setIsModalOpen(false)}>×</button>
+                            <button className="close-btn" onClick={() => { setIsModalOpen(false); setShowPassword(false); }}>×</button>
                         </div>
                         <form onSubmit={handleSave}>
                             <div className="modal-body">
@@ -218,18 +220,39 @@ const ManageSecurity: React.FC = () => {
                                 </div>
                                 <div className="form-group">
                                     <label>Password</label>
-                                    <input
-                                        type="password"
-                                        required
-                                        placeholder="••••••••"
-                                        value={newWatchman.password}
-                                        onChange={e => setNewWatchman({ ...newWatchman, password: e.target.value })}
-                                        className="form-input"
-                                    />
+                                    <div className="input-group">
+                                        <input
+                                            type={showPassword ? "text" : "password"}
+                                            required
+                                            placeholder="••••••••"
+                                            value={newWatchman.password}
+                                            onChange={e => setNewWatchman({ ...newWatchman, password: e.target.value })}
+                                            className="form-input"
+                                            style={{ paddingRight: '40px' }}
+                                        />
+                                        <button
+                                            type="button"
+                                            className="password-toggle-btn"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                        >
+                                            {showPassword ? (
+                                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                                                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                                                    <line x1="1" y1="1" x2="23" y2="23" />
+                                                </svg>
+                                            ) : (
+                                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                                    <circle cx="12" cy="12" r="3" />
+                                                </svg>
+                                            )}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             <div className="modal-footer">
-                                <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>
+                                <button type="button" className="btn-secondary" onClick={() => { setIsModalOpen(false); setShowPassword(false); }}>Cancel</button>
                                 <button type="submit" className="btn-primary">Register</button>
                             </div>
                         </form>
@@ -269,9 +292,9 @@ const ManageSecurity: React.FC = () => {
                 }
 
                 .page-subtitle {
-                    color: #111827;
+                    color: #4b5563;
                     font-size: 0.95rem;
-                    margin-top: 20px;
+                    margin-top: 6px;
                 }
 
 
@@ -299,7 +322,7 @@ const ManageSecurity: React.FC = () => {
                     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
                 }
 
-                .search-icon { color: #9ca3af; }
+                .search-icon { color: #9ca3af; position: static; }
                 .search-bar input {
                     border: none; background: transparent; outline: none; width: 100%;
                     font-size: 0.9rem; color: #111827;
@@ -350,11 +373,39 @@ const ManageSecurity: React.FC = () => {
                 .form-group label { display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 8px; }
                 .form-input { width: 100%; padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 10px; font-size: 0.95rem; transition: border-color 0.15s, box-shadow 0.15s; }
                 .form-input:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+                .input-group { position: relative; display: flex; align-items: center; }
+                .password-toggle-btn { position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 4px; border-radius: 4px; transition: color 0.15s, background-color 0.15s; }
+                .password-toggle-btn:hover { color: #374151; background-color: #f3f4f6; }
                 .modal-footer { padding: 20px 24px; background: #f9fafb; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 12px; }
                 .btn-secondary { background: white; border: 1px solid #d1d5db; color: #374151; padding: 10px 18px; border-radius: 10px; font-weight: 500; cursor: pointer; }
 
                 @keyframes spin { to { transform: rotate(360deg); } }
                 @keyframes modalSlide { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+                @media (max-width: 768px) {
+                    .page-header {
+                        flex-direction: column;
+                        align-items: stretch;
+                        gap: 16px;
+                    }
+                    .header-actions {
+                        flex-direction: column;
+                        align-items: stretch;
+                        width: 100%;
+                        gap: 12px;
+                    }
+                    .search-bar {
+                        width: 100%;
+                    }
+                    .btn-primary {
+                        width: 100%;
+                        justify-content: center;
+                    }
+                    .modern-table th, .modern-table td {
+                        padding: 12px 14px;
+                        font-size: 0.85rem;
+                    }
+                }
             `}</style>
         </AdminLayout >
     );

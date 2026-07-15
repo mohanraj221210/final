@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { Search, Calendar, ChevronDown, ClipboardList } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import WatchmanNav from "../../components/WatchmanNav";
 import LoadingSpinner from "../../components/LoadingSpinner";
@@ -119,7 +120,7 @@ const WatchmanOutpassList: React.FC = () => {
             {/* Filter and Search Controls */}
             <div className="sd-controls">
               <div className="sd-search-wrapper">
-                <span className="sd-search-icon">🔍</span>
+                <span className="sd-search-icon" style={{ display: 'inline-flex', alignItems: 'center' }}><Search size={18} /></span>
                 <input
                   type="text"
                   placeholder="Search name, register no..."
@@ -144,7 +145,7 @@ const WatchmanOutpassList: React.FC = () => {
 
               {/* Mobile Filters Dropdown */}
               <div className="mobile-only sd-dropdown-wrapper">
-                <span className="sd-dropdown-icon">📅</span>
+                <span className="sd-dropdown-icon" style={{ display: 'inline-flex', alignItems: 'center' }}><Calendar size={18} /></span>
                 <select
                   className="sd-filter-dropdown"
                   value={dateFilter}
@@ -154,7 +155,7 @@ const WatchmanOutpassList: React.FC = () => {
                     <option key={filter} value={filter}>{filter}</option>
                   ))}
                 </select>
-                <span className="sd-dropdown-arrow">▼</span>
+                <span className="sd-dropdown-arrow" style={{ display: 'inline-flex', alignItems: 'center' }}><ChevronDown size={14} /></span>
               </div>
             </div>
           </div>
@@ -179,7 +180,9 @@ const WatchmanOutpassList: React.FC = () => {
                     <tr>
                       <td colSpan={7} className="sd-empty-cell">
                         <div className="sd-empty-state">
-                          <span className="sd-empty-icon">📋</span>
+                          <span className="sd-empty-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <ClipboardList size={40} style={{ color: '#CBD5E1' }} />
+                          </span>
                           <h3 className="sd-empty-title">No Approved Outpasses</h3>
                           <p className="sd-empty-desc">No approved student outpasses match your filters.</p>
                         </div>

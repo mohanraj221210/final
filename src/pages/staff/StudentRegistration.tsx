@@ -11,10 +11,13 @@ interface Student {
     name: string;
     email: string;
     registerNo?: string;
+    registerNumber?: string;
     department?: string;
     year?: string;
     residentType?: string;
+    residencetype?: string;
     isBlocked?: boolean;
+    isblocked?: boolean;
     // Add other fields as necessary from backend response
     boardingPoint?: string;
     busNo?: string;
@@ -164,11 +167,17 @@ const StudentRegistration: React.FC = () => {
     };
 
     // Filtered Students
-    const filteredStudents = studentsList.filter(student =>
-        student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (student.registerNo && student.registerNo.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
+    const filteredStudents = studentsList.filter(student => {
+        const name = student.name || '';
+        const email = student.email || '';
+        const regNo = student.registerNumber || student.registerNo || '';
+        
+        return (
+            name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            regNo.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    });
 
     // Handle File Change
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -533,68 +542,73 @@ const StudentRegistration: React.FC = () => {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {filteredStudents.map(student => (
-                                                    <tr
-                                                        key={student._id}
-                                                        onClick={() => navigate(`/staff/student-details/${student._id}`)}
-                                                        className={student.isBlocked ? 'row-blocked' : ''}
-                                                    >
-                                                        <td data-label="Student Details">
-                                                            <div className="table-student-cell">
-                                                                <div className="student-avatar-small">
-                                                                    {student.photo ? (
-                                                                        <img
-                                                                            src={student.photo.startsWith('http') || student.photo.startsWith('data:') || student.photo.startsWith('blob:')
-                                                                                ? student.photo
-                                                                                : `${import.meta.env.VITE_CDN_URL}${student.photo}`}
-                                                                            alt={student.name}
-                                                                        />
-                                                                    ) : (
-                                                                        student.name.charAt(0).toUpperCase()
-                                                                    )}
-                                                                </div>
-                                                                <div className="student-name-email">
-                                                                    <div className="student-name-row">
-                                                                        <span className="student-name-text">{student.name}</span>
-                                                                        {student.isBlocked && <span className="badge-blocked">Blocked</span>}
+                                                {filteredStudents.map(student => {
+                                                    const isBlocked = student.isBlocked || student.isblocked;
+                                                    const registerNo = student.registerNumber || student.registerNo || '—';
+                                                    const residentType = student.residentType || student.residencetype;
+                                                    return (
+                                                        <tr
+                                                            key={student._id}
+                                                            onClick={() => navigate(`/staff/student-details/${student._id}`)}
+                                                            className={isBlocked ? 'row-blocked' : ''}
+                                                        >
+                                                            <td data-label="Student Details">
+                                                                <div className="table-student-cell">
+                                                                    <div className="student-avatar-small">
+                                                                        {student.photo ? (
+                                                                            <img
+                                                                                src={student.photo.startsWith('data:') || student.photo.startsWith('blob:')
+                                                                                    ? student.photo
+                                                                                    : `${student.photo}`}
+                                                                                alt={student.name}
+                                                                            />
+                                                                        ) : (
+                                                                            student.name.charAt(0).toUpperCase()
+                                                                        )}
                                                                     </div>
-                                                                    <span className="student-email-text">{student.email}</span>
+                                                                    <div className="student-name-email">
+                                                                        <div className="student-name-row">
+                                                                            <span className="student-name-text">{student.name}</span>
+                                                                            {isBlocked && <span className="badge-blocked">Blocked</span>}
+                                                                        </div>
+                                                                        <span className="student-email-text">{student.email}</span>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        </td>
-                                                        <td data-label="Register No">
-                                                            <span className="student-reg-text">{student.registerNo || '—'}</span>
-                                                        </td>
-                                                        <td data-label="Department">
-                                                            <span className="student-dept-text">{student.department || '—'}</span>
-                                                        </td>
-                                                        <td data-label="Resident Type">
-                                                            {student.residentType ? (
-                                                                <span className={`resident-badge ${student.residentType.toLowerCase()}`}>
-                                                                    {student.residentType}
-                                                                </span>
-                                                            ) : (
-                                                                <span className="resident-badge unassigned">Unassigned</span>
-                                                            )}
-                                                        </td>
-                                                        <td data-label="Actions" className="text-right" onClick={(e) => e.stopPropagation()}>
-                                                            <div className="actions-cell">
-                                                                <button
-                                                                    className="btn-table-action btn-view-action"
-                                                                    onClick={() => navigate(`/staff/student-details/${student._id}`)}
-                                                                >
-                                                                    View
-                                                                </button>
-                                                                <button
-                                                                    className="btn-table-action btn-pwd-action"
-                                                                    onClick={(e) => openPasswordModal(student._id, student.email, e)}
-                                                                >
-                                                                    Reset Pwd
-                                                                </button>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                ))}
+                                                            </td>
+                                                            <td data-label="Register No">
+                                                                <span className="student-reg-text">{registerNo}</span>
+                                                            </td>
+                                                            <td data-label="Department">
+                                                                <span className="student-dept-text">{student.department || '—'}</span>
+                                                            </td>
+                                                            <td data-label="Resident Type">
+                                                                {residentType ? (
+                                                                    <span className={`resident-badge ${residentType.toLowerCase()}`}>
+                                                                        {residentType}
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="resident-badge unassigned">Unassigned</span>
+                                                                )}
+                                                            </td>
+                                                            <td data-label="Actions" className="text-right" onClick={(e) => e.stopPropagation()}>
+                                                                <div className="actions-cell">
+                                                                    <button
+                                                                        className="btn-table-action btn-view-action"
+                                                                        onClick={() => navigate(`/staff/student-details/${student._id}`)}
+                                                                    >
+                                                                        View
+                                                                    </button>
+                                                                    <button
+                                                                        className="btn-table-action btn-pwd-action"
+                                                                        onClick={(e) => openPasswordModal(student._id, student.email, e)}
+                                                                    >
+                                                                        Reset Pwd
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
                                             </tbody>
                                         </table>
                                     </div>

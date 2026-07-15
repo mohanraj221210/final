@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Camera, Shield, User, Mail, Phone } from "lucide-react";
 import Nav from "../../components/WatchmanNav";
 import Toast from "../../components/Toast";
 import watchmanProfile from "../../assets/jit.webp";
@@ -198,7 +199,7 @@ const WatchmanProfile: React.FC = () => {
                             <div className="sd-avatar-uploader-container">
                                 <div className="sd-profile-avatar-wrapper">
                                     <img
-                                        src={previewUrl || `${import.meta.env.VITE_CDN_URL}${watchman.photo}` || watchmanProfile}
+                                        src={previewUrl || `${watchman.photo}` || watchmanProfile}
                                         alt="Profile"
                                         className="sd-profile-img"
                                         onError={(e) => {
@@ -208,7 +209,7 @@ const WatchmanProfile: React.FC = () => {
                                     />
                                     {isEditing && (
                                         <label className="sd-avatar-upload-overlay">
-                                            <span className="sd-upload-icon">📷</span>
+                                            <span className="sd-upload-icon" style={{ display: 'inline-flex', alignItems: 'center' }}><Camera size={20} /></span>
                                             <input
                                                 type="file"
                                                 accept="image/jpeg, image/png"
@@ -222,7 +223,9 @@ const WatchmanProfile: React.FC = () => {
                                 <h2 className="sd-sidebar-name">{watchman.name || "Security Officer"}</h2>
                                 
                                 <div className="sd-sidebar-badge-row">
-                                    <span className="sd-sidebar-badge">👮 Security Gate</span>
+                                    <span className="sd-sidebar-badge">
+                                        <Shield size={14} style={{ marginRight: '4px', display: 'inline-flex', alignItems: 'center' }} /> Security Gate
+                                    </span>
                                 </div>
                             </div>
 
@@ -253,7 +256,7 @@ const WatchmanProfile: React.FC = () => {
                         {/* Main Content Area: Forms */}
                         <div className="sd-profile-content-card">
                             <div className="sd-card-section-header">
-                                <span className="sd-section-icon-badge">👤</span>
+                                <span className="sd-section-icon-badge" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><User size={20} /></span>
                                 <div>
                                     <h3>Personal Credentials</h3>
                                     <p className="sd-card-section-desc">Keep your details up to date for campus notifications.</p>
@@ -264,7 +267,7 @@ const WatchmanProfile: React.FC = () => {
                                 <div className="sd-input-group">
                                     <label className="sd-label">Full Name</label>
                                     <div className="sd-input-wrapper">
-                                        <span className="sd-input-icon">👤</span>
+                                        <span className="sd-input-icon" style={{ display: 'inline-flex', alignItems: 'center' }}><User size={16} /></span>
                                         <input
                                             type="text"
                                             name="name"
@@ -280,7 +283,7 @@ const WatchmanProfile: React.FC = () => {
                                 <div className="sd-input-group">
                                     <label className="sd-label">Email ID</label>
                                     <div className="sd-input-wrapper">
-                                        <span className="sd-input-icon">✉️</span>
+                                        <span className="sd-input-icon" style={{ display: 'inline-flex', alignItems: 'center' }}><Mail size={16} /></span>
                                         <input
                                             type="email"
                                             name="email"
@@ -296,7 +299,7 @@ const WatchmanProfile: React.FC = () => {
                                 <div className="sd-input-group">
                                     <label className="sd-label">Mobile Number</label>
                                     <div className="sd-input-wrapper">
-                                        <span className="sd-input-icon">📞</span>
+                                        <span className="sd-input-icon" style={{ display: 'inline-flex', alignItems: 'center' }}><Phone size={16} /></span>
                                         <input
                                             type="tel"
                                             name="phone"

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AdminLayout from './AdminLayout';
 import { adminService } from '../../services/adminService';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ViewDetailsButton from '../../components/ViewDetailsButton';
 import { 
     Users, 
     UserCheck, 
@@ -33,6 +35,7 @@ const DEPARTMENTS = [
 const COLORS = ['#4F46E5', '#06B6D4', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#94A3B8'];
 
 const AdminDashboard: React.FC = () => {
+    const navigate = useNavigate();
     // Student Filters
     const [studentDeptFilter, setStudentDeptFilter] = useState('');
 
@@ -59,6 +62,12 @@ const AdminDashboard: React.FC = () => {
     const [exportLoading, setExportLoading] = useState(false);
 
     const fetchData = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            localStorage.clear();
+            navigate('/admin-login');
+            return;
+        }
         setLoading(true);
         try {
             const [students, staff, outpasses] = await Promise.all([
@@ -287,7 +296,7 @@ const AdminDashboard: React.FC = () => {
                                 </div>
                                 <div className="kpi-bottom">
                                     <div>
-                                        <p className="kpi-label">Active Staff</p>
+                                        <p className="kpi-label">Active Faculty</p>
                                         <h2 className="kpi-value">{staffStats?.total || 0}</h2>
                                     </div>
                                     <div className="kpi-spark">
@@ -401,7 +410,7 @@ const AdminDashboard: React.FC = () => {
                             <div className="saas-card">
                                 <div className="card-header">
                                     <div className="card-title-group">
-                                        <h3>Staff Overview</h3>
+                                        <h3>Faculty Overview</h3>
                                         <p>Faculty members per department</p>
                                     </div>
                                 </div>
@@ -558,7 +567,7 @@ const AdminDashboard: React.FC = () => {
                                                             </span>
                                                         </td>
                                                         <td className="text-right">
-                                                            <button className="table-action-btn">View</button>
+                                                            <ViewDetailsButton compact label="View" onClick={() => {}} />
                                                         </td>
                                                     </tr>
                                                 );
@@ -1025,12 +1034,6 @@ const AdminDashboard: React.FC = () => {
                     font-size: 0.75rem; font-weight: 600; text-transform: capitalize;
                 }
 
-                .table-action-btn {
-                    background: transparent; border: none; color: var(--primary);
-                    font-size: 0.85rem; font-weight: 500; cursor: pointer;
-                }
-                .table-action-btn:hover { text-decoration: underline; }
-
                 .table-empty {
                     display: flex; flex-direction: column; align-items: center; justify-content: center;
                     padding: 60px 20px; color: var(--text-light);
@@ -1039,13 +1042,31 @@ const AdminDashboard: React.FC = () => {
                 .table-empty p { font-size: 0.9rem; margin: 0; }
 
                 /* Skeleton Loaders */
-                .saas-skeleton-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 24px; }
+                .saas-skeleton-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 24px; }
                 .skeleton { background: var(--border-light); border-radius: 12px; animation: pulse 1.5s infinite; }
                 .card-skel { height: 140px; }
                 @keyframes pulse {
                     0% { opacity: 0.6; }
                     50% { opacity: 0.3; }
                     100% { opacity: 0.6; }
+                }
+
+                @media (max-width: 768px) {
+                    .saas-header-actions {
+                        flex-direction: column;
+                        align-items: stretch;
+                        gap: 12px;
+                    }
+                    .header-buttons {
+                        width: 100%;
+                    }
+                    .header-buttons button {
+                        flex: 1;
+                        justify-content: center;
+                    }
+                    .saas-skeleton-container {
+                        grid-template-columns: 1fr;
+                    }
                 }
                 `}</style>
             </div>

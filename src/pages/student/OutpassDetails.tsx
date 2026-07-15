@@ -44,6 +44,9 @@ interface OutpassData {
     createdAt: string;
     document?: string;
     remarks?: string;
+    out?: string;
+    in?: string;
+    isLate?: boolean;
 }
 
 const OutpassDetails: React.FC = () => {
@@ -109,6 +112,9 @@ const OutpassDetails: React.FC = () => {
                         createdAt: item.createdAt,
                         document: item.proof || item.document || item.file || null,
                         remarks: item.remarks || '',
+                        out: item.out,
+                        in: item.in,
+                        isLate: !!item.isLate || (item.in && new Date(item.in) > new Date(item.toDate)),
                         staffApproval: {
                             status: item.staff?.status || item.staffapprovalstatus || 'pending',
                             approverName: item.staffid?.name,
@@ -173,7 +179,7 @@ const OutpassDetails: React.FC = () => {
             toast.error("Document not found");
             return;
         }
-        const fullUrl = `${import.meta.env.VITE_CDN_URL}${url}`;
+        const fullUrl = `${url}`;
         setDocumentUrl(fullUrl);
         if (url.toLowerCase().endsWith('.pdf')) {
             setDocumentType('pdf');
@@ -183,11 +189,12 @@ const OutpassDetails: React.FC = () => {
         setShowDocumentModal(true);
     };
 
-    const isWithinTimeWindow = (fromDate: string) => {
+    const isWithinTimeWindow = (fromDate: string, toDate: string) => {
+        const now = currentTime;
         const fromTime = new Date(fromDate).getTime();
-        const diff = currentTime - fromTime;
-        // Valid from the moment of approval until 30 minutes AFTER the fromDate
-        return diff <= 30 * 60 * 1000;
+        const thirtyMinsBefore = fromTime - 30 * 60 * 1000;
+        const toTime = new Date(toDate).getTime();
+        return now >= thirtyMinsBefore && now <= toTime;
     };
 
     const filteredOutpasses = outpasses.filter(op => {
@@ -196,7 +203,9 @@ const OutpassDetails: React.FC = () => {
     });
 
     const renderTimeline = (outpass: OutpassData) => {
-        const steps = [
+        const isOuting = outpass.outpassType?.toLowerCase().replace(/\s+/g, '') === 'outing';
+
+        const steps = !isOuting ? [
             {
                 title: 'Staff / Tutor Advisor',
                 status: outpass.staffApproval.status,
@@ -227,7 +236,7 @@ const OutpassDetails: React.FC = () => {
                     </svg>
                 )
             }
-        ];
+        ] : [];
 
         if (residenceType === 'hostel') {
             steps.push({
@@ -385,13 +394,20 @@ const OutpassDetails: React.FC = () => {
                                         {filteredOutpasses.map((outpass, index) => {
                                             const staggerIndex = (index % 6) + 1;
                                             return (
-                                                <div key={outpass.id} className={`pb-outpass-item-card pb-animate-stagger-${staggerIndex}`}>
+                                                <div key={outpass.id} className={`pb-outpass-item-card ${outpass.isLate ? 'late-card-red' : ''} pb-animate-stagger-${staggerIndex}`}>
                                                     <div className="pb-card-top-row">
-                                                        <span className={`pb-outpass-type-indicator ${
-                                                            outpass.outpassType.toLowerCase() === 'emergency' ? 'emergency' : ''
-                                                        }`}>
-                                                            {outpass.outpassType}
-                                                        </span>
+                                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                            <span className={`pb-outpass-type-indicator ${
+                                                                outpass.outpassType.toLowerCase() === 'emergency' ? 'emergency' : ''
+                                                            }`}>
+                                                                {outpass.outpassType}
+                                                            </span>
+                                                            {outpass.isLate && (
+                                                                <span className="pb-outpass-type-indicator emergency" style={{ textTransform: 'uppercase' }}>
+                                                                    ⏳ Late
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         {getStatusBadge(outpass.overallStatus)}
                                                     </div>
 
@@ -456,7 +472,7 @@ const OutpassDetails: React.FC = () => {
                                     </button>
                                 </div>
 
-                                <div className="pb-details-layout-grid">
+                                <div className={`pb-details-layout-grid ${selectedOutpass.outpassType?.toLowerCase().replace(/\s+/g, '') === 'hostelemergency' ? 'single-col' : ''}`}>
                                     {/* Left Column: Outpass Details */}
                                     <div className="pb-details-left-col">
                                         <div className="pb-detail-info-card">
@@ -487,6 +503,18 @@ const OutpassDetails: React.FC = () => {
                                                     <div className="pb-meta-info-item">
                                                         <span className="label" style={{ color: '#EF4444' }}>Remarks</span>
                                                         <span className="val reason-text" style={{ color: '#EF4444', fontWeight: 600 }}>"{selectedOutpass.remarks}"</span>
+                                                    </div>
+                                                )}
+                                                {selectedOutpass.out && (
+                                                    <div className="pb-meta-info-item">
+                                                        <span className="label" style={{ color: '#3B82F6' }}>Marked Out Time</span>
+                                                        <span className="val font-semibold" style={{ color: '#2563EB' }}>{formatDateTime(selectedOutpass.out)}</span>
+                                                    </div>
+                                                )}
+                                                {selectedOutpass.in && (
+                                                    <div className="pb-meta-info-item">
+                                                        <span className="label" style={{ color: '#10B981' }}>Marked In Time</span>
+                                                        <span className="val font-semibold" style={{ color: '#059669' }}>{formatDateTime(selectedOutpass.in)}</span>
                                                     </div>
                                                 )}
                                                 <div className="pb-meta-info-item">
@@ -520,14 +548,26 @@ const OutpassDetails: React.FC = () => {
                                         {selectedOutpass.overallStatus === 'approved' && (
                                             <div className="pb-detail-info-card pb-qr-card-container">
                                                 <h3 className="pb-section-title">Exit Pass QR</h3>
-                                                {isWithinTimeWindow(selectedOutpass.fromDate) ? (
+                                                {isWithinTimeWindow(selectedOutpass.fromDate, selectedOutpass.toDate) ? (
                                                     <div className="pb-qr-wrapper">
                                                         <div className="pb-qr-box">
                                                             <QRCodeSVG value={selectedOutpass.id} size={180} level="H" />
                                                         </div>
                                                         <p className="pb-qr-tip">
                                                             Show this QR code at the security gate.<br/>
-                                                            <small>Valid up to 30 minutes after departure.</small>
+                                                            <small>Valid from {formatDateTime(selectedOutpass.fromDate)} to {formatDateTime(selectedOutpass.toDate)}</small>
+                                                        </p>
+                                                    </div>
+                                                ) : new Date(currentTime).getTime() < new Date(selectedOutpass.fromDate).getTime() - 30 * 60 * 1000 ? (
+                                                    <div className="pb-qr-expired">
+                                                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: '#F59E0B' }}>
+                                                            <circle cx="12" cy="12" r="10" />
+                                                            <polyline points="12 6 12 12 16 14" />
+                                                        </svg>
+                                                        <p>
+                                                            QR Code is not yet active.<br/>
+                                                            It will be valid starting from your departure time:<br/>
+                                                            <strong>{formatDateTime(selectedOutpass.fromDate)}</strong>
                                                         </p>
                                                     </div>
                                                 ) : (
@@ -539,8 +579,8 @@ const OutpassDetails: React.FC = () => {
                                                         </svg>
                                                         <p>
                                                             QR Code has expired.<br/>
-                                                            It was valid up to 30 minutes after your departure time:<br/>
-                                                            <strong>{formatDateTime(selectedOutpass.fromDate)}</strong>
+                                                            It was valid up to your arrival time:<br/>
+                                                            <strong>{formatDateTime(selectedOutpass.toDate)}</strong>
                                                         </p>
                                                     </div>
                                                 )}
@@ -549,10 +589,12 @@ const OutpassDetails: React.FC = () => {
                                     </div>
 
                                     {/* Right Column: Vertical Approval Timeline */}
-                                    <div className="pb-details-right-col">
-                                        <h3 className="pb-section-title">Approval Flow Timeline</h3>
-                                        {renderTimeline(selectedOutpass)}
-                                    </div>
+                                    {selectedOutpass.outpassType?.toLowerCase().replace(/\s+/g, '') !== 'hostelemergency' && (
+                                        <div className="pb-details-right-col">
+                                            <h3 className="pb-section-title">Approval Flow Timeline</h3>
+                                            {renderTimeline(selectedOutpass)}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -620,11 +662,18 @@ const OutpassDetails: React.FC = () => {
                                 filteredOutpasses.map((op, index) => {
                                     const staggerIndex = (index % 5) + 1;
                                     return (
-                                        <div key={op.id} className={`pb-mob-outpass-card pb-animate-stagger-${staggerIndex}`} onClick={() => setSelectedOutpass(op)}>
+                                        <div key={op.id} className={`pb-mob-outpass-card ${op.isLate ? 'late-card-red' : ''} pb-animate-stagger-${staggerIndex}`} onClick={() => setSelectedOutpass(op)}>
                                             <div className="pb-mob-op-top">
-                                                <span className={`pb-outpass-type-indicator ${op.outpassType.toLowerCase() === 'emergency' ? 'emergency' : ''}`}>
-                                                    {op.outpassType}
-                                                </span>
+                                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                    <span className={`pb-outpass-type-indicator ${op.outpassType.toLowerCase() === 'emergency' ? 'emergency' : ''}`}>
+                                                        {op.outpassType}
+                                                    </span>
+                                                    {op.isLate && (
+                                                        <span className="pb-outpass-type-indicator emergency" style={{ textTransform: 'uppercase' }}>
+                                                            ⏳ Late
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 {getStatusBadge(op.overallStatus)}
                                             </div>
                                             <div className="pb-mob-op-dates">
@@ -673,6 +722,18 @@ const OutpassDetails: React.FC = () => {
                                         <span className="pb-val font-semibold">“{selectedOutpass.remarks}”</span>
                                     </div>
                                 )}
+                                {selectedOutpass.out && (
+                                    <div className="pb-mob-detail-row" style={{ color: '#3B82F6' }}>
+                                        <span className="pb-label" style={{ color: '#3B82F6' }}>Marked Out Time</span>
+                                        <span className="pb-val font-semibold">{formatDateTime(selectedOutpass.out)}</span>
+                                    </div>
+                                )}
+                                {selectedOutpass.in && (
+                                    <div className="pb-mob-detail-row" style={{ color: '#10B981' }}>
+                                        <span className="pb-label" style={{ color: '#10B981' }}>Marked In Time</span>
+                                        <span className="pb-val font-semibold">{formatDateTime(selectedOutpass.in)}</span>
+                                    </div>
+                                )}
                                 <div className="pb-mob-detail-row" style={{borderBottom: 'none'}}><span className="pb-label">Applied</span><span className="pb-val">{formatDateTime(selectedOutpass.createdAt)}</span></div>
                                 {selectedOutpass.document && (
                                     <button onClick={() => handleViewDocument(selectedOutpass.document)} className="pb-mob-view-proof-btn">
@@ -689,9 +750,22 @@ const OutpassDetails: React.FC = () => {
                             {selectedOutpass.overallStatus === 'approved' && (
                                 <div className="pb-mob-detail-card pb-mob-qr-container">
                                     <h3 className="pb-mob-section-title">Exit Pass QR</h3>
-                                    {isWithinTimeWindow(selectedOutpass.fromDate) ? (
+                                    {isWithinTimeWindow(selectedOutpass.fromDate, selectedOutpass.toDate) ? (
                                         <div className="pb-mob-qr-box">
                                             <QRCodeSVG value={selectedOutpass.id} size={160} level="H" />
+                                            <p className="pb-qr-tip" style={{ marginTop: '8px', fontSize: '0.75rem', textAlign: 'center', color: '#64748B' }}>
+                                                Valid till: {formatDateTime(selectedOutpass.toDate)}
+                                            </p>
+                                        </div>
+                                    ) : new Date(currentTime).getTime() < new Date(selectedOutpass.fromDate).getTime() - 30 * 60 * 1000 ? (
+                                        <div className="pb-mob-qr-expired">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: '#F59E0B' }}>
+                                                <circle cx="12" cy="12" r="10" />
+                                                <polyline points="12 6 12 12 16 14" />
+                                            </svg>
+                                            <p>
+                                                QR Code is not yet active.<br/>Valid starting at: <br/><strong>{formatDateTime(selectedOutpass.fromDate)}</strong>
+                                            </p>
                                         </div>
                                     ) : (
                                         <div className="pb-mob-qr-expired">
@@ -701,7 +775,7 @@ const OutpassDetails: React.FC = () => {
                                                 <line x1="9" y1="9" x2="15" y2="15" />
                                             </svg>
                                             <p>
-                                                QR Code has expired.<br/>Valid up to 30 mins after: <br/><strong>{formatDateTime(selectedOutpass.fromDate)}</strong>
+                                                QR Code has expired.<br/>Expired at: <br/><strong>{formatDateTime(selectedOutpass.toDate)}</strong>
                                             </p>
                                         </div>
                                     )}
@@ -709,11 +783,15 @@ const OutpassDetails: React.FC = () => {
                             )}
 
                             {/* Timeline */}
-                            <h3 className="pb-mob-section-header">Approval Timeline</h3>
-                            <div className="pb-mob-timeline">
+                            {selectedOutpass.outpassType?.toLowerCase().replace(/\s+/g, '') !== 'hostelemergency' && (
+                                <>
+                                    <h3 className="pb-mob-section-header">Approval Timeline</h3>
+                                    <div className="pb-mob-timeline">
                                 {[
-                                    { title: 'Staff / Tutor Advisor', ...selectedOutpass.staffApproval },
-                                    { title: 'Year Incharge', ...selectedOutpass.yearInchargeApproval },
+                                    ...(selectedOutpass.outpassType?.toLowerCase().replace(/\s+/g, '') === 'outing' ? [] : [
+                                        { title: 'Staff / Tutor Advisor', ...selectedOutpass.staffApproval },
+                                        { title: 'Year Incharge', ...selectedOutpass.yearInchargeApproval }
+                                    ]),
                                     ...(residenceType === 'hostel' ? [{ title: 'Hostel Warden', ...selectedOutpass.wardenApproval }] : [])
                                 ].map((step, idx, arr) => (
                                     <div key={idx} className="pb-mob-timeline-step">
@@ -754,6 +832,8 @@ const OutpassDetails: React.FC = () => {
                                     </div>
                                 ))}
                             </div>
+                                </>
+                            )}
                         </>
                     )}
                 </div>
@@ -890,6 +970,18 @@ const OutpassDetails: React.FC = () => {
                     backdrop-filter: blur(20px);
                     -webkit-backdrop-filter: blur(20px);
                     transition: var(--pb-transition);
+                }
+                .pb-outpass-item-card.late-card-red,
+                .pb-mob-outpass-card.late-card-red {
+                    background: rgba(239, 68, 68, 0.05) !important;
+                    border-color: rgba(239, 68, 68, 0.25) !important;
+                    box-shadow: 0 4px 20px rgba(239, 68, 68, 0.08) !important;
+                }
+                [data-theme="dark"] .pb-outpass-item-card.late-card-red,
+                [data-theme="dark"] .pb-mob-outpass-card.late-card-red {
+                    background: rgba(239, 68, 68, 0.1) !important;
+                    border-color: rgba(239, 68, 68, 0.3) !important;
+                    box-shadow: 0 4px 20px rgba(239, 68, 68, 0.15) !important;
                 }
                 .pb-outpass-item-card:hover {
                     transform: translateY(-4px);
@@ -1054,6 +1146,10 @@ const OutpassDetails: React.FC = () => {
                     grid-template-columns: 1fr 1.2fr;
                     gap: 32px;
                     align-items: start;
+                }
+                .pb-details-layout-grid.single-col {
+                    grid-template-columns: minmax(auto, 900px);
+                    justify-content: center;
                 }
                 @media (max-width: 992px) {
                     .pb-details-layout-grid {

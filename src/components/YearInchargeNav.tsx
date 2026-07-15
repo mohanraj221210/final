@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { Home, Clock, ClipboardList, User, LogOut } from 'lucide-react';
 
 const YearInchargeNav: React.FC = () => {
     const navigate = useNavigate();
@@ -25,18 +26,21 @@ const YearInchargeNav: React.FC = () => {
     const isActive = (path: string) => location.pathname === path;
 
     const navItems = [
-        { path: '/year-incharge-dashboard',       label: 'Dashboard',     icon: '🏠' },
-        { path: '/year-incharge/pending-outpass',  label: 'Pending',       icon: '⏳' },
-        { path: '/year-incharge/outpass-list',     label: 'Outpass List',  icon: '📋' },
-        { path: '/year-incharge-profile',          label: 'Profile',       icon: '👤' },
+        { path: '/year-incharge-dashboard',       label: 'Dashboard',     icon: <Home size={20} /> },
+        { path: '/year-incharge/pending-outpass',  label: 'Pending',       icon: <Clock size={20} /> },
+        { path: '/year-incharge/outpass-list',     label: 'Outpass List',  icon: <ClipboardList size={20} /> },
+        { path: '/year-incharge-profile',          label: 'Profile',       icon: <User size={20} /> },
     ];
+
 
     return (
         <>
             <header className={`yin-header ${scrolled ? 'yin-scrolled' : ''}`}>
                 <div className="yin-container">
                     <div className="yin-brand" onClick={() => navigate('/year-incharge-dashboard')}>
-                        <span style={{ fontSize: '1.4rem' }}>⚡</span>
+                        <div className="lux-logo-icon">
+                            <img src="/jit permigo.png" alt="JIT Permigo" style={{ width: '22px', height: '22px', objectFit: 'contain', borderRadius: '4px' }} />
+                        </div>
                         <span className="yin-brand-text">Year Incharge</span>
                     </div>
 
@@ -69,7 +73,9 @@ const YearInchargeNav: React.FC = () => {
                 <div className="yin-overlay" onClick={() => setIsMobileMenuOpen(false)}>
                     <div className="yin-mobile-menu" onClick={e => e.stopPropagation()}>
                         <div className="yin-mobile-head">
-                            <span style={{ fontSize: '2rem' }}>⚡</span>
+                            <div className="lux-logo-icon">
+                            <img src="/jit permigo.png" alt="JIT Permigo" style={{ width: '22px', height: '22px', objectFit: 'contain', borderRadius: '4px' }} />
+                        </div>
                             <div>
                                 <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>Year Incharge Portal</div>
                                 <div style={{ fontSize: '0.78rem', color: 'var(--text-3)' }}>Administrative Controls</div>
@@ -81,11 +87,11 @@ const YearInchargeNav: React.FC = () => {
                                 className={`yin-mobile-link ${isActive(item.path) ? 'yin-ml-active' : ''}`}
                                 onClick={() => { navigate(item.path); setIsMobileMenuOpen(false); }}
                             >
-                                <span>{item.icon}</span>{item.label}
+                                <span style={{ display: 'inline-flex', alignItems: 'center', marginRight: '8px' }}>{item.icon}</span>{item.label}
                             </button>
                         ))}
                         <div style={{ height: 1, background: 'var(--border)', margin: '8px 0' }}></div>
-                        <button className="yin-mobile-logout" onClick={handleLogout}>🚪 Logout</button>
+                        <button className="yin-mobile-logout" onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><LogOut size={18} /> Logout</button>
                     </div>
                 </div>
             )}
@@ -97,7 +103,7 @@ const YearInchargeNav: React.FC = () => {
                         className={`yin-bottom-item ${isActive(item.path) ? 'yin-bottom-active' : ''}`}
                         onClick={() => navigate(item.path)}
                     >
-                        <span style={{ fontSize: '1.3rem' }}>{item.icon}</span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{item.icon}</span>
                         <span style={{ fontSize: '0.62rem', fontWeight: 600 }}>{item.label}</span>
                     </button>
                 ))}

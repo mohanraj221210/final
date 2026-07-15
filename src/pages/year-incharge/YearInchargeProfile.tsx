@@ -8,7 +8,10 @@ import { useNavigate } from 'react-router-dom';
 import Loader from '../../components/Loader';
 import jitProfile from '../../assets/jit.webp'; // Fallback image similar to WardenProfile
 
+import { Camera } from 'lucide-react';
+
 interface YearIncharge {
+
     name: string;
     email: string;
     phone: string;
@@ -257,9 +260,7 @@ const YearInchargeProfile: React.FC = () => {
                                     <img
                                         src={
                                             previewImage
-                                                ? (previewImage.startsWith('data:') || previewImage.startsWith('http')
-                                                    ? previewImage
-                                                    : `${import.meta.env.VITE_CDN_URL}${previewImage}`)
+                                                ? previewImage
                                                 : jitProfile
                                         }
                                         alt="Profile"
@@ -267,8 +268,8 @@ const YearInchargeProfile: React.FC = () => {
                                         onError={(e) => { e.currentTarget.src = jitProfile; }}
                                     />
                                     {isEditing && (
-                                        <label className="avatar-upload">
-                                            <span>📷</span>
+                                        <label className="avatar-upload" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <Camera size={18} />
                                             <input
                                                 type="file"
                                                 accept="image/png, image/jpeg, image/jpg"

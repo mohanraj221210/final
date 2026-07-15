@@ -11,6 +11,20 @@ import DeleteConfirmationModal from '../../components/DeleteConfirmationModal';
 
 import { GENDERS } from '../../constants/dropdownOptions';
 
+const YEAR_OPTIONS = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
+const BATCH_OPTIONS = ['2022-2026', '2023-2027', '2024-2028', '2025-2029', '2026-2030'];
+const DEPARTMENT_OPTIONS = [
+    'Computer Science and Engineering',
+    'Electronics and Communication Engineering',
+    'Mechanical Engineering',
+    'Information Technology',
+    'Artificial Intelligence and Data Science',
+    'Master of Business Administration',
+    'Computer Science and Business System'
+];
+
+type FormData = Partial<YearIncharge>;
+
 const YearInchargeDetailsAdmin: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -19,12 +33,12 @@ const YearInchargeDetailsAdmin: React.FC = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [formData, setFormData] = useState<Partial<YearIncharge & { departmentsString?: string; yearsString?: string; batchesString?: string }>>({});
+    const [formData, setFormData] = useState<FormData>({});
 
     const getImageUrl = (photo: string) => {
         if (!photo) return '';
-        if (photo.startsWith('http') || photo.startsWith('data:')) return photo;
-        const baseUrl = import.meta.env.VITE_CDN_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        if (photo.startsWith('data:')) return photo;
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
         const cleanPhoto = photo.startsWith('/') ? photo : `/${photo}`;
         return `${cleanBase}${cleanPhoto}`;
@@ -40,9 +54,9 @@ const YearInchargeDetailsAdmin: React.FC = () => {
             setIncharge(data);
             setFormData({
                 ...data,
-                departmentsString: data.handlingdepartments?.join(', ') || '',
-                yearsString: data.handlingyears?.join(', ') || '',
-                batchesString: data.handlingbatches?.join(', ') || ''
+                handlingdepartments: data.handlingdepartments || [],
+                handlingyears: data.handlingyears || [],
+                handlingbatches: data.handlingbatches || []
             });
         } catch (error) {
             console.error(error);
@@ -57,18 +71,51 @@ const YearInchargeDetailsAdmin: React.FC = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleAddMulti = (field: 'handlingyears' | 'handlingbatches' | 'handlingdepartments', value: string) => {
+        if (!value) return;
+        setFormData(prev => {
+            const currentArray = prev[field] || [];
+            if (currentArray.includes(value)) return prev;
+            return { ...prev, [field]: [...currentArray, value] };
+        });
+    };
+
+    const handleRemoveMulti = (field: 'handlingyears' | 'handlingbatches' | 'handlingdepartments', valueToRemove: string) => {
+        setFormData(prev => ({
+            ...prev,
+            [field]: (prev[field] || []).filter(item => item !== valueToRemove)
+        }));
+    };
+
+    const resetFormData = () => {
+        if (!incharge) return;
+        setFormData({
+            ...incharge,
+            handlingdepartments: incharge.handlingdepartments || [],
+            handlingyears: incharge.handlingyears || [],
+            handlingbatches: incharge.handlingbatches || []
+        });
+    };
+
     const handleUpdate = async () => {
         if (!incharge) return;
+
+        const handlingyears = formData.handlingyears || [];
+        const handlingbatches = formData.handlingbatches || [];
+        const handlingdepartments = formData.handlingdepartments || [];
+
+        if (handlingyears.length === 0 || handlingbatches.length === 0 || handlingdepartments.length === 0) {
+            toast.error("Please select at least one option for all handling details");
+            return;
+        }
+
         try {
             const updateData = {
                 ...formData,
-                handlingdepartments: formData.departmentsString ? formData.departmentsString.split(',').map(s => s.trim()) : [],
-                handlingyears: formData.yearsString ? formData.yearsString.split(',').map(s => s.trim()) : [],
-                handlingbatches: formData.batchesString ? formData.batchesString.split(',').map(s => s.trim()) : []
+                handlingdepartments,
+                handlingyears,
+                handlingbatches
             };
-            delete (updateData as any).departmentsString;
-            delete (updateData as any).yearsString;
-            delete (updateData as any).batchesString;
 
             await adminService.updateIncharge(incharge._id, updateData);
             toast.success("Year Incharge updated successfully");
@@ -93,7 +140,7 @@ const YearInchargeDetailsAdmin: React.FC = () => {
     const handlePasswordUpdate = async (password: string) => {
         if (!incharge) return;
         try {
-            await adminService.updateIncharge(incharge._id, { ...incharge, password });
+            await adminService.resetInchargePassword(incharge._id, password);
             toast.success("Password updated successfully");
         } catch (error) {
             toast.error("Failed to update password");
@@ -131,7 +178,7 @@ const YearInchargeDetailsAdmin: React.FC = () => {
                             </>
                         ) : (
                             <>
-                                <button className="btn-secondary" onClick={() => { setIsEditing(false); setFormData(incharge as any); }}>Cancel</button>
+                                <button className="btn-secondary" onClick={() => { setIsEditing(false); resetFormData(); }}>Cancel</button>
                                 <button className="btn-success" onClick={handleUpdate}>Save Changes</button>
                             </>
                         )}
@@ -182,7 +229,6 @@ const YearInchargeDetailsAdmin: React.FC = () => {
                             <div className="fields-grid">
                                 <Field label="Full Name" name="name" value={formData.name} isEditing={isEditing} onChange={handleInputChange} />
                                 <Field label="Email Address" name="email" value={formData.email} isEditing={isEditing} onChange={handleInputChange} />
-                                <Field label="Role" name="role" value={formData.role} isEditing={isEditing} onChange={handleInputChange} />
                                 <Field label="Phone Number" name="phone" value={formData.phone} isEditing={isEditing} onChange={handleInputChange} />
                                 <Field
                                     label="Gender"
@@ -192,43 +238,34 @@ const YearInchargeDetailsAdmin: React.FC = () => {
                                     onChange={handleInputChange}
                                     options={GENDERS}
                                 />
+                                <MultiSelectField
+                                    label="Handling Year"
+                                    items={formData.handlingyears || []}
+                                    options={YEAR_OPTIONS}
+                                    isEditing={isEditing}
+                                    onAdd={(value) => handleAddMulti('handlingyears', value)}
+                                    onRemove={(value) => handleRemoveMulti('handlingyears', value)}
+                                    addPlaceholder="+ Add Year"
+                                />
+                                <MultiSelectField
+                                    label="Handling Batch"
+                                    items={formData.handlingbatches || []}
+                                    options={BATCH_OPTIONS}
+                                    isEditing={isEditing}
+                                    onAdd={(value) => handleAddMulti('handlingbatches', value)}
+                                    onRemove={(value) => handleRemoveMulti('handlingbatches', value)}
+                                    addPlaceholder="+ Add Batch"
+                                />
+                                <MultiSelectField
+                                    label="Handling Department"
+                                    items={formData.handlingdepartments || []}
+                                    options={DEPARTMENT_OPTIONS}
+                                    isEditing={isEditing}
+                                    onAdd={(value) => handleAddMulti('handlingdepartments', value)}
+                                    onRemove={(value) => handleRemoveMulti('handlingdepartments', value)}
+                                    addPlaceholder="+ Add Department"
+                                />
                             </div>
-                        </div>
-
-                        <div className="detail-section">
-                            <h3 className="section-title">Responsibilities</h3>
-                            {isEditing ? (
-                                <div className="fields-grid">
-                                    <Field
-                                        label="Handling Departments (Comma separated)"
-                                        name="departmentsString"
-                                        value={formData.departmentsString}
-                                        isEditing={isEditing}
-                                        onChange={handleInputChange}
-                                    />
-                                    <Field
-                                        label="Handling Years (Comma separated)"
-                                        name="yearsString"
-                                        value={formData.yearsString}
-                                        isEditing={isEditing}
-                                        onChange={handleInputChange}
-                                    />
-                                    <Field
-                                        label="Handling Batches (Comma separated)"
-                                        name="batchesString"
-                                        value={formData.batchesString}
-                                        isEditing={isEditing}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
-                            ) : (
-                                <div className="tags-container">
-                                    {incharge.handlingdepartments?.map((dept, i) => <span key={`d-${i}`} className="tag tag-blue">{dept}</span>)}
-                                    {incharge.handlingyears?.map((yr, i) => <span key={`y-${i}`} className="tag tag-purple">Year {yr}</span>)}
-                                    {incharge.handlingbatches?.map((bat, i) => <span key={`b-${i}`} className="tag tag-green">{bat}</span>)}
-                                    {(!incharge.handlingdepartments?.length && !incharge.handlingyears?.length && !incharge.handlingbatches?.length) && <span className="text-gray-400">No specific responsibilities listed</span>}
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>
@@ -256,11 +293,11 @@ const YearInchargeDetailsAdmin: React.FC = () => {
                     background: white;
                     border: 1px solid #e2e8f0;
                     color: #64748b;
-                    font-size: 0.95rem;
+                    font-size: 0.85rem;
                     font-weight: 600;
                     cursor: pointer;
                     margin-bottom: 24px;
-                    padding: 10px 20px;
+                    padding: 6px 12px;
                     border-radius: 10px;
                     transition: all 0.2s;
                     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
@@ -403,7 +440,7 @@ const YearInchargeDetailsAdmin: React.FC = () => {
                 .field-group { display: flex; flex-direction: column; gap: 6px; }
                 .field-label { font-size: 0.85rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.025em; }
                 .field-value { font-size: 1rem; color: #111827; font-weight: 500; }
-                .field-input {
+                .field-input { background-color: white; color: #111827;
                     padding: 10px 12px;
                     border: 1px solid #d1d5db;
                     border-radius: 8px;
@@ -413,18 +450,78 @@ const YearInchargeDetailsAdmin: React.FC = () => {
                 }
                 .field-input:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
                 
-                .full-width-field { margin-top: 24px; }
-                .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-                .tag { padding: 6px 12px; border-radius: 8px; font-size: 0.9rem; font-weight: 500; }
-                .tag-blue { background: #e0e7ff; color: #4338ca; }
-                .tag-purple { background: #f3e8ff; color: #9333ea; }
-                .tag-green { background: #dcfce7; color: #166534; }
+                .multi-select-container {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                }
+
+                .chips-container {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 8px;
+                    min-height: 40px;
+                }
+
+                .chip {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    background: #e0f2fe;
+                    color: #0369a1;
+                    padding: 6px 12px;
+                    border-radius: 20px;
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                }
+
+                .chip-remove {
+                    background: none;
+                    border: none;
+                    color: #0369a1;
+                    font-size: 1.1rem;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 20px;
+                    height: 20px;
+                    border-radius: 50%;
+                    line-height: 1;
+                    padding: 0;
+                    opacity: 0.7;
+                    transition: all 0.2s;
+                }
+
+                .chip-remove:hover {
+                    opacity: 1;
+                    background: rgba(3, 105, 161, 0.1);
+                }
+
+                .empty-chips { color: #9ca3af; font-size: 0.95rem; font-weight: 500; }
                 
                 .hidden { display: none; }
 
                 @media (max-width: 1024px) {
                     .profile-layout { grid-template-columns: 1fr; }
                     .profile-sidebar { max-width: 400px; margin: 0 auto; width: 100%; }
+                }
+
+                @media (max-width: 768px) {
+                    .page-header {
+                        flex-direction: column;
+                        align-items: stretch;
+                        gap: 16px;
+                    }
+                    .header-actions {
+                        flex-direction: column;
+                        width: 100%;
+                        gap: 10px;
+                    }
+                    .header-actions button {
+                        width: 100%;
+                        justify-content: center;
+                    }
                 }
             `}</style>
             <ChangePasswordModal
@@ -444,14 +541,21 @@ const YearInchargeDetailsAdmin: React.FC = () => {
     );
 };
 
-const Field = ({ label, name, value, isEditing, onChange, options }: any) => (
+const Field = ({ label, name, value, isEditing, onChange, options }: {
+    label: string;
+    name: string;
+    value?: string;
+    isEditing: boolean;
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+    options?: string[];
+}) => (
     <div className="field-group">
         <label className="field-label">{label}</label>
         {isEditing ? (
             options ? (
                 <select name={name} value={value || ''} onChange={onChange} className="field-input">
                     <option value="">Select {label}</option>
-                    {options.map((opt: string) => (
+                    {options.map((opt) => (
                         <option key={opt} value={opt}>{opt}</option>
                     ))}
                 </select>
@@ -461,6 +565,52 @@ const Field = ({ label, name, value, isEditing, onChange, options }: any) => (
         ) : (
             <div className="field-value">{value || '-'}</div>
         )}
+    </div>
+);
+
+const MultiSelectField = ({ label, items, options, isEditing, onAdd, onRemove, addPlaceholder }: {
+    label: string;
+    items: string[];
+    options: string[];
+    isEditing: boolean;
+    onAdd: (value: string) => void;
+    onRemove: (value: string) => void;
+    addPlaceholder: string;
+}) => (
+    <div className="field-group">
+        <label className="field-label">{label}</label>
+        <div className="multi-select-container">
+            <div className="chips-container">
+                {items.length > 0 ? items.map((item) => (
+                    <span key={item} className="chip">
+                        {item}
+                        {isEditing && (
+                            <button
+                                type="button"
+                                className="chip-remove"
+                                onClick={() => onRemove(item)}
+                            >
+                                ×
+                            </button>
+                        )}
+                    </span>
+                )) : (
+                    !isEditing && <span className="empty-chips">-</span>
+                )}
+            </div>
+            {isEditing && (
+                <select
+                    value=""
+                    onChange={(e) => onAdd(e.target.value)}
+                    className="field-input"
+                >
+                    <option value="" disabled>{addPlaceholder}</option>
+                    {options.filter(opt => !items.includes(opt)).map(opt => (
+                        <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                </select>
+            )}
+        </div>
     </div>
 );
 

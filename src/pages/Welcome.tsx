@@ -108,21 +108,31 @@ const portals = [
 ];
 
 const statsData = [
-  { label: 'Students', value: 1200, suffix: '+', prefix: '', icon: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-  )},
-  { label: 'Faculty Members', value: 85, suffix: '+', prefix: '', icon: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-  )},
-  { label: 'Departments', value: 8, suffix: '+', prefix: '', icon: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="9" width="18" height="11" rx="2"/><path d="M3 9l9-6 9 6"/></svg>
-  )},
-  { label: 'Placement Rate', value: 98, suffix: '%', prefix: '', icon: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-  )},
-  { label: 'Years of Excellence', value: 15, suffix: '+', prefix: '', icon: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-  )},
+  {
+    label: 'Students', value: 1200, suffix: '+', prefix: '', icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z" /><path d="M6 12v5c3 3 9 3 12 0v-5" /></svg>
+    )
+  },
+  {
+    label: 'Faculty Members', value: 85, suffix: '+', prefix: '', icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+    )
+  },
+  {
+    label: 'Departments', value: 8, suffix: '+', prefix: '', icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="9" width="18" height="11" rx="2" /><path d="M3 9l9-6 9 6" /></svg>
+    )
+  },
+  {
+    label: 'Placement Rate', value: 98, suffix: '%', prefix: '', icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>
+    )
+  },
+  {
+    label: 'Years of Excellence', value: 15, suffix: '+', prefix: '', icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+    )
+  },
 ];
 
 const features = [
@@ -131,7 +141,7 @@ const features = [
     desc: 'Centralized marks, grades, timetables and performance analytics for every stakeholder.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
       </svg>
     ),
   },
@@ -140,7 +150,7 @@ const features = [
     desc: 'End-to-end digital leave management from request to gate clearance with real-time notifications.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
       </svg>
     ),
   },
@@ -149,7 +159,7 @@ const features = [
     desc: 'Seamless communication between faculty, year incharges and administration in real time.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
       </svg>
     ),
   },
@@ -158,7 +168,7 @@ const features = [
     desc: 'Instant institutional circulars, approvals and operations managed campus-wide with receipts.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+        <rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
       </svg>
     ),
   },
@@ -167,7 +177,7 @@ const features = [
     desc: 'Gate control, visitor tracking and outpass verification with real-time status updates.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
       </svg>
     ),
   },
@@ -176,7 +186,7 @@ const features = [
     desc: 'Live campus transport schedules, route management and student tracking in one dashboard.',
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+        <rect x="1" y="3" width="15" height="13" rx="2" /><path d="M16 8h4l3 3v5h-7V8z" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" />
       </svg>
     ),
   },
@@ -217,6 +227,7 @@ const Welcome: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [heroMouse, setHeroMouse] = useState({ x: 0, y: 0 });
+  const [highlightEmail, setHighlightEmail] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 60);
@@ -236,7 +247,15 @@ const Welcome: React.FC = () => {
   }, []);
 
   const scrollTo = useCallback((id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    if (id === 'contact-section') {
+      setHighlightEmail(true);
+      setTimeout(() => setHighlightEmail(false), 3000);
+    }
+    if (id === 'jit-root') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    }
     setMobileMenuOpen(false);
   }, []);
 
@@ -265,6 +284,7 @@ const Welcome: React.FC = () => {
   }, []);
 
   const navLinks = ['Home', 'Services', 'Campus', 'About', 'Contact'];
+  const navTargets = ['jit-root', 'portals-section', 'features-section', 'about-section', 'contact-section'];
 
   return (
     <div className="jit-root" ref={pageRef}>
@@ -297,10 +317,10 @@ const Welcome: React.FC = () => {
                 <button
                   key={link}
                   className={`jit-nav-link${i === 0 ? ' jit-nav-link-active' : ''}`}
-                  onClick={() => i === 1 ? scrollTo('portals-section') : i === 2 ? scrollTo('features-section') : undefined}
+                  onClick={() => scrollTo(navTargets[i])}
                 >
                   {link}
-                  {i === 0 && <span className="jit-nav-underline"/>}
+                  {i === 0 && <span className="jit-nav-underline" />}
                 </button>
               ))}
             </nav>
@@ -309,7 +329,7 @@ const Welcome: React.FC = () => {
             <div className="jit-nav-right">
               <button className="jit-nav-btn" onClick={() => scrollTo('portals-section')}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
                 </svg>
                 Login
               </button>
@@ -318,8 +338,8 @@ const Welcome: React.FC = () => {
 
           {/* Mobile drawer */}
           <div className={`jit-mobile-menu${mobileMenuOpen ? ' jit-mobile-open' : ''}`}>
-            {navLinks.map((link) => (
-              <button key={link} className="jit-mobile-link" onClick={() => scrollTo('portals-section')}>{link}</button>
+            {navLinks.map((link, i) => (
+              <button key={link} className="jit-mobile-link" onClick={() => scrollTo(navTargets[i])}>{link}</button>
             ))}
             <button className="jit-nav-btn jit-mobile-cta" onClick={() => scrollTo('portals-section')}>Login / Signup</button>
           </div>
@@ -329,27 +349,27 @@ const Welcome: React.FC = () => {
           {/* ══════════ HERO ══════════ */}
           <section className="jit-hero" onMouseMove={handleHeroMouseMove} onMouseLeave={handleHeroMouseLeave}>
             <div className="jit-hero-bg">
-              <div className="jit-hero-blob jit-blob-1"/>
-              <div className="jit-hero-blob jit-blob-2"/>
-              <div className="jit-hero-blob jit-blob-3"/>
-              <div className="jit-hero-grid"/>
+              <div className="jit-hero-blob jit-blob-1" />
+              <div className="jit-hero-blob jit-blob-2" />
+              <div className="jit-hero-blob jit-blob-3" />
+              <div className="jit-hero-grid" />
             </div>
 
             <div className="jit-container jit-hero-inner">
               {/* Left */}
               <div className="jit-hero-left">
                 <div className="jit-hero-badge jit-reveal jit-fade-up">
-                  <span className="jit-badge-dot"/>
+                  <span className="jit-badge-dot" />
                   Empowering Education. Elevating Excellence.
                 </div>
 
                 <h1 className="jit-hero-h1 jit-reveal jit-fade-up jit-d1">
-                  Welcome to<br/>
+                  Welcome to<br />
                   <span className="jit-h1-blue">JIT PERMIGO</span>
                 </h1>
 
                 <p className="jit-hero-sub jit-reveal jit-fade-up jit-d2">
-                  Digital Campus Platform for Students, Faculty,<br/>
+                  Digital Campus Platform for Students, Faculty,<br />
                   Administration &amp; Campus Services
                 </p>
 
@@ -361,13 +381,13 @@ const Welcome: React.FC = () => {
                   <button className="jit-btn-primary" id="hero-access-portals" onClick={() => scrollTo('portals-section')}>
                     Access Portals
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                      <path d="M5 12h14M12 5l7 7-7 7" />
                     </svg>
                   </button>
                   <button className="jit-btn-outline" id="hero-explore" onClick={() => scrollTo('features-section')}>
                     <span className="jit-play-circle">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                        <polygon points="5 3 19 12 5 21 5 3"/>
+                        <polygon points="5 3 19 12 5 21 5 3" />
                       </svg>
                     </span>
                     Explore Features
@@ -376,7 +396,7 @@ const Welcome: React.FC = () => {
               </div>
 
               {/* Right — 3D Orb Visual */}
-              <div 
+              <div
                 className="jit-hero-right jit-reveal jit-fade-up jit-d1"
                 style={{
                   '--hero-mouse-x': heroMouse.x,
@@ -388,9 +408,9 @@ const Welcome: React.FC = () => {
                   <svg className="jit-orbit-svg jit-orbit-outer" viewBox="0 0 400 400">
                     <defs>
                       <linearGradient id="orbitG-out" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.8"/>
-                        <stop offset="50%" stopColor="#60A5FA" stopOpacity="0.2"/>
-                        <stop offset="100%" stopColor="#1D4ED8" stopOpacity="0.8"/>
+                        <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.8" />
+                        <stop offset="50%" stopColor="#60A5FA" stopOpacity="0.2" />
+                        <stop offset="100%" stopColor="#1D4ED8" stopOpacity="0.8" />
                       </linearGradient>
                     </defs>
                     <circle cx="200" cy="200" r="180" className="jit-orbit-track" />
@@ -400,8 +420,8 @@ const Welcome: React.FC = () => {
                   <svg className="jit-orbit-svg jit-orbit-mid" viewBox="0 0 300 300">
                     <defs>
                       <linearGradient id="orbitG-mid" x1="100%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stopColor="#60A5FA" stopOpacity="0.8"/>
-                        <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.3"/>
+                        <stop offset="0%" stopColor="#60A5FA" stopOpacity="0.8" />
+                        <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.3" />
                       </linearGradient>
                     </defs>
                     <circle cx="150" cy="150" r="130" className="jit-orbit-track" />
@@ -419,7 +439,7 @@ const Welcome: React.FC = () => {
                   <div className="jit-chip jit-chip-tl">
                     <div className="jit-chip-inner">
                       <div className="jit-chip-icon">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="9" width="18" height="11" rx="2"/><path d="M3 9l9-6 9 6"/></svg>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="9" width="18" height="11" rx="2" /><path d="M3 9l9-6 9 6" /></svg>
                       </div>
                       <div>
                         <div className="jit-chip-title">outpass Management</div>
@@ -429,7 +449,7 @@ const Welcome: React.FC = () => {
                   <div className="jit-chip jit-chip-tr">
                     <div className="jit-chip-inner">
                       <div className="jit-chip-icon">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>
                       </div>
                       <div>
                         <div className="jit-chip-title">Documentation</div>
@@ -439,7 +459,7 @@ const Welcome: React.FC = () => {
                   <div className="jit-chip jit-chip-br">
                     <div className="jit-chip-inner">
                       <div className="jit-chip-icon">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
                       </div>
                       <div>
                         <div className="jit-chip-title">Easy Access</div>
@@ -463,13 +483,13 @@ const Welcome: React.FC = () => {
           </section>
 
           {/* ══════════ STATS BAR ══════════ */}
-          <section className="jit-stats-section">
+          <section id="about-section" className="jit-stats-section">
             <div className="jit-container">
               <div className="jit-stats-bar">
                 {statsData.map((stat, i) => (
                   <React.Fragment key={stat.label}>
                     <StatCard stat={stat} index={i} />
-                    {i < statsData.length - 1 && <div className="jit-stats-divider"/>}
+                    {i < statsData.length - 1 && <div className="jit-stats-divider" />}
                   </React.Fragment>
                 ))}
               </div>
@@ -484,7 +504,7 @@ const Welcome: React.FC = () => {
                 <div className="jit-section-head-row">
                   <div>
                     <h2 className="jit-section-h2">Portal Access</h2>
-                    <div className="jit-h2-bar"/>
+                    <div className="jit-h2-bar" />
                   </div>
                   <p className="jit-section-desc">Access your portal with ease and manage everything in one place.</p>
                 </div>
@@ -501,7 +521,7 @@ const Welcome: React.FC = () => {
                     onMouseMove={handleCardMouseMove}
                     onMouseLeave={handleCardMouseLeave}
                   >
-                    <div className="jit-portal-shine"/>
+                    <div className="jit-portal-shine" />
                     <div className="jit-portal-icon">
                       {p.icon}
                     </div>
@@ -509,10 +529,10 @@ const Welcome: React.FC = () => {
                     <div className="jit-portal-desc">{p.desc}</div>
                     <div className="jit-portal-arrow">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                        <path d="M5 12h14M12 5l7 7-7 7" />
                       </svg>
                     </div>
-                    <div className="jit-portal-bottom-line"/>
+                    <div className="jit-portal-bottom-line" />
                   </button>
                 ))}
               </div>
@@ -525,7 +545,7 @@ const Welcome: React.FC = () => {
               <div className="jit-section-center jit-reveal jit-fade-up">
                 <span className="jit-eyebrow-tag">PLATFORM CAPABILITIES</span>
                 <h2 className="jit-section-h2">Everything Your Campus Needs</h2>
-                <div className="jit-h2-bar jit-bar-center"/>
+                <div className="jit-h2-bar jit-bar-center" />
                 <p className="jit-feat-intro">Built for modern institutions. Designed for every stakeholder on campus.</p>
               </div>
 
@@ -538,16 +558,11 @@ const Welcome: React.FC = () => {
                     onMouseMove={handleCardMouseMove}
                     onMouseLeave={handleCardMouseLeave}
                   >
-                    <div className="jit-feat-shine"/>
+                    <div className="jit-feat-shine" />
                     <div className="jit-feat-icon">{f.icon}</div>
                     <h3 className="jit-feat-title">{f.title}</h3>
                     <p className="jit-feat-desc">{f.desc}</p>
-                    <div className="jit-feat-link">
-                      Learn more
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M5 12h14M12 5l7 7-7 7"/>
-                      </svg>
-                    </div>
+
                   </div>
                 ))}
               </div>
@@ -556,16 +571,16 @@ const Welcome: React.FC = () => {
 
           {/* ══════════ CTA BANNER ══════════ */}
           <section className="jit-cta-section">
-            <div className="jit-cta-blob-1"/>
-            <div className="jit-cta-blob-2"/>
+            <div className="jit-cta-blob-1" />
+            <div className="jit-cta-blob-2" />
             <div className="jit-container jit-cta-inner">
               <div className="jit-cta-content jit-reveal jit-fade-up">
                 <h2 className="jit-cta-h2">Start Your Digital Campus Journey</h2>
-                <p className="jit-cta-sub">Join 1,200+ students and 85+ faculty members already on JIT Campus One.</p>
+                <p className="jit-cta-sub">Join 1,200+ students and 85+ faculty members already on JIT Permigo.</p>
                 <button className="jit-btn-primary jit-btn-lg" id="cta-access" onClick={() => scrollTo('portals-section')}>
                   Access Your Portal
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                    <path d="M5 12h14M12 5l7 7-7 7" />
                   </svg>
                 </button>
               </div>
@@ -574,25 +589,18 @@ const Welcome: React.FC = () => {
         </main>
 
         {/* ══════════ FOOTER ══════════ */}
-        <footer className="jit-footer">
+        <footer className="jit-footer" id="contact-section">
           <div className="jit-container jit-footer-inner">
             <div className="jit-footer-brand">
-              <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
-                <rect width="32" height="32" rx="9" fill="url(#ftG)"/>
-                <path d="M8 24L16 9L24 24H8Z" fill="white" fillOpacity="0.95"/>
-                <rect x="13" y="18" width="6" height="5" rx="1.5" fill="url(#ftG)"/>
-                <defs>
-                  <linearGradient id="ftG" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#3B82F6"/><stop offset="1" stopColor="#1D4ED8"/>
-                  </linearGradient>
-                </defs>
-              </svg>
-              <span className="jit-footer-name">JIT Campus One</span>
+              <div className="lux-logo-icon">
+                <img src="/jit permigo.png" alt="JIT Permigo" style={{ width: '25px', height: '25px', objectFit: 'contain', borderRadius: '4px' }} />
+              </div>
+              <span className="jit-footer-name">JIT Permigo</span>
             </div>
             <span className="jit-footer-copy">
               © 2025 Jeppiaar Institute of Technology. All rights reserved.
               <span style={{ margin: '0 10px', color: '#CBD5E1' }}>|</span>
-              Support: <a href="mailto:jeppiaaroutpass@gmail.com" style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 600 }}>jeppiaaroutpass@gmail.com</a>
+              Support: <a href="mailto:outpass@jeppiaarinstitute.org" className={`jit-support-email${highlightEmail ? ' email-highlight-pulse' : ''}`} style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 600, display: 'inline-block', transition: 'all 0.3s ease' }}>outpass@jeppiaarinstitute.org</a>
             </span>
             <span className="jit-footer-tag">v2.0 · Digital Campus Platform</span>
           </div>
@@ -1392,6 +1400,17 @@ const Welcome: React.FC = () => {
           .jit-footer-inner { flex-direction: column; text-align: center; gap: 10px; }
           .jit-cta-h2 { font-size: 28px; letter-spacing: -1px; }
           .jit-cta-sub { font-size: 15px; }
+        }
+
+        @keyframes emailGlow {
+          0% { transform: scale(1); background: transparent; }
+          25% { transform: scale(1.15); background: rgba(59, 130, 246, 0.15); box-shadow: 0 0 12px rgba(59, 130, 246, 0.4); border-radius: 6px; padding: 2px 8px; }
+          50% { transform: scale(1.15); background: rgba(59, 130, 246, 0.25); box-shadow: 0 0 20px rgba(59, 130, 246, 0.6); border-radius: 6px; padding: 2px 8px; }
+          75% { transform: scale(1.15); background: rgba(59, 130, 246, 0.15); box-shadow: 0 0 12px rgba(59, 130, 246, 0.4); border-radius: 6px; padding: 2px 8px; }
+          100% { transform: scale(1); background: transparent; }
+        }
+        .email-highlight-pulse {
+          animation: emailGlow 2.5s ease-in-out;
         }
       `}</style>
     </div>

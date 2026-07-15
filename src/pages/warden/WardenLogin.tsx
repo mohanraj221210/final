@@ -4,6 +4,8 @@ import Toast from '../../components/Toast';
 import axios from 'axios';
 import { toast, ToastContainer } from "react-toastify";
 import SEO from '../../components/SEO';
+import { Home, Ticket, Users, Shield, Lock, Globe } from 'lucide-react';
+
 
 /* ─────────────────────────────────────────────────────────────────────────────
    BACKGROUND CANVAS  — flowing light waves + floating dots (warden teal theme)
@@ -217,16 +219,16 @@ const Wardenlogin: React.FC = () => {
   };
 
   const featureCards = [
-    { icon: '🏠', label: 'Hostel\nManagement' },
-    { icon: '🎫', label: 'Outpass\nApproval' },
-    { icon: '👥', label: 'Student\nOversight' },
-    { icon: '🛡️', label: 'Campus\nSecurity' },
+    { icon: <Home size={24} />, label: 'Hostel\nManagement' },
+    { icon: <Ticket size={24} />, label: 'Outpass\nApproval' },
+    { icon: <Users size={24} />, label: 'Student\nOversight' },
+    { icon: <Shield size={24} />, label: 'Campus\nSecurity' },
   ];
 
   const footerItems = [
-    { icon: '🔒', title: 'Secure & Protected', sub: 'Your data is safe with us' },
-    { icon: '🛡️', title: 'Warden Access Only', sub: 'Authorized personnel' },
-    { icon: '🌍', title: 'Always Accessible', sub: 'Anytime, Anywhere' },
+    { icon: <Lock size={20} />, title: 'Secure & Protected', sub: 'Your data is safe with us' },
+    { icon: <Shield size={20} />, title: 'Warden Access Only', sub: 'Authorized personnel' },
+    { icon: <Globe size={20} />, title: 'Always Accessible', sub: 'Anytime, Anywhere' },
   ];
 
   return (
@@ -263,19 +265,9 @@ const Wardenlogin: React.FC = () => {
           {/* JIT Logo wordmark */}
           <div className="wlp-brand">
             <div className="wlp-brand-logo">
-              <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-                <rect width="36" height="36" rx="9" fill="url(#wlpBrandGrad)" />
-                <path d="M9 26L18 10L27 26H9Z" fill="white" fillOpacity="0.96" />
-                <rect x="14.5" y="20" width="7" height="6" rx="2" fill="url(#wlpBrandGrad2)" />
-                <defs>
-                  <linearGradient id="wlpBrandGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#059669" /><stop offset="1" stopColor="#34D399" />
-                  </linearGradient>
-                  <linearGradient id="wlpBrandGrad2" x1="0" y1="0" x2="7" y2="6" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#047857" /><stop offset="1" stopColor="#10B981" />
-                  </linearGradient>
-                </defs>
-              </svg>
+             <div className="lux-logo-icon">
+                <img src="/green permigo.png" alt="JIT Permigo" style={{ width: '50px', height: '50px', objectFit: 'contain', borderRadius: '4px' }} />
+              </div>
               <div className="wlp-brand-text">
                 <span className="wlp-brand-jit">JIT</span>
                 <span className="wlp-brand-campus">PERMIGO</span>
@@ -298,7 +290,7 @@ const Wardenlogin: React.FC = () => {
           <div className="wlp-features">
             {featureCards.map((fc, i) => (
               <div className="wlp-feat-card" key={i} style={{ animationDelay: `${120 + i * 80}ms` }}>
-                <span className="wlp-feat-icon">{fc.icon}</span>
+                <span className="wlp-feat-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{fc.icon}</span>
                 <span className="wlp-feat-label">{fc.label}</span>
               </div>
             ))}
@@ -321,27 +313,7 @@ const Wardenlogin: React.FC = () => {
         <main className="wlp-right">
 
           {/* Mobile Brand Header */}
-          <div className="wlp-mobile-brand">
-            <div className="wlp-brand-logo">
-              <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-                <rect width="36" height="36" rx="9" fill="url(#wlpBrandGradM)" />
-                <path d="M9 26L18 10L27 26H9Z" fill="white" fillOpacity="0.96" />
-                <rect x="14.5" y="20" width="7" height="6" rx="2" fill="url(#wlpBrandGrad2M)" />
-                <defs>
-                  <linearGradient id="wlpBrandGradM" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#059669" /><stop offset="1" stopColor="#34D399" />
-                  </linearGradient>
-                  <linearGradient id="wlpBrandGrad2M" x1="0" y1="0" x2="7" y2="6" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#047857" /><stop offset="1" stopColor="#10B981" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              <div className="wlp-brand-text">
-                <span className="wlp-brand-jit">JIT</span>
-                <span className="wlp-brand-campus">PERMIGO</span>
-              </div>
-            </div>
-          </div>
+          
 
           {/* Back button */}
           <button className="wlp-back-btn" onClick={() => navigate('/')}>
@@ -354,10 +326,9 @@ const Wardenlogin: React.FC = () => {
           {/* Floating 3D logo above card */}
           <div className="wlp-float-logo">
             <div className="wlp-float-logo-inner">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                <polyline points="9 22 9 12 15 12 15 22"/>
-              </svg>
+             
+                <img src="/green permigo.png" alt="JIT Permigo" style={{ width: '50px', height: '50px', objectFit: 'contain', borderRadius: '4px' }} />
+              
             </div>
           </div>
 
@@ -506,7 +477,7 @@ const Wardenlogin: React.FC = () => {
       <footer className="wlp-footer">
         {footerItems.map((fi, i) => (
           <div className="wlp-footer-item" key={i}>
-            <span className="wlp-footer-icon">{fi.icon}</span>
+            <span className="wlp-footer-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{fi.icon}</span>
             <div className="wlp-footer-text">
               <span className="wlp-footer-title">{fi.title}</span>
               <span className="wlp-footer-sub">{fi.sub}</span>
@@ -800,6 +771,15 @@ const Wardenlogin: React.FC = () => {
           border-radius: 12px; outline: none;
           transition: border-color 0.28s ease, box-shadow 0.28s ease, background 0.28s ease;
           -webkit-appearance: none;
+        }
+        .wlp-input:-webkit-autofill,
+        .wlp-input:-webkit-autofill:hover, 
+        .wlp-input:-webkit-autofill:focus, 
+        .wlp-input:-webkit-autofill:active {
+          -webkit-box-shadow: 0 0 0 1000px #f0fdf4 inset !important;
+          -webkit-text-fill-color: #0F172A !important;
+          caret-color: #0F172A;
+          transition: background-color 5000s ease-in-out 0s;
         }
         .wlp-input::placeholder { color: #94A3B8; font-weight: 400; }
         .wlp-input:hover {

@@ -3,11 +3,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import WardenNav from "../../components/WardenNav";
 import { toast, ToastContainer } from "react-toastify";
+import { AlertTriangle, Clock, User, Phone, Building2, FileText, Eye, CheckCircle, LogIn, LogOut, Check, Home, History } from 'lucide-react';
+
 
 const WardenStudentView: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [student, setStudent] = useState<any>(null);
+  const [outpassHistory, setOutpassHistory] = useState<any[]>([]);
 
   useEffect(() => {
     fetchStudent();
@@ -23,6 +26,9 @@ const WardenStudentView: React.FC = () => {
         }
       );
       setStudent(res.data.outpassdetail || (res.data.filterOutpass && res.data.filterOutpass[0]) || null);
+      if (res.data.outpassHistory) {
+        setOutpassHistory(res.data.outpassHistory);
+      }
       setImageError(false);
     } catch (error) {
       console.error("Failed to fetch student details:", error);
@@ -43,7 +49,7 @@ const WardenStudentView: React.FC = () => {
       toast.error("Document not found");
       return;
     }
-    const fullUrl = `${import.meta.env.VITE_CDN_URL}${url}`;
+    const fullUrl = `${url}`;
     setDocumentUrl(fullUrl);
     if (url.toLowerCase().endsWith('.pdf')) {
       setDocumentType('pdf');
@@ -87,9 +93,7 @@ const WardenStudentView: React.FC = () => {
       await axios.put(
         `${import.meta.env.VITE_API_URL}/warden/outpass/reject/${id}`,
         {
-          outpassId: id,
-          wardenapprovalstatus: modalType,
-          wardenremarks: remarks,
+          remarks: remarks,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -168,6 +172,12 @@ const WardenStudentView: React.FC = () => {
   const yearInchargeTime = student.yearinchargeapprovedAt || student.yearincharge?.actionAt || student.yearinchargeapprovedtime;
   const yearInchargeRemarks = student.yearinchargeremarks || student.yearincharge?.remarks || student.yearinchargeremarksvalue;
 
+  // Resolve Warden Approval Details
+  const wardenName = student.wardenid?.name || student.warden?.name || 'N/A';
+  const wardenTime = student.wardenapprovedAt || student.warden?.actionAt || student.approvedAt;
+  const isEmergency = (student.outpasstype || '').toLowerCase().includes('emergency');
+  const isLateReturn = !isEmergency && (student.isLate || (student.in && new Date(student.in) > new Date(student.toDate)));
+
   return (
     <div className="page-container warden-view-page">
       <WardenNav />
@@ -178,21 +188,33 @@ const WardenStudentView: React.FC = () => {
           ← Back
         </button>
 
-        <div className="main-header">
-          <h1>Outpass Approval</h1>
+        <div className={`main-header ${student.outpasstype?.toLowerCase().includes('emergency') ? 'emergency' : ''}`}>
+          <h1>
+            Outpass Approval
+            {student.outpasstype?.toLowerCase().includes('emergency') && (
+              <span className="emergency-header-badge" style={{ WebkitTextFillColor: 'initial', display: 'inline-flex', alignItems: 'center' }}><AlertTriangle size={14} style={{ marginRight: 4 }} /> EMERGENCY</span>
+            )}
+            {isLateReturn && (
+              <span className="emergency-header-badge" style={{ background: '#FEF2F2', color: '#EF4444', border: '1px solid #FCA5A5', marginLeft: '10px', WebkitTextFillColor: 'initial', display: 'inline-flex', alignItems: 'center' }}>
+                <Clock size={14} style={{ marginRight: 4 }} /> LATE RETURN
+              </span>
+            )}
+          </h1>
+
         </div>
 
         {/* Section 1: Student Personal Details */}
         <div className="section-card">
           <div className="section-header">
-            <h3>👤 Student Personal Details</h3>
+            <h3 style={{ display: 'flex', alignItems: 'center' }}><User size={20} style={{ marginRight: 8 }} /> Student Personal Details</h3>
           </div>
+
           <div className="section-body info-grid-with-avatar">
             <div className="avatar-box">
               {s.photo && !imageError ? (
                 <img
                   src={
-                    s.photo.startsWith('http') || s.photo.startsWith('data:')
+                    s.photo.startsWith('data:')
                       ? s.photo
                       : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${s.photo?.replace(/^\//, '')}`
                   }
@@ -208,10 +230,6 @@ const WardenStudentView: React.FC = () => {
               )}
             </div>
             <div className="info-fields">
-              <div className="field-group">
-                <label>STUDENT ID</label>
-                <div className="display-box">{s._id || "N/A"}</div>
-              </div>
               <div className="field-group">
                 <label>REGISTER NUMBER</label>
                 <div className="display-box">{s.registerNumber || "N/A"}</div>
@@ -237,9 +255,11 @@ const WardenStudentView: React.FC = () => {
                       href={`tel:${s.phone}`}
                       className="dial-btn"
                       title="Call Student"
+                      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                     >
-                      📞
+                      <Phone size={14} />
                     </a>
+
                   )}
                 </div>
               </div>
@@ -252,9 +272,11 @@ const WardenStudentView: React.FC = () => {
                       href={`tel:${s.parentPhone || s.parentnumber}`}
                       className="dial-btn"
                       title="Call Parent"
+                      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                     >
-                      📞
+                      <Phone size={14} />
                     </a>
+
                   )}
                 </div>
               </div>
@@ -262,59 +284,30 @@ const WardenStudentView: React.FC = () => {
           </div>
         </div>
 
-        {/* Section 2: Parents Details */}
-        {/* <div className="section-card">
-          <div className="section-header">
-            <h3>👨‍👩‍👦 Parents Details</h3>
-          </div>
-          <div className="section-body info-grid-3">
-            <div className="field-group">
-              <label>FATHER NAME</label>
-              <div className="display-box">{s.fatherName || "N/A"}</div>
-            </div>
-            <div className="field-group">
-              <label>MOTHER NAME</label>
-              <div className="display-box">{s.motherName || "N/A"}</div>
-            </div>
-            <div className="field-group">
-              <label>PARENT CONTACT</label>
-              <div className="display-box">{s.parentPhone || "N/A"}</div>
-            </div>
-          </div>
-        </div> */}
-
-
-
         {/* Section 3: Hostel Details */}
         <div className="section-card">
           <div className="section-header">
-            <h3>🏢 Hostel Details</h3>
+            <h3 style={{ display: 'flex', alignItems: 'center' }}><Building2 size={20} style={{ marginRight: 8 }} /> Hostel Details</h3>
           </div>
+
           <div className="section-body info-grid-4">
             <div className="field-group">
               <label>HOSTEL NAME</label>
               <div className="display-box">{s.hostelname || "N/A"}</div>
             </div>
-            {/* <div className="field-group">
-              <label>BLOCK</label>
-              <div className="display-box">{s.block || "N/A"}</div>
-            </div> */}
             <div className="field-group">
               <label>ROOM NUMBER</label>
               <div className="display-box">{s.hostelroomno || "N/A"}</div>
             </div>
-            {/* <div className="field-group">
-              <label>WARDEN NAME</label>
-              <div className="display-box">N/A</div>
-            </div> */}
           </div>
         </div>
 
         {/* Section 4: Outpass Request Details */}
         <div className="section-card highlight-border">
           <div className="section-header">
-            <h3>📄 Outpass Request Details</h3>
+            <h3 style={{ display: 'flex', alignItems: 'center' }}><FileText size={20} style={{ marginRight: 8 }} /> Outpass Request Details</h3>
           </div>
+
           <div className="section-body">
             <div className="field-group full-width">
               <label>REASON FOR OUTPASS</label>
@@ -333,10 +326,26 @@ const WardenStudentView: React.FC = () => {
                   {new Date(student.toDate).toLocaleString()}
                 </div>
               </div>
-              {/* <div className="field-group">
-                <label>PLACE OF VISIT</label>
-                <div className="display-box">{student.placeOfVisit || "N/A"}</div>
-              </div> */}
+              <div className="field-group">
+                <label>RETURN STATUS</label>
+                <div
+                  className="display-box"
+                  style={isLateReturn ? { borderColor: '#FCA5A5', background: '#FEF2F2', color: '#EF4444', fontWeight: 'bold' } : (student.in ? { color: '#10B981', fontWeight: 'bold' } : {})}
+                >
+                  {student.in ? (
+                    isEmergency ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center' }}><CheckCircle size={16} style={{ marginRight: 6, color: '#10B981' }} /> Returned</span>
+                    ) : isLateReturn ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center' }}><Clock size={16} style={{ marginRight: 6, color: '#EF4444' }} /> Late Return</span>
+                    ) : (
+                      <span style={{ display: 'inline-flex', alignItems: 'center' }}><CheckCircle size={16} style={{ marginRight: 6, color: '#10B981' }} /> On Time Return</span>
+                    )
+                  ) : (
+                    <span style={{ display: 'inline-flex', alignItems: 'center' }}><LogOut size={16} style={{ marginRight: 6, color: '#64748B' }} /> Not Returned Yet</span>
+                  )}
+
+                </div>
+              </div>
             </div>
 
             {(student.proof || student.document || student.file) && (
@@ -346,9 +355,11 @@ const WardenStudentView: React.FC = () => {
                   <button
                     className="view-doc-btn"
                     onClick={() => handleViewDocument(student.proof || student.document || student.file)}
+                    style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                   >
-                    <span>👁️</span> View Document
+                    <Eye size={16} style={{ marginRight: 6 }} /> View Document
                   </button>
+
                 </div>
               </div>
             )}
@@ -356,103 +367,233 @@ const WardenStudentView: React.FC = () => {
         </div>
 
         {/* Section 5: Approval Workflow */}
-        <div className="section-card">
-          <div className="section-header">
-            <h3>✅ Approval Status &amp; Workflow</h3>
-          </div>
-          <div className="section-body">
-            <div className="workflow-status-grid">
-              {/* Staff Approval */}
-              <div className="workflow-card">
-                <div className="workflow-card-header">
-                  <span className="workflow-role">Staff / Mentor</span>
-                  <span className={`status-pill ${staffStatus}`}>
-                    {staffStatus}
-                  </span>
-                </div>
-                <div className="workflow-card-body">
-                  <div className="workflow-field">
-                    <label>Approved By</label>
-                    <div className="workflow-value">{staffName}</div>
-                  </div>
-                  {staffTime && (
-                    <div className="workflow-field mt-2">
-                      <label>Action Date &amp; Time</label>
-                      <div className="workflow-value">
-                        {new Date(staffTime).toLocaleString('en-IN', {
-                          day: '2-digit', month: 'short', year: 'numeric',
-                          hour: '2-digit', minute: '2-digit', hour12: true
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+        {student.outpasstype?.toLowerCase() !== 'hostelemergency' && (
+          <div className="section-card">
+            <div className="section-header">
+              <h3 style={{ display: 'flex', alignItems: 'center' }}><CheckCircle size={20} style={{ marginRight: 8 }} /> Approval Status &amp; Workflow</h3>
+            </div>
 
-              {/* Year Incharge Approval */}
-              <div className="workflow-card">
-                <div className="workflow-card-header">
-                  <span className="workflow-role">Year Incharge</span>
-                  <span className={`status-pill ${yearInchargeStatus}`}>
-                    {yearInchargeStatus}
-                  </span>
-                </div>
-                <div className="workflow-card-body">
-                  <div className="workflow-field">
-                    <label>Approved By</label>
-                    <div className="workflow-value">{yearInchargeName}</div>
+            <div className="section-body">
+              <div className="workflow-status-grid">
+                {/* Staff Approval */}
+                <div className="workflow-card">
+                  <div className="workflow-card-header">
+                    <span className="workflow-role">Staff / Mentor</span>
+                    <span className={`status-pill ${staffStatus}`}>
+                      {staffStatus}
+                    </span>
                   </div>
-                  {yearInchargeTime && (
-                    <div className="workflow-field mt-2">
-                      <label>Action Date &amp; Time</label>
-                      <div className="workflow-value">
-                        {new Date(yearInchargeTime).toLocaleString('en-IN', {
-                          day: '2-digit', month: 'short', year: 'numeric',
-                          hour: '2-digit', minute: '2-digit', hour12: true
-                        })}
-                      </div>
-                    </div>
-                  )}
-                  {yearInchargeRemarks && (
-                    <div className="workflow-field mt-2">
-                      <label>Remarks</label>
-                      <div className="workflow-value remarks-value">"{yearInchargeRemarks}"</div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Warden Approval */}
-              <div className="workflow-card">
-                <div className="workflow-card-header">
-                  <span className="workflow-role">Warden Decision</span>
-                  <span className={`status-pill ${wardenStatus || 'pending'}`}>
-                    {wardenStatus || 'pending'}
-                  </span>
-                </div>
-                <div className="workflow-card-body">
-                  {student.wardenapprovedAt && (
+                  <div className="workflow-card-body">
                     <div className="workflow-field">
-                      <label>Action Date &amp; Time</label>
-                      <div className="workflow-value">
-                        {new Date(student.wardenapprovedAt).toLocaleString('en-IN', {
-                          day: '2-digit', month: 'short', year: 'numeric',
-                          hour: '2-digit', minute: '2-digit', hour12: true
-                        })}
+                      <label>Approved By</label>
+                      <div className="workflow-value">{staffName}</div>
+                    </div>
+                    {staffTime && (
+                      <div className="workflow-field mt-2">
+                        <label>Action Date &amp; Time</label>
+                        <div className="workflow-value">
+                          {new Date(staffTime).toLocaleString('en-IN', {
+                            day: '2-digit', month: 'short', year: 'numeric',
+                            hour: '2-digit', minute: '2-digit', hour12: true
+                          })}
+                        </div>
                       </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Year Incharge Approval */}
+                <div className="workflow-card">
+                  <div className="workflow-card-header">
+                    <span className="workflow-role">Year Incharge</span>
+                    <span className={`status-pill ${yearInchargeStatus}`}>
+                      {yearInchargeStatus}
+                    </span>
+                  </div>
+                  <div className="workflow-card-body">
+                    <div className="workflow-field">
+                      <label>Approved By</label>
+                      <div className="workflow-value">{yearInchargeName}</div>
                     </div>
-                  )}
-                  {student.wardenremarks && (
-                    <div className="workflow-field mt-2">
-                      <label>Remarks</label>
-                      <div className="workflow-value remarks-value">"{student.wardenremarks}"</div>
+                    {yearInchargeTime && (
+                      <div className="workflow-field mt-2">
+                        <label>Action Date &amp; Time</label>
+                        <div className="workflow-value">
+                          {new Date(yearInchargeTime).toLocaleString('en-IN', {
+                            day: '2-digit', month: 'short', year: 'numeric',
+                            hour: '2-digit', minute: '2-digit', hour12: true
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    {yearInchargeRemarks && (
+                      <div className="workflow-field mt-2">
+                        <label>Remarks</label>
+                        <div className="workflow-value remarks-value">"{yearInchargeRemarks}"</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Warden Approval */}
+                <div className="workflow-card">
+                  <div className="workflow-card-header">
+                    <span className="workflow-role">Warden Decision</span>
+                    <span className={`status-pill ${wardenStatus || 'pending'}`}>
+                      {wardenStatus || 'pending'}
+                    </span>
+                  </div>
+                  <div className="workflow-card-body">
+                    <div className="workflow-field">
+                      <label>Approved By</label>
+                      <div className="workflow-value">{wardenName}</div>
                     </div>
-                  )}
+                    {wardenTime && (
+                      <div className="workflow-field mt-2">
+                        <label>Action Date &amp; Time</label>
+                        <div className="workflow-value">
+                          {new Date(wardenTime).toLocaleString('en-IN', {
+                            day: '2-digit', month: 'short', year: 'numeric',
+                            hour: '2-digit', minute: '2-digit', hour12: true
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    {student.wardenremarks && (
+                      <div className="workflow-field mt-2">
+                        <label>Remarks</label>
+                        <div className="workflow-value remarks-value">"{student.wardenremarks}"</div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+        )}
+
+        {/* Section 6: Gate Movement Details */}
+        <div className="section-card gate-movement-card">
+          <div className="section-header">
+            <h3 style={{ display: 'flex', alignItems: 'center' }}><LogIn size={20} style={{ marginRight: 8 }} /> Gate Movement Timeline</h3>
+          </div>
+
+          <div className="section-body">
+            <div className="movement-timeline">
+              <div className="timeline-item completed">
+                <div className="timeline-badge" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><FileText size={16} /></div>
+                <div className="timeline-panel">
+                  <h4 className="timeline-title">Outpass Request Applied</h4>
+                  <p className="timeline-time">
+                    {new Date(student.createdAt).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+
+              <div className={`timeline-item ${wardenStatus === 'approved' ? 'completed' : 'pending'}`}>
+                <div className="timeline-badge" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{wardenStatus === 'approved' ? <Check size={16} /> : <Clock size={16} />}</div>
+                <div className="timeline-panel">
+                  <h4 className="timeline-title">Warden Approval Status</h4>
+                  <p className="timeline-time">
+                    {student.wardenapprovedAt ? (
+                      `Approved on ${new Date(student.wardenapprovedAt).toLocaleString()}`
+                    ) : (
+                      wardenStatus ? `Status: ${wardenStatus}` : 'Pending warden decision'
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              <div className={`timeline-item ${student.out ? 'completed' : 'pending emergency-placeholder'}`}>
+                <div className="timeline-badge" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{student.out ? <LogOut size={16} /> : <LogIn size={16} />}</div>
+                <div className="timeline-panel">
+                  <h4 className="timeline-title">Gate Exit Departure</h4>
+                  <p className="timeline-time">
+                    {student.out ? (
+                      `Departed on ${new Date(student.out).toLocaleString()}`
+                    ) : (
+                      s.gender?.toLowerCase() === 'male' ? "He doesn't go out" : s.gender?.toLowerCase() === 'female' ? "She doesn't go out" : "He/She doesn't go out"
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              <div className={`timeline-item ${student.in ? 'completed' : 'pending emergency-placeholder'} ${isLateReturn ? 'timeline-item-late' : ''}`}>
+                <div className="timeline-badge" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{isLateReturn ? <Clock size={16} /> : (student.in ? <LogIn size={16} /> : <Home size={16} />)}</div>
+                <div className="timeline-panel" style={isLateReturn ? { borderColor: '#FCA5A5', background: '#FEF2F2' } : {}}>
+                  <h4 className="timeline-title" style={isLateReturn ? { color: '#B91C1C', display: 'flex', alignItems: 'center', gap: '6px' } : {}}>
+                    Gate Entry Arrival
+                    {isLateReturn && <span className="late-timeline-tag">LATE</span>}
+                  </h4>
+                  {isLateReturn && (
+                    <p className="late-timeline-desc" style={{ color: '#B91C1C', fontSize: '0.8rem', margin: '0 0 6px 0', fontWeight: 600, display: 'inline-flex', alignItems: 'center' }}>
+                      <AlertTriangle size={16} style={{ color: '#EF4444', marginRight: 8 }} /> Student returned late. Expected back by: {new Date(student.toDate).toLocaleString()}
+                    </p>
+                  )}
+                  <p className="timeline-time">
+                    {student.in ? (
+                      `Returned on ${new Date(student.in).toLocaleString()}`
+                    ) : (
+                      s.gender?.toLowerCase() === 'male' ? "He doesn't get in" : s.gender?.toLowerCase() === 'female' ? "She doesn't get in" : "He/She doesn't get in"
+                    )}
+                  </p>
+                </div>
+              </div>
+
+            </div>
+          </div>
         </div>
+
+        {/* Section 7: Outpass History */}
+        {outpassHistory && outpassHistory.length > 0 && (
+          <div className="section-card gate-movement-card">
+            <div className="section-header">
+              <h3 style={{ display: 'flex', alignItems: 'center' }}><History size={20} style={{ marginRight: 8 }} /> Outpass History</h3>
+            </div>
+
+            <div className="section-body" style={{ padding: '20px' }}>
+              <div className="history-grid" style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                {outpassHistory.map((historyItem, idx) => {
+                  const isLate = historyItem.isLate || historyItem.islate;
+                  return (
+                    <div 
+                      key={idx} 
+                      style={{ 
+                        background: isLate ? '#FEF2F2' : '#F8FAFC', 
+                        border: isLate ? '1px solid #FCA5A5' : '1px solid #E2E8F0', 
+                        borderRadius: '12px', 
+                        padding: '16px' 
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#3B82F6', background: '#DBEAFE', padding: '4px 8px', borderRadius: '6px' }}>
+                          {historyItem.outpasstype || 'General'}
+                        </span>
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                          {isLate && (
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#DC2626', background: '#FEE2E2', border: '1px solid #FCA5A5', padding: '4px 8px', borderRadius: '6px' }}>
+                              LATE
+                            </span>
+                          )}
+                          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: historyItem.status === 'approved' ? '#10B981' : historyItem.status === 'rejected' ? '#EF4444' : '#F59E0B', background: historyItem.status === 'approved' ? '#D1FAE5' : historyItem.status === 'rejected' ? '#FEE2E2' : '#FEF3C7', padding: '4px 8px', borderRadius: '6px', textTransform: 'capitalize' }}>
+                            {historyItem.status || 'Pending'}
+                          </span>
+                        </div>
+                      </div>
+                      <p style={{ margin: '0 0 8px 0', fontSize: '0.85rem', color: '#475569', fontWeight: 500, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        <strong>Reason:</strong> {historyItem.reason || 'N/A'}
+                      </p>
+                      <div style={{ fontSize: '0.75rem', color: '#64748B', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div><strong>From:</strong> {historyItem.fromDate ? new Date(historyItem.fromDate).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A'}</div>
+                        <div><strong>To:</strong> {historyItem.toDate ? new Date(historyItem.toDate).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A'}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="section-body workflow-container" style={{ padding: 0 }}>
           {/* Action Buttons if Pending */}
@@ -535,11 +676,11 @@ const WardenStudentView: React.FC = () => {
 
       <style>{`
         .warden-view-page {
-          background-color: #f8fafc; /* Lighter background matching list page */
+          background: radial-gradient(circle at 10% 20%, rgba(240, 244, 250, 0.3) 0%, rgba(248, 250, 252, 0.9) 100%);
           min-height: 100vh;
           font-family: 'Inter', sans-serif;
-          padding-top: 85px; /* Added for fixed navbar */
-          padding-bottom: 40px;
+          padding-top: 85px; 
+          padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
         }
 
         .content-wrapper {
@@ -551,7 +692,7 @@ const WardenStudentView: React.FC = () => {
         .back-btn {
           background: white;
           border: 1px solid #cbd5e1;
-          font-size: 16px;
+          font-size: 14px;
           color: #1e3a8a;
           cursor: pointer;
           margin-bottom: 20px;
@@ -559,59 +700,81 @@ const WardenStudentView: React.FC = () => {
           align-items: center;
           gap: 8px;
           transition: all 0.3s ease;
-          padding: 10px 24px;
+          padding: 10px 20px;
           border-radius: 50px;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 2px 4px rgba(0,0,0,0.02);
           font-weight: 600;
         }
 
         .back-btn:hover {
           background: #f1f5f9;
-          transform: translateX(-5px);
-          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+          transform: translateX(-3px);
+          box-shadow: 0 4px 8px rgba(0,0,0,0.05);
         }
 
         .main-header {
-          background: linear-gradient(135deg, #1e3a8a, #0f172a);
-          color: white;
-          padding: 16px 24px;
-          border-radius: 12px;
-          margin-bottom: 24px;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          background: rgba(255, 255, 255, 0.7);
+          backdrop-filter: blur(12px);
+          border: 1px solid rgba(226, 232, 240, 0.8);
+          color: #0f172a;
+          padding: 20px 28px;
+          border-radius: 20px;
+          margin-bottom: 28px;
+          box-shadow: 0 4px 20px rgba(15, 23, 42, 0.02);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
         }
         .main-header h1 {
           margin: 0;
-          font-size: 24px;
-          font-weight: 700;
-          color: white;
+          font-size: 22px;
+          font-weight: 800;
+          background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          letter-spacing: -0.5px;
         }
 
         .section-card {
           background: white;
-          border-radius: 24px;
+          border-radius: 20px;
           overflow: hidden;
           margin-bottom: 24px;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.06);
-          border: 1px solid rgba(0,0,0,0.05);
+          box-shadow: 0 8px 30px rgba(15, 23, 42, 0.03);
+          border: 1px solid #e2e8f0;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .section-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 35px rgba(15, 23, 42, 0.06);
+          border-color: #cbd5e1;
         }
 
         .highlight-border {
           border: 2px solid #fbbf24; 
+          box-shadow: 0 8px 30px rgba(251, 191, 36, 0.06);
+        }
+        
+        .highlight-border:hover {
+          border-color: #d97706;
         }
 
         .section-header {
-          background: linear-gradient(135deg, #1e3a8a, #0f172a);
-          color: white;
-          padding: 14px 24px;
+          background: #f8fafc;
+          color: #1e293b;
+          padding: 16px 24px;
+          border-bottom: 1px solid #e2e8f0;
         }
+        
         .section-header h3 {
           margin: 0;
-          font-size: 16px;
-          font-weight: 600;
+          font-size: 15px;
+          font-weight: 700;
           display: flex;
           align-items: center;
           gap: 8px;
-          color: white;
+          color: #1e3a8a;
         }
 
         .section-body {
@@ -633,14 +796,17 @@ const WardenStudentView: React.FC = () => {
         .initials-avatar {
           width: 100px;
           height: 100px;
-          background: linear-gradient(135deg, #1e3a8a, #2563eb);
+          background: linear-gradient(135deg, #1e3a8a, #3b82f6);
           color: white;
           font-size: 36px;
           font-weight: bold;
           display: flex;
           align-items: center;
           justify-content: center;
-          border-radius: 12px;
+          border-radius: 16px;
+          box-shadow: 0 6px 18px rgba(30, 58, 138, 0.12);
+          border: 3px solid white;
+          outline: 1px solid #e2e8f0;
         }
 
         .info-fields {
@@ -671,24 +837,31 @@ const WardenStudentView: React.FC = () => {
         }
 
         .field-group label {
-          font-size: 11px;
-          font-weight: 700;
+          font-size: 10px;
+          font-weight: 750;
           text-transform: uppercase;
-          color: #6b7280;
+          color: #64748b;
           letter-spacing: 0.05em;
         }
 
         .display-box {
-          background: #f9fafb;
-          border: 1px solid #e5e7eb;
-          padding: 10px 14px;
-          border-radius: 8px;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          padding: 11px 15px;
+          border-radius: 10px;
           font-size: 14px;
-          color: #1f2937;
-          font-weight: 500;
-          min-height: 42px;
+          color: #334155;
+          font-weight: 600;
+          min-height: 44px;
           display: flex;
           align-items: center;
+          transition: all 0.2s ease;
+        }
+
+        .display-box:hover {
+          background: white;
+          border-color: #3b82f6;
+          box-shadow: 0 2px 8px rgba(59,130,246,0.04);
         }
 
         .mt-4 { margin-top: 16px; }
@@ -735,8 +908,8 @@ const WardenStudentView: React.FC = () => {
         .status-pill {
           padding: 4px 12px;
           border-radius: 20px;
-          font-size: 12px;
-          font-weight: 600;
+          font-size: 11px;
+          font-weight: 700;
           text-transform: uppercase;
         }
         .status-pill.approved { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
@@ -747,7 +920,7 @@ const WardenStudentView: React.FC = () => {
           width: 2px;
           height: 24px;
           background: #e5e7eb;
-          margin-left: 15px; /* Half of icon width roughly */
+          margin-left: 15px; 
           margin-top: 4px;
           margin-bottom: 4px;
         }
@@ -762,30 +935,33 @@ const WardenStudentView: React.FC = () => {
         }
 
         .btn-approve, .btn-reject {
-          padding: 10px 24px;
-          border-radius: 6px;
-          font-weight: 600;
-          cursor: pointer;
+          padding: 12px 28px;
+          border-radius: 12px;
+          font-weight: 700;
+          font-size: 14px;
           border: none;
-          transition: all 0.2s;
+          cursor: pointer;
+          transition: all 0.25s ease;
         }
 
         .btn-approve {
           background: linear-gradient(135deg, #10b981, #059669);
           color: white;
+          box-shadow: 0 4px 14px rgba(16,185,129,0.2);
         }
         .btn-approve:hover { 
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
         }
 
         .btn-reject {
           background: linear-gradient(135deg, #ef4444, #dc2626);
           color: white;
+          box-shadow: 0 4px 14px rgba(239,68,68,0.2);
         }
         .btn-reject:hover { 
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
         }
 
         @media (max-width: 768px) {
@@ -797,7 +973,7 @@ const WardenStudentView: React.FC = () => {
           }
           .avatar-box {
             margin-bottom: 24px;
-            justify-content: center; /* Center avatar on mobile */
+            justify-content: center; 
           }
           
           .no-data {
@@ -809,20 +985,37 @@ const WardenStudentView: React.FC = () => {
           .dial-btn {
              display: inline-flex !important;
           }
+
+          .workflow-actions {
+            flex-direction: column;
+            width: 100%;
+            gap: 12px;
+          }
+
+          .btn-approve, .btn-reject {
+            width: 100%;
+            text-align: center;
+          }
         }
 
         .dial-btn {
            display: none;
            justify-content: center;
            align-items: center;
-           width: 36px;
-           height: 36px;
+           width: 30px;
+           height: 30px;
            background-color: #10b981;
            color: white;
            border-radius: 50%;
            text-decoration: none;
-           font-size: 1.2rem;
+           font-size: 1rem;
            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+           transition: 0.2s;
+        }
+        
+        .dial-btn:hover {
+           background-color: #059669;
+           transform: scale(1.05);
         }
 
         /* Modal Styles */
@@ -832,7 +1025,7 @@ const WardenStudentView: React.FC = () => {
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(0, 0, 0, 0.6);
+          background: rgba(15, 23, 42, 0.5);
           backdrop-filter: blur(4px);
           display: flex;
           align-items: center;
@@ -845,13 +1038,13 @@ const WardenStudentView: React.FC = () => {
           border-radius: 20px;
           width: 90%;
           max-width: 500px;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
           animation: modalSlideUp 0.3s ease-out;
         }
 
         .page-container .modal-header {
           background: linear-gradient(135deg, #1e3a8a, #0f172a);
-          padding: 24px 28px;
+          padding: 20px 24px;
           border-radius: 20px 20px 0 0;
           display: flex;
           justify-content: space-between;
@@ -861,18 +1054,18 @@ const WardenStudentView: React.FC = () => {
         .page-container .modal-header h3 {
           margin: 0;
           color: white;
-          font-size: 1.4rem;
-          font-weight: 600;
+          font-size: 1.2rem;
+          font-weight: 700;
         }
 
         .page-container .close-btn {
-          background: rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.15);
           border: none;
           color: white;
-          width: 36px;
-          height: 36px;
+          width: 32px;
+          height: 32px;
           border-radius: 8px;
-          font-size: 1.5rem;
+          font-size: 1.2rem;
           cursor: pointer;
           transition: all 0.2s;
           display: flex;
@@ -883,41 +1076,43 @@ const WardenStudentView: React.FC = () => {
         }
 
         .page-container .close-btn:hover {
-          background: rgba(255, 255, 255, 0.3);
+          background: rgba(255, 255, 255, 0.25);
           color: white;
         }
 
         .page-container .modal-body {
-          padding: 28px;
+          padding: 24px;
         }
 
         .page-container .modal-body label {
           display: block;
           font-weight: 700;
           color: #1e293b;
-          margin-bottom: 12px;
-          font-size: 1rem;
+          margin-bottom: 10px;
+          font-size: 0.95rem;
         }
 
         .page-container .remarks-input {
           width: 100%;
-          padding: 14px;
+          padding: 12px;
           border: 2px solid #e2e8f0;
-          border-radius: 12px;
-          font-size: 1rem;
+          border-radius: 10px;
+          font-size: 0.95rem;
           font-family: inherit;
           resize: vertical;
           min-height: 100px;
           color: #1f2937;
+          outline: none;
+          transition: 0.25s;
         }
 
         .page-container .remarks-input:focus {
-          outline: none;
-          border-color: #1e3a8a;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
         }
 
         .page-container .modal-footer {
-          padding: 0 28px 28px 28px;
+          padding: 0 24px 24px 24px;
           display: flex;
           gap: 12px;
           justify-content: flex-end;
@@ -926,7 +1121,7 @@ const WardenStudentView: React.FC = () => {
         }
 
         .page-container .btn-cancel {
-          padding: 12px 28px;
+          padding: 10px 24px;
           border: none;
           border-radius: 10px;
           font-weight: 600;
@@ -941,10 +1136,10 @@ const WardenStudentView: React.FC = () => {
         }
 
         .page-container .btn-confirm {
-          padding: 12px 28px;
+          padding: 10px 24px;
           border: none;
           border-radius: 10px;
-          font-weight: 600;
+          font-weight: 700;
           cursor: pointer;
           transition: all 0.3s;
           color: white;
@@ -971,9 +1166,6 @@ const WardenStudentView: React.FC = () => {
           cursor: not-allowed;
         }
 
-          to { opacity: 1; transform: translateY(0); }
-        }
-
         .view-doc-btn {
             display: inline-flex;
             align-items: center;
@@ -981,9 +1173,9 @@ const WardenStudentView: React.FC = () => {
             padding: 8px 16px;
             background: white;
             border: 1px solid #3b82f6;
-            border-radius: 6px;
+            border-radius: 8px;
             color: #3b82f6;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
             margin-top: 4px;
             transition: all 0.2s;
@@ -1004,13 +1196,13 @@ const WardenStudentView: React.FC = () => {
 
         @media (min-width: 1024px) {
             .doc-modal {
-                max-width: 1200px; /* Larger modal only on desktop */
+                max-width: 1200px; 
                 height: 90vh;
             }
 
             .view-doc-btn {
-                padding: 12px 24px; /* Larger button only on desktop */
-                font-size: 1.1rem;
+                padding: 10px 20px;
+                font-size: 1rem;
             }
         }
 
@@ -1045,13 +1237,21 @@ const WardenStudentView: React.FC = () => {
         }
 
         .workflow-card {
-          background: #f8fafc;
+          background: #ffffff;
           border: 1px solid #e2e8f0;
-          border-radius: 12px;
-          padding: 16px;
+          border-radius: 16px;
+          padding: 18px;
           display: flex;
           flex-direction: column;
           gap: 12px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.01);
+          transition: all 0.25s ease;
+        }
+
+        .workflow-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+          border-color: #cbd5e1;
         }
 
         .workflow-card-header {
@@ -1063,8 +1263,8 @@ const WardenStudentView: React.FC = () => {
         }
 
         .workflow-role {
-          font-weight: 700;
-          font-size: 13px;
+          font-weight: 750;
+          font-size: 11px;
           color: #1e3a8a;
           text-transform: uppercase;
           letter-spacing: 0.5px;
@@ -1083,8 +1283,8 @@ const WardenStudentView: React.FC = () => {
         }
 
         .workflow-field label {
-          font-size: 10px;
-          font-weight: 700;
+          font-size: 9px;
+          font-weight: 750;
           color: #64748b;
           text-transform: uppercase;
         }
@@ -1111,6 +1311,516 @@ const WardenStudentView: React.FC = () => {
             grid-template-columns: 1fr;
             gap: 16px;
           }
+        }
+
+        /* ═══════════════════════════════════════════════ */
+        /* Enhanced UI & Timing Elements                 */
+        /* ═══════════════════════════════════════════════ */
+        .main-header.emergency {
+          background: linear-gradient(135deg, #dc2626, #7f1d1d);
+          box-shadow: 0 10px 25px rgba(220, 38, 38, 0.25);
+        }
+        
+        .emergency-header-badge {
+          background: white;
+          color: #dc2626;
+          padding: 4px 12px;
+          border-radius: 50px;
+          font-size: 11px;
+          font-weight: 800;
+          margin-left: 12px;
+          display: inline-block;
+          vertical-align: middle;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .info-grid-2 {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 20px;
+        }
+
+        .null-timing {
+          background: #fef2f2 !important;
+          border: 1px solid #fee2e2 !important;
+        }
+
+        .has-timing {
+          background: #f0fdf4 !important;
+          border: 1px solid #dcfce7 !important;
+        }
+
+        .time-highlight {
+          color: #10b981;
+          font-weight: 700;
+        }
+
+        .timing-placeholder {
+          color: #ef4444;
+          font-weight: 600;
+        }
+
+        /* Timeline Section */
+        .timeline-container {
+          margin-top: 32px;
+          padding-top: 24px;
+          border-top: 1px dashed #e2e8f0;
+        }
+
+        .timeline-title {
+          font-size: 13px;
+          font-weight: 700;
+          color: #1e3a8a;
+          margin-bottom: 24px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .timeline-steps-wrapper {
+          overflow-x: auto;
+          padding: 10px 0;
+        }
+
+        .timeline-steps {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          position: relative;
+          min-width: 600px;
+        }
+
+        .timeline-step {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+          flex: 1;
+          text-align: center;
+          z-index: 2;
+        }
+
+        .timeline-icon {
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: white;
+          border: 2px solid #e2e8f0;
+          font-size: 18px;
+          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+          transition: all 0.3s ease;
+        }
+
+        .timeline-step.completed .timeline-icon {
+          border-color: #10b981;
+          background: #f0fdf4;
+          transform: scale(1.05);
+        }
+
+        .timeline-step.pending .timeline-icon {
+          border-color: #cbd5e1;
+          background: #f8fafc;
+          opacity: 0.6;
+        }
+
+        .timeline-info {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        .step-label {
+          font-size: 12px;
+          font-weight: 700;
+          color: #1e293b;
+        }
+
+        .timeline-step.pending .step-label {
+          color: #64748b;
+        }
+
+        .step-time {
+          font-size: 10px;
+          color: #64748b;
+          font-weight: 500;
+        }
+
+        .timeline-line {
+          flex-grow: 1;
+          height: 3px;
+          background: #e2e8f0;
+          margin-bottom: 40px;
+          position: relative;
+          z-index: 1;
+          border-radius: 2px;
+        }
+
+        .timeline-line.completed {
+          background: #10b981;
+        }
+
+        @media (max-width: 768px) {
+          .info-grid-2 {
+            grid-template-columns: 1fr;
+          }
+
+          .timeline-steps {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 24px;
+            padding-left: 20px;
+            position: relative;
+            min-width: 100%;
+          }
+
+          .timeline-steps::before {
+            content: '';
+            position: absolute;
+            left: 41px;
+            top: 20px;
+            bottom: 20px;
+            width: 3px;
+            background: #e2e8f0;
+            z-index: 1;
+          }
+
+          .timeline-step {
+            flex-direction: row;
+            text-align: left;
+            gap: 16px;
+            width: 100%;
+          }
+
+          .timeline-icon {
+            z-index: 2;
+          }
+          font-size: 12px;
+          margin-top: 2px;
+          border-left: 3px solid #cbd5e1;
+        }
+
+        @media (max-width: 768px) {
+          .workflow-status-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+          }
+        }
+
+        /* ═══════════════════════════════════════════════ */
+        /* Enhanced UI & Timing Elements                 */
+        /* ═══════════════════════════════════════════════ */
+        .main-header.emergency {
+          background: linear-gradient(135deg, #dc2626, #7f1d1d);
+          box-shadow: 0 10px 25px rgba(220, 38, 38, 0.25);
+        }
+        
+        .emergency-header-badge {
+          background: white;
+          color: #dc2626;
+          padding: 4px 12px;
+          border-radius: 50px;
+          font-size: 11px;
+          font-weight: 800;
+          margin-left: 12px;
+          display: inline-block;
+          vertical-align: middle;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+          -webkit-text-fill-color: initial !important;
+        }
+
+        .info-grid-2 {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 20px;
+        }
+
+        .null-timing {
+          background: #fef2f2 !important;
+          border: 1px solid #fee2e2 !important;
+        }
+
+        .has-timing {
+          background: #f0fdf4 !important;
+          border: 1px solid #dcfce7 !important;
+        }
+
+        .time-highlight {
+          color: #10b981;
+          font-weight: 700;
+        }
+
+        .timing-placeholder {
+          color: #ef4444;
+          font-weight: 600;
+        }
+
+        /* Timeline Section */
+        .timeline-container {
+          margin-top: 32px;
+          padding-top: 24px;
+          border-top: 1px dashed #e2e8f0;
+        }
+
+        .timeline-title {
+          font-size: 13px;
+          font-weight: 700;
+          color: #1e3a8a;
+          margin-bottom: 24px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .timeline-steps-wrapper {
+          overflow-x: auto;
+          padding: 10px 0;
+        }
+
+        .timeline-steps {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          position: relative;
+          min-width: 600px;
+        }
+
+        .timeline-step {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+          flex: 1;
+          text-align: center;
+          z-index: 2;
+        }
+
+        .timeline-icon {
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: white;
+          border: 2px solid #e2e8f0;
+          font-size: 18px;
+          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+          transition: all 0.3s ease;
+        }
+
+        .timeline-step.completed .timeline-icon {
+          border-color: #10b981;
+          background: #f0fdf4;
+          transform: scale(1.05);
+        }
+
+        .timeline-step.pending .timeline-icon {
+          border-color: #cbd5e1;
+          background: #f8fafc;
+          opacity: 0.6;
+        }
+
+        .timeline-info {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        .step-label {
+          font-size: 12px;
+          font-weight: 700;
+          color: #1e293b;
+        }
+
+        .timeline-step.pending .step-label {
+          color: #64748b;
+        }
+
+        .step-time {
+          font-size: 10px;
+          color: #64748b;
+          font-weight: 500;
+        }
+
+        .timeline-line {
+          flex-grow: 1;
+          height: 3px;
+          background: #e2e8f0;
+          margin-bottom: 40px;
+          position: relative;
+          z-index: 1;
+          border-radius: 2px;
+        }
+
+        .timeline-line.completed {
+          background: #10b981;
+        }
+
+        @media (max-width: 768px) {
+          .info-grid-2 {
+            grid-template-columns: 1fr;
+          }
+
+          .timeline-steps {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 24px;
+            padding-left: 20px;
+            position: relative;
+            min-width: 100%;
+          }
+
+          .timeline-steps::before {
+            content: '';
+            position: absolute;
+            left: 41px;
+            top: 20px;
+            bottom: 20px;
+            width: 3px;
+            background: #e2e8f0;
+            z-index: 1;
+          }
+
+          .timeline-step {
+            flex-direction: row;
+            text-align: left;
+            gap: 16px;
+            width: 100%;
+          }
+
+          .timeline-icon {
+            z-index: 2;
+          }
+
+          .timeline-line {
+            display: none !important;
+          }
+
+          .timeline-info {
+            align-items: flex-start;
+          }
+        }
+
+        /* ═══════════════════════════════════════════════ */
+        /* Vertical Movement Timeline                    */
+        /* ═══════════════════════════════════════════════ */
+        .movement-timeline {
+          position: relative;
+          padding-left: 45px;
+          margin-top: 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+        }
+
+        .movement-timeline::before {
+          content: '';
+          position: absolute;
+          left: 21px;
+          top: 8px;
+          bottom: 8px;
+          width: 3px;
+          background: #e2e8f0;
+          z-index: 1;
+        }
+
+        .timeline-item {
+          position: relative;
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          width: 100%;
+        }
+
+        .timeline-badge {
+          position: absolute;
+          left: -45px;
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: white;
+          border: 2.5px solid #cbd5e1;
+          font-size: 16px;
+          z-index: 2;
+          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+          transition: all 0.3s ease;
+        }
+
+        .timeline-item.completed .timeline-badge {
+          border-color: #10b981;
+          background: #f0fdf4;
+          box-shadow: 0 0 10px rgba(16,185,129,0.25);
+        }
+
+        .timeline-item.pending .timeline-badge {
+          border-color: #cbd5e1;
+          background: #f8fafc;
+          opacity: 0.75;
+        }
+
+        .timeline-panel {
+          flex: 1;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          padding: 14px 20px;
+          border-radius: 12px;
+          transition: all 0.25s ease;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          text-align: left;
+        }
+
+        .timeline-item.completed .timeline-panel {
+          border-color: #dcfce7;
+          background: #ffffff;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.01);
+        }
+
+        .timeline-item.completed .timeline-panel:hover {
+          transform: translateX(4px);
+          border-color: #86efac;
+          box-shadow: 0 4px 15px rgba(16,185,129,0.06);
+        }
+
+        .timeline-title {
+          font-size: 13.5px;
+          font-weight: 700;
+          color: #334155;
+          margin: 0;
+        }
+
+        .timeline-time {
+          font-size: 12px;
+          color: #10b981;
+          font-weight: 650;
+          margin: 0;
+        }
+
+        .timeline-item.pending .timeline-time {
+          color: #64748b;
+          font-weight: 500;
+        }
+        
+        .timeline-item.pending.emergency-placeholder .timeline-time {
+          color: #ef4444;
+          font-weight: 600;
+        }
+
+        .late-timeline-tag {
+          background: #FEF2F2;
+          color: #EF4444;
+          border: 1px solid #FCA5A5;
+          padding: 2px 8px;
+          font-size: 0.7rem;
+          border-radius: 6px;
+          font-weight: 700;
+          margin-left: 8px;
+          letter-spacing: 0.04em;
         }
       `}</style>
     </div >

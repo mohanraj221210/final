@@ -28,13 +28,13 @@ const Outpass: React.FC = () => {
 
     const now = new Date();
     const currentHour = now.getHours();
-    // Portal open: 6:00 AM to 1:00 PM (13:00)
-    const isPortalOpen = currentHour >= 6 && currentHour < 13;
+    // Portal open: 6:00 AM to 8:00 PM (20:00)
+    const isPortalOpen = currentHour >= 6 && currentHour < 20;
     const isEmergency = formData.outpasstype === 'Emergency';
 
     const portalClosesIn = (): string => {
         const close = new Date();
-        close.setHours(13, 0, 0, 0);
+        close.setHours(20, 0, 0, 0);
         const diff = close.getTime() - now.getTime();
         if (diff <= 0) return '';
         const hrs = Math.floor(diff / 3600000);
@@ -167,8 +167,14 @@ const Outpass: React.FC = () => {
         e.preventDefault();
         setIsSubmitting(true);
 
+        if (!isEmergency && hasPendingOutpass) {
+            toast.error("You cannot apply for a non-emergency outpass while you have a pending request.");
+            setIsSubmitting(false);
+            return;
+        }
+
         if (!isEmergency && !isPortalOpen) {
-            toast.error("Portal is open from 6:00 AM to 1:00 PM only.");
+            toast.error("Portal is open from 6:00 AM to 8:00 PM only.");
             setIsSubmitting(false);
             return;
         }
@@ -199,6 +205,10 @@ const Outpass: React.FC = () => {
                 submitData.append('file', selectedFile);
             }
 
+            // We cannot inject approval status fields here because the backend enforces strict validation 
+            // and will return a validation error ("staffapprovalstatus is not allowed").
+
+
             const response = await axios.post(
                 `${import.meta.env.VITE_API_URL}/api/outpass/apply`,
                 submitData,
@@ -216,7 +226,17 @@ const Outpass: React.FC = () => {
             }
         } catch (error: any) {
             console.error('Error submitting outpass:', error);
-            toast.error(error.response?.data?.message || 'Failed to submit application');
+            const errData = error.response?.data;
+            let errMsg = errData?.message || 'Failed to submit application';
+            if (errData?.error && typeof errData.error === 'string') {
+                errMsg = errData.error;
+            } else if (errData?.errors && Array.isArray(errData.errors)) {
+                errMsg = errData.errors.map((e: any) => e.msg || e.message || e).join(', ');
+            } else if (errData?.message && typeof errData.message === 'string' && errData.message.includes('validation')) {
+                // if the message is a generic 'validation error', try to find specifics
+                errMsg = errData.details || errData.message;
+            }
+            toast.error(errMsg);
         } finally {
             setIsSubmitting(false);
         }
@@ -349,24 +369,24 @@ const Outpass: React.FC = () => {
                                     <div className={`pb-type-cards-grid ${residenceType === 'day scholar' ? 'pb-type-cards-grid-2' : ''}`}>
                                         {residenceType !== 'day scholar' && (
                                             <>
-                                                <button type="button" onClick={() => setFormData(p => ({...p, outpasstype: 'Outing'}))} className={`pb-type-card ${formData.outpasstype === 'Outing' ? 'selected' : ''}`}>
+                                                <button type="button" onClick={() => setFormData(p => ({ ...p, outpasstype: 'Outing' }))} className={`pb-type-card ${formData.outpasstype === 'Outing' ? 'selected' : ''}`}>
                                                     <span className="pb-type-card-icon">🚶</span>
                                                     <span className="pb-type-card-name">Outing</span>
                                                     <span className="pb-type-card-desc">Town Pass</span>
                                                 </button>
-                                                <button type="button" onClick={() => setFormData(p => ({...p, outpasstype: 'Home'}))} className={`pb-type-card ${formData.outpasstype === 'Home' ? 'selected' : ''}`}>
+                                                <button type="button" onClick={() => setFormData(p => ({ ...p, outpasstype: 'Home' }))} className={`pb-type-card ${formData.outpasstype === 'Home' ? 'selected' : ''}`}>
                                                     <span className="pb-type-card-icon">🏠</span>
                                                     <span className="pb-type-card-name">Home</span>
                                                     <span className="pb-type-card-desc">Home Pass</span>
                                                 </button>
                                             </>
                                         )}
-                                        <button type="button" onClick={() => setFormData(p => ({...p, outpasstype: 'OD'}))} className={`pb-type-card ${formData.outpasstype === 'OD' ? 'selected' : ''}`}>
+                                        <button type="button" onClick={() => setFormData(p => ({ ...p, outpasstype: 'OD' }))} className={`pb-type-card ${formData.outpasstype === 'OD' ? 'selected' : ''}`}>
                                             <span className="pb-type-card-icon">📋</span>
                                             <span className="pb-type-card-name">OD</span>
                                             <span className="pb-type-card-desc">On Duty</span>
                                         </button>
-                                        <button type="button" onClick={() => setFormData(p => ({...p, outpasstype: 'Emergency'}))} className={`pb-type-card ${formData.outpasstype === 'Emergency' ? 'selected emergency' : ''}`}>
+                                        <button type="button" onClick={() => setFormData(p => ({ ...p, outpasstype: 'Emergency' }))} className={`pb-type-card ${formData.outpasstype === 'Emergency' ? 'selected emergency' : ''}`}>
                                             <span className="pb-type-card-icon">🚨</span>
                                             <span className="pb-type-card-name">Emergency</span>
                                             <span className="pb-type-card-desc">Urgent</span>
@@ -374,15 +394,15 @@ const Outpass: React.FC = () => {
                                     </div>
                                     {residenceType === 'day scholar' && (
                                         <div className="pb-ds-hint">
-                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
                                             Day Scholars may only apply for OD or Emergency passes.
                                         </div>
                                     )}
 
                                     {/* Portal hours info */}
                                     <div className="pb-info-strip">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                                        <span>Portal Hours: <strong>6:00 AM – 1:00 PM</strong> daily · Return must be by <strong>6 PM</strong></span>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                                        <span>Portal Hours: <strong>6:00 AM – 8:00 PM</strong> daily · Return must be by <strong>6 PM</strong></span>
                                     </div>
 
                                     <div className="pb-grid-2" style={{ marginTop: '20px' }}>
@@ -412,7 +432,7 @@ const Outpass: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {hasPendingOutpass && (
+                                    {hasPendingOutpass && !isEmergency && (
                                         <div className="pb-notice-panel pb-panel-danger" style={{ marginTop: '24px' }}>
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '8px', flexShrink: 0 }}>
                                                 <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" />
@@ -585,9 +605,9 @@ const Outpass: React.FC = () => {
                                         <button
                                             type="submit"
                                             className="pb-submit-action-btn"
-                                            disabled={isSubmitting || hasPendingOutpass}
+                                            disabled={isSubmitting || (hasPendingOutpass && !isEmergency)}
                                         >
-                                            {isSubmitting ? 'Submitting...' : (hasPendingOutpass ? 'Pending Request Active' : 'Submit Outpass')}
+                                            {isSubmitting ? 'Submitting...' : ((hasPendingOutpass && !isEmergency) ? 'Pending Request Active' : 'Submit Outpass')}
                                         </button>
                                     </div>
                                 </form>
@@ -629,13 +649,13 @@ const Outpass: React.FC = () => {
                     <div className={`pb-mob-portal-status ${isPortalOpen ? 'pb-portal-open' : 'pb-portal-closed'} pb-animate-stagger-2`}>
                         <span className={`pb-mob-portal-dot ${isPortalOpen ? 'open' : 'closed'}`} />
                         {isPortalOpen ? (
-                            <span>Portal <strong>Open</strong> · Closes 1:00 PM · <strong>{portalClosesIn()}</strong></span>
+                            <span>Portal <strong>Open</strong> · Closes 8:00 PM · <strong>{portalClosesIn()}</strong></span>
                         ) : (
                             <span>Portal <strong>Closed</strong> · Opens at 6:00 AM daily</span>
                         )}
                     </div>
 
-                    {hasPendingOutpass && (
+                    {hasPendingOutpass && !isEmergency && (
                         <div className="pb-mob-alert-card pb-alert-danger pb-animate-stagger-2">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
                             <span>You have an active pending outpass request</span>
@@ -649,18 +669,18 @@ const Outpass: React.FC = () => {
                             <div className={`pb-mob-type-grid ${residenceType === 'day scholar' ? 'pb-mob-type-grid-2' : ''}`}>
                                 {residenceType !== 'day scholar' && (
                                     <>
-                                        <button type="button" onClick={() => setFormData(p => ({...p, outpasstype: 'Outing'}))} className={`pb-mob-type-card ${formData.outpasstype === 'Outing' ? 'selected' : ''}`}>
+                                        <button type="button" onClick={() => setFormData(p => ({ ...p, outpasstype: 'Outing' }))} className={`pb-mob-type-card ${formData.outpasstype === 'Outing' ? 'selected' : ''}`}>
                                             <span>🚶</span><span>Outing</span>
                                         </button>
-                                        <button type="button" onClick={() => setFormData(p => ({...p, outpasstype: 'Home'}))} className={`pb-mob-type-card ${formData.outpasstype === 'Home' ? 'selected' : ''}`}>
+                                        <button type="button" onClick={() => setFormData(p => ({ ...p, outpasstype: 'Home' }))} className={`pb-mob-type-card ${formData.outpasstype === 'Home' ? 'selected' : ''}`}>
                                             <span>🏠</span><span>Home</span>
                                         </button>
                                     </>
                                 )}
-                                <button type="button" onClick={() => setFormData(p => ({...p, outpasstype: 'OD'}))} className={`pb-mob-type-card ${formData.outpasstype === 'OD' ? 'selected' : ''}`}>
+                                <button type="button" onClick={() => setFormData(p => ({ ...p, outpasstype: 'OD' }))} className={`pb-mob-type-card ${formData.outpasstype === 'OD' ? 'selected' : ''}`}>
                                     <span>📋</span><span>OD</span>
                                 </button>
-                                <button type="button" onClick={() => setFormData(p => ({...p, outpasstype: 'Emergency'}))} className={`pb-mob-type-card ${formData.outpasstype === 'Emergency' ? 'selected emergency' : ''}`}>
+                                <button type="button" onClick={() => setFormData(p => ({ ...p, outpasstype: 'Emergency' }))} className={`pb-mob-type-card ${formData.outpasstype === 'Emergency' ? 'selected emergency' : ''}`}>
                                     <span>🚨</span><span>Emergency</span>
                                 </button>
                             </div>
@@ -669,7 +689,7 @@ const Outpass: React.FC = () => {
                             )}
 
                             <div className="pb-mob-info-strip">
-                                🕐 Portal: <strong>6:00 AM – 1:00 PM</strong> · Return by <strong>6:00 PM</strong>
+                                🕐 Portal: <strong>6:00 AM – 8:00 PM</strong> · Return by <strong>6:00 PM</strong>
                             </div>
 
                             <h3 className="pb-mob-form-section-title" style={{ marginTop: 20 }}>Schedule</h3>
@@ -768,10 +788,10 @@ const Outpass: React.FC = () => {
                                     <button
                                         type="submit"
                                         className="pb-mob-cta-btn"
-                                        disabled={isSubmitting || hasPendingOutpass}
+                                        disabled={isSubmitting || (hasPendingOutpass && !isEmergency)}
                                         style={{ flex: 1 }}
                                     >
-                                        {isSubmitting ? 'Submitting…' : hasPendingOutpass ? 'Request Active' : 'Submit'}
+                                        {isSubmitting ? 'Submitting…' : (hasPendingOutpass && !isEmergency) ? 'Request Active' : 'Submit'}
                                     </button>
                                 </div>
                             </div>

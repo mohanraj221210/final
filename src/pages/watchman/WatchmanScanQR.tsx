@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import WatchmanNav from '../../components/WatchmanNav';
+import { Camera, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import { toast, ToastContainer } from 'react-toastify';
@@ -12,6 +13,14 @@ const WatchmanScanQR: React.FC = () => {
     const [outpassData, setOutpassData] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
     const [imageError, setImageError] = useState<boolean>(false);
+
+    const isOutpassTimeValid = (fromDate: string, toDate: string) => {
+        if (!fromDate || !toDate) return true;
+        const now = Date.now();
+        const fromTime = new Date(fromDate).getTime();
+        const toTime = new Date(toDate).getTime();
+        return now >= fromTime && now <= toTime;
+    };
 
     const handleScan = async (text: string) => {
         if (text && text !== scannedId && !loading) {
@@ -70,9 +79,9 @@ const WatchmanScanQR: React.FC = () => {
     // Calculate avatar source
     const studentPhoto = outpassData?.studentid?.photo;
     const avatarSrc = studentPhoto
-        ? (studentPhoto.startsWith('http') || studentPhoto.startsWith('data:')
+        ? (studentPhoto.startsWith('data:')
             ? studentPhoto
-            : `${import.meta.env.VITE_CDN_URL?.replace(/\/$/, '')}/${studentPhoto.replace(/^\//, '')}`)
+            : `${studentPhoto}`)
         : null;
 
     return (
@@ -102,7 +111,7 @@ const WatchmanScanQR: React.FC = () => {
                         {!scannedId ? (
                             <div className="sd-scanner-init">
                                 <div className="sd-scanner-instructions">
-                                    <span className="sd-scanner-tip-icon">📷</span>
+                                    <span className="sd-scanner-tip-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><Camera size={24} /></span>
                                     <p className="sd-scanner-tip-text">Align the student's digital outpass QR code inside the camera window below.</p>
                                 </div>
 
@@ -133,7 +142,9 @@ const WatchmanScanQR: React.FC = () => {
 
                                 {error && !loading && (
                                     <div className="sd-result-error">
-                                        <div className="sd-error-badge-large">❌</div>
+                                        <div className="sd-error-badge-large" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <XCircle size={48} style={{ color: '#EF4444' }} />
+                                        </div>
                                         <h2 className="sd-error-header">Access Denied / Failed</h2>
                                         <p className="sd-error-desc">{error}</p>
                                         <button onClick={resetScan} className="sd-action-btn sd-btn-retry">
@@ -144,13 +155,27 @@ const WatchmanScanQR: React.FC = () => {
 
                                 {outpassData && !loading && (
                                     <div className="sd-result-success">
-                                        <div className="sd-success-banner">
-                                            <span className="sd-success-checkmark">✓</span>
-                                            <div>
-                                                <h2 className="sd-success-title">Verified Outpass Approved</h2>
-                                                <p className="sd-success-subtitle">Gate Log Record Validated</p>
+                                        {isOutpassTimeValid(outpassData.fromDate, outpassData.toDate) ? (
+                                            <div className="sd-success-banner">
+                                                <span className="sd-success-checkmark">✓</span>
+                                                <div>
+                                                    <h2 className="sd-success-title">Verified Outpass Approved</h2>
+                                                    <p className="sd-success-subtitle">Gate Log Record Validated</p>
+                                                </div>
                                             </div>
-                                        </div>
+                                        ) : (
+                                            <div className="sd-success-banner" style={{ background: '#FEF2F2', borderColor: '#FECACA', color: '#DC2626' }}>
+                                                <span className="sd-success-checkmark" style={{ background: '#EF4444' }}>!</span>
+                                                <div>
+                                                    <h2 className="sd-success-title" style={{ color: '#991B1B' }}>Warning: Outpass Time Window Invalid</h2>
+                                                    <p className="sd-success-subtitle" style={{ color: '#B91C1C' }}>
+                                                        {new Date().getTime() < new Date(outpassData.fromDate).getTime() 
+                                                            ? 'Outpass is not yet active (future scheduled pass).' 
+                                                            : 'Outpass has expired (return time exceeded).'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
 
                                         <div className="sd-result-body">
                                             
@@ -189,6 +214,18 @@ const WatchmanScanQR: React.FC = () => {
                                                     <span className="label">Status</span>
                                                     <span className="value" style={{ color: outpassData.status === 'approved' ? '#10B981' : '#EA580C', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.88rem' }}>
                                                         {outpassData.status || 'Pending'}
+                                                    </span>
+                                                </div>
+                                                <div className="sd-detail-item">
+                                                    <span className="label">Valid From Date & Time</span>
+                                                    <span className="value" style={{ color: '#475569', fontWeight: 600 }}>
+                                                        {outpassData.fromDate ? new Date(outpassData.fromDate).toLocaleString() : 'N/A'}
+                                                    </span>
+                                                </div>
+                                                <div className="sd-detail-item">
+                                                    <span className="label">Valid To Date & Time</span>
+                                                    <span className="value" style={{ color: '#475569', fontWeight: 600 }}>
+                                                        {outpassData.toDate ? new Date(outpassData.toDate).toLocaleString() : 'N/A'}
                                                     </span>
                                                 </div>
                                                 <div className="sd-detail-item full-width">

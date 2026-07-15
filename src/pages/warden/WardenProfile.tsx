@@ -4,6 +4,8 @@ import Nav from "../../components/WardenNav";
 import Toast from "../../components/Toast";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
+import { Camera } from "lucide-react";
+
 import ImageCropper from "../../components/ImageCropper";
 import imageCompression from 'browser-image-compression';
 
@@ -159,7 +161,7 @@ const WardenProfile: React.FC = () => {
   const handleSave = async () => {
     const formData = new FormData();
     if (selectedPhoto) {
-      formData.append("photo", selectedPhoto);
+      formData.append("file", selectedPhoto);
     }
     formData.append("name", warden.name);
     formData.append("hostelname", warden.hostelname);
@@ -244,11 +246,10 @@ const WardenProfile: React.FC = () => {
                       src={
                         previewUrl ||
                         (warden.photo
-                          ? warden.photo.startsWith("data:") ||
-                            warden.photo.startsWith("blob:") ||
+                          ? warden.photo.startsWith("blob:") ||
                             warden.photo.startsWith("http")
                             ? warden.photo
-                            : `${(import.meta.env.VITE_CDN_URL || '').replace(/\/$/, '')}/${warden.photo.replace(/^\//, '')}?t=${imageRefreshKey}`
+                            : `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/${warden.photo.replace(/^\//, '')}?t=${imageRefreshKey}`
                           : "")
                       }
                       alt="Profile"
@@ -304,8 +305,9 @@ const WardenProfile: React.FC = () => {
                   </div>
 
                   {isEditing && (
-                    <label className="avatar-upload">
-                      <span>📷</span>
+                    <label className="avatar-upload" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Camera size={20} />
+
                       <input
                         type="file"
                         accept="image/jpeg, image/png"
@@ -603,6 +605,17 @@ const WardenProfile: React.FC = () => {
           flex-direction: column;
           align-items: center;
           text-align: center;
+        }
+
+        .profile-header {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          width: 100%;
+        }
+
+        .hidden-input {
+          display: none;
         }
 
         .avatar-container {

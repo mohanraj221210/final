@@ -21,8 +21,8 @@ const SecurityDetailsAdmin: React.FC = () => {
 
     const getImageUrl = (photo: string) => {
         if (!photo) return '';
-        if (photo.startsWith('http') || photo.startsWith('data:')) return photo;
-        const baseUrl = import.meta.env.VITE_CDN_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        if (photo.startsWith('data:')) return photo;
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
         const cleanPhoto = photo.startsWith('/') ? photo : `/${photo}`;
         return `${cleanBase}${cleanPhoto}`;
@@ -76,7 +76,7 @@ const SecurityDetailsAdmin: React.FC = () => {
     const handlePasswordUpdate = async (password: string) => {
         if (!watchman) return;
         try {
-            await adminService.updateWatchman(watchman._id, { ...watchman, password });
+            await adminService.resetSecurityPassword(watchman._id, password);
             toast.success("Password updated successfully");
         } catch (error) {
             toast.error("Failed to update password");
@@ -208,11 +208,11 @@ const SecurityDetailsAdmin: React.FC = () => {
                     background: white;
                     border: 1px solid #e2e8f0;
                     color: #64748b;
-                    font-size: 0.95rem;
+                    font-size: 0.85rem;
                     font-weight: 600;
                     cursor: pointer;
                     margin-bottom: 24px;
-                    padding: 10px 20px;
+                    padding: 6px 12px;
                     border-radius: 10px;
                     transition: all 0.2s;
                     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
@@ -355,7 +355,7 @@ const SecurityDetailsAdmin: React.FC = () => {
                 .field-group { display: flex; flex-direction: column; gap: 6px; }
                 .field-label { font-size: 0.85rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.025em; }
                 .field-value { font-size: 1rem; color: #111827; font-weight: 500; }
-                .field-input {
+                .field-input { background-color: white; color: #111827;
                     padding: 10px 12px;
                     border: 1px solid #d1d5db;
                     border-radius: 8px;
@@ -370,6 +370,23 @@ const SecurityDetailsAdmin: React.FC = () => {
                 @media (max-width: 1024px) {
                     .profile-layout { grid-template-columns: 1fr; }
                     .profile-sidebar { max-width: 400px; margin: 0 auto; width: 100%; }
+                }
+
+                @media (max-width: 768px) {
+                    .page-header {
+                        flex-direction: column;
+                        align-items: stretch;
+                        gap: 16px;
+                    }
+                    .header-actions {
+                        flex-direction: column;
+                        width: 100%;
+                        gap: 10px;
+                    }
+                    .header-actions button {
+                        width: 100%;
+                        justify-content: center;
+                    }
                 }
             `}</style>
             <ChangePasswordModal

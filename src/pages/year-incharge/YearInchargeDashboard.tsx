@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import YearInchargeNav from '../../components/YearInchargeNav';
 import { useNavigate } from 'react-router-dom';
-import { ToastContainer } from 'react-toastify';
-import { YearInchargeService } from '../../services/yearInchargeService';
-import type { MappedStats } from '../../services/yearInchargeService';
+import { toast, ToastContainer } from 'react-toastify';
+import { YearInchargeService, type MappedStats, calculateProfileCompletion } from '../../services/yearInchargeService';
 
 /* ─────────────────────────────────────────────
    Animated Counter Hook
@@ -193,6 +192,30 @@ const ChartSkeleton = () => (
     </div>
 );
 
+const TableSkeleton = () => (
+    <div className="yi-analytics-card" style={{ marginTop: '32px', padding: '28px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <Skel w="200px" h="22px" r="6px" />
+            <Skel w="120px" h="32px" r="6px" />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {[1, 2, 3, 4].map(i => (
+                <div key={i} style={{ display: 'flex', gap: 16, alignItems: 'center', padding: '14px 0', borderBottom: '1px solid #F1F5F9' }}>
+                    <Skel w="36px" h="36px" r="50%" />
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <Skel w="120px" h="16px" r="4px" />
+                        <Skel w="100px" h="12px" r="4px" />
+                    </div>
+                    <Skel w="180px" h="16px" r="4px" />
+                    <Skel w="80px" h="24px" r="12px" />
+                    <Skel w="100px" h="16px" r="4px" />
+                    <Skel w="80px" h="36px" r="8px" />
+                </div>
+            ))}
+        </div>
+    </div>
+);
+
 /* ─────────────────────────────────────────────
    Filter Pills
 ───────────────────────────────────────────── */
@@ -238,11 +261,11 @@ function buildChartData(stats: MappedStats, filter: FilterType): ChartPoint[] {
             const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const slots = [
                 { label: '12AM', start: 0, end: 4 },
-                { label: '4AM',  start: 4, end: 8 },
-                { label: '8AM',  start: 8, end: 12 },
+                { label: '4AM', start: 4, end: 8 },
+                { label: '8AM', start: 8, end: 12 },
                 { label: '12PM', start: 12, end: 16 },
-                { label: '4PM',  start: 16, end: 20 },
-                { label: '8PM',  start: 20, end: 24 },
+                { label: '4PM', start: 16, end: 20 },
+                { label: '8PM', start: 20, end: 24 },
             ];
             const counts = slots.map(() => 0);
             passes.forEach(pass => {
@@ -394,6 +417,7 @@ const YearInchargeDashboard: React.FC = () => {
     const [filter, setFilter] = useState<FilterType>('total');
     const [error, setError] = useState<string | null>(null);
     const [zoomingPath, setZoomingPath] = useState<string | null>(null);
+    const [profileCompletion, setProfileCompletion] = useState(0);
     const navigate = useNavigate();
 
     // Animated counters — update when stats change
@@ -411,7 +435,7 @@ const YearInchargeDashboard: React.FC = () => {
     // Initial full load (profile + stats + pending check + chart data)
     const fetchAll = useCallback(async (selectedFilter: FilterType) => {
         const token = localStorage.getItem('token');
-        if (!token) { navigate('/year-incharge-login'); return; }
+        if (!token) { localStorage.clear(); navigate('/year-incharge-login'); return; }
 
         setInitialLoading(true);
         setError(null);
@@ -436,6 +460,7 @@ const YearInchargeDashboard: React.FC = () => {
                 year: profileData.year || 'N/A',
                 email: profileData.email || 'incharge@jit.edu'
             });
+            setProfileCompletion(calculateProfileCompletion(profileData));
         }
         if (statsData) setStats(statsData);
 
@@ -445,7 +470,7 @@ const YearInchargeDashboard: React.FC = () => {
     // Filter-driven re-fetch (stats + chart data only — no profile re-fetch)
     const fetchFiltered = useCallback(async (selectedFilter: FilterType) => {
         const token = localStorage.getItem('token');
-        if (!token) { navigate('/year-incharge-login'); return; }
+        if (!token) { localStorage.clear(); navigate('/year-incharge-login'); return; }
 
         setStatsLoading(true);
         setChartLoading(true);
@@ -475,6 +500,11 @@ const YearInchargeDashboard: React.FC = () => {
     }, [filter]);
 
     const handleQuickAction = (path: string) => {
+        if ((path === '/year-incharge/pending-outpass' || path === '/year-incharge/outpass-list') && profileCompletion < 100) {
+            toast.error("Please complete your profile 100% to handle outpasses");
+            setTimeout(() => navigate('/year-incharge-profile'), 1500);
+            return;
+        }
         setZoomingPath(path);
         setTimeout(() => navigate(path), 700);
     };
@@ -501,6 +531,7 @@ const YearInchargeDashboard: React.FC = () => {
                         <StatsSkeleton />
                     </div>
                     <ChartSkeleton />
+                    <TableSkeleton />
                     <div className="dashboard-layout">
                         <div className="main-content">
                             <section className="section">
@@ -632,6 +663,96 @@ const YearInchargeDashboard: React.FC = () => {
                         </div>
                     </section>
                 )}
+
+                {/* ── Recent Passes ── */}
+                <section className="yi-analytics-card" style={{ marginTop: '32px' }}>
+                    <div className="yi-analytics-header" style={{ marginBottom: '16px' }}>
+                        <div>
+                            <h2 className="yi-analytics-title">Recent Outpass Requests</h2>
+                            <p className="yi-analytics-desc">{Math.min(stats.recentpasses?.length || 0, 10)} of {stats.recentpasses?.length || 0} requests shown</p>
+                        </div>
+                        <button className="view-all-btn" onClick={() => handleQuickAction('/year-incharge/outpass-list')} style={{ padding: '8px 18px', borderRadius: '10px', background: '#EFF6FF', color: '#3B82F6', border: '1px solid rgba(59,130,246,0.15)', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', transition: 'all 0.2s ease', minHeight: '44px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                            onMouseOver={(e) => { e.currentTarget.style.background = '#3B82F6'; e.currentTarget.style.color = 'white'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(59,130,246,0.3)'; }}
+                            onMouseOut={(e) => { e.currentTarget.style.background = '#EFF6FF'; e.currentTarget.style.color = '#3B82F6'; e.currentTarget.style.boxShadow = 'none'; }}>
+                            View All <svg width="14" height="14" fill="none" viewBox="0 0 24 24" style={{ display: 'inline-block' }}><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                        </button>
+                    </div>
+                    {stats.recentpasses && stats.recentpasses.length > 0 ? (
+                        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '700px' }}>
+                                <thead>
+                                    <tr>
+                                        <th style={{ padding: '14px 24px', borderBottom: '1px solid #E2E8F0', color: '#64748B', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', background: '#F8FAFC', position: 'sticky', top: 0, zIndex: 2 }}>Student</th>
+                                        <th style={{ padding: '14px 24px', borderBottom: '1px solid #E2E8F0', color: '#64748B', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', background: '#F8FAFC', position: 'sticky', top: 0, zIndex: 2 }}>Register No.</th>
+                                        <th style={{ padding: '14px 24px', borderBottom: '1px solid #E2E8F0', color: '#64748B', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', background: '#F8FAFC', position: 'sticky', top: 0, zIndex: 2 }}>Reason</th>
+                                        <th style={{ padding: '14px 24px', borderBottom: '1px solid #E2E8F0', color: '#64748B', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', background: '#F8FAFC', position: 'sticky', top: 0, zIndex: 2 }}>Status</th>
+                                        <th style={{ padding: '14px 24px', borderBottom: '1px solid #E2E8F0', color: '#64748B', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', background: '#F8FAFC', position: 'sticky', top: 0, zIndex: 2 }}>Applied</th>
+                                        <th style={{ padding: '14px 24px', borderBottom: '1px solid #E2E8F0', color: '#64748B', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', background: '#F8FAFC', position: 'sticky', top: 0, zIndex: 2 }}>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {stats.recentpasses.slice(0, 10).map((pass, idx) => {
+                                        const sName = pass.studentid?.name || 'Student';
+                                        const rNum = pass.studentid?.registerNumber || 'N/A';
+                                        const status = (pass.yearinchargeapprovalstatus || pass.status || 'pending').toLowerCase();
+                                        const photoUrl = pass.studentid?.photo;
+
+                                        return (
+                                            <tr key={pass._id || idx} style={{ cursor: 'pointer', outline: 'none' }}
+                                                onClick={() => handleQuickAction(status === 'pending' ? '/year-incharge/pending-outpass' : '/year-incharge/outpass-list')}
+                                                onMouseOver={(e) => { e.currentTarget.style.background = '#F8FAFC'; }}
+                                                onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; }}>
+                                                <td style={{ padding: '14px 24px', borderBottom: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                    <img
+                                                        src={photoUrl ? photoUrl : 'https://ui-avatars.com/api/?name=' + sName + '&background=EFF6FF&color=3B82F6&bold=true'}
+                                                        alt={sName}
+                                                        style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #E2E8F0', flexShrink: 0 }}
+                                                    />
+                                                    <span style={{ fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap', fontSize: '0.88rem' }}>{sName}</span>
+                                                </td>
+                                                <td style={{ padding: '14px 24px', borderBottom: '1px solid #F1F5F9', fontFamily: "'SF Mono', 'Fira Code', monospace", fontWeight: 600, color: '#64748B', fontSize: '0.82rem' }}>
+                                                    {rNum}
+                                                </td>
+                                                <td style={{ padding: '14px 24px', borderBottom: '1px solid #F1F5F9', color: '#334155', fontSize: '0.88rem', maxWidth: '180px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={pass.reason}>
+                                                    {pass.reason}
+                                                </td>
+                                                <td style={{ padding: '14px 24px', borderBottom: '1px solid #F1F5F9' }}>
+                                                    <span style={{
+                                                        display: 'inline-flex', alignItems: 'center',
+                                                        padding: '4px 12px', borderRadius: '20px', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em',
+                                                        background: status === 'approved' ? '#ECFDF5' : status === 'rejected' ? '#FEF2F2' : '#FFFBEB',
+                                                        color: status === 'approved' ? '#059669' : status === 'rejected' ? '#DC2626' : '#D97706'
+                                                    }}>
+                                                        {status}
+                                                    </span>
+                                                </td>
+                                                <td style={{ padding: '14px 24px', borderBottom: '1px solid #F1F5F9', color: '#94A3B8', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>
+                                                    {pass.createdAt ? new Date(pass.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
+                                                </td>
+                                                <td style={{ padding: '14px 24px', borderBottom: '1px solid #F1F5F9' }}>
+                                                    <button style={{
+                                                        padding: '7px 16px', borderRadius: '8px', background: '#EFF6FF', color: '#3B82F6', border: 'none', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', minHeight: '36px', transition: 'all 0.2s ease'
+                                                    }}
+                                                        onMouseOver={(e) => { e.currentTarget.style.background = '#3B82F6'; e.currentTarget.style.color = 'white'; }}
+                                                        onMouseOut={(e) => { e.currentTarget.style.background = '#EFF6FF'; e.currentTarget.style.color = '#3B82F6'; }}
+                                                        tabIndex={-1}>Review</button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <div style={{ textAlign: 'center', padding: '56px 24px' }}>
+                            <div style={{ marginBottom: '16px', color: '#CBD5E1' }}>
+                                <svg width="48" height="48" fill="none" viewBox="0 0 24 24" style={{ margin: '0 auto' }}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                            </div>
+                            <p style={{ fontSize: '1rem', fontWeight: 700, color: '#334155', margin: '0 0 6px' }}>No recent requests</p>
+                            <p style={{ fontSize: '0.85rem', color: '#94A3B8', margin: 0 }}>New outpass requests will appear here</p>
+                        </div>
+                    )}
+                </section>
 
                 {/* ── Quick Actions ── */}
                 <div className="dashboard-layout">

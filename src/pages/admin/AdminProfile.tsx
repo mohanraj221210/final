@@ -120,7 +120,7 @@ const AdminProfile: React.FC = () => {
 
     const getImageUrl = (path: string) => {
         if (!path) return '';
-        if (path.startsWith('data:') || path.startsWith('http') || path.startsWith('blob:')) return path;
+        if (path.startsWith('http') || path.startsWith('blob:')) return path;
         return `${API_BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
     };
 
@@ -134,14 +134,14 @@ const AdminProfile: React.FC = () => {
                     </button>
 
                     {!isEditing ? (
-                        <>
-                            <button className="btn-secondary" onClick={() => setIsPasswordModalOpen(true)} style={{ marginRight: '10px' }}>
-                                🔒 Change Password
-                            </button>
-                            <button className="btn-primary" onClick={() => setIsEditing(true)}>
-                                ✏️ Edit Profile
-                            </button>
-                        </>
+                            <div className="action-buttons-right">
+                                <button className="btn-secondary" onClick={() => setIsPasswordModalOpen(true)} style={{ marginRight: '10px' }}>
+                                    🔒 Change Password
+                                </button>
+                                <button className="btn-primary" onClick={() => setIsEditing(true)}>
+                                    ✏️ Edit Profile
+                                </button>
+                            </div>
                     ) : (
                         <div className="edit-actions">
                             <button className="btn-secondary" onClick={() => {
@@ -265,6 +265,12 @@ const AdminProfile: React.FC = () => {
                     display: flex;
                     gap: 12px;
                 }
+                .action-buttons-right button, .edit-actions button {
+                    min-width: 180px;
+                    display: inline-flex;
+                    justify-content: center;
+                    align-items: center;
+                }
                 .back-dashboard-btn {
                     display: inline-flex;
                     align-items: center;
@@ -272,11 +278,11 @@ const AdminProfile: React.FC = () => {
                     background: white;
                     border: 1px solid #e2e8f0;
                     color: #64748b;
-                    font-size: 0.95rem;
+                    font-size: 0.85rem;
                     font-weight: 600;
                     cursor: pointer;
                     margin-bottom: 24px;
-                    padding: 10px 20px;
+                    padding: 6px 12px;
                     border-radius: 10px;
                     transition: all 0.2s;
                     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
@@ -296,7 +302,7 @@ const AdminProfile: React.FC = () => {
                     color: white;
                 }
                 .btn-primary { background: #3b82f6; }
-                .btn-secondary { background: white; color: #374151; border: 1px solid #d1d5db; margin-left: 270px; }
+                .btn-secondary { background: white; color: #374151; border: 1px solid #d1d5db; }
                 .btn-success { background: #10b981; }
 
                 .profile-card-main {
@@ -369,6 +375,8 @@ const AdminProfile: React.FC = () => {
                     border: 1px solid #d1d5db;
                     border-radius: 8px;
                     width: 100%;
+                    background-color: white;
+                    color: #111827;
                 }
 
                 .profile-details-grid {
@@ -402,9 +410,36 @@ const AdminProfile: React.FC = () => {
                     border-radius: 6px;
                     width: 100%;
                     font-size: 1rem;
+                    background-color: white;
+                    color: #111827;
                 }
                 .hidden { display: none; }
                 
+                @media (max-width: 768px) {
+                    .profile-page-header-actions {
+                        flex-direction: column;
+                        align-items: stretch;
+                        gap: 16px;
+                    }
+                    .action-buttons-right, .edit-actions {
+                        display: flex;
+                        flex-direction: column;
+                        width: 100%;
+                        gap: 12px;
+                    }
+                    .action-buttons-right button, .edit-actions button {
+                        width: 100%;
+                        margin-right: 0 !important;
+                    }
+                    .profile-header-section {
+                        flex-direction: column;
+                        text-align: center;
+                        padding: 24px;
+                    }
+                    .profile-details-grid {
+                        padding: 16px;
+                    }
+                }
 
             `}</style>
             <ChangePasswordModal

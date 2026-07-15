@@ -185,8 +185,10 @@ const StaffHeader: React.FC<StaffHeaderProps> = ({ activeMenu }) => {
             <header className={`sfh-header ${scrolled ? 'sfh-scrolled' : ''}`}>
                 <div className="sfh-container">
                     <div className="sfh-brand" onClick={() => handleNavigation('/staff-dashboard')}>
-                        <span className="sfh-brand-icon">🎓</span>
-                        <span className="sfh-brand-text">JIT Faculty Portal</span>
+                        <div className="lux-logo-icon">
+                            <img src="/jit permigo.png" alt="JIT Permigo" style={{ width: '22px', height: '22px', objectFit: 'contain', borderRadius: '4px' }} />
+                        </div>
+                        <span className="sfh-brand-text">JIT Permigo</span>
                     </div>
 
                     <nav className="sfh-desktop-nav">
